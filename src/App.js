@@ -332,7 +332,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
   return (
     <div className="app">
       <div className="header">
-        <div className="logo">Poker<em>IQ</em></div>
+        <div className="logo">Check<em>Raise</em></div>
         <div className="tagline">AI-Powered Skill Training</div>
       </div>
       <SkillTracker skillResults={skillResults} />

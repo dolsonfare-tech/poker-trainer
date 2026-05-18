@@ -1,6 +1,8 @@
 {
-  "name": "poker-trainer",
-  "version": "0.1.0",
+  "name": "CheckRaise",
+  "version": "1.0.0",
+  "description": "AI-powered Texas Hold'em skill trainer",
+  "author": "David Olson",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.1",
