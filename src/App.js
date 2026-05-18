@@ -112,9 +112,9 @@ const SCENARIOS = [
     ],
     correct: 'call',
     grading: {
-      fold:  { g: 'incorrect', title: 'Folding Equity Left Behind', emoji: '❌' },
-      call:  { g: 'correct',   title: 'Solid Pot Odds Decision',    emoji: '✅' },
-      raise: { g: 'partial',   title: 'Bold Bluff vs Wrong Villain', emoji: '⚠️' },
+      fold:  { g: 'incorrect', title: 'Folding Equity Left Behind',   emoji: '❌' },
+      call:  { g: 'correct',   title: 'Solid Pot Odds Decision',      emoji: '✅' },
+      raise: { g: 'partial',   title: 'Bold Bluff vs Wrong Villain',  emoji: '⚠️' },
     },
   },
 
@@ -152,9 +152,9 @@ const SCENARIOS = [
     ],
     correct: 'call',
     grading: {
-      fold:  { g: 'incorrect', title: 'Too Much Equity to Fold',      emoji: '❌' },
-      call:  { g: 'correct',   title: 'Smart Play vs a Nit',          emoji: '✅' },
-      raise: { g: 'partial',   title: '3-Bet Sets Up a Tough Spot',   emoji: '⚠️' },
+      fold:  { g: 'incorrect', title: 'Too Much Equity to Fold',    emoji: '❌' },
+      call:  { g: 'correct',   title: 'Smart Play vs a Nit',        emoji: '✅' },
+      raise: { g: 'partial',   title: '3-Bet Sets Up a Tough Spot', emoji: '⚠️' },
     },
   },
   {
@@ -169,12 +169,12 @@ const SCENARIOS = [
       notes: 'Calls down with any pair or draw, never folds to aggression, does not respond to bluffs',
     },
     positions: [
-      { label: 'UTG',       action: 'Folds',     state: 'folded' },
-      { label: 'HJ',        action: 'Folds',     state: 'folded' },
-      { label: 'CO (You)',  action: '???',        state: 'hero'   },
-      { label: 'BTN',       action: 'Folds',     state: 'folded' },
-      { label: 'SB',        action: 'Folds',     state: 'folded' },
-      { label: 'BB (CS)',   action: 'Called $6', state: 'active' },
+      { label: 'UTG',      action: 'Folds',     state: 'folded' },
+      { label: 'HJ',       action: 'Folds',     state: 'folded' },
+      { label: 'CO (You)', action: '???',        state: 'hero'   },
+      { label: 'BTN',      action: 'Folds',     state: 'folded' },
+      { label: 'SB',       action: 'Folds',     state: 'folded' },
+      { label: 'BB (CS)',  action: 'Called $6', state: 'active' },
     ],
     hand: [{ r: 'A', s: '♥', c: 'red' }, { r: 'K', s: '♥', c: 'red' }],
     board: ['A♣', '7♦', '2♠'],
@@ -206,12 +206,12 @@ const SCENARIOS = [
       notes: 'Raises and re-raises constantly, bluffs at very high frequency, hard to put on a hand',
     },
     positions: [
-      { label: 'UTG',          action: 'Folds',      state: 'folded' },
-      { label: 'HJ (You)',     action: 'Raised $6',  state: 'hero'   },
-      { label: 'CO',           action: 'Folds',      state: 'folded' },
-      { label: 'BTN (Maniac)', action: '3-Bet $20',  state: 'active' },
-      { label: 'SB',           action: 'Folds',      state: 'folded' },
-      { label: 'BB',           action: 'Folds',      state: 'folded' },
+      { label: 'UTG',          action: 'Folds',     state: 'folded' },
+      { label: 'HJ (You)',     action: 'Raised $6', state: 'hero'   },
+      { label: 'CO',           action: 'Folds',     state: 'folded' },
+      { label: 'BTN (Maniac)', action: '3-Bet $20', state: 'active' },
+      { label: 'SB',           action: 'Folds',     state: 'folded' },
+      { label: 'BB',           action: 'Folds',     state: 'folded' },
     ],
     hand: [{ r: 'Q', s: '♠', c: 'black' }, { r: 'Q', s: '♥', c: 'red' }],
     board: null,
@@ -243,12 +243,12 @@ const SCENARIOS = [
       notes: 'Only continues postflop with strong made hands, folds to large bets on scary boards, never bluffs',
     },
     positions: [
-      { label: 'UTG',       action: 'Folds',      state: 'folded' },
-      { label: 'HJ',        action: 'Folds',      state: 'folded' },
-      { label: 'CO (You)',  action: 'Raised $6',  state: 'hero'   },
-      { label: 'BTN (Nit)', action: 'Called $6',  state: 'active' },
-      { label: 'SB',        action: 'Folds',      state: 'folded' },
-      { label: 'BB',        action: 'Folds',      state: 'folded' },
+      { label: 'UTG',       action: 'Folds',     state: 'folded' },
+      { label: 'HJ',        action: 'Folds',     state: 'folded' },
+      { label: 'CO (You)',  action: 'Raised $6', state: 'hero'   },
+      { label: 'BTN (Nit)', action: 'Called $6', state: 'active' },
+      { label: 'SB',        action: 'Folds',     state: 'folded' },
+      { label: 'BB',        action: 'Folds',     state: 'folded' },
     ],
     hand: [{ r: '9', s: '♠', c: 'black' }, { r: '8', s: '♠', c: 'black' }],
     board: ['K♠', '7♠', '2♥'],
@@ -257,15 +257,15 @@ const SCENARIOS = [
     body: "You raised CO with 9♠8♠ and the Nit called on the Button. Flop: K♠ 7♠ 2♥. You missed but picked up a flush draw. You're first to act. The nit only continues with strong hands — a King or better.",
     question: 'You have a flush draw on a King-high board vs a nit. What do you do?',
     options: [
-      { label: 'Check',        icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8',       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $15 (pot)',icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check',         icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $8',        icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'incorrect', title: 'Give Up Too Early',           emoji: '❌' },
+      fold:  { g: 'incorrect', title: 'Give Up Too Early',            emoji: '❌' },
       call:  { g: 'partial',   title: 'Small Bet, Small Fold Equity', emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Nits Fold to Pressure',       emoji: '✅' },
+      raise: { g: 'correct',   title: 'Nits Fold to Pressure',        emoji: '✅' },
     },
   },
   {
@@ -280,12 +280,12 @@ const SCENARIOS = [
       notes: 'Will call any bet size with any pair, draw, or gut shot — bluffing is completely ineffective',
     },
     positions: [
-      { label: 'UTG',      action: 'Folds',      state: 'folded' },
-      { label: 'HJ',       action: 'Folds',      state: 'folded' },
-      { label: 'CO',       action: 'Folds',      state: 'folded' },
-      { label: 'BTN (You)',action: 'Raised $6',  state: 'hero'   },
-      { label: 'SB',       action: 'Folds',      state: 'folded' },
-      { label: 'BB (CS)',  action: 'Called $6',  state: 'active' },
+      { label: 'UTG',       action: 'Folds',     state: 'folded' },
+      { label: 'HJ',        action: 'Folds',     state: 'folded' },
+      { label: 'CO',        action: 'Folds',     state: 'folded' },
+      { label: 'BTN (You)', action: 'Raised $6', state: 'hero'   },
+      { label: 'SB',        action: 'Folds',     state: 'folded' },
+      { label: 'BB (CS)',   action: 'Called $6', state: 'active' },
     ],
     hand: [{ r: '7', s: '♣', c: 'black' }, { r: '6', s: '♣', c: 'black' }],
     board: ['K♥', 'Q♦', '5♠'],
@@ -300,14 +300,14 @@ const SCENARIOS = [
     ],
     correct: 'fold',
     grading: {
-      fold:  { g: 'correct',   title: 'Never Bluff a Station',      emoji: '✅' },
-      call:  { g: 'incorrect', title: 'Burning Money',              emoji: '❌' },
-      raise: { g: 'incorrect', title: 'Expensive Lesson',           emoji: '❌' },
+      fold:  { g: 'correct',   title: 'Never Bluff a Station', emoji: '✅' },
+      call:  { g: 'incorrect', title: 'Burning Money',         emoji: '❌' },
+      raise: { g: 'incorrect', title: 'Expensive Lesson',      emoji: '❌' },
     },
   },
 ];
 
-// ─── Skill Labels (8 skills per architecture doc) ──────────────────────────
+// ─── Skill Labels ──────────────────────────────────────────────────────────
 const SKILL_LABELS = {
   preflop:    'Preflop',
   position:   'Position',
@@ -448,11 +448,11 @@ function FeedbackPanel({ grade, loading, feedbackText }) {
   );
 }
 
-function SessionSummary({ skillResults, onRestart }) {
+function SessionSummary({ skillResults, coachRead, coachLoading, onRestart }) {
   const statusMap = {
-    correct:   ['Strong',   'correct'],
-    partial:   ['Work On',  'partial'],
-    incorrect: ['Weak',     'incorrect'],
+    correct:   ['Strong',  'correct'],
+    partial:   ['Work On', 'partial'],
+    incorrect: ['Weak',    'incorrect'],
   };
   return (
     <div className="summary-card">
@@ -470,6 +470,39 @@ function SessionSummary({ skillResults, onRestart }) {
           );
         })}
       </div>
+
+      <div style={{
+        background: 'rgba(200,168,75,0.07)',
+        border: '1px solid rgba(200,168,75,0.2)',
+        borderRadius: '12px',
+        padding: '18px 16px',
+        marginBottom: '24px',
+        textAlign: 'left',
+      }}>
+        <div style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize: '0.55rem',
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: 'rgba(200,168,75,0.7)',
+          marginBottom: '10px',
+        }}>
+          🧠 Coach's Read
+        </div>
+        {coachLoading ? (
+          <div className="thinking">Reading your session...</div>
+        ) : (
+          <div style={{
+            fontSize: '0.86rem',
+            lineHeight: '1.7',
+            color: 'rgba(242,237,227,0.8)',
+            fontStyle: 'italic',
+          }}>
+            {coachRead || 'No pattern identified yet.'}
+          </div>
+        )}
+      </div>
+
       <button className="restart-btn" onClick={onRestart}>Train Again</button>
     </div>
   );
@@ -483,8 +516,59 @@ export default function App() {
   const [decided, setDecided]            = useState(false);
   const [feedback, setFeedback]          = useState(null);
   const [showSummary, setShowSummary]    = useState(false);
+  const [coachRead, setCoachRead]        = useState('');
+  const [coachLoading, setCoachLoading]  = useState(false);
 
   const scenario = SCENARIOS[currentIndex];
+
+  const fetchCoachRead = async (results, lastIndex) => {
+    setCoachLoading(true);
+
+    const decisionsPlayed = SCENARIOS.slice(0, lastIndex + 1).map(s => ({
+      scenario: s.tag,
+      villain: s.villain.label,
+      skill: s.skill,
+      result: results[s.skill] || 'unknown',
+    }));
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': CLAUDE_API_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          messages: [{
+            role: 'user',
+            content: `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
+
+Session decisions:
+${decisionsPlayed.map(d => `- ${d.scenario} (${d.villain}): ${d.result}`).join('\n')}
+
+Write 2-3 sentences identifying the pattern. Rules:
+- Sound like a human coach, not an AI
+- No em dashes, no "not only... but also" constructions
+- No generic praise or filler
+- Be direct and specific about what you observe
+- If they got everything right, acknowledge it briefly and name one area to keep watching
+- Start with the observation, not with "you"`,
+          }],
+        }),
+      });
+
+      const data = await res.json();
+      const text = data.content?.find(b => b.type === 'text')?.text || '';
+      setCoachRead(text);
+    } catch {
+      setCoachRead('');
+    }
+    setCoachLoading(false);
+  };
 
   const handleDecision = useCallback(async (choice) => {
     if (decided) return;
@@ -535,6 +619,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
     const next = currentIndex + 1;
     if (next >= SCENARIOS.length) {
       setShowSummary(true);
+      fetchCoachRead(skillResults, currentIndex);
     } else {
       setCurrentIndex(next);
       setDecided(false);
@@ -549,6 +634,8 @@ Reference the villain type in your feedback. Explain how this specific opponent 
     setDecided(false);
     setFeedback(null);
     setShowSummary(false);
+    setCoachRead('');
+    setCoachLoading(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -562,7 +649,12 @@ Reference the villain type in your feedback. Explain how this specific opponent 
       <SkillTracker skillResults={skillResults} />
 
       {showSummary ? (
-        <SessionSummary skillResults={skillResults} onRestart={handleRestart} />
+        <SessionSummary
+          skillResults={skillResults}
+          coachRead={coachRead}
+          coachLoading={coachLoading}
+          onRestart={handleRestart}
+        />
       ) : (
         <>
           <ProgressDots total={SCENARIOS.length} current={currentIndex} />
@@ -580,7 +672,12 @@ Reference the villain type in your feedback. Explain how this specific opponent 
 
           <div className="actions">
             {scenario.options.map((opt) => (
-              <button key={opt.val} className={`act-btn ${opt.cls}`} onClick={() => handleDecision(opt.val)} disabled={decided}>
+              <button
+                key={opt.val}
+                className={`act-btn ${opt.cls}`}
+                onClick={() => handleDecision(opt.val)}
+                disabled={decided}
+              >
                 <div className="act-icon">{opt.icon}</div>
                 <span>{opt.label}</span>
               </button>
@@ -589,7 +686,11 @@ Reference the villain type in your feedback. Explain how this specific opponent 
 
           {feedback && (
             <>
-              <FeedbackPanel grade={feedback.grade} loading={feedback.loading} feedbackText={feedback.text} />
+              <FeedbackPanel
+                grade={feedback.grade}
+                loading={feedback.loading}
+                feedbackText={feedback.text}
+              />
               {!feedback.loading && (
                 <button className="next-btn" onClick={handleNext}>
                   {currentIndex < SCENARIOS.length - 1 ? 'Next Scenario →' : 'See My Results →'}
