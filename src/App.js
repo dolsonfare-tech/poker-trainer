@@ -247,6 +247,33 @@ function VillainGuide({ onClose }) {
     },
   ];
 
+  const positions = [
+    {
+      label: 'BTN — Button',
+      desc: 'The best seat at the table — you act last on every postflop street, giving you maximum information before making a decision.',
+    },
+    {
+      label: 'CO — Cutoff',
+      desc: 'One seat right of the Button, second best position — you act last preflop if the BTN folds and nearly last postflop.',
+    },
+    {
+      label: 'HJ — Hijack',
+      desc: 'Two seats right of the Button — decent position with three players still to act behind you preflop.',
+    },
+    {
+      label: 'UTG — Under the Gun',
+      desc: 'First to act preflop, the worst position — you have no information about anyone else\'s hand when you make your decision.',
+    },
+    {
+      label: 'SB — Small Blind',
+      desc: 'Posts half the big blind and acts first on every postflop street — the worst position postflop despite acting late preflop.',
+    },
+    {
+      label: 'BB — Big Blind',
+      desc: 'Posts the full big blind, acts last preflop, and acts second on every postflop street — better than SB but still out of position most of the time.',
+    },
+  ];
+
   const tabStyle = (tab) => ({
     flex: 1,
     padding: '10px',
@@ -338,13 +365,12 @@ function VillainGuide({ onClose }) {
         </div>
 
         {/* Tabs */}
-        <div style={{
-          display: 'flex',
-          marginBottom: '20px',
-          gap: '0',
-        }}>
+ <div style={{ display: 'flex', marginBottom: '20px' }}>
           <button style={tabStyle('players')} onClick={() => setActiveTab('players')}>
             Player Types
+          </button>
+          <button style={tabStyle('positions')} onClick={() => setActiveTab('positions')}>
+            Positions
           </button>
           <button style={tabStyle('glossary')} onClick={() => setActiveTab('glossary')}>
             Glossary
@@ -353,8 +379,7 @@ function VillainGuide({ onClose }) {
 
         {/* Content */}
         <div style={{ display: 'grid', gap: '10px' }}>
-          {(activeTab === 'players' ? villains : glossary).map((item, i) => (
-            <div
+{(activeTab === 'players' ? villains : activeTab === 'positions' ? positions : glossary).map((item, i) => (            <div
               key={i}
               style={{
                 background: 'rgba(255,255,255,0.03)',
