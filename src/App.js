@@ -150,6 +150,8 @@ function FeedbackPanel({ grade, loading, feedbackText }) {
 }
 
 function VillainGuide({ onClose }) {
+  const [activeTab, setActiveTab] = useState('players');
+
   const villains = [
     {
       label: 'Tight Nit',
@@ -161,11 +163,11 @@ function VillainGuide({ onClose }) {
     },
     {
       label: 'Maniac',
-      desc: 'Raises and re-raises constantly with a wide range including bluffs. Let them bluff into you and trap with strong hands.',
+      desc: "Raises and re-raises constantly with a wide range including bluffs. Let them bluff into you and trap with strong hands.",
     },
     {
       label: 'Aggressive Regular',
-      desc: 'Skilled and unpredictable — applies pressure with both value and bluffs. Respect their bets but don\'t over-fold.',
+      desc: "Skilled and unpredictable — applies pressure with both value and bluffs. Respect their bets but don't over-fold.",
     },
     {
       label: 'Passive Player',
@@ -177,13 +179,89 @@ function VillainGuide({ onClose }) {
     },
     {
       label: 'Tight Recreational',
-      desc: 'Plays few hands but lacks the skill to fold once they\'re in. Easy to read but hard to get value from when they fold pre.',
+      desc: "Plays few hands but lacks the skill to fold once they're in. Easy to read but hard to get value from when they fold pre.",
     },
     {
       label: 'Unknown',
       desc: 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.',
     },
   ];
+
+  const glossary = [
+    {
+      label: 'C-bet (Continuation Bet)',
+      desc: 'A bet made by the player who raised before the flop, continuing to show aggression on the flop even if it missed their hand.',
+    },
+    {
+      label: '3-bet',
+      desc: 'A re-raise over someone who has already raised — the third bet in the sequence.',
+    },
+    {
+      label: '4-bet',
+      desc: 'A re-raise over a 3-bet — the fourth bet in the sequence, usually representing a very strong hand.',
+    },
+    {
+      label: 'Open Raise',
+      desc: 'The first raise preflop when no one has entered the pot yet.',
+    },
+    {
+      label: 'Pot Odds',
+      desc: 'The ratio of the current pot size to the cost of calling — used to decide if chasing a draw is mathematically profitable.',
+    },
+    {
+      label: 'Fold Equity',
+      desc: 'The added value of a bet or raise that comes from the chance your opponent will fold, giving you the pot without a showdown.',
+    },
+    {
+      label: 'Range',
+      desc: "The full set of hands a player could have in a given situation, rather than one specific hand.",
+    },
+    {
+      label: 'Position',
+      desc: 'Where you sit relative to the dealer button. BTN (Button) acts last and has the most advantage. CO (Cutoff) is one seat right of BTN. HJ (Hijack) is two seats right. UTG (Under the Gun) acts first preflop. SB (Small Blind) and BB (Big Blind) act last preflop but first postflop.',
+    },
+    {
+      label: 'Check-raise',
+      desc: 'Checking when it is your turn, then raising after your opponent bets — a deceptive move used with strong hands or as a bluff.',
+    },
+    {
+      label: 'Value Bet',
+      desc: 'A bet made with a strong hand to get called by weaker hands and win more money.',
+    },
+    {
+      label: 'Bluff',
+      desc: 'A bet or raise made with a weak hand to make your opponent fold a better hand.',
+    },
+    {
+      label: 'Donk Bet',
+      desc: 'A bet made out of position into the player who had the betting initiative — considered unusual and often signals a strong hand or a mistake.',
+    },
+    {
+      label: 'Slow Play',
+      desc: 'Playing a strong hand passively by checking or calling instead of betting, to disguise its strength and trap your opponent.',
+    },
+    {
+      label: 'ICM',
+      desc: 'Independent Chip Model — a tournament concept where chip value is not linear, so decisions near the money or final table require extra caution.',
+    },
+  ];
+
+  const tabStyle = (tab) => ({
+    flex: 1,
+    padding: '10px',
+    background: activeTab === tab ? 'rgba(200,168,75,0.12)' : 'transparent',
+    border: 'none',
+    borderBottom: activeTab === tab
+      ? '2px solid rgba(200,168,75,0.6)'
+      : '2px solid rgba(255,255,255,0.07)',
+    color: activeTab === tab ? 'var(--gold)' : 'rgba(242,237,227,0.4)',
+    fontFamily: "'Courier New', Courier, monospace",
+    fontSize: '0.6rem',
+    letterSpacing: '0.15em',
+    textTransform: 'uppercase',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  });
 
   return (
     <div
@@ -196,7 +274,6 @@ function VillainGuide({ onClose }) {
         display: 'flex',
         alignItems: 'flex-end',
         justifyContent: 'center',
-        padding: '0',
         backdropFilter: 'blur(4px)',
         animation: 'fadeUp 0.25s ease',
       }}
@@ -223,32 +300,20 @@ function VillainGuide({ onClose }) {
           margin: '0 auto 24px',
         }} />
 
-        {/* Title */}
+        {/* Title row */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '24px',
+          marginBottom: '20px',
         }}>
-          <div>
-            <div style={{
-              fontFamily: 'Georgia, serif',
-              fontSize: '1.3rem',
-              fontWeight: '700',
-              color: 'var(--cream)',
-            }}>
-              Know Your Opponent
-            </div>
-            <div style={{
-              fontFamily: "'Courier New', Courier, monospace",
-              fontSize: '0.55rem',
-              letterSpacing: '0.15em',
-              textTransform: 'uppercase',
-              color: 'rgba(242,237,227,0.35)',
-              marginTop: '4px',
-            }}>
-              8 player archetypes
-            </div>
+          <div style={{
+            fontFamily: 'Georgia, serif',
+            fontSize: '1.3rem',
+            fontWeight: '700',
+            color: 'var(--cream)',
+          }}>
+            Reference Guide
           </div>
           <button
             onClick={onClose}
@@ -271,9 +336,23 @@ function VillainGuide({ onClose }) {
           </button>
         </div>
 
-        {/* Villain list */}
+        {/* Tabs */}
+        <div style={{
+          display: 'flex',
+          marginBottom: '20px',
+          gap: '0',
+        }}>
+          <button style={tabStyle('players')} onClick={() => setActiveTab('players')}>
+            Player Types
+          </button>
+          <button style={tabStyle('glossary')} onClick={() => setActiveTab('glossary')}>
+            Glossary
+          </button>
+        </div>
+
+        {/* Content */}
         <div style={{ display: 'grid', gap: '10px' }}>
-          {villains.map((v, i) => (
+          {(activeTab === 'players' ? villains : glossary).map((item, i) => (
             <div
               key={i}
               style={{
@@ -290,7 +369,7 @@ function VillainGuide({ onClose }) {
                 color: 'var(--gold)',
                 marginBottom: '5px',
               }}>
-                {v.label}
+                {item.label}
               </div>
               <div style={{
                 fontSize: '0.78rem',
@@ -298,7 +377,7 @@ function VillainGuide({ onClose }) {
                 color: 'rgba(242,237,227,0.55)',
                 fontFamily: "'Courier New', Courier, monospace",
               }}>
-                {v.desc}
+                {item.desc}
               </div>
             </div>
           ))}
@@ -626,7 +705,7 @@ Write 2-3 sentences identifying the pattern. Rules:
         },
         body: JSON.stringify({
           model: 'claude-sonnet-4-5',
-          max_tokens: 1000,
+          max_tokens: 600,
           messages: [{
             role: 'user',
             content: `You are a direct, knowledgeable poker coach. Give 2-3 sentences of specific, actionable feedback.
