@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
-
 // ─── API Key ───────────────────────────────────────────────────────────────
 const CLAUDE_API_KEY = process.env.REACT_APP_CLAUDE_API_KEY;
 
@@ -208,18 +207,18 @@ function SessionSummary({ skillResults, coachRead, coachLoading, onRestart }) {
 
 export default function App() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [skillResults, setSkillResults]  = useState({});
+const [shuffledScenarios, setShuffledScenarios] = useState(() => [...SCENARIOS].sort(() => Math.random() - 0.5));  const [skillResults, setSkillResults]  = useState({});
   const [decided, setDecided]            = useState(false);
   const [feedback, setFeedback]          = useState(null);
   const [showSummary, setShowSummary]    = useState(false);
   const [coachRead, setCoachRead]        = useState('');
   const [coachLoading, setCoachLoading]  = useState(false);
 
-  const scenario = SCENARIOS[currentIndex];
+  const scenario = shuffledScenarios[currentIndex];
 
   const fetchCoachRead = async (results, lastIndex) => {
     setCoachLoading(true);
-    const decisionsPlayed = SCENARIOS.slice(0, lastIndex + 1).map(s => ({
+    const decisionsPlayed = shuffledScenarios.slice(0, lastIndex + 1).map(s => ({
       scenario: s.tag,
       villain: s.villain.label,
       skill: s.skill,
@@ -307,7 +306,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
 
   const handleNext = () => {
     const next = currentIndex + 1;
-    if (next >= SCENARIOS.length) {
+    if (next >= shuffledScenarios.length) {
       setShowSummary(true);
       fetchCoachRead(skillResults, currentIndex);
     } else {
@@ -319,6 +318,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
   };
 
   const handleRestart = () => {
+    setShuffledScenarios([...SCENARIOS].sort(() => Math.random() - 0.5));
     setCurrentIndex(0);
     setSkillResults({});
     setDecided(false);
@@ -345,11 +345,11 @@ Reference the villain type in your feedback. Explain how this specific opponent 
         />
       ) : (
         <>
-          <ProgressDots total={SCENARIOS.length} current={currentIndex} />
+          <ProgressDots total={shuffledScenarios.length} current={currentIndex} />
           <div className="scenario-card">
             <div className="card-meta">
               <div className="skill-tag">{scenario.tag}</div>
-              <div className="scenario-counter">{currentIndex + 1} / {SCENARIOS.length}</div>
+              <div className="scenario-counter">{currentIndex + 1} / {shuffledScenarios.length}</div>
             </div>
             <VillainBadge villain={scenario.villain} />
             <TableVisual scenario={scenario} />
@@ -378,7 +378,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
               />
               {!feedback.loading && (
                 <button className="next-btn" onClick={handleNext}>
-                  {currentIndex < SCENARIOS.length - 1 ? 'Next Scenario →' : 'See My Results →'}
+                  {currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
                 </button>
               )}
             </>
