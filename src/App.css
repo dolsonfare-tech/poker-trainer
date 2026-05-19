@@ -78,12 +78,14 @@ body {
 /* ── Skill Tracker ── */
 .skill-bar {
   display: flex;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 6px;
   margin-bottom: 24px;
 }
 
 .skill-item {
-  flex: 1;
+  flex: 1 1 calc(25% - 6px);
+  min-width: 60px;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: var(--radius-sm);

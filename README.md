@@ -1,70 +1,88 @@
-# Getting Started with Create React App
+# CheckRaise
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+AI-powered Texas Hold'em skill trainer. Presents poker scenarios, grades your decisions, and coaches you based on villain type and skill area.
 
-## Available Scripts
+Live at: https://checkraise.ai
 
-In the project directory, you can run:
+---
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- React (Create React App)
+- Anthropic Claude API — scenario grading and Coach's Read
+- Vercel — hosting and auto-deploy from GitHub
+- Capacitor — planned for iOS App Store (Phase 3)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+---
 
-### `npm test`
+## Setup
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+1. Clone the repo
+2. Run `npm install`
+3. Create a `.env` file in the root with your API key:
+REACT_APP_CLAUDE_API_KEY=your-key-here
+4. Run `npm start`
 
-### `npm run build`
+For production, the API key is set as an environment variable in the Vercel dashboard.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## Project Structure
+src/
+├── components/       UI components (in progress — currently in App.js)
+├── data/
+│   └── scenarios.js  All scenario content lives here
+├── utils/            API calls, spaced repetition, skill rating logic (planned)
+├── hooks/            Custom React hooks (Phase 2)
+├── App.js            Main app — routing between difficulty selector, session, summary
+└── index.js          Entry point
+---
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Scenario Format
 
-### `npm run eject`
+Every scenario in `scenarios.js` requires these fields:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+- `id` — unique number
+- `tag` — display label (e.g. "Preflop Hand Selection")
+- `skill` — internal key (preflop, position, aggression, betsize, bluffing, potodds, reads, opponent)
+- `difficulty` — beginner / intermediate / advanced
+- `weight` — spaced repetition weight, default 1.0
+- `villain` — object with type, label, notes
+- `positions` — array of 6 table positions
+- `hand` — hero's hole cards
+- `board` — community cards or null
+- `pot` — pot size string
+- `toCall` — amount to call or null
+- `body` — scenario description
+- `question` — the decision prompt
+- `options` — array of 3 choices (fold/call/raise)
+- `correct` — correct answer value
+- `grading` — grade and title for each option
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+---
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Bundle ID
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+Pending — to be set before App Store submission. Format: `com.[name].checkraise`
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Phase Roadmap
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+| Phase | What | Who | When |
+|-------|------|-----|-------|
+| 1 | Prototype — scenarios, AI grading, Coach's Read | Founders + Claude | Done |
+| 2 | User accounts, history, spaced repetition, personalization | Developer needed | Next |
+| 3 | App Store submission via Capacitor | Developer + designer | Later |
 
-### Code Splitting
+---
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Decision Log
 
-### Analyzing the Bundle Size
+See `decision-log.md` for a full record of all product and technical decisions.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
+## Adding Scenarios
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+All scenarios live in `src/data/scenarios.js`. Add new objects to the array following the format above. The app auto-picks them up on next deploy — no other files need to change.
