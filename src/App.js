@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
-// ─── API Key ───────────────────────────────────────────────────────────────
+
 const CLAUDE_API_KEY = process.env.REACT_APP_CLAUDE_API_KEY;
 
-// ─── Skill Labels ──────────────────────────────────────────────────────────
 const SKILL_LABELS = {
   preflop:    'Preflop',
   position:   'Position',
@@ -33,6 +32,11 @@ const FALLBACKS = {
     incorrect: 'This raise is ill-timed. You are out of position with insufficient equity — pick better spots to apply pressure.',
   },
 };
+
+function getFilteredScenarios(difficulty) {
+  const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
+  return [...filtered].sort(() => Math.random() - 0.5);
+}
 
 // ─── Sub-components ────────────────────────────────────────────────────────
 
@@ -145,7 +149,340 @@ function FeedbackPanel({ grade, loading, feedbackText }) {
   );
 }
 
-function SessionSummary({ skillResults, coachRead, coachLoading, onRestart }) {
+function VillainGuide({ onClose }) {
+  const villains = [
+    {
+      label: 'Tight Nit',
+      desc: 'Only plays premium hands from any position. If they bet or raise, they almost always have it — never bluff them off a hand.',
+    },
+    {
+      label: 'Calling Station',
+      desc: 'Calls everything down with any pair or draw. Bluffing is useless — bet big for value and never try to make them fold.',
+    },
+    {
+      label: 'Maniac',
+      desc: 'Raises and re-raises constantly with a wide range including bluffs. Let them bluff into you and trap with strong hands.',
+    },
+    {
+      label: 'Aggressive Regular',
+      desc: 'Skilled and unpredictable — applies pressure with both value and bluffs. Respect their bets but don\'t over-fold.',
+    },
+    {
+      label: 'Passive Player',
+      desc: 'Checks and calls rather than betting or raising. When they do bet, take it seriously — it usually means a strong hand.',
+    },
+    {
+      label: 'Loose Recreational',
+      desc: 'Plays too many hands and chases draws. Bet for value liberally and avoid fancy bluffs — they call too wide to fold.',
+    },
+    {
+      label: 'Tight Recreational',
+      desc: 'Plays few hands but lacks the skill to fold once they\'re in. Easy to read but hard to get value from when they fold pre.',
+    },
+    {
+      label: 'Unknown',
+      desc: 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.',
+    },
+  ];
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.75)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'flex-end',
+        justifyContent: 'center',
+        padding: '0',
+        backdropFilter: 'blur(4px)',
+        animation: 'fadeUp 0.25s ease',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: '#0e2019',
+          border: '1px solid rgba(200,168,75,0.2)',
+          borderRadius: '20px 20px 0 0',
+          padding: '28px 20px 40px',
+          width: '100%',
+          maxWidth: '660px',
+          maxHeight: '82vh',
+          overflowY: 'auto',
+        }}
+      >
+        {/* Handle bar */}
+        <div style={{
+          width: '36px',
+          height: '4px',
+          background: 'rgba(255,255,255,0.15)',
+          borderRadius: '2px',
+          margin: '0 auto 24px',
+        }} />
+
+        {/* Title */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '24px',
+        }}>
+          <div>
+            <div style={{
+              fontFamily: 'Georgia, serif',
+              fontSize: '1.3rem',
+              fontWeight: '700',
+              color: 'var(--cream)',
+            }}>
+              Know Your Opponent
+            </div>
+            <div style={{
+              fontFamily: "'Courier New', Courier, monospace",
+              fontSize: '0.55rem',
+              letterSpacing: '0.15em',
+              textTransform: 'uppercase',
+              color: 'rgba(242,237,227,0.35)',
+              marginTop: '4px',
+            }}>
+              8 player archetypes
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '50%',
+              width: '34px',
+              height: '34px',
+              color: 'rgba(242,237,227,0.6)',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Villain list */}
+        <div style={{ display: 'grid', gap: '10px' }}>
+          {villains.map((v, i) => (
+            <div
+              key={i}
+              style={{
+                background: 'rgba(255,255,255,0.03)',
+                border: '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '12px',
+                padding: '14px 16px',
+              }}
+            >
+              <div style={{
+                fontFamily: 'Georgia, serif',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: 'var(--gold)',
+                marginBottom: '5px',
+              }}>
+                {v.label}
+              </div>
+              <div style={{
+                fontSize: '0.78rem',
+                lineHeight: '1.6',
+                color: 'rgba(242,237,227,0.55)',
+                fontFamily: "'Courier New', Courier, monospace",
+              }}>
+                {v.desc}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DifficultySelector({ onSelect }) {
+  const [selected, setSelected] = useState('beginner');
+
+  const difficulties = [
+    {
+      key: 'beginner',
+      label: 'Beginner',
+      sublabel: 'Learning the game',
+      desc: 'Preflop fundamentals, position basics, simple value decisions',
+      icon: '🂡',
+    },
+    {
+      key: 'intermediate',
+      label: 'Intermediate',
+      sublabel: 'Solid foundation',
+      desc: 'Postflop play, pot odds, bet sizing, reading passive opponents',
+      icon: '♠',
+    },
+    {
+      key: 'advanced',
+      label: 'Advanced',
+      sublabel: 'Playing to win',
+      desc: 'Bluff frequency, exploitative reads, tournament pressure spots',
+      icon: '⚡',
+    },
+  ];
+
+  return (
+    <div style={{ animation: 'fadeUp 0.5s ease' }}>
+
+      {/* Hero text */}
+      <div style={{ textAlign: 'center', padding: '32px 0 36px' }}>
+        <div style={{
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize: '0.58rem',
+          letterSpacing: '0.25em',
+          textTransform: 'uppercase',
+          color: 'rgba(242,237,227,0.35)',
+          marginBottom: '12px',
+        }}>
+          Before we begin
+        </div>
+        <div style={{
+          fontFamily: 'Georgia, serif',
+          fontSize: '2rem',
+          fontWeight: '700',
+          color: 'var(--cream)',
+          lineHeight: '1.15',
+          marginBottom: '10px',
+        }}>
+          Choose your level
+        </div>
+        <div style={{
+          fontSize: '0.85rem',
+          color: 'rgba(242,237,227,0.45)',
+          maxWidth: '280px',
+          margin: '0 auto',
+          lineHeight: '1.6',
+        }}>
+          Scenarios are filtered to match your level. Pick honest — the coaching works better when it's calibrated to you.
+        </div>
+      </div>
+
+      {/* Level cards */}
+      <div style={{ display: 'grid', gap: '12px', marginBottom: '32px' }}>
+        {difficulties.map((d) => {
+          const isSelected = selected === d.key;
+          return (
+            <button
+              key={d.key}
+              onClick={() => setSelected(d.key)}
+              style={{
+                background: isSelected
+                  ? 'rgba(200,168,75,0.12)'
+                  : 'rgba(255,255,255,0.03)',
+                border: isSelected
+                  ? '1px solid rgba(200,168,75,0.45)'
+                  : '1px solid rgba(255,255,255,0.07)',
+                borderRadius: '16px',
+                padding: '20px 20px 18px',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'all 0.2s ease',
+                width: '100%',
+                position: 'relative',
+                transform: isSelected ? 'translateX(4px)' : 'none',
+              }}
+            >
+              {/* Selected indicator */}
+              {isSelected && (
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: '18px',
+                  transform: 'translateY(-50%)',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: 'var(--gold)',
+                  boxShadow: '0 0 10px rgba(200,168,75,0.7)',
+                }} />
+              )}
+
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                <div style={{
+                  fontSize: '1.4rem',
+                  lineHeight: '1',
+                  marginTop: '2px',
+                  flexShrink: 0,
+                }}>
+                  {d.icon}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+                    <span style={{
+                      fontFamily: 'Georgia, serif',
+                      fontSize: '1.05rem',
+                      fontWeight: '700',
+                      color: isSelected ? 'var(--gold)' : 'var(--cream)',
+                      transition: 'color 0.2s',
+                    }}>
+                      {d.label}
+                    </span>
+                    <span style={{
+                      fontFamily: "'Courier New', Courier, monospace",
+                      fontSize: '0.55rem',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: isSelected ? 'rgba(200,168,75,0.6)' : 'rgba(242,237,227,0.3)',
+                    }}>
+                      {d.sublabel}
+                    </span>
+                  </div>
+                  <div style={{
+                    fontSize: '0.78rem',
+                    color: 'rgba(242,237,227,0.45)',
+                    lineHeight: '1.5',
+                    fontFamily: "'Courier New', Courier, monospace",
+                  }}>
+                    {d.desc}
+                  </div>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Start button */}
+      <button
+        onClick={() => onSelect(selected)}
+        style={{
+          width: '100%',
+          background: 'linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1))',
+          border: '1px solid rgba(200,168,75,0.45)',
+          borderRadius: '14px',
+          padding: '17px',
+          color: 'var(--gold)',
+          fontFamily: 'Georgia, serif',
+          fontSize: '1rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+          letterSpacing: '0.05em',
+          transition: 'all 0.2s ease',
+        }}
+        onMouseEnter={e => e.target.style.background = 'linear-gradient(135deg, rgba(200,168,75,0.32), rgba(200,168,75,0.16))'}
+        onMouseLeave={e => e.target.style.background = 'linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1))'}
+      >
+        Start Session →
+      </button>
+    </div>
+  );
+}
+
+function SessionSummary({ skillResults, coachRead, coachLoading, difficulty, onRestart }) {
   const statusMap = {
     correct:   ['Strong',  'correct'],
     partial:   ['Work On', 'partial'],
@@ -206,8 +543,12 @@ function SessionSummary({ skillResults, coachRead, coachLoading, onRestart }) {
 // ─── Main App ──────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-const [shuffledScenarios, setShuffledScenarios] = useState(() => [...SCENARIOS].sort(() => Math.random() - 0.5));  const [skillResults, setSkillResults]  = useState({});
+  const [showVillainGuide, setShowVillainGuide] = useState(false);
+  const [screen, setScreen]              = useState('difficulty');
+  const [difficulty, setDifficulty]      = useState('beginner');
+  const [shuffledScenarios, setShuffledScenarios] = useState([]);
+  const [currentIndex, setCurrentIndex]  = useState(0);
+  const [skillResults, setSkillResults]  = useState({});
   const [decided, setDecided]            = useState(false);
   const [feedback, setFeedback]          = useState(null);
   const [showSummary, setShowSummary]    = useState(false);
@@ -215,6 +556,12 @@ const [shuffledScenarios, setShuffledScenarios] = useState(() => [...SCENARIOS].
   const [coachLoading, setCoachLoading]  = useState(false);
 
   const scenario = shuffledScenarios[currentIndex];
+
+  const handleDifficultySelect = (selected) => {
+    setDifficulty(selected);
+    setShuffledScenarios(getFilteredScenarios(selected));
+    setScreen('session');
+  };
 
   const fetchCoachRead = async (results, lastIndex) => {
     setCoachLoading(true);
@@ -318,7 +665,7 @@ Reference the villain type in your feedback. Explain how this specific opponent 
   };
 
   const handleRestart = () => {
-    setShuffledScenarios([...SCENARIOS].sort(() => Math.random() - 0.5));
+    setScreen('difficulty');
     setCurrentIndex(0);
     setSkillResults({});
     setDecided(false);
@@ -326,60 +673,95 @@ Reference the villain type in your feedback. Explain how this specific opponent 
     setShowSummary(false);
     setCoachRead('');
     setCoachLoading(false);
+    setShuffledScenarios([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <div className="app">
-      <div className="header">
+<div className="header" style={{ position: 'relative' }}>
         <div className="logo">Check<em>Raise</em></div>
         <div className="tagline">AI-Powered Skill Training</div>
+        <button
+          onClick={() => setShowVillainGuide(true)}
+          style={{
+            position: 'absolute',
+            top: '36px',
+            right: '0',
+            background: 'rgba(255,255,255,0.06)',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '50%',
+            width: '30px',
+            height: '30px',
+            color: 'rgba(242,237,227,0.5)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            fontFamily: "'Courier New', Courier, monospace",
+            fontWeight: '700',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          i
+        </button>
       </div>
-      <SkillTracker skillResults={skillResults} />
-      {showSummary ? (
-        <SessionSummary
-          skillResults={skillResults}
-          coachRead={coachRead}
-          coachLoading={coachLoading}
-          onRestart={handleRestart}
-        />
+
+      {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
+
+      {screen === 'difficulty' ? (
+        <DifficultySelector onSelect={handleDifficultySelect} />
       ) : (
         <>
-          <ProgressDots total={shuffledScenarios.length} current={currentIndex} />
-          <div className="scenario-card">
-            <div className="card-meta">
-              <div className="skill-tag">{scenario.tag}</div>
-              <div className="scenario-counter">{currentIndex + 1} / {shuffledScenarios.length}</div>
-            </div>
-            <VillainBadge villain={scenario.villain} />
-            <TableVisual scenario={scenario} />
-            <p className="scenario-body">{scenario.body}</p>
-            <p className="scenario-q">{scenario.question}</p>
-          </div>
-          <div className="actions">
-            {scenario.options.map((opt) => (
-              <button
-                key={opt.val}
-                className={`act-btn ${opt.cls}`}
-                onClick={() => handleDecision(opt.val)}
-                disabled={decided}
-              >
-                <div className="act-icon">{opt.icon}</div>
-                <span>{opt.label}</span>
-              </button>
-            ))}
-          </div>
-          {feedback && (
+          <SkillTracker skillResults={skillResults} />
+
+          {showSummary ? (
+            <SessionSummary
+              skillResults={skillResults}
+              coachRead={coachRead}
+              coachLoading={coachLoading}
+              difficulty={difficulty}
+              onRestart={handleRestart}
+            />
+          ) : (
             <>
-              <FeedbackPanel
-                grade={feedback.grade}
-                loading={feedback.loading}
-                feedbackText={feedback.text}
-              />
-              {!feedback.loading && (
-                <button className="next-btn" onClick={handleNext}>
-                  {currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
-                </button>
+              <ProgressDots total={shuffledScenarios.length} current={currentIndex} />
+              <div className="scenario-card">
+                <div className="card-meta">
+                  <div className="skill-tag">{scenario.tag}</div>
+                  <div className="scenario-counter">{currentIndex + 1} / {shuffledScenarios.length}</div>
+                </div>
+                <VillainBadge villain={scenario.villain} />
+                <TableVisual scenario={scenario} />
+                <p className="scenario-body">{scenario.body}</p>
+                <p className="scenario-q">{scenario.question}</p>
+              </div>
+              <div className="actions">
+                {scenario.options.map((opt) => (
+                  <button
+                    key={opt.val}
+                    className={`act-btn ${opt.cls}`}
+                    onClick={() => handleDecision(opt.val)}
+                    disabled={decided}
+                  >
+                    <div className="act-icon">{opt.icon}</div>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+              {feedback && (
+                <>
+                  <FeedbackPanel
+                    grade={feedback.grade}
+                    loading={feedback.loading}
+                    feedbackText={feedback.text}
+                  />
+                  {!feedback.loading && (
+                    <button className="next-btn" onClick={handleNext}>
+                      {currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
