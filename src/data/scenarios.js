@@ -37,6 +37,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Well Played',           emoji: '✅' },
       raise: { g: 'partial',   title: 'Aggressive, But Risky', emoji: '⚠️' },
     },
+    feedback: {
+      correct: "J8 suited in the BB is a clear defend against an aggressive regular who opens wide. You're getting great odds and the hand plays well postflop — connected, suited, and hard to read.",
+      partial: "3-betting J8s against an aggressive regular who 3-bets back frequently puts you in a tough spot. The hand has value, but it's better used as a call and outplay postflop than as a 3-bet bluff.",
+      incorrect: "Folding J8 suited in the BB against a wide opener is leaving money on the table. You're getting nearly 3:1 and the hand has real playability — suited connectors thrive in exactly these spots.",
+    },
   },
   {
     id: 2,
@@ -73,6 +78,11 @@ const SCENARIOS = [
       fold:  { g: 'incorrect', title: 'Way Too Tight',         emoji: '❌' },
       call:  { g: 'partial',   title: 'Limping Gives Up Edge', emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Perfect Button Play',   emoji: '✅' },
+    },
+    feedback: {
+      correct: "A7o on the button is a standard open. You have position for the whole hand, and the calling station in the SB means you'll get paid when you hit — they won't fold a worse ace.",
+      partial: "Limping with A7o on the button surrenders the initiative and lets the blinds see a cheap flop. Against a calling station you want to build a pot with your stronger hands, not sneak in cheaply.",
+      incorrect: "Folding A7o on the button with two players left is far too tight. You have position, a decent hand, and a calling station in the blinds who will pay you off when you connect.",
     },
   },
   {
@@ -111,6 +121,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Solid Pot Odds Decision',     emoji: '✅' },
       raise: { g: 'partial',   title: 'Bold Bluff vs Wrong Villain', emoji: '⚠️' },
     },
+    feedback: {
+      correct: "With 10 outs and 3.6:1 odds, calling is the clear play. A passive regular who only bets for value is unlikely to fold to a raise, so you take the good price and look to hit your draw.",
+      partial: "Check-raising a passive player who bets for value is expensive. He's not folding top pair or two pair to your raise — you're turning a profitable call into a costly bluff against the wrong opponent.",
+      incorrect: "You have 10 outs to the nuts and you're getting 3.6:1 — this is a mandatory call. Folding KQ on this board gives up too much equity against a passive player who isn't even likely to barrel future streets.",
+    },
   },
   {
     id: 4,
@@ -147,6 +162,11 @@ const SCENARIOS = [
       fold:  { g: 'incorrect', title: 'Too Much Equity to Fold',    emoji: '❌' },
       call:  { g: 'correct',   title: 'Smart Play vs a Nit',        emoji: '✅' },
       raise: { g: 'partial',   title: '3-Bet Sets Up a Tough Spot', emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "JJ is too strong to fold but the nit's UTG range — AA, KK, QQ, AK — dominates you badly when an overcard hits. Calling keeps the pot small and lets you fold cleanly on A, K, or Q boards.",
+      partial: "3-betting a nit UTG with JJ puts you in a nightmare spot. He's 4-betting AA/KK every time and calling with QQ/AK — you're flipping at best and crushed at worst, then out of position postflop.",
+      incorrect: "JJ against a nit still has plenty of equity. You're not dominated preflop — just call, keep the pot controlled, and fold if the board comes A, K, or Q and he continues firing.",
     },
   },
   {
@@ -185,6 +205,11 @@ const SCENARIOS = [
       call:  { g: 'partial',   title: 'Bet More — They Always Call', emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Max Value vs a Station',      emoji: '✅' },
     },
+    feedback: {
+      correct: "Pot-sized bet is correct here. A calling station will call this with any pair, any ace, any draw — your job is to charge them the maximum for the privilege. Don't let them see free cards.",
+      partial: "A small bet works but you're underselling your hand. Calling stations don't fold to any size, so a pot bet extracts the same call at twice the price. Always size up against players who won't fold.",
+      incorrect: "Checking top pair top kicker against a calling station is a major leak. They will call any bet with any piece of this board — you need to build the pot now while you're comfortably ahead.",
+    },
   },
   {
     id: 6,
@@ -221,6 +246,11 @@ const SCENARIOS = [
       fold:  { g: 'incorrect', title: 'Never Fold QQ to a Maniac',    emoji: '❌' },
       call:  { g: 'partial',   title: 'Calling Lets Him Bluff Again', emoji: '⚠️' },
       raise: { g: 'correct',   title: '4-Bet and Extract Value',      emoji: '✅' },
+    },
+    feedback: {
+      correct: "4-betting a maniac with QQ is exactly right. His 3-bet range is so wide that your queens are a massive favorite — re-raising denies him the chance to realize equity with garbage hands and builds a pot you're likely to win.",
+      partial: "Calling is fine but you're giving a maniac exactly what he wants — a chance to outplay you postflop with any two cards. 4-betting forces him to put in money as a big underdog or fold his air.",
+      incorrect: "Folding QQ to a player who 3-bets 30% of hands is a serious mistake. His range is full of bluffs and weak hands — your queens are a massive favorite and you're surrendering a pot you should be building.",
     },
   },
   {
@@ -259,6 +289,11 @@ const SCENARIOS = [
       call:  { g: 'partial',   title: 'Small Bet, Small Fold Equity', emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Nits Fold to Pressure',        emoji: '✅' },
     },
+    feedback: {
+      correct: "Pot-sized pressure on a nit is exactly right. He called preflop but without a King in his range, most of his hand either missed or has weak equity. A big bet forces him to fold all his air and pocket pairs.",
+      partial: "A small bet doesn't do enough work against a nit. He'll float with pocket pairs hoping you give up — you need a size that makes continuing with less than top pair genuinely uncomfortable.",
+      incorrect: "Checking here surrenders your fold equity entirely. A nit without a King has very little reason to continue — a pot-sized bet represents top pair with a draw and forces the folds you need.",
+    },
   },
   {
     id: 8,
@@ -295,6 +330,11 @@ const SCENARIOS = [
       fold:  { g: 'correct',   title: 'Never Bluff a Station', emoji: '✅' },
       call:  { g: 'incorrect', title: 'Burning Money',         emoji: '❌' },
       raise: { g: 'incorrect', title: 'Expensive Lesson',      emoji: '❌' },
+    },
+    feedback: {
+      correct: "Checking back is the only play here. You have no equity and no fold equity — a calling station will call with any king, any queen, and probably any pair. Take the free card and hope to pick up a draw on the turn.",
+      partial: "Betting into a calling station with no hand and no draw is just donating chips. They cannot be bluffed — every bet you make without equity is a pure loss. Check and reassess on the turn.",
+      incorrect: "This is one of the most expensive mistakes in poker — bluffing a player who never folds. You have no equity and no fold equity. Check it back, take the free card, and find a better spot.",
     },
   },
 
@@ -336,6 +376,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Well Played',          emoji: '✅' },
       raise: { g: 'partial',   title: 'Ambitious vs a Nit',   emoji: '⚠️' },
     },
+    feedback: {
+      correct: "AJo is strong enough to call a nit's CO open but not strong enough to 3-bet for value — his continuing range after a 3-bet is AK, AQ, and big pairs that all crush you. Call and play your position.",
+      partial: "3-betting AJo into a nit's CO range is risky. He folds his weak opens but 4-bets or calls with AK, AQ, and big pairs — hands that dominate you badly. The hand plays better as a call.",
+      incorrect: "AJo on the button is a comfortable call against any open. You have position, a decent hand, and the nit's range is capped enough that you can outplay him postflop on ace-high boards.",
+    },
   },
   {
     id: 10,
@@ -372,6 +417,11 @@ const SCENARIOS = [
       fold:  { g: 'incorrect', title: 'Tossing Implied Odds', emoji: '❌' },
       call:  { g: 'correct',   title: 'Smart Set Mine',       emoji: '✅' },
       raise: { g: 'partial',   title: '3-Bet Bloats Pot',     emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "Calling with 77 multiway is textbook set-mining. You're getting good odds, the calling station will inflate the pot when you hit, and small pairs play terribly in 3-bet pots out of position.",
+      partial: "3-betting 77 bloats the pot with a hand that wants to flop a set cheaply. You'll often face a call from CO and the station, then be out of position with a hand that misses most flops.",
+      incorrect: "Folding 77 for 6 more with a calling station already in the pot is a clear mistake. You have great implied odds — the station will pay you off handsomely when you hit your set.",
     },
   },
   {
@@ -410,6 +460,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
       raise: { g: 'incorrect', title: 'Never Limp from CO',      emoji: '❌' },
     },
+    feedback: {
+      correct: "KQs is a mandatory open from CO. If the aggressive regular 3-bets wide and folds to 4-bets, you actually have a great 4-bet candidate — KQs plays well as both a value hand and a bluff.",
+      partial: "Limping KQs from CO hands the initiative to the aggressive BTN for free. He'll iso-raise you constantly and you'll be out of position with a hand strong enough to fight back. Always open this hand.",
+      incorrect: "Folding KQs CO is a significant error. It's in the top 10% of hands and plays well in 3-bet pots. An aggressive BTN should make you want to open more, not less — you have a hand to fight back with.",
+    },
   },
   {
     id: 12,
@@ -443,9 +498,14 @@ const SCENARIOS = [
     ],
     correct: 'call',
     grading: {
-      fold:  { g: 'incorrect', title: 'Bleeding Chips',                   emoji: '❌' },
-      call:  { g: 'correct',   title: 'Correct ICM Shove',                emoji: '✅' },
-      raise: { g: 'partial',   title: 'Small Raise Commits You Anyway',   emoji: '⚠️' },
+      fold:  { g: 'incorrect', title: 'Bleeding Chips',                 emoji: '❌' },
+      call:  { g: 'correct',   title: 'Correct ICM Shove',              emoji: '✅' },
+      raise: { g: 'partial',   title: 'Small Raise Commits You Anyway', emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "At 25BB, K9s is a clear shove against tight recreational players who fold to pressure. The small raise just commits you anyway — go all-in, deny them the ability to call off 10BB and fold the rest.",
+      partial: "Raising small at 25BB creates a pot you'll commit to anyway on most flops. Against tight recs who fold to shoves 80% of the time, just put the pressure on immediately and take the pot now.",
+      incorrect: "K9s at 25BB is too strong to fold. Tournament chips are bleeding away — against tight players who over-fold, this is a profitable shove. Passivity at this stack depth is slow suicide.",
     },
   },
   {
@@ -474,15 +534,20 @@ const SCENARIOS = [
     body: 'You raised preflop. BB passive player called. Flop J♥8♦3♠. BB checks to you.',
     question: "T9s on J83 rainbow — you have an open-ended straight draw. In position. Passive BB checks. What do you do?",
     options: [
-      { label: 'Check back',       icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $14 (2/3 pot)',icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $22 (pot)',     icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check back',        icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $14 (2/3 pot)', icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $22 (pot)',      icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'call',
     grading: {
       fold:  { g: 'partial',   title: 'Leaving Fold Equity Behind', emoji: '⚠️' },
       call:  { g: 'correct',   title: 'Semi-Bluff in Position',     emoji: '✅' },
       raise: { g: 'partial',   title: 'Too Large for a Draw',       emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "2/3 pot is the perfect size here — enough to fold out his weak holdings while keeping the pot manageable if called. You have 8 outs to the nuts and position, which means you can continue applying pressure on the turn.",
+      partial: "Checking back surrenders fold equity against a passive player who will check-call with weak pairs and draws. You have a strong semi-bluff hand — use it. The 2/3 bet wins the pot outright often enough to be profitable.",
+      incorrect: "Pot-sized bets on draws bloat the pot unnecessarily and make it harder to fold the turn if called. A 2/3 bet achieves the same fold equity at lower risk — size down and keep your options open.",
     },
   },
   {
@@ -511,15 +576,20 @@ const SCENARIOS = [
     body: "SB raised, BB maniac called. Flop A♠7♦2♣ rainbow. You're OOP with top pair.",
     question: 'AQ on A72 rainbow OOP vs maniac. Check or bet?',
     options: [
-      { label: 'Bet $14',              icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Check — let him bluff', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $20 (pot)',         icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Bet $14',               icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Check — let him bluff',  icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $20 (pot)',          icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'call',
     grading: {
-      fold:  { g: 'partial',   title: 'Betting Into Maniac',       emoji: '⚠️' },
-      call:  { g: 'correct',   title: 'Check to Induce Bluffs',    emoji: '✅' },
+      fold:  { g: 'partial',   title: 'Betting Into Maniac',        emoji: '⚠️' },
+      call:  { g: 'correct',   title: 'Check to Induce Bluffs',     emoji: '✅' },
       raise: { g: 'partial',   title: 'Pot Bet Invites Bluff-Raise', emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "Checking top pair OOP against a maniac is the highest EV line. He will bet his entire range into you — air, draws, weak pairs. Let him build the pot, then check-raise or call down depending on board texture.",
+      partial: "Betting into a maniac isn't terrible but it gives up a key advantage. He'll raise wide and put you in uncomfortable spots. Check-calling or check-raising extracts more value from his bluffing tendencies.",
+      incorrect: "Pot-betting a maniac OOP invites a bluff-raise you can't comfortably call or fold. Check instead — let him do the betting, then trap him with a check-raise or call down as the board develops.",
     },
   },
   {
@@ -548,15 +618,20 @@ const SCENARIOS = [
     body: "BTN aggressive regular raised preflop. BB called. Flop Q♣8♦3♥. BB checks. BTN c-bets $20.",
     question: "QJ (top pair, weak kicker) OOP on Q83 rainbow vs aggressive regular's c-bet. Check-call, check-raise, or fold?",
     options: [
-      { label: 'Fold',              icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Check-call $20',    icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Check-raise to $65',icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',               icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Check-call $20',     icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Check-raise to $65', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'call',
     grading: {
       fold:  { g: 'incorrect', title: 'Top Pair is Not a Fold',      emoji: '❌' },
       call:  { g: 'correct',   title: 'Call and Evaluate Turn',      emoji: '✅' },
       raise: { g: 'partial',   title: 'Check-Raise Targets Bluffs',  emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "Check-calling is correct with QJ on Q83 OOP. You have top pair but a weak kicker — check-raising bloats the pot when you're beat by QK/QA and folds out his bluffs you beat anyway. Call and reassess the turn.",
+      partial: "Check-raising is not bad in theory but against an aggressive regular who c-bets wide, you're likely folding out his bluffs and getting called by better kickers. The call is safer and keeps more hands in his range.",
+      incorrect: "Folding top pair to a c-bet from an aggressive regular who fires 75% of flops is a major over-fold. He's betting with his entire range here — call and re-evaluate once you see his turn action.",
     },
   },
   {
@@ -595,6 +670,11 @@ const SCENARIOS = [
       call:  { g: 'partial',   title: 'Leaves Value on the Table',    emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Max Value vs Station',         emoji: '✅' },
     },
+    feedback: {
+      correct: "Large bet is correct against a calling station — they'll call with any jack, any pair, any draw. Size up to extract maximum value. The only mistake with KK on this board is not betting big enough.",
+      partial: "A small bet works but undersells your hand. Calling stations don't adjust to bet size — they call because they have something, not because the price is right. Bet bigger and get paid more.",
+      incorrect: "Slow playing KK against a calling station is leaving chips on the table. They will call any bet with any jack or any pair — there's nothing to fear from betting large on this dry board.",
+    },
   },
   {
     id: 17,
@@ -632,6 +712,11 @@ const SCENARIOS = [
       call:  { g: 'partial',   title: 'Calling Gives Free Cards', emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Raise to Deny Equity',     emoji: '✅' },
     },
+    feedback: {
+      correct: "Raising is correct. An aggressive regular donk-bets wide here — weak kings, draws, probe bets. You have the overpair and a flush draw on the board. Raise to protect your equity and deny his draws a free card.",
+      partial: "Calling lets him see a free turn card with all his draws and weak kings. Against an aggressive player who donk-bets as a probe, raising clarifies your hand strength and puts him to an immediate decision.",
+      incorrect: "AA never folds to a donk-bet on K93. An aggressive regular is donking here with a wide range including draws and weak top pairs. You have the overpair — raise and find out where you stand.",
+    },
   },
   {
     id: 18,
@@ -665,9 +750,14 @@ const SCENARIOS = [
     ],
     correct: 'fold',
     grading: {
-      fold:  { g: 'correct',   title: "Reading a Nit's Range",      emoji: '✅' },
+      fold:  { g: 'correct',   title: "Reading a Nit's Range",         emoji: '✅' },
       call:  { g: 'partial',   title: 'Calling with Almost No Equity', emoji: '⚠️' },
-      raise: { g: 'incorrect', title: 'Bluffing Into a Nit',         emoji: '❌' },
+      raise: { g: 'incorrect', title: 'Bluffing Into a Nit',           emoji: '❌' },
+    },
+    feedback: {
+      correct: "Folding is correct. A tight nit bets the flop on AK7 rainbow with a very narrow range — AK, AQ, KK, AA, A7 — all of which have JJ drawing nearly dead. This is a disciplined fold that good players make.",
+      partial: "Calling with JJ on AK7 against a nit who only bets strong hands is burning money. You're drawing to 2 outs at best and he's not folding the turn. Take the information and fold.",
+      incorrect: "Check-raising a nit on AK7 is a bluff into a very strong range. He's not folding AK or a big pair here — you're turning your hand into a bluff with almost no equity. Fold and save your chips.",
     },
   },
   {
@@ -696,15 +786,20 @@ const SCENARIOS = [
     body: 'BTN raised preflop. BB loose recreational called. Flop A♥6♣2♦. BB checks.',
     question: 'TPTK on A62 rainbow. Loose rec BB checks. What bet size maximizes value?',
     options: [
-      { label: 'Check (slow play)',         icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $7 (small, keep him in)',icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $14 (large)',            icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (slow play)',          icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $7 (small, keep him in)', icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $14 (large)',             icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
       fold:  { g: 'incorrect', title: "He's Not Slow Playing Against You", emoji: '❌' },
       call:  { g: 'partial',   title: 'He Calls Bigger — Bet More',        emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Correct Exploitative Size',         emoji: '✅' },
+    },
+    feedback: {
+      correct: "Large bet is correct. Loose recreationals call big with weak aces, middle pairs, and draws. You don't need to keep him in — he's staying regardless. Maximize value while you're clearly ahead.",
+      partial: "Small bets against loose recreationals leave money behind. They're not folding to larger sizes — they call because they have something, not because the price is right. Bet $14 and get paid.",
+      incorrect: "Slow playing TPTK against a loose recreational is a mistake. They'll happily call big bets with weak aces and second pairs — you're not protecting your hand with a slow play, you're just making less money.",
     },
   },
   {
@@ -733,15 +828,20 @@ const SCENARIOS = [
     body: 'CO raised preflop. BTN aggressive regular called. Flop T♠7♥2♣. CO has OESD.',
     question: '98d — open-ended straight draw on T72 rainbow. Aggressive BTN called preflop. What sizing for your semi-bluff c-bet?',
     options: [
-      { label: 'Check (give up)',                 icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8 (small, see what happens)', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $16 (large, fold equity)',     icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (give up)',                  icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $8 (small, see what happens)',  icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $16 (large, fold equity)',      icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'incorrect', title: "Don't Abandon 8 Outs",    emoji: '❌' },
+      fold:  { g: 'incorrect', title: "Don't Abandon 8 Outs",      emoji: '❌' },
       call:  { g: 'partial',   title: "Too Small — He Floats Wide", emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Size for Fold Equity',     emoji: '✅' },
+      raise: { g: 'correct',   title: 'Size for Fold Equity',       emoji: '✅' },
+    },
+    feedback: {
+      correct: "Large c-bet is correct with a semi-bluff against an aggressive regular who floats small bets. Go big, represent top pair, and deny him the cheap float he wants. You win now or have equity when called.",
+      partial: "A small bet into an aggressive regular with a draw is the worst of both worlds — he floats with his entire range and you haven't made any profit. Either check or bet big enough to have fold equity.",
+      incorrect: "Checking with an open-ended straight draw out of position surrenders fold equity and gives a free card to a hand that might actually be ahead. Semi-bluff large and put him to a real decision.",
     },
   },
   {
@@ -780,6 +880,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Medium Sizing Over 3 Streets',     emoji: '✅' },
       raise: { g: 'partial',   title: 'Slow Play Risks Bad Turn Cards',   emoji: '⚠️' },
     },
+    feedback: {
+      correct: "Medium sizing is the play. A passive player calls medium bets with top pair and check-folds to large ones — three streets of $20 gets you $60 more. A pot bet might fold out the hands paying you off.",
+      partial: "Large bets fold out the passive player's medium pairs and weak top pairs — exactly the hands you want to keep in. Size down so he calls three streets instead of folding on the first.",
+      incorrect: "Slow playing sets on wet-ish boards is dangerous. Turn an 8 or a flush draw and he'll fold anyway. Bet medium now, build the pot, and let him call three times with his worse queens and pairs.",
+    },
   },
   {
     id: 22,
@@ -813,9 +918,14 @@ const SCENARIOS = [
     ],
     correct: 'call',
     grading: {
-      fold:  { g: 'incorrect', title: 'Bluffing Never Works Here',    emoji: '❌' },
+      fold:  { g: 'incorrect', title: 'Bluffing Never Works Here',     emoji: '❌' },
       call:  { g: 'correct',   title: 'Never Bluff a Calling Station', emoji: '✅' },
-      raise: { g: 'incorrect', title: 'Burning Money',                emoji: '❌' },
+      raise: { g: 'incorrect', title: 'Burning Money',                 emoji: '❌' },
+    },
+    feedback: {
+      correct: "Checking back is correct. KQ has no equity on A82 and a calling station will not fold anything. Take the free card, hope to pick up a draw or hit a pair on the turn, and find a better spot to apply pressure.",
+      partial: "Bluffing a calling station with any sizing is the same mistake at different price points. They cannot be bluffed — save your chips and check back to take a free card with your two overcards.",
+      incorrect: "Pot-betting a calling station with no hand is one of the most expensive leaks in poker. Every chip you bet without equity is a pure loss. They are calling with ace-high, any pair, any draw. Check it back.",
     },
   },
   {
@@ -854,6 +964,11 @@ const SCENARIOS = [
       call:  { g: 'partial',   title: 'Free Card but Missed EV',   emoji: '⚠️' },
       raise: { g: 'partial',   title: 'Too Much — Just 2/3 Works', emoji: '⚠️' },
     },
+    feedback: {
+      correct: "Betting 2/3 pot is the play. This board is terrifying and a tight nit checks hands that can't continue here. Your bet represents the flush or a strong made hand — he folds everything without a spade.",
+      partial: "Checking gives a free card on a board where your bluff had real merit. A nit who checks AKQ monotone is scared — a 2/3 pot bet picks this up most of the time. Don't surrender free equity.",
+      incorrect: "Pot-sized bet is slightly too large on this board. A 2/3 bet accomplishes the same fold against a nit while risking fewer chips if he has a spade. Size down and get the same result more efficiently.",
+    },
   },
   {
     id: 24,
@@ -881,15 +996,20 @@ const SCENARIOS = [
     body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♥3♦. BB checks.',
     question: 'A5d — nut flush draw + overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
     options: [
-      { label: 'Check back',                    icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $22 (half pot — semi-bluff)',icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $40 (pot)',                  icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check back',                     icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $22 (half pot — semi-bluff)', icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $40 (pot)',                   icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'call',
     grading: {
       fold:  { g: 'partial',   title: 'Missing Fold Equity with Strong Draw', emoji: '⚠️' },
       call:  { g: 'correct',   title: 'Semi-Bluff the Nut Draw',              emoji: '✅' },
       raise: { g: 'partial',   title: 'Pot Risks Check-Raise',                emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "Half-pot semi-bluff is correct. You have the nut flush draw, an overcard, and the 3-bet initiative. A half-pot bet folds out his weak holdings, and when called you have 9 outs to the nuts.",
+      partial: "Checking back gives up fold equity with a hand that has real equity when called. As the 3-bettor you should be c-betting on this board — check back only dilutes your range and lets him realize equity for free.",
+      incorrect: "Pot-sizing risks a check-raise from an aggressive regular who check-raises wide. Half-pot achieves the same fold and keeps the pot manageable if called — you can continue applying pressure on the turn.",
     },
   },
   {
@@ -928,6 +1048,11 @@ const SCENARIOS = [
       call:  { g: 'correct',   title: 'Easy Call for the Draw',         emoji: '✅' },
       raise: { g: 'incorrect', title: 'Check-Raise Kills Implied Odds', emoji: '❌' },
     },
+    feedback: {
+      correct: "With 8 outs and 3:1 pot odds, this is a straightforward call. You need roughly 4:1 for a pure call, but implied odds against a passive player who bets made hands push this well into profitable territory.",
+      partial: "Folding an open-ended straight draw getting 3:1 is a significant mistake. Even without implied odds you're close to the break-even point — against a passive player who pays off draws, this is a comfortable call.",
+      incorrect: "Check-raising here turns a profitable call into a bluff that kills your implied odds. A passive player who bets for value won't fold to your raise — call, hit your draw, and get paid on later streets.",
+    },
   },
   {
     id: 26,
@@ -955,15 +1080,20 @@ const SCENARIOS = [
     body: "BTN bets $16 into $24 pot on T♠9♣2♦. You're in BB with QJd — OESD + flush draw.",
     question: 'QJd on T92 with OESD + flush draw (~15 outs). Getting 2.5:1. Call, raise, or fold?',
     options: [
-      { label: 'Fold',                  icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $16',              icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Check-raise to $55',    icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',               icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $16',           icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Check-raise to $55', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'incorrect', title: '15 Outs Is a Monster Draw',        emoji: '❌' },
-      call:  { g: 'partial',   title: 'Calling Undersells Your Equity',   emoji: '⚠️' },
+      fold:  { g: 'incorrect', title: '15 Outs Is a Monster Draw',          emoji: '❌' },
+      call:  { g: 'partial',   title: 'Calling Undersells Your Equity',     emoji: '⚠️' },
       raise: { g: 'correct',   title: "Semi-Raise — You're a Slight Favorite", emoji: '✅' },
+    },
+    feedback: {
+      correct: "With 15 outs you're roughly a coin flip with any made hand — check-raising is correct. You have fold equity, massive draw equity, and are semi-bluffing from a position of genuine strength against an aggressive regular who bets wide.",
+      partial: "Calling with 15 outs is not wrong but undersells your hand. You're almost a favorite to win the pot — check-raising denies him free cards and puts him to a decision for his stack with a hand that may be behind.",
+      incorrect: "Folding 15 outs is a major error. With an OESD and a flush draw you're approximately 54% to improve by the river. You should be raising, not folding — this hand has enough equity to go all the way.",
     },
   },
   {
@@ -992,15 +1122,20 @@ const SCENARIOS = [
     body: "BTN tight nit bets $40 into $60 pot on A♣K♦Q♠ monotone. You're CO with 8♠7♠ — you have the J-high flush draw.",
     question: '87s (J-high flush draw) on AKQ monotone spades. Tight nit bets $40. Getting 2.5:1. Call or fold?',
     options: [
-      { label: 'Fold',           icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $40',       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Raise to $120',  icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',          icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $40',      icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Raise to $120', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'fold',
     grading: {
       fold:  { g: 'correct',   title: 'Non-Nut Flush Draw vs Nit', emoji: '✅' },
       call:  { g: 'partial',   title: 'You Could Be Drawing Dead', emoji: '⚠️' },
       raise: { g: 'incorrect', title: 'Bluffing Into the Nuts',    emoji: '❌' },
+    },
+    feedback: {
+      correct: "Folding is correct. A tight nit betting AKQ monotone has a high flush or the nut flush — your J-high flush draw loses to any higher spade. You could be drawing completely dead against T♠ or better.",
+      partial: "Calling a nit on AKQ monotone with a J-high flush draw is extremely risky. His betting range here is dominated by higher flushes, meaning you have very few live outs. The 2.5:1 doesn't compensate for the dead equity.",
+      incorrect: "Raising a nit into the nuts on a monotone board is throwing chips away. He has the high flush, you have a draw that's often drawing dead. Fold and save your stack for a spot where your outs are actually live.",
     },
   },
   {
@@ -1029,15 +1164,20 @@ const SCENARIOS = [
     body: 'BB raised preflop. SB passive player called. Flop 7♣5♦2♠. BB checks. SB checks. Turn is 3♦. SB checks. River Jh. SB suddenly bets $14.',
     question: 'TT on 7532J. Passive player who never bets the river suddenly fires $14 on the river. Call or fold?',
     options: [
-      { label: 'Fold',           icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $14',       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Raise to $45',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',         icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $14',     icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Raise to $45', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'fold',
     grading: {
-      fold:  { g: 'correct',   title: 'Reading the Pattern',            emoji: '✅' },
-      call:  { g: 'partial',   title: 'He Could Have Bluffed Once',     emoji: '⚠️' },
-      raise: { g: 'incorrect', title: 'Never Raise Into This Spot',     emoji: '❌' },
+      fold:  { g: 'correct',   title: 'Reading the Pattern',        emoji: '✅' },
+      call:  { g: 'partial',   title: 'He Could Have Bluffed Once', emoji: '⚠️' },
+      raise: { g: 'incorrect', title: 'Never Raise Into This Spot', emoji: '❌' },
+    },
+    feedback: {
+      correct: "Folding is correct. A passive player who checks and calls all session and then bets the river for the first time almost always has the goods. The Jack completes straights and gives JX a strong hand — trust the pattern.",
+      partial: "Calling is defensible but the pattern here is clear. A player who has never bet the river suddenly betting is a major tell. His range on this river is heavily weighted toward strong hands — the fold has better EV.",
+      incorrect: "Raising into a passive player who just made his first river bet of the session is putting money in when you're very likely behind. He found the courage to bet because he has something strong — fold or call, never raise.",
     },
   },
   {
@@ -1066,15 +1206,20 @@ const SCENARIOS = [
     body: 'CO raised preflop. BTN maniac called. Flop K♥9♦4♣. BTN checks. CO has top pair.',
     question: 'KQ (top pair, 2nd kicker) on K94 rainbow. Maniac BTN checks to you. Bet or check-raise trap?',
     options: [
-      { label: 'Check (let him bluff)',                    icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $14 (2/3 pot)',                        icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Check, then check-raise if he bets',       icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (let him bluff)',              icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $14 (2/3 pot)',                  icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Check, then check-raise if he bets', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'partial',   title: 'Checking Once Is Good',      emoji: '⚠️' },
-      call:  { g: 'partial',   title: 'Betting Stops the Action',   emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Check-Raise to Stack Him',   emoji: '✅' },
+      fold:  { g: 'partial',   title: 'Checking Once Is Good',     emoji: '⚠️' },
+      call:  { g: 'partial',   title: 'Betting Stops the Action',  emoji: '⚠️' },
+      raise: { g: 'correct',   title: 'Check-Raise to Stack Him',  emoji: '✅' },
+    },
+    feedback: {
+      correct: "Check-raise is the highest EV line against a maniac. He raises 60% of flops — check to him, let him bet his air, then check-raise and build a massive pot. Betting out stops his bluffing range from putting money in.",
+      partial: "Checking once is fine but you need a plan. If you check and call, you're not extracting full value. Check with intent to check-raise — that's what maximizes your EV against a player who bets too often.",
+      incorrect: "Betting out against a maniac shuts down his bluffing range. He only continues with better hands. Check instead, let him fire his air, then check-raise and get maximum value from a player who can't stop betting.",
     },
   },
   {
@@ -1103,15 +1248,20 @@ const SCENARIOS = [
     body: "SB aggressive regular leads $35 on A♠J♣7♦ after calling BTN's preflop raise. BTN has TPTK.",
     question: 'TPTK (AK) on AJ7 rainbow. Aggressive SB donk-bets $35. Getting 2.4:1. Fold, call, or raise?',
     options: [
-      { label: 'Fold',            icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $35',        icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Raise to $100',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',          icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $35',      icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Raise to $100', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'call',
     grading: {
       fold:  { g: 'incorrect', title: 'TPTK is Too Strong to Fold',   emoji: '❌' },
       call:  { g: 'correct',   title: 'Call and Gather More Info',     emoji: '✅' },
       raise: { g: 'partial',   title: 'Raising Bloats Pot vs Unknown', emoji: '⚠️' },
+    },
+    feedback: {
+      correct: "Calling is correct. Against an aggressive regular who donk-bets wide, TPTK has plenty of equity — but raising risks bloating a pot against the part of his range that has you beat (AJ, 77). Call and re-evaluate the turn.",
+      partial: "Raising TPTK against a polarized donk-bettor commits you against his strong hands while folding out his bluffs. Calling keeps all his weaker holdings in and lets you navigate future streets with more information.",
+      incorrect: "Folding TPTK on AJ7 to an aggressive regular is a massive over-fold. His donk-bet range here includes weak aces, draws, and probes — you're way ahead of much of his range. Call and see what he does on the turn.",
     },
   },
   {
@@ -1140,15 +1290,20 @@ const SCENARIOS = [
     body: 'BTN raised preflop. BB tight nit called. Flop K♠8♦3♥. BTN checks. BB bets $14.',
     question: '99 on K83 rainbow. Tight nit bets after your check. What do you do?',
     options: [
-      { label: 'Fold',           icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $14',       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Raise to $45',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',         icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $14',     icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Raise to $45', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'fold',
     grading: {
       fold:  { g: 'correct',   title: "Nit's Range Destroys 99",       emoji: '✅' },
       call:  { g: 'partial',   title: 'Calling with 2 Outs',           emoji: '⚠️' },
       raise: { g: 'incorrect', title: "Raising Into a Nit's Strength", emoji: '❌' },
+    },
+    feedback: {
+      correct: "Folding 99 is correct. A tight nit bets K83 rainbow only when he has a King — his range here is exactly KX. You have 2 outs to a set and are drawing nearly dead. Disciplined folds against nits save significant money.",
+      partial: "Calling with 99 on K83 against a nit who only bets with top pair is drawing to 2 outs. You need roughly 16:1 pot odds to call profitably — you're getting less than 3:1. Fold and move on.",
+      incorrect: "Raising 99 into a nit's KX range on K83 is a pure bluff into a strong hand. He's not folding top pair — he'll call or re-raise, and you're drawing nearly dead. Fold and save the chips.",
     },
   },
   {
@@ -1177,15 +1332,20 @@ const SCENARIOS = [
     body: "CO raised preflop. BTN calling station called. Flop A♦9♣3♠. BTN leads $12 (donk-bet).",
     question: "Top pair (A8) vs calling station's donk-bet on A93. Raise or call?",
     options: [
-      { label: 'Fold',           icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $12',       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Raise to $40',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',         icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $12',     icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Raise to $40', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
       fold:  { g: 'incorrect', title: 'A8 is Strong Here',           emoji: '❌' },
       call:  { g: 'partial',   title: 'Calling Undersells Your Hand', emoji: '⚠️' },
       raise: { g: 'correct',   title: 'Build the Pot vs Station',    emoji: '✅' },
+    },
+    feedback: {
+      correct: "Raising is correct. A calling station donk-bets with any ace, any pair, any draw — and will call your raise with all of them. Build the pot now while you're ahead with top pair, they're not folding.",
+      partial: "Calling lets the station see a free turn card with all his draws and weaker aces. He will call a raise just as readily — raise to build the pot and charge his weaker holdings for the privilege of continuing.",
+      incorrect: "Folding top pair to a calling station's donk-bet is giving up a strong hand. His donk-betting range here is extremely wide — weak aces, pairs, draws. You're ahead of most of it. Raise and build the pot.",
     },
   },
   {
@@ -1214,15 +1374,20 @@ const SCENARIOS = [
     body: 'SB raised preflop. BTN loose recreational called. Flop J♥T♣4♦. SB bets $25. BTN raises to $80.',
     question: 'Two pair (JT on JT4). Loose rec raises your c-bet to $80. 3-bet or call?',
     options: [
-      { label: 'Fold',            icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Call $55',        icon: '📞', cls: 'call',  val: 'call'  },
-      { label: '3-Bet to $220',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Fold',          icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Call $55',      icon: '📞', cls: 'call',  val: 'call'  },
+      { label: '3-Bet to $220', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'incorrect', title: 'You Have Two Pair!',                  emoji: '❌' },
-      call:  { g: 'partial',   title: 'Calling is Passive with Two Pair',    emoji: '⚠️' },
-      raise: { g: 'correct',   title: '3-Bet for Value vs Loose Range',      emoji: '✅' },
+      fold:  { g: 'incorrect', title: 'You Have Two Pair!',               emoji: '❌' },
+      call:  { g: 'partial',   title: 'Calling is Passive with Two Pair', emoji: '⚠️' },
+      raise: { g: 'correct',   title: '3-Bet for Value vs Loose Range',   emoji: '✅' },
+    },
+    feedback: {
+      correct: "3-betting is correct. A loose recreational raises here with top pair, draws, and even bluffs — all of which you're crushing with two pair. Get the money in now before the board changes and charge them maximum.",
+      partial: "Calling with two pair is passive. A loose recreational raises wide here and will call your 3-bet with all the hands you're beating. Build the pot now — if they have a set, that's a cooler, but your two pair is a monster.",
+      incorrect: "Folding two pair to a loose recreational's raise is a massive mistake. Their raising range is top pair, draws, and occasional bluffs — you're comfortably ahead of almost all of it. 3-bet and get the money in.",
     },
   },
 ];

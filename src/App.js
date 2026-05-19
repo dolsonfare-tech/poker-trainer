@@ -15,24 +15,6 @@ const SKILL_LABELS = {
   opponent:   'Opponent',
 };
 
-const FALLBACKS = {
-  fold: {
-    correct:   'Folding here preserves your stack for better spots. Discipline to fold when you are behind is a hallmark of winning players.',
-    partial:   'While folding can be right, here you had enough equity to continue. Trust the math and your position.',
-    incorrect: 'This fold is too tight. You are surrendering real equity — learn to recognize when the pot odds justify a call.',
-  },
-  call: {
-    correct:   'Calling here is textbook. You have the right price and a clear plan for the hand going forward.',
-    partial:   'A call works, but you may be leaving value on the table. Consider your range balance and future streets.',
-    incorrect: 'Calling here is a mistake — you are behind and the pot odds do not justify it. Look for a better spot.',
-  },
-  raise: {
-    correct:   'Aggressive play is correct here. You have fold equity, a range advantage, and a clear story to tell.',
-    partial:   'The raise has some merit but carries real risk. Make sure you have a balanced raising range before committing.',
-    incorrect: 'This raise is ill-timed. You are out of position with insufficient equity — pick better spots to apply pressure.',
-  },
-};
-
 function getFilteredScenarios(difficulty) {
   const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
   return [...filtered].sort(() => Math.random() - 0.5);
@@ -125,7 +107,7 @@ function VillainBadge({ villain }) {
   );
 }
 
-function FeedbackPanel({ grade, loading, feedbackText }) {
+function FeedbackPanel({ grade, loading, feedbackText, correctAnswer }) {
   const subLabel = {
     correct:   'Correct Play',
     partial:   'Acceptable — Not Optimal',
@@ -142,6 +124,25 @@ function FeedbackPanel({ grade, loading, feedbackText }) {
         </div>
       </div>
       <div className={`skill-pill ${grade.g}`}>● {grade.skill}</div>
+      {(grade.g === 'incorrect' || grade.g === 'partial') && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          background: 'rgba(39,174,96,0.08)',
+          border: '1px solid rgba(39,174,96,0.2)',
+          borderRadius: '8px',
+          padding: '8px 12px',
+          marginBottom: '12px',
+          fontFamily: "'Courier New', Courier, monospace",
+          fontSize: '0.72rem',
+          letterSpacing: '0.08em',
+        }}>
+          <span style={{ color: 'var(--green)' }}>✅</span>
+          <span style={{ color: 'rgba(242,237,227,0.5)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' }}>Correct play:</span>
+          <span style={{ color: 'var(--green)', fontWeight: '600', textTransform: 'capitalize' }}>{correctAnswer}</span>
+        </div>
+      )}
       <div className="fb-text">
         {loading ? <div className="thinking">Analyzing your decision…</div> : feedbackText}
       </div>
@@ -693,42 +694,9 @@ Write 2-3 sentences identifying the pattern. Rules:
     setDecided(true);
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
-    setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: true, text: '' });
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': CLAUDE_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true',
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: 600,
-          messages: [{
-            role: 'user',
-            content: `You are a direct, knowledgeable poker coach. Give 2-3 sentences of specific, actionable feedback.
-
-Scenario: ${scenario.body}
-Hero's hand: ${scenario.hand.map(c => c.r + c.s).join('')}
-Villain type: ${scenario.villain.label} — ${scenario.villain.notes}
-Player chose: ${choice}
-Correct play: ${scenario.correct}
-Assessment: ${gr.g}
-Skill being tested: ${scenario.tag}
-
-Reference the villain type in your feedback. Explain how this specific opponent type should change the decision. Be direct. No preamble.`,
-          }],
-        }),
-      });
-      const data = await res.json();
-      const text = data.content?.find(b => b.type === 'text')?.text || FALLBACKS[choice][gr.g];
-      setFeedback(prev => ({ ...prev, loading: false, text }));
-    } catch {
-      setFeedback(prev => ({ ...prev, loading: false, text: FALLBACKS[choice][gr.g] }));
-    }
-  }, [decided, scenario]);
+    const feedbackText = scenario.feedback[gr.g];
+  setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
+}, [decided, scenario]);
 
   const handleNext = () => {
     const next = currentIndex + 1;
@@ -831,10 +799,11 @@ Reference the villain type in your feedback. Explain how this specific opponent 
               {feedback && (
                 <>
                   <FeedbackPanel
-                    grade={feedback.grade}
-                    loading={feedback.loading}
-                    feedbackText={feedback.text}
-                  />
+  grade={feedback.grade}
+  loading={feedback.loading}
+  feedbackText={feedback.text}
+  correctAnswer={scenario.correct}
+/>
                   {!feedback.loading && (
                     <button className="next-btn" onClick={handleNext}>
                       {currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
