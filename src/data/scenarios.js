@@ -12,6 +12,7 @@ const SCENARIOS = [
       label: 'Aggressive Regular',
       notes: 'Opens wide, 3-bets frequently, applies pressure on all streets',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',      action: 'Folds',     state: 'folded' },
       { label: 'HJ',       action: 'Folds',     state: 'folded' },
@@ -54,6 +55,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Calls too wide preflop and postflop, rarely folds to aggression, does not bluff',
     },
+    tableContext: "The Big Blind is a solid regular who defends tight and plays straightforward postflop.",
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -96,6 +98,7 @@ const SCENARIOS = [
       label: 'Passive Regular',
       notes: 'Bets for value only, rarely bluffs, folds to large raises when holding marginal hands',
     },
+    tableContext: null,
     positions: [
       { label: 'You',     action: 'Checked',  state: 'hero'   },
       { label: 'Villain', action: 'Bets $15', state: 'active' },
@@ -138,6 +141,7 @@ const SCENARIOS = [
       label: 'Tight Nit',
       notes: 'Only plays premium hands, folds to any aggression without top pair or better, almost never bluffs',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG (Nit)', action: 'Raises $6', state: 'active' },
       { label: 'HJ',        action: 'Folds',     state: 'folded' },
@@ -180,6 +184,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Calls down with any pair or draw, never folds to aggression, does not respond to bluffs',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',      action: 'Folds',     state: 'folded' },
       { label: 'HJ',       action: 'Folds',     state: 'folded' },
@@ -222,6 +227,7 @@ const SCENARIOS = [
       label: 'Maniac',
       notes: 'Raises and re-raises constantly, bluffs at very high frequency, hard to put on a hand',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',          action: 'Folds',     state: 'folded' },
       { label: 'HJ (You)',     action: 'Raised $6', state: 'hero'   },
@@ -264,6 +270,7 @@ const SCENARIOS = [
       label: 'Tight Nit',
       notes: 'Only continues postflop with strong made hands, folds to large bets on scary boards, never bluffs',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',     state: 'folded' },
       { label: 'HJ',        action: 'Folds',     state: 'folded' },
@@ -306,6 +313,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Will call any bet size with any pair, draw, or gut shot — bluffing is completely ineffective',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',     state: 'folded' },
       { label: 'HJ',        action: 'Folds',     state: 'folded' },
@@ -351,6 +359,7 @@ const SCENARIOS = [
       label: 'Tight Nit',
       notes: 'Only opens top 10% of hands, rarely bluffs.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -393,6 +402,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Calls everything, rarely raises, limped wide here.',
     },
+    tableContext: "The SB is unknown — limped in and is likely a passive recreational player happy to see cheap flops.",
     positions: [
       { label: 'UTG',       action: 'Active', state: 'active' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -435,6 +445,7 @@ const SCENARIOS = [
       label: 'Aggressive Regular',
       notes: '3-bets wide from BTN, folds to 4-bets frequently.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -477,6 +488,7 @@ const SCENARIOS = [
       label: 'Tight Recreational',
       notes: 'Tight recs defend blinds too narrow — fold to shoves ~80% of the time.',
     },
+    tableContext: "The SB raised and is the primary aggressor; the BB tight recreational is likely to fold to pressure.",
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -519,6 +531,7 @@ const SCENARIOS = [
       label: 'Passive Player',
       notes: 'Checks and calls, rarely raises, almost never bluffs.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -561,6 +574,7 @@ const SCENARIOS = [
       label: 'Maniac',
       notes: 'Bets and raises constantly, bluffs frequently, unpredictable.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -603,6 +617,7 @@ const SCENARIOS = [
       label: 'Aggressive Regular',
       notes: 'C-bets 75% of flops, barrels many turns — understands board texture.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -645,6 +660,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Never folds a pair, calls any bet size, never bluffs.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -687,6 +703,7 @@ const SCENARIOS = [
       label: 'Aggressive Regular',
       notes: 'Donk-bets as a probe with weak top pairs, draws, and occasionally strong hands.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -729,6 +746,7 @@ const SCENARIOS = [
       label: 'Tight Nit',
       notes: 'Only bets flops with top pair or better — rarely has draws in his range here.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -771,6 +789,7 @@ const SCENARIOS = [
       label: 'Loose Recreational',
       notes: 'Plays too many hands, will call big bets with weak aces and any pair.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -813,6 +832,7 @@ const SCENARIOS = [
       label: 'Aggressive Regular',
       notes: 'Calls medium c-bets but folds to large ones with air; raises light occasionally.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -855,6 +875,7 @@ const SCENARIOS = [
       label: 'Passive Player',
       notes: 'Calls medium bets with top pair, check-folds to very large bets with marginal hands.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -897,6 +918,7 @@ const SCENARIOS = [
       label: 'Calling Station',
       notes: 'Calls every flop bet, will not fold any pair or overcards.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -939,6 +961,7 @@ const SCENARIOS = [
       label: 'Tight Nit',
       notes: "Folds to c-bets without a made hand, doesn't call without top pair or a flush.",
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -981,6 +1004,7 @@ feedback: {
       label: 'Aggressive Regular',
       notes: 'Calls c-bets with wide range, check-raises draws and strong hands, rarely gives up.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1023,6 +1047,7 @@ feedback: {
       label: 'Passive Player',
       notes: 'Bets made hands, rarely bluffs — his bet almost always means a real hand.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1065,6 +1090,7 @@ feedback: {
       label: 'Aggressive Regular',
       notes: 'Bets wide on this board — has draws, top pairs, and bluffs.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1107,6 +1133,7 @@ feedback: {
       label: 'Tight Nit',
       notes: 'Never bets without top pair or better on this board — almost certainly has a big flush or two pair.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1149,6 +1176,7 @@ feedback: {
       label: 'Passive Player',
       notes: 'Checks and calls every street — has never bet the river in this session.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1191,6 +1219,7 @@ feedback: {
       label: 'Maniac',
       notes: 'Raises 60%+ of flops, almost never check-folds, fires multiple streets as bluffs.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1233,6 +1262,7 @@ feedback: {
       label: 'Aggressive Regular',
       notes: 'Donk-bets this board with strong hands AND as a probe with medium holdings — hard to read.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1275,6 +1305,7 @@ feedback: {
       label: 'Tight Nit',
       notes: 'Only bets when he has top pair or better. Never bluffs on dry boards.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1317,6 +1348,7 @@ feedback: {
       label: 'Calling Station',
       notes: 'Donk-bets with any ace, any pair, any draw — will call any raise and never folds.',
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
@@ -1359,6 +1391,7 @@ feedback: {
       label: 'Loose Recreational',
       notes: "Raises with top pair or better AND draws, gambles, doesn't fold two pair, bluffs occasionally.",
     },
+    tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',  state: 'folded' },
       { label: 'HJ',        action: 'Folds',  state: 'folded' },
