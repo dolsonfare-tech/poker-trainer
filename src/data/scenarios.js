@@ -953,22 +953,22 @@ const SCENARIOS = [
     toCall: null,
     body: 'CO raised preflop, tight nit BTN called. Flop A♠K♠Q♠ monotone. BTN checks.',
     question: '54d on A♠K♠Q♠ monotone board. Tight nit BTN checks. Bluff or check?',
-    options: [
-      { label: 'Bet $15 (bluff the scary board)', icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Check back',                       icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $22 (pot)',                    icon: '⚡', cls: 'raise', val: 'raise' },
-    ],
-    correct: 'fold',
-    grading: {
-      fold:  { g: 'correct',   title: 'Represent the Flush',       emoji: '✅' },
-      call:  { g: 'partial',   title: 'Free Card but Missed EV',   emoji: '⚠️' },
-      raise: { g: 'partial',   title: 'Too Much — Just 2/3 Works', emoji: '⚠️' },
-    },
-    feedback: {
-      correct: "Betting 2/3 pot is the play. This board is terrifying and a tight nit checks hands that can't continue here. Your bet represents the flush or a strong made hand — he folds everything without a spade.",
-      partial: "Checking gives a free card on a board where your bluff had real merit. A nit who checks AKQ monotone is scared — a 2/3 pot bet picks this up most of the time. Don't surrender free equity.",
-      incorrect: "Pot-sized bet is slightly too large on this board. A 2/3 bet accomplishes the same fold against a nit while risking fewer chips if he has a spade. Size down and get the same result more efficiently.",
-    },
+options: [
+  { label: 'Check back',                       icon: '🃏', cls: 'fold',  val: 'fold'  },
+  { label: 'Bet $15 (bluff the scary board)',   icon: '📞', cls: 'call',  val: 'call'  },
+  { label: 'Bet $22 (pot)',                     icon: '⚡', cls: 'raise', val: 'raise' },
+],
+correct: 'call',
+grading: {
+  fold:  { g: 'partial',   title: 'Free Card but Missed EV',   emoji: '⚠️' },
+  call:  { g: 'correct',   title: 'Represent the Flush',        emoji: '✅' },
+  raise: { g: 'partial',   title: 'Too Much — Just 2/3 Works',  emoji: '⚠️' },
+},
+feedback: {
+  correct: "Betting 2/3 pot is the play. This board is terrifying and a tight nit checks hands that can't continue here. Your bet represents the flush or a strong made hand — he folds everything without a spade.",
+  partial: "Checking gives a free card on a board where your bluff had real merit. A nit who checks AKQ monotone is scared — a 2/3 pot bet picks this up most of the time. Don't surrender free equity.",
+  incorrect: "Pot-sized bet is slightly too large on this board. A 2/3 bet accomplishes the same fold against a nit while risking fewer chips if he has a spade. Size down and get the same result more efficiently.",
+},
   },
   {
     id: 24,
@@ -1119,8 +1119,8 @@ const SCENARIOS = [
     board: ['A♣', 'K♦', 'Q♠'],
     pot: '$60',
     toCall: '$40',
-    body: "BTN tight nit bets $40 into $60 pot on A♣K♦Q♠ monotone. You're CO with 8♠7♠ — you have the J-high flush draw.",
-    question: '87s (J-high flush draw) on AKQ monotone spades. Tight nit bets $40. Getting 2.5:1. Call or fold?',
+    body: "BTN tight nit bets $40 into $60 pot on A♣K♦Q♠ monotone. You're CO with 8♠7♠ — you have the 8-high flush draw.",
+    question: '87s (8-high flush draw) on AKQ monotone spades. Tight nit bets $40. Getting 2.5:1. Call or fold?',
     options: [
       { label: 'Fold',          icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $40',      icon: '📞', cls: 'call',  val: 'call'  },

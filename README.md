@@ -9,7 +9,7 @@ Live at: https://checkraise.ai
 ## Tech Stack
 
 - React (Create React App)
-- Anthropic Claude API — scenario grading and Coach's Read
+- Anthropic Claude API — Coach's Read session summary only
 - Vercel — hosting and auto-deploy from GitHub
 - Capacitor — planned for iOS App Store (Phase 3)
 
@@ -58,6 +58,7 @@ Every scenario in `scenarios.js` requires these fields:
 - `options` — array of 3 choices (fold/call/raise)
 - `correct` — correct answer value
 - `grading` — grade and title for each option
+- `feedback` — pre-written correct/partial/incorrect responses
 
 ---
 
