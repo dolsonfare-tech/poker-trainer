@@ -195,15 +195,15 @@ const SCENARIOS = [
     body: "You raised to $6 preflop with A♥K♥. The Big Blind — a calling station who never folds — called. Flop comes A♣ 7♦ 2♠. You flopped top pair top kicker. The BB checks to you.",
     question: 'You have top pair top kicker vs a calling station. What do you do?',
     options: [
-      { label: 'Check Behind',   icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8 (small)', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $15 (pot)',  icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check Behind',   icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $8 (small)', icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $15 (pot)',  icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'raise',
+    correct: 'bet_large',
     grading: {
-      fold:  { g: 'incorrect', title: 'Never Slow Play a Station',   emoji: '❌' },
-      call:  { g: 'partial',   title: 'Bet More — They Always Call', emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Max Value vs a Station',      emoji: '✅' },
+      check:  { g: 'incorrect', title: 'Never Slow Play a Station',   emoji: '❌' },
+      bet_small:  { g: 'partial',   title: 'Bet More — They Always Call', emoji: '⚠️' },
+      bet_large: { g: 'correct',   title: 'Max Value vs a Station',      emoji: '✅' },
     },
     feedback: {
       correct: "Pot-sized bet is correct here. A calling station will call this with any pair, any ace, any draw — your job is to charge them the maximum for the privilege. Don't let them see free cards.",
@@ -279,15 +279,15 @@ const SCENARIOS = [
     body: "You raised CO with 9♠8♠ and the Nit called on the Button. Flop: K♠ 7♠ 2♥. You missed but picked up a flush draw. You're first to act. The nit only continues with strong hands — a King or better.",
     question: 'You have a flush draw on a King-high board vs a nit. What do you do?',
     options: [
-      { label: 'Check',         icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8',        icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check',         icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $8',        icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'raise',
+    correct: 'bet_large',
     grading: {
-      fold:  { g: 'incorrect', title: 'Give Up Too Early',            emoji: '❌' },
-      call:  { g: 'partial',   title: 'Small Bet, Small Fold Equity', emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Nits Fold to Pressure',        emoji: '✅' },
+      check:  { g: 'incorrect', title: 'Give Up Too Early',            emoji: '❌' },
+      bet_small:  { g: 'partial',   title: 'Small Bet, Small Fold Equity', emoji: '⚠️' },
+      bet_large: { g: 'correct',   title: 'Nits Fold to Pressure',        emoji: '✅' },
     },
     feedback: {
       correct: "Pot-sized pressure on a nit is exactly right. He called preflop but without a King in his range, most of his hand either missed or has weak equity. A big bet forces him to fold all his air and pocket pairs.",
@@ -321,15 +321,15 @@ const SCENARIOS = [
     body: "You raised BTN with 7♣6♣. The calling station in the BB called. Flop: K♥ Q♦ 5♠. You completely missed — no pair, no draw. The calling station checks to you.",
     question: 'You have nothing vs a calling station who never folds. What do you do?',
     options: [
-      { label: 'Check Behind',  icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8',        icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check Behind',  icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $8',        icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'fold',
+    correct: 'check',
     grading: {
-      fold:  { g: 'correct',   title: 'Never Bluff a Station', emoji: '✅' },
-      call:  { g: 'incorrect', title: 'Burning Money',         emoji: '❌' },
-      raise: { g: 'incorrect', title: 'Expensive Lesson',      emoji: '❌' },
+      check:  { g: 'correct',   title: 'Never Bluff a Station', emoji: '✅' },
+      bet_small:  { g: 'incorrect', title: 'Burning Money',         emoji: '❌' },
+      bet_large: { g: 'incorrect', title: 'Expensive Lesson',      emoji: '❌' },
     },
     feedback: {
       correct: "Checking back is the only play here. You have no equity and no fold equity — a calling station will call with any king, any queen, and probably any pair. Take the free card and hope to pick up a draw on the turn.",
@@ -451,14 +451,14 @@ const SCENARIOS = [
     question: 'KQs in CO with an aggressive regular behind on BTN. Open or fold?',
     options: [
       { label: 'Fold',              icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Open raise to $15', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Limp',              icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Open raise to $15', icon: '📞', cls: 'call',  val: 'limp'  },
+      { label: 'Limp',              icon: '⚡', cls: 'raise', val: 'limp' },
     ],
-    correct: 'call',
+    correct: 'limp',
     grading: {
       fold:  { g: 'incorrect', title: 'KQs is Too Good to Fold', emoji: '❌' },
-      call:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
-      raise: { g: 'incorrect', title: 'Never Limp from CO',      emoji: '❌' },
+      limp:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
+      limp: { g: 'incorrect', title: 'Never Limp from CO',      emoji: '❌' },
     },
     feedback: {
       correct: "KQs is a mandatory open from CO. If the aggressive regular 3-bets wide and folds to 4-bets, you actually have a great 4-bet candidate — KQs plays well as both a value hand and a bluff.",
@@ -493,13 +493,13 @@ const SCENARIOS = [
     question: 'K9s on BTN with 25BB in a tournament. Tight recs in the blinds. Shove or raise small?',
     options: [
       { label: 'Fold',           icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Shove all-in',   icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Shove all-in',   icon: '📞', cls: 'call',  val: 'shove'  },
       { label: 'Raise to 2.5BB', icon: '⚡', cls: 'raise', val: 'raise' },
     ],
-    correct: 'call',
+    correct: 'shove',
     grading: {
       fold:  { g: 'incorrect', title: 'Bleeding Chips',                 emoji: '❌' },
-      call:  { g: 'correct',   title: 'Correct ICM Shove',              emoji: '✅' },
+      shove:  { g: 'correct',   title: 'Correct ICM Shove',              emoji: '✅' },
       raise: { g: 'partial',   title: 'Small Raise Commits You Anyway', emoji: '⚠️' },
     },
     feedback: {
@@ -534,15 +534,15 @@ const SCENARIOS = [
     body: 'You raised preflop. BB passive player called. Flop J♥8♦3♠. BB checks to you.',
     question: "T9s on J83 rainbow — you have an open-ended straight draw. In position. Passive BB checks. What do you do?",
     options: [
-      { label: 'Check back',        icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $14 (2/3 pot)', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $22 (pot)',      icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check back',        icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $14 (2/3 pot)', icon: '📞', cls: 'call',  val: 'bet_medium'  },
+      { label: 'Bet $22 (pot)',      icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'call',
+    correct: 'bet_medium',
     grading: {
-      fold:  { g: 'partial',   title: 'Leaving Fold Equity Behind', emoji: '⚠️' },
-      call:  { g: 'correct',   title: 'Semi-Bluff in Position',     emoji: '✅' },
-      raise: { g: 'partial',   title: 'Too Large for a Draw',       emoji: '⚠️' },
+      check:  { g: 'partial',   title: 'Leaving Fold Equity Behind', emoji: '⚠️' },
+      bet_medium:  { g: 'correct',   title: 'Semi-Bluff in Position',     emoji: '✅' },
+      bet_large: { g: 'partial',   title: 'Too Large for a Draw',       emoji: '⚠️' },
     },
     feedback: {
       correct: "2/3 pot is the perfect size here — enough to fold out his weak holdings while keeping the pot manageable if called. You have 8 outs to the nuts and position, which means you can continue applying pressure on the turn.",
@@ -576,15 +576,15 @@ const SCENARIOS = [
     body: "SB raised, BB maniac called. Flop A♠7♦2♣ rainbow. You're OOP with top pair.",
     question: 'AQ on A72 rainbow OOP vs maniac. Check or bet?',
     options: [
-      { label: 'Bet $14',               icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Check — let him bluff',  icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $20 (pot)',          icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Bet $14',               icon: '🃏', cls: 'fold',  val: 'bet'  },
+      { label: 'Check — let him bluff',  icon: '📞', cls: 'call',  val: 'check'  },
+      { label: 'Bet $20 (pot)',          icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'call',
+    correct: 'check',
     grading: {
-      fold:  { g: 'partial',   title: 'Betting Into Maniac',        emoji: '⚠️' },
-      call:  { g: 'correct',   title: 'Check to Induce Bluffs',     emoji: '✅' },
-      raise: { g: 'partial',   title: 'Pot Bet Invites Bluff-Raise', emoji: '⚠️' },
+      bet:  { g: 'partial',   title: 'Betting Into Maniac',        emoji: '⚠️' },
+      check:  { g: 'correct',   title: 'Check to Induce Bluffs',     emoji: '✅' },
+      bet_large: { g: 'partial',   title: 'Pot Bet Invites Bluff-Raise', emoji: '⚠️' },
     },
     feedback: {
       correct: "Checking top pair OOP against a maniac is the highest EV line. He will bet his entire range into you — air, draws, weak pairs. Let him build the pot, then check-raise or call down depending on board texture.",
@@ -660,15 +660,15 @@ const SCENARIOS = [
     body: 'CO raised preflop. BB calling station called. Flop J♠7♣2♥. BB checks.',
     question: 'KK on J72 rainbow. Calling station checks to you. What do you do?',
     options: [
-      { label: 'Check (slow play)', icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $10 (small)',   icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $18 (large)',   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (slow play)', icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $10 (small)',   icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $18 (large)',   icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'raise',
+    correct: 'bet_large',
     grading: {
-      fold:  { g: 'incorrect', title: 'Never Slow Play vs a Station', emoji: '❌' },
-      call:  { g: 'partial',   title: 'Leaves Value on the Table',    emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Max Value vs Station',         emoji: '✅' },
+      check:  { g: 'incorrect', title: 'Never Slow Play vs a Station', emoji: '❌' },
+      bet_small:  { g: 'partial',   title: 'Leaves Value on the Table',    emoji: '⚠️' },
+      bet_large: { g: 'correct',   title: 'Max Value vs Station',         emoji: '✅' },
     },
     feedback: {
       correct: "Large bet is correct against a calling station — they'll call with any jack, any pair, any draw. Size up to extract maximum value. The only mistake with KK on this board is not betting big enough.",
@@ -786,15 +786,15 @@ const SCENARIOS = [
     body: 'BTN raised preflop. BB loose recreational called. Flop A♥6♣2♦. BB checks.',
     question: 'TPTK on A62 rainbow. Loose rec BB checks. What bet size maximizes value?',
     options: [
-      { label: 'Check (slow play)',          icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $7 (small, keep him in)', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $14 (large)',             icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (slow play)',          icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $7 (small, keep him in)', icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $14 (large)',             icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'raise',
+    correct: 'bet_large',
     grading: {
-      fold:  { g: 'incorrect', title: "He's Not Slow Playing Against You", emoji: '❌' },
-      call:  { g: 'partial',   title: 'He Calls Bigger — Bet More',        emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Correct Exploitative Size',         emoji: '✅' },
+      check:  { g: 'incorrect', title: "He's Not Slow Playing Against You", emoji: '❌' },
+      bet_small:  { g: 'partial',   title: 'He Calls Bigger — Bet More',        emoji: '⚠️' },
+      bet_large: { g: 'correct',   title: 'Correct Exploitative Size',         emoji: '✅' },
     },
     feedback: {
       correct: "Large bet is correct. Loose recreationals call big with weak aces, middle pairs, and draws. You don't need to keep him in — he's staying regardless. Maximize value while you're clearly ahead.",
@@ -828,15 +828,15 @@ const SCENARIOS = [
     body: 'CO raised preflop. BTN aggressive regular called. Flop T♠7♥2♣. CO has OESD.',
     question: '98d — open-ended straight draw on T72 rainbow. Aggressive BTN called preflop. What sizing for your semi-bluff c-bet?',
     options: [
-      { label: 'Check (give up)',                  icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $8 (small, see what happens)',  icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $16 (large, fold equity)',      icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (give up)',                  icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $8 (small, see what happens)',  icon: '📞', cls: 'call',  val: 'bet_small'  },
+      { label: 'Bet $16 (large, fold equity)',      icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'raise',
+    correct: 'bet_large',
     grading: {
-      fold:  { g: 'incorrect', title: "Don't Abandon 8 Outs",      emoji: '❌' },
-      call:  { g: 'partial',   title: "Too Small — He Floats Wide", emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Size for Fold Equity',       emoji: '✅' },
+      check:  { g: 'incorrect', title: "Don't Abandon 8 Outs",      emoji: '❌' },
+      bet_small:  { g: 'partial',   title: "Too Small — He Floats Wide", emoji: '⚠️' },
+      bet_large: { g: 'correct',   title: 'Size for Fold Equity',       emoji: '✅' },
     },
     feedback: {
       correct: "Large c-bet is correct with a semi-bluff against an aggressive regular who floats small bets. Go big, represent top pair, and deny him the cheap float he wants. You win now or have equity when called.",
@@ -870,15 +870,15 @@ const SCENARIOS = [
     body: 'BTN raised preflop. BB passive player called. Flop Q♠8♣3♦. BB checks.',
     question: 'Top set on Q83 rainbow vs passive BB. What sizing extracts maximum value over multiple streets?',
     options: [
-      { label: 'Bet $40 (large, build now)', icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $20 (medium)',            icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Check (slow play)',           icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Bet $40 (large, build now)', icon: '🃏', cls: 'fold',  val: 'bet_large'  },
+      { label: 'Bet $20 (medium)',            icon: '📞', cls: 'call',  val: 'bet_medium'  },
+      { label: 'Check (slow play)',           icon: '⚡', cls: 'raise', val: 'check' },
     ],
-    correct: 'call',
+    correct: 'bet_medium',
     grading: {
-      fold:  { g: 'partial',   title: 'Large May Fold His Medium Pairs',  emoji: '⚠️' },
-      call:  { g: 'correct',   title: 'Medium Sizing Over 3 Streets',     emoji: '✅' },
-      raise: { g: 'partial',   title: 'Slow Play Risks Bad Turn Cards',   emoji: '⚠️' },
+      bet_large:  { g: 'partial',   title: 'Large May Fold His Medium Pairs',  emoji: '⚠️' },
+      bet_medium:  { g: 'correct',   title: 'Medium Sizing Over 3 Streets',     emoji: '✅' },
+      check: { g: 'partial',   title: 'Slow Play Risks Bad Turn Cards',   emoji: '⚠️' },
     },
     feedback: {
       correct: "Medium sizing is the play. A passive player calls medium bets with top pair and check-folds to large ones — three streets of $20 gets you $60 more. A pot bet might fold out the hands paying you off.",
@@ -912,15 +912,15 @@ const SCENARIOS = [
     body: 'BTN raised preflop. BB calling station called. Flop A♠8♥2♣ rainbow. BB checks.',
     question: 'KQ with no pair on A82. Calling station checks. C-bet bluff or give up?',
     options: [
-      { label: 'Bet $10 (bluff)',          icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Check back',               icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $16 (pot, pressure)',  icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Bet $10 (bluff)',          icon: '🃏', cls: 'fold',  val: 'bluff'  },
+      { label: 'Check back',               icon: '📞', cls: 'call',  val: 'check'  },
+      { label: 'Bet $16 (pot, pressure)',  icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'call',
+    correct: 'check',
     grading: {
-      fold:  { g: 'incorrect', title: 'Bluffing Never Works Here',     emoji: '❌' },
-      call:  { g: 'correct',   title: 'Never Bluff a Calling Station', emoji: '✅' },
-      raise: { g: 'incorrect', title: 'Burning Money',                 emoji: '❌' },
+      bluff:  { g: 'incorrect', title: 'Bluffing Never Works Here',     emoji: '❌' },
+      check:  { g: 'correct',   title: 'Never Bluff a Calling Station', emoji: '✅' },
+      bet_large: { g: 'incorrect', title: 'Burning Money',                 emoji: '❌' },
     },
     feedback: {
       correct: "Checking back is correct. KQ has no equity on A82 and a calling station will not fold anything. Take the free card, hope to pick up a draw or hit a pair on the turn, and find a better spot to apply pressure.",
@@ -954,15 +954,15 @@ const SCENARIOS = [
     body: 'CO raised preflop, tight nit BTN called. Flop A♠K♠Q♠ monotone. BTN checks.',
     question: '54d on A♠K♠Q♠ monotone board. Tight nit BTN checks. Bluff or check?',
 options: [
-  { label: 'Check back',                       icon: '🃏', cls: 'fold',  val: 'fold'  },
-  { label: 'Bet $15 (bluff the scary board)',   icon: '📞', cls: 'call',  val: 'call'  },
-  { label: 'Bet $22 (pot)',                     icon: '⚡', cls: 'raise', val: 'raise' },
+  { label: 'Check back',                       icon: '🃏', cls: 'fold',  val: 'check'  },
+  { label: 'Bet $15 (bluff the scary board)',   icon: '📞', cls: 'call',  val: 'bluff'  },
+  { label: 'Bet $22 (pot)',                     icon: '⚡', cls: 'raise', val: 'bet_large' },
 ],
-correct: 'call',
+correct: 'bluff',
 grading: {
-  fold:  { g: 'partial',   title: 'Free Card but Missed EV',   emoji: '⚠️' },
-  call:  { g: 'correct',   title: 'Represent the Flush',        emoji: '✅' },
-  raise: { g: 'partial',   title: 'Too Much — Just 2/3 Works',  emoji: '⚠️' },
+  check:  { g: 'partial',   title: 'Free Card but Missed EV',   emoji: '⚠️' },
+  bluff:  { g: 'correct',   title: 'Represent the Flush',        emoji: '✅' },
+  bet_large: { g: 'partial',   title: 'Too Much — Just 2/3 Works',  emoji: '⚠️' },
 },
 feedback: {
   correct: "Betting 2/3 pot is the play. This board is terrifying and a tight nit checks hands that can't continue here. Your bet represents the flush or a strong made hand — he folds everything without a spade.",
@@ -996,15 +996,15 @@ feedback: {
     body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♥3♦. BB checks.',
     question: 'A5d — nut flush draw + overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
     options: [
-      { label: 'Check back',                     icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $22 (half pot — semi-bluff)', icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $40 (pot)',                   icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check back',                     icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $22 (half pot — semi-bluff)', icon: '📞', cls: 'call',  val: 'semi_bluff'  },
+      { label: 'Bet $40 (pot)',                   icon: '⚡', cls: 'raise', val: 'bet_large' },
     ],
-    correct: 'call',
+    correct: 'semi_bluff',
     grading: {
-      fold:  { g: 'partial',   title: 'Missing Fold Equity with Strong Draw', emoji: '⚠️' },
-      call:  { g: 'correct',   title: 'Semi-Bluff the Nut Draw',              emoji: '✅' },
-      raise: { g: 'partial',   title: 'Pot Risks Check-Raise',                emoji: '⚠️' },
+      check:  { g: 'partial',   title: 'Missing Fold Equity with Strong Draw', emoji: '⚠️' },
+      semi_bluff:  { g: 'correct',   title: 'Semi-Bluff the Nut Draw',              emoji: '✅' },
+      bet_large: { g: 'partial',   title: 'Pot Risks Check-Raise',                emoji: '⚠️' },
     },
     feedback: {
       correct: "Half-pot semi-bluff is correct. You have the nut flush draw, an overcard, and the 3-bet initiative. A half-pot bet folds out his weak holdings, and when called you have 9 outs to the nuts.",
@@ -1206,15 +1206,15 @@ feedback: {
     body: 'CO raised preflop. BTN maniac called. Flop K♥9♦4♣. BTN checks. CO has top pair.',
     question: 'KQ (top pair, 2nd kicker) on K94 rainbow. Maniac BTN checks to you. Bet or check-raise trap?',
     options: [
-      { label: 'Check (let him bluff)',              icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $14 (2/3 pot)',                  icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Check, then check-raise if he bets', icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check (let him bluff)',              icon: '🃏', cls: 'fold',  val: 'check'  },
+      { label: 'Bet $14 (2/3 pot)',                  icon: '📞', cls: 'call',  val: 'bet'  },
+      { label: 'Check, then check-raise if he bets', icon: '⚡', cls: 'raise', val: 'check_raise' },
     ],
-    correct: 'raise',
+    correct: 'check_raise',
     grading: {
-      fold:  { g: 'partial',   title: 'Checking Once Is Good',     emoji: '⚠️' },
-      call:  { g: 'partial',   title: 'Betting Stops the Action',  emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Check-Raise to Stack Him',  emoji: '✅' },
+      check:  { g: 'partial',   title: 'Checking Once Is Good',     emoji: '⚠️' },
+      bet:  { g: 'partial',   title: 'Betting Stops the Action',  emoji: '⚠️' },
+      check_raise: { g: 'correct',   title: 'Check-Raise to Stack Him',  emoji: '✅' },
     },
     feedback: {
       correct: "Check-raise is the highest EV line against a maniac. He raises 60% of flops — check to him, let him bet his air, then check-raise and build a massive pot. Betting out stops his bluffing range from putting money in.",
@@ -1390,6 +1390,7 @@ feedback: {
       incorrect: "Folding two pair to a loose recreational's raise is a massive mistake. Their raising range is top pair, draws, and occasional bluffs — you're comfortably ahead of almost all of it. 3-bet and get the money in.",
     },
   },
+
 // ── sc_034 through sc_083 ─────────────────────────────────────────────────
 
   {
@@ -1768,7 +1769,7 @@ grading: {
     board: ['J♦', '9♥', '2♣', 'K♠'],
     pot: '$20',
     toCall: null,
-    body: "BTN vs BB nit. Flop J♦9♥2♣ — you c-bet, he called. Turn K♠. Nit checks to you. You have an open-ended straight draw (QT).",
+    body: "BTN vs BB nit. Flop J♦9♥2♣ — you c-bet, he called. Turn K♠. Nit checks to you. You have QT - a double gutshot draw.",
     question: 'QTc (double gutshot) in position on J92K — nit check-calls flop and checks turn. Bet or check?',
     options: [
       { label: 'Check back — take the free river', icon: '🃏', cls: 'fold',  val: 'fold'  },
@@ -2164,7 +2165,7 @@ grading: {
     board: ['J♦', '9♠', '4♣', '2♥', 'T♠'],
     pot: '$60',
     toCall: null,
-    body: "BTN vs BB passive player. You bet flop and turn with KQc (gutshot + two overs). River T♠ — you backdoored the nut straight (K-Q-J-T-9 — wait, you have KQ and the board is J-9-4-2-T, making KQJT9). He checks to you.",
+    body: "BTN vs BB passive player. You bet flop and turn with KQc (gutshot + two overs). River T♠ — you backdoored the nut straight. He checks to you.",
     question: 'You rivered the nut straight on J942T. Passive player checks. What do you do?',
     options: [
       { label: 'Check — he has nothing',    icon: '🃏', cls: 'fold',  val: 'fold'  },
@@ -3591,5 +3592,5 @@ grading: {
       incorrect: "Raising folds out his bluffs — the exact hands you want to call with. Never raise a polarized river bettor when you're a bluff-catcher. Call and take his chips.",
     },
   },];
-
+ 
 export default SCENARIOS;
