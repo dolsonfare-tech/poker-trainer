@@ -451,13 +451,13 @@ const SCENARIOS = [
     question: 'KQs in CO with an aggressive regular behind on BTN. Open or fold?',
     options: [
       { label: 'Fold',              icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Open raise to $15', icon: '📞', cls: 'call',  val: 'limp'  },
+      { label: 'Open raise to $15', icon: '📞', cls: 'call',  val: 'raise'  },
       { label: 'Limp',              icon: '⚡', cls: 'raise', val: 'limp' },
     ],
     correct: 'limp',
     grading: {
       fold:  { g: 'incorrect', title: 'KQs is Too Good to Fold', emoji: '❌' },
-      limp:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
+      raise:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
       limp: { g: 'incorrect', title: 'Never Limp from CO',      emoji: '❌' },
     },
     feedback: {
