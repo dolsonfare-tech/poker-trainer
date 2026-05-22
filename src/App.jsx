@@ -92,9 +92,11 @@ function StreakBadge({ streak, xp }) {
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 
+const SESSION_LENGTH = 5;
+
 function getFilteredScenarios(difficulty) {
   const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
-  return [...filtered].sort(() => Math.random() - 0.5);
+  return [...filtered].sort(() => Math.random() - 0.5).slice(0, SESSION_LENGTH);
 }
 
 function ProgressDots({ total, current }) {
