@@ -9,6 +9,89 @@ import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 
+// ─── Streak & XP helpers (localStorage) ───────────────────────────────────
+
+const XP_VALUES = { correct: 10, partial: 5, incorrect: 0 };
+const XP_SESSION_BONUS = 25;
+const XP_STREAK_BONUS = 10;
+
+function loadStats() {
+  try {
+    const raw = localStorage.getItem('cr_stats');
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return { xp: 0, streak: 0, lastSessionDate: null };
+}
+
+function saveStats(stats) {
+  try { localStorage.setItem('cr_stats', JSON.stringify(stats)); } catch {}
+}
+
+function todayString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function calcStreakAndXP(stats, sessionXP) {
+  const today = todayString();
+  const last = stats.lastSessionDate;
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+
+  let newStreak = stats.streak;
+  if (last === today) {
+    // already played today — don't increment streak again
+  } else if (last === yesterdayStr) {
+    newStreak = stats.streak + 1;
+  } else {
+    newStreak = 1;
+  }
+
+  const streakBonus = last !== today ? XP_STREAK_BONUS * newStreak : 0;
+  const totalXP = stats.xp + sessionXP + XP_SESSION_BONUS + streakBonus;
+
+  return { xp: totalXP, streak: newStreak, lastSessionDate: today, sessionXP, streakBonus };
+}
+
+// ─── Streak badge shown in header ─────────────────────────────────────────
+
+function StreakBadge({ streak, xp }) {
+  if (!streak && !xp) return null;
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '10px',
+      marginTop: '10px',
+      flexWrap: 'wrap',
+    }}>
+      {streak > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '5px',
+          background: 'rgba(240,165,0,0.12)', border: '1px solid rgba(240,165,0,0.25)',
+          borderRadius: '20px', padding: '4px 12px',
+          fontFamily: "'Courier New', Courier, monospace", fontSize: '0.62rem',
+          letterSpacing: '0.08em', color: 'var(--yellow)',
+        }}>
+          🔥 {streak}-day streak
+        </div>
+      )}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '5px',
+        background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.22)',
+        borderRadius: '20px', padding: '4px 12px',
+        fontFamily: "'Courier New', Courier, monospace", fontSize: '0.62rem',
+        letterSpacing: '0.08em', color: 'var(--gold)',
+      }}>
+        ⚡ {xp.toLocaleString()} XP
+      </div>
+    </div>
+  );
+}
+
+// ─── Utility ──────────────────────────────────────────────────────────────
+
 function getFilteredScenarios(difficulty) {
   const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
   return [...filtered].sort(() => Math.random() - 0.5);
@@ -24,6 +107,8 @@ function ProgressDots({ total, current }) {
   );
 }
 
+// ─── Main App ──────────────────────────────────────────────────────────────
+
 export default function App() {
   const [showVillainGuide, setShowVillainGuide] = useState(false);
   const [screen, setScreen]                     = useState('difficulty');
@@ -36,6 +121,9 @@ export default function App() {
   const [showSummary, setShowSummary]           = useState(false);
   const [coachRead, setCoachRead]               = useState('');
   const [coachLoading, setCoachLoading]         = useState(false);
+  const [stats, setStats]                       = useState(() => loadStats());
+  const [sessionXP, setSessionXP]               = useState(0);
+  const [xpData, setXpData]                     = useState(null);
 
   const scenario = shuffledScenarios[currentIndex];
 
@@ -61,6 +149,8 @@ export default function App() {
     setDecided(true);
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
+    const earned = XP_VALUES[gr.g] || 0;
+    setSessionXP(prev => prev + earned);
     const feedbackText = scenario.feedback[gr.g];
     setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
   }, [decided, scenario]);
@@ -68,6 +158,10 @@ export default function App() {
   const handleNext = () => {
     const next = currentIndex + 1;
     if (next >= shuffledScenarios.length) {
+      const newStats = calcStreakAndXP(stats, sessionXP);
+      saveStats(newStats);
+      setStats(newStats);
+      setXpData(newStats);
       setShowSummary(true);
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
@@ -88,6 +182,8 @@ export default function App() {
     setCoachRead('');
     setCoachLoading(false);
     setShuffledScenarios([]);
+    setSessionXP(0);
+    setXpData(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -96,6 +192,7 @@ export default function App() {
       <div className="header" style={{ position: 'relative' }}>
         <div className="logo">Check<em>Raise</em></div>
         <div className="tagline">AI-Powered Skill Training</div>
+        <StreakBadge streak={stats.streak} xp={stats.xp} />
         <button
           onClick={() => setShowVillainGuide(true)}
           style={{
@@ -136,6 +233,7 @@ export default function App() {
               coachLoading={coachLoading}
               difficulty={difficulty}
               onRestart={handleRestart}
+              xpData={xpData}
             />
           ) : (
             <>
