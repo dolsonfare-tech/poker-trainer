@@ -2229,7 +2229,6 @@ grading: {
       partial: "Half-pot looks like a blocker bet, not a flush — a tight rec can call that with kings or queens. You need a real commitment to represent the flush you were credibly drawing to all along.",
       incorrect: "Your range is loaded with nut flush combos that just bricked — a tight recreational knows that and is not calling a pot-sized river bet with one pair. The fold equity here is too good to surrender.",
     },
-}
   },
 
   {
