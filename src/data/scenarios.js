@@ -448,22 +448,22 @@ const SCENARIOS = [
     pot: '$5',
     toCall: null,
     body: 'Folds to you in CO. BTN is an aggressive regular.',
-    question: 'KQs in CO with an aggressive regular behind on BTN. Open or fold?',
+    question: 'K♠Q♠ in CO with an aggressive regular behind on BTN. Open or fold?',
     options: [
       { label: 'Fold',              icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Open raise to $15', icon: '📞', cls: 'call',  val: 'raise'  },
       { label: 'Limp',              icon: '⚡', cls: 'raise', val: 'limp' },
     ],
-    correct: 'limp',
+    correct: 'raise',
     grading: {
-      fold:  { g: 'incorrect', title: 'KQs is Too Good to Fold', emoji: '❌' },
+      fold:  { g: 'incorrect', title: 'K♠Q♠ is Too Good to Fold', emoji: '❌' },
       raise:  { g: 'correct',   title: 'Open and Re-evaluate',    emoji: '✅' },
       limp: { g: 'incorrect', title: 'Never Limp from CO',      emoji: '❌' },
     },
     feedback: {
-      correct: "KQs is a mandatory open from CO. If the aggressive regular 3-bets wide and folds to 4-bets, you actually have a great 4-bet candidate — KQs plays well as both a value hand and a bluff.",
-      partial: "Limping KQs from CO hands the initiative to the aggressive BTN for free. He'll iso-raise you constantly and you'll be out of position with a hand strong enough to fight back. Always open this hand.",
-      incorrect: "Folding KQs CO is a significant error. It's in the top 10% of hands and plays well in 3-bet pots. An aggressive BTN should make you want to open more, not less — you have a hand to fight back with.",
+      correct: "K♠Q♠ is a mandatory open from CO. If the aggressive regular 3-bets wide and folds to 4-bets, you actually have a great 4-bet candidate — K♠Q♠ plays well as both a value hand and a bluff.",
+      partial: "Limping K♠Q♠ from CO hands the initiative to the aggressive BTN for free. He'll iso-raise you constantly and you'll be out of position with a hand strong enough to fight back. Always open this hand.",
+      incorrect: "Folding K♠Q♠ CO is a significant error. It's in the top 10% of hands and plays well in 3-bet pots. An aggressive BTN should make you want to open more, not less — you have a hand to fight back with.",
     },
   },
   {
@@ -574,7 +574,7 @@ const SCENARIOS = [
     pot: '$20',
     toCall: null,
     body: "SB raised, BB maniac called. Flop A♠7♦2♣ rainbow. You're OOP with top pair.",
-    question: 'AQ on A72 rainbow OOP vs maniac. Check or bet?',
+    question: 'AQ on A72 rainbow OOP vs maniac. What do you do?',
     options: [
       { label: 'Bet $14',               icon: '🃏', cls: 'fold',  val: 'bet'  },
       { label: 'Check — let him bluff',  icon: '📞', cls: 'call',  val: 'check'  },
@@ -700,7 +700,7 @@ const SCENARIOS = [
     pot: '$25',
     toCall: '$15',
     body: "BTN raised preflop. BB aggressive regular called. Flop K♦9♠3♦. BB bets $15 (donk-bet).",
-    question: "AA on K93 two-tone. Aggressive BB donk-bets $15. You're in position. Raise or call?",
+    question: "AA on K93 two-tone. Aggressive BB donk-bets $15. You're in position. What do you do?",
     options: [
       { label: 'Fold',         icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $15',     icon: '📞', cls: 'call',  val: 'call'  },
@@ -826,7 +826,7 @@ const SCENARIOS = [
     pot: '$20',
     toCall: null,
     body: 'CO raised preflop. BTN aggressive regular called. Flop T♠7♥2♣. CO has OESD.',
-    question: '98d — open-ended straight draw on T72 rainbow. Aggressive BTN called preflop. What sizing for your semi-bluff c-bet?',
+    question: '9♦8♦ — open-ended straight draw on T72 rainbow. Aggressive BTN called preflop. What sizing for your semi-bluff c-bet?',
     options: [
       { label: 'Check (give up)',                  icon: '🃏', cls: 'fold',  val: 'check'  },
       { label: 'Bet $8 (small, see what happens)',  icon: '📞', cls: 'call',  val: 'bet_small'  },
@@ -910,7 +910,7 @@ const SCENARIOS = [
     pot: '$16',
     toCall: null,
     body: 'BTN raised preflop. BB calling station called. Flop A♠8♥2♣ rainbow. BB checks.',
-    question: 'KQ with no pair on A82. Calling station checks. C-bet bluff or give up?',
+    question: 'KQ with no pair on A82. Calling station checks. What do you do?',
     options: [
       { label: 'Bet $10 (bluff)',          icon: '🃏', cls: 'fold',  val: 'bluff'  },
       { label: 'Check back',               icon: '📞', cls: 'call',  val: 'check'  },
@@ -952,7 +952,7 @@ const SCENARIOS = [
     pot: '$22',
     toCall: null,
     body: 'CO raised preflop, tight nit BTN called. Flop A♠K♠Q♠ monotone. BTN checks.',
-    question: '54d on A♠K♠Q♠ monotone board. Tight nit BTN checks. Bluff or check?',
+    question: '5♦4♦ on A♠K♠Q♠ monotone board. Tight nit BTN checks. Bluff or check?',
 options: [
   { label: 'Check back',                       icon: '🃏', cls: 'fold',  val: 'check'  },
   { label: 'Bet $15 (bluff the scary board)',   icon: '📞', cls: 'call',  val: 'bluff'  },
@@ -994,7 +994,7 @@ feedback: {
     pot: '$40',
     toCall: null,
     body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♥3♦. BB checks.',
-    question: 'A5d — nut flush draw + overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
+    question: 'A♦5♦ — nut flush draw + overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
     options: [
       { label: 'Check back',                     icon: '🃏', cls: 'fold',  val: 'check'  },
       { label: 'Bet $22 (half pot — semi-bluff)', icon: '📞', cls: 'call',  val: 'semi_bluff'  },
@@ -1035,8 +1035,8 @@ feedback: {
     board: ['K♠', '5♦', '3♣'],
     pot: '$18',
     toCall: '$9',
-    body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 76h — an OESD.",
-    question: '76h on K53 — open-ended straight draw (8 outs). Getting 3:1 pot odds ($9 to win $27). Call or fold?',
+    body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 7♥6♥ — an OESD.",
+    question: '7♥6♥ on K53 — open-ended straight draw (8 outs). Getting 3:1 pot odds ($9 to win $27). Call or fold?',
     options: [
       { label: 'Fold',               icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $9',            icon: '📞', cls: 'call',  val: 'call'  },
@@ -1077,8 +1077,8 @@ feedback: {
     board: ['T♠', '9♣', '2♦'],
     pot: '$24',
     toCall: '$16',
-    body: "BTN bets $16 into $24 pot on T♠9♣2♦. You're in BB with QJd — OESD + flush draw.",
-    question: 'QJd on T92 with OESD + flush draw (~15 outs). Getting 2.5:1. Call, raise, or fold?',
+    body: "BTN bets $16 into $24 pot on T♠9♣2♦. You're in BB with Q♦J♦ — OESD + flush draw.",
+    question: 'Q♦J♦ on T92 with OESD + flush draw (~15 outs). Getting 2.5:1. Call, raise, or fold?',
     options: [
       { label: 'Fold',               icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $16',           icon: '📞', cls: 'call',  val: 'call'  },
@@ -1595,7 +1595,7 @@ feedback: {
     pot: '$22',
     toCall: '$11 more',
     body: "You raise BTN to $5 with T♣8♣. The BB — a tight recreational who defends only his best hands and 3-bets a very narrow range — re-raises to $16.",
-    question: 'T8s on BTN vs a tight BB 3-bet. What do you do?',
+    question: 'T♣8♣ on BTN vs a tight BB 3-bet. What do you do?',
     options: [
       { label: 'Fold',          icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $11 more', icon: '📞', cls: 'call',  val: 'call'  },
@@ -1608,9 +1608,9 @@ feedback: {
       raise: { g: 'incorrect', title: '4-Betting Air Into the Nuts',      emoji: '❌' },
     },
     feedback: {
-      correct: "When a tight recreational 3-bets from the BB, his range is exactly QQ+/AK — T8s is drawing thin and OOP. This is a disciplined fold that saves chips you'll need in better spots.",
-      partial: "Calling T8s in a 3-bet pot OOP against a tight player who 3-bets only his best hands puts you in an unwinnable position on most flops. The fold is cleaner than leaking chips postflop.",
-      incorrect: "4-betting a tight recreational's 3-bet with T8s is a bluff into QQ+/AK. He's not folding those hands — you're committing a large portion of your stack as a significant underdog.",
+      correct: "When a tight recreational 3-bets from the BB, his range is exactly QQ+/AK — T♣8♣ is drawing thin and OOP. This is a disciplined fold that saves chips you'll need in better spots.",
+      partial: "Calling T♣8♣ in a 3-bet pot OOP against a tight player who 3-bets only his best hands puts you in an unwinnable position on most flops. The fold is cleaner than leaking chips postflop.",
+      incorrect: "4-betting a tight recreational's 3-bet with T♣8♣ is a bluff into QQ+/AK. He's not folding those hands — you're committing a large portion of your stack as a significant underdog.",
     },
   },
 
@@ -1859,7 +1859,7 @@ grading: {
     pot: '$36',
     toCall: null,
     body: "You raised CO, calling station BB called. You bet flop and turn for value with middle pair. Turn J♦. Station has called both streets. River action — he checks.",
-    question: '87d (middle pair) on 852J river. Station called flop and turn. He checks river. What do you do?',
+    question: '8♦7♦ (middle pair) on 852J river. Station called flop and turn. He checks river. What do you do?',
     options: [
       { label: 'Check back',         icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $18 (value)',    icon: '📞', cls: 'call',  val: 'call'  },
@@ -2078,7 +2078,7 @@ grading: {
     board: ['J♣', '8♦', '2♠', 'Q♠', '7♦'],
     pot: '$60',
     toCall: null,
-    body: "BTN vs BB aggressive regular. You have T9d — you rivered a straight. River 7♦. He checks.",
+    body: "BTN vs BB aggressive regular. You have T♦9♦ — you rivered a straight. River 7♦. He checks.",
     question: 'Rivered nut straight on J8Q27 vs aggressive regular who re-raises polarized. What size?',
 options: [
   { label: 'Bet $25 (40% pot, induce raise)', icon: '🃏', cls: 'fold',  val: 'small'  },
@@ -2122,8 +2122,8 @@ grading: {
     board: ['A♣', 'K♠', '6♦', '2♥'],
     pot: '$28',
     toCall: null,
-    body: "You c-bet the flop with JTd (gutshot + two overs) and the nit called. Turn is 2♥ — a blank. He checks to you.",
-    question: 'JTd on AK62 vs nit who called the flop. Blank turn. Barrel or give up?',
+    body: "You c-bet the flop with J♦T♦ (gutshot + two overs) and the nit called. Turn is 2♥ — a blank. He checks to you.",
+    question: 'J♦T♦ on AK62 vs nit who called the flop. Blank turn. Barrel or give up?',
     options: [
       { label: 'Check — give up',            icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $18 (second barrel)',     icon: '📞', cls: 'call',  val: 'call'  },
@@ -2187,6 +2187,8 @@ grading: {
   },
 
   {
+{
+
     id: 'sc_052',
     tag: 'Bluff Frequency',
     skill: 'bluffing',
@@ -2200,34 +2202,35 @@ grading: {
     tableContext: null,
     positions: [
       { label: 'UTG',       action: 'Folds',     state: 'folded' },
-      { label: 'HJ',       action: 'Folds',     state: 'folded' },
-      { label: 'CO',       action: 'Folds',     state: 'folded' },
-      { label: 'BTN (You)',action: 'Raises $6', state: 'hero'   },
-      { label: 'SB',       action: 'Folds',     state: 'folded' },
-      { label: 'BB (TR)',  action: 'Called $4', state: 'active' },
+      { label: 'HJ',        action: 'Folds',     state: 'folded' },
+      { label: 'CO',        action: 'Folds',     state: 'folded' },
+      { label: 'BTN (You)', action: 'Raises $6', state: 'hero'   },
+      { label: 'SB',        action: 'Folds',     state: 'folded' },
+      { label: 'BB (TR)',   action: 'Called $4', state: 'active' },
     ],
     hand: [{ r: 'A', s: '♦', c: 'red' }, { r: '4', s: '♦', c: 'red' }],
-    board: ['K♠', 'Q♣', '7♦', '2♥', '5♦'],
+    board: ['K♠', 'Q♣', '7♦', '2♥', '5♣'],
     pot: '$55',
     toCall: null,
-    body: "BTN vs BB tight recreational. You barreled flop and turn with A4d (nut flush draw). River 5♦ — you missed the flush but rivered a pair of 4s with no showdown value really. He checks.",
-    question: 'A4d — missed flush draw, rivered a weak pair on K♠Q♣7♦2♥5♦. Tight rec checks. Bluff or check?',
+    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (nut flush draw on the 7♦). River bricks 5♣ — the flush misses completely and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
+    question: 'A♦4♦ — nut flush draw bricked on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
     options: [
-      { label: 'Check back',                    icon: '🃏', cls: 'fold',  val: 'fold'  },
-      { label: 'Bet $25 (half-pot bluff)',      icon: '📞', cls: 'call',  val: 'call'  },
-      { label: 'Bet $55 (pot, polarized bluff)', icon: '⚡', cls: 'raise', val: 'raise' },
+      { label: 'Check back',                     icon: '🃏', cls: 'fold',  val: 'fold'  },
+      { label: 'Bet $25 (half-pot bluff)',        icon: '📞', cls: 'call',  val: 'call'  },
+      { label: 'Bet $55 (pot, polarized bluff)',  icon: '⚡', cls: 'raise', val: 'raise' },
     ],
     correct: 'raise',
     grading: {
-      fold:  { g: 'partial',   title: 'Checking Has Showdown Value Too',    emoji: '⚠️' },
-      call:  { g: 'partial',   title: 'Half-Pot Doesn\'t Apply Enough Pressure', emoji: '⚠️' },
-      raise: { g: 'correct',   title: 'Polarized River Bluff vs Tight Rec', emoji: '✅' },
+      fold:  { g: 'partial',   title: 'Surrendering with Real Fold Equity', emoji: '⚠️' },
+      call:  { g: 'partial',   title: "Half-Pot Won't Move a Tight Rec",    emoji: '⚠️' },
+      raise: { g: 'correct',   title: 'Polarized Bluff on the Brick River', emoji: '✅' },
     },
     feedback: {
-      correct: "Pot-sized bluff is correct. A tight recreational who called two streets has one pair — a pair of kings or queens. A polarized river bet represents the flush you were chasing, and he folds one pair to a big bet at high frequency.",
-      partial: "Half-pot doesn't apply enough pressure on this river. A tight recreational who folds one pair to big bets needs a real commitment to fold — half-pot looks like a value bet, not a representation of a flush.",
-      incorrect: "Checking is fine for showdown value but the pot-sized bluff here has strong fold equity. Your range credibly contains the nut flush on this runout — a tight recreational isn't calling a pot-sized bet with one pair.",
+      correct: "Pot-sized bluff is correct. You barreled two streets credibly and your range contains the nut flush — a tight recreational with one pair is folding to a polarized river bet at high frequency on this runout.",
+      partial: "Half-pot looks like a blocker bet, not a flush — a tight rec can call that with kings or queens. You need a real commitment to represent the flush you were credibly drawing to all along.",
+      incorrect: "Your range is loaded with nut flush combos that just bricked — a tight recreational knows that and is not calling a pot-sized river bet with one pair. The fold equity here is too good to surrender.",
     },
+}
   },
 
   {
@@ -2343,7 +2346,7 @@ grading: {
     pot: '$80',
     toCall: '$60',
     body: "BTN vs BB nit. River 2♣ on A♦J♣5♠4♥2♣. Nit — who has never bluffed — leads $60 into $80.",
-    question: 'AK (top pair top kicker) on AJ542. Nit leads $60 on the river. Getting 2.33:1. Call or fold?',
+    question: 'AK (top pair top kicker) on AJ542. Nit leads $60 on the river. Getting 2.33:1. Fold, call, or raise?',
     options: [
       { label: 'Fold',   icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $60', icon: '📞', cls: 'call',  val: 'call'  },
@@ -2914,8 +2917,8 @@ grading: {
     board: ['J♥', '9♦', '4♠', 'K♣', '2♥'],
     pot: '$55',
     toCall: null,
-    body: "BB vs BTN aggressive regular. You called preflop, called flop, called turn on J9K. River 2♥ — he checks to you. You have T8s — an OESD that missed.",
-    question: 'T8s missed draw on J94K2 river. Aggressive regular who gives up rivers 70% of the time checks. Bluff or check?',
+    body: "BB vs BTN aggressive regular. You called preflop, called flop, called turn on J9K. River 2♥ — he checks to you. You have T♣8♣ — an OESD that missed.",
+    question: 'T♣8♣ missed draw on J94K2 river. Aggressive regular who gives up rivers 70% of the time checks. Bluff or check?',
     options: [
       { label: 'Check back',                    icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $25 (half-pot bluff)',      icon: '📞', cls: 'call',  val: 'call'  },
@@ -2959,7 +2962,7 @@ grading: {
     pot: '$14',
     toCall: '$9',
     body: "BTN aggressive regular bets $9 on T♣8♣2♦. You have J♣5♣ — a flush draw plus gutshot (potentially 12 outs).",
-    question: 'J5c (flush draw + gutshot, ~12 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. Call or raise?',
+    question: 'J♣5♣ (flush draw + gutshot, ~12 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. Call or raise?',
     options: [
       { label: 'Fold',                icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $9',             icon: '📞', cls: 'call',  val: 'call'  },
@@ -3222,8 +3225,8 @@ grading: {
     board: ['A♥', 'T♦', '4♣', '2♠'],
     pot: '$20',
     toCall: null,
-    body: "BTN vs BB passive player. Flop A♥T♦4♣ — you c-bet, he called. Turn 2♠ — he checks. You have Q9c (gutshot + backdoor flush draw).",
-    question: 'Q9c (gutshot, some backdoor equity) on AT42. Passive player checks turn. Second barrel or give up?',
+    body: "BTN vs BB passive player. Flop A♥T♦4♣ — you c-bet, he called. Turn 2♠ — he checks. You have Q♣9♣ (gutshot + backdoor flush draw).",
+    question: 'Q♣9♣ (gutshot, some backdoor equity) on AT42. Passive player checks turn. Second barrel or give up?',
 options: [
   { label: 'Check back',                   icon: '🃏', cls: 'fold',  val: 'check'  },
   { label: 'Bet $12 (second barrel)',      icon: '📞', cls: 'call',  val: 'barrel' },
@@ -3442,8 +3445,8 @@ grading: {
     board: ['T♠', '8♠', '3♥', 'A♣'],
     pot: '$26',
     toCall: null,
-    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J9d — OESD that picked up an overcard scare. He checks.",
-    question: 'J9d (OESD + two overs) on T83A. Passive player checks the turn after calling the flop. Double barrel or give up?',
+    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J♦9♦ — a gutshot straight draw. He checks.",
+question: 'J♦9♦ (gutshot) on T83A. Passive player checks the turn after calling the flop. Double barrel or give up?',
     options: [
       { label: 'Check back — give up',           icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $16 (second barrel)',        icon: '📞', cls: 'call',  val: 'call'  },
@@ -3530,8 +3533,8 @@ grading: {
     board: ['A♠', 'K♣', 'Q♦', 'J♠'],
     pot: '$18',
     toCall: null,
-    body: "BTN vs BB maniac. Turn A♠K♣Q♦J♠ — a very scary board for most hands. He checks to you. You have 32h — complete air.",
-    question: '32h (pure air) on AKQJ — the scariest possible board. Maniac checks. Bluff or give up?',
+    body: "BTN vs BB maniac. Turn A♠K♣Q♦J♠ — a very scary board for most hands. He checks to you. You have 3♥2♥ — complete air.",
+    question: '3♥2♥ (pure air) on AKQJ — the scariest possible board. Maniac checks. Bluff or give up?',
     options: [
       { label: 'Bet $12 (bluff)',  icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Check back',       icon: '📞', cls: 'call',  val: 'call'  },
