@@ -2187,7 +2187,6 @@ grading: {
   },
 
   {
-{
 
     id: 'sc_052',
     tag: 'Bluff Frequency',
