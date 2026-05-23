@@ -548,3 +548,19 @@ body {
 @keyframes fadeUp  { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse   { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+/* ─── Deal-in animation ───────────────────────────────────────────────────── */
+@keyframes deal-in {
+  from { opacity: 0; transform: translateY(-10px) rotate(-6deg); }
+  to   { opacity: 1; transform: translateY(0) rotate(0deg); }
+}
+
+.deal-in {
+  opacity: 0;
+  animation: deal-in 0.35s ease-out forwards;
+}
+
+/* ─── Combo ring appear ───────────────────────────────────────────────────── */
+@keyframes combo-appear {
+  from { opacity: 0; transform: translateY(-6px) scale(0.95); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
