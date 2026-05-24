@@ -121,6 +121,13 @@ function ComboRing({ combo }) {
   );
 }
 
+// ─── Action sublabels (derived from cls — no scenario data changes needed) ────
+const ACTION_SUBLABELS = {
+  fold:  'Give up the hand',
+  call:  'Match the bet',
+  raise: 'Apply pressure',
+};
+
 // ─── Utility ──────────────────────────────────────────────────────────────
 
 function getFilteredScenarios(difficulty) {
@@ -350,18 +357,25 @@ export default function App() {
                 totalSeconds={TIMER_SECONDS}
                 correctCount={correctCount}
               />
-              <div className="actions">
-                {scenario.options.map((opt) => (
-                  <button
-                    key={opt.val}
-                    className={`act-btn ${opt.cls}`}
-                    onClick={() => handleDecision(opt.val)}
-                    disabled={decided}
-                  >
-                    <div className="act-icon">{opt.icon}</div>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
+              <div className="actions-panel">
+                <div className="actions">
+                  {scenario.options.map((opt) => (
+                    <button
+                      key={opt.val}
+                      className={`act-btn ${opt.cls}`}
+                      onClick={() => handleDecision(opt.val)}
+                      disabled={decided}
+                    >
+                      <div className="act-icon">{opt.icon}</div>
+                      <div className="act-btn-content">
+                        <div className="act-btn-label">{opt.label}</div>
+                        {ACTION_SUBLABELS[opt.cls] && (
+                          <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
               {feedback && (
                 <>
