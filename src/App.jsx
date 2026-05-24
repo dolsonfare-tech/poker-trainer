@@ -368,10 +368,17 @@ export default function App() {
                     >
                       <div className="act-icon">{opt.icon}</div>
                       <div className="act-btn-content">
-                        <div className="act-btn-label">{opt.label}</div>
-{ACTION_SUBLABELS[opt.cls] && opt.val === opt.cls && (
-  <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
-)}
+                        <div className="act-btn-label">
+                          {opt.label.includes('(') ? opt.label.slice(0, opt.label.indexOf('(')).trim() : opt.label}
+                        </div>
+                        {opt.label.includes('(') && (
+                          <div className="act-btn-sublabel" style={{ color: '#3a3a3a' }}>
+                            {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
+                          </div>
+                        )}
+                        {!opt.label.includes('(') && ACTION_SUBLABELS[opt.cls] && opt.val === opt.cls && (
+                          <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
+                        )}
                       </div>
                     </button>
                   ))}
