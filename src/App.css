@@ -582,10 +582,10 @@ body {
 /* ─── Your Hand label ─────────────────────────────────────────────────────── */
 .hand-label {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.5rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--cream-faint);
+  color: rgba(242,237,227,0.65);
   text-align: center;
   margin: 12px 0 5px;
   position: relative;
