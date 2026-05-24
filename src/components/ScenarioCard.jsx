@@ -1,5 +1,24 @@
 import PlayingCard from './PlayingCard';
 
+// ─── Hand name derivation ──────────────────────────────────────────────────
+
+const RANK_NAMES = {
+  'A': 'Ace', 'K': 'King', 'Q': 'Queen', 'J': 'Jack',
+  'T': 'Ten', '9': 'Nine', '8': 'Eight', '7': 'Seven',
+  '6': 'Six', '5': 'Five', '4': 'Four', '3': 'Three', '2': 'Two',
+};
+
+function getHandName(hand) {
+  const [c1, c2] = hand;
+  const r1 = c1.r;
+  const r2 = c2.r;
+  const suited = c1.s === c2.s;
+  if (r1 === r2) {
+    return `Pocket ${RANK_NAMES[r1]}s`;
+  }
+  return `${RANK_NAMES[r1]}-${RANK_NAMES[r2]} ${suited ? 'Suited' : 'Offsuit'}`;
+}
+
 // ─── Timer Ring ────────────────────────────────────────────────────────────
 
 function TimerRing({ seconds, totalSeconds }) {
@@ -55,11 +74,28 @@ function VillainBadge({ villain }) {
   );
 }
 
+// ─── Blank card placeholder ────────────────────────────────────────────────
+
+function BlankCard({ small }) {
+  return (
+    <div className={`playing-card blank-card ${small ? 'sm' : ''}`}>
+      <span className="c-rank" style={{ opacity: 0.18, fontSize: small ? '0.7rem' : '0.9rem' }}>—</span>
+    </div>
+  );
+}
+
 // ─── Table Visual ──────────────────────────────────────────────────────────
 
 function TableVisual({ scenario }) {
   const isRed = (str) => str.includes('♥') || str.includes('♦');
   const boardCount = scenario.board ? scenario.board.length : 0;
+
+  // Determine street and how many placeholder cards to show
+  // Flop = 3 cards, show 2 blanks (turn + river)
+  // Turn = 4 cards, show 1 blank (river)
+  // River = 5 cards, show 0 blanks
+  const totalBoardSlots = 5;
+  const blankCount = scenario.board ? Math.max(0, totalBoardSlots - boardCount) : 0;
 
   return (
     <div className="table-wrap">
@@ -85,9 +121,17 @@ function TableVisual({ scenario }) {
                 animDelay={`${i * 0.12}s`}
               />
             ))}
+            {Array.from({ length: blankCount }, (_, i) => (
+              <BlankCard key={`blank-${i}`} small />
+            ))}
           </div>
         </>
       )}
+
+      {/* Your Hand label + cards */}
+      <div className="hand-label">
+        Your Hand · <span>{getHandName(scenario.hand)}</span>
+      </div>
       <div className="cards-row">
         {scenario.hand.map((card, i) => (
           <PlayingCard
@@ -99,6 +143,7 @@ function TableVisual({ scenario }) {
           />
         ))}
       </div>
+
       <div className="pot-info">
         Pot: <span>{scenario.pot}</span>
         {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
@@ -107,20 +152,40 @@ function TableVisual({ scenario }) {
   );
 }
 
+// ─── Session progress bar ──────────────────────────────────────────────────
+
+function SessionProgress({ currentIndex, total, correctCount }) {
+  return (
+    <div className="session-progress">
+      <span>Hand <strong>{currentIndex + 1}</strong> / {total}</span>
+      <span className="progress-divider">·</span>
+      <span><strong className="correct-count">{correctCount}</strong> correct</span>
+    </div>
+  );
+}
+
 // ─── Scenario Card ─────────────────────────────────────────────────────────
 
-export default function ScenarioCard({ scenario, currentIndex, total, timerSeconds, totalSeconds }) {
+export default function ScenarioCard({
+  scenario, currentIndex, total,
+  timerSeconds, totalSeconds,
+  correctCount,
+}) {
   return (
     <div className="scenario-card">
       <div className="card-meta">
         <div className="skill-tag">{scenario.tag}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <TimerRing seconds={timerSeconds} totalSeconds={totalSeconds} />
-          <div className="scenario-counter">{currentIndex + 1} / {total}</div>
+          <SessionProgress
+            currentIndex={currentIndex}
+            total={total}
+            correctCount={correctCount}
+          />
         </div>
       </div>
       <VillainBadge villain={scenario.villain} />
-<TableVisual scenario={scenario} key={currentIndex} />
+      <TableVisual scenario={scenario} key={currentIndex} />
       <p className="scenario-body">{scenario.body}</p>
       <p className="scenario-q">{scenario.question}</p>
     </div>

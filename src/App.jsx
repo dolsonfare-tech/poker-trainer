@@ -158,6 +158,7 @@ export default function App() {
   const [timerSeconds, setTimerSeconds]         = useState(TIMER_SECONDS);
   const [timedOut, setTimedOut]                 = useState(false);
   const [combo, setCombo]                       = useState(0);
+  const [correctCount, setCorrectCount]         = useState(0);
   const timerRef                                = useRef(null);
   // Keep a ref to current scenario index so the timeout handler always has fresh value
   const currentIndexRef                         = useRef(0);
@@ -226,6 +227,7 @@ export default function App() {
     setShuffledScenarios(scenarios);
     shuffledRef.current = scenarios;
     setCombo(0);
+    setCorrectCount(0);
     setSessionXP(0);
     setXpData(null);
     setScreen('session');
@@ -253,6 +255,7 @@ export default function App() {
     setSessionXP(prev => prev + earned);
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
+      setCorrectCount(prev => prev + 1);
     } else {
       setCombo(0);
     }
@@ -295,6 +298,7 @@ export default function App() {
     setTimerSeconds(TIMER_SECONDS);
     setTimedOut(false);
     setCombo(0);
+    setCorrectCount(0);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -344,6 +348,7 @@ export default function App() {
                 total={shuffledScenarios.length}
                 timerSeconds={timerSeconds}
                 totalSeconds={TIMER_SECONDS}
+                correctCount={correctCount}
               />
               <div className="actions">
                 {scenario.options.map((opt) => (
