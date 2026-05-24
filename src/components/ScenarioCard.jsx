@@ -19,6 +19,16 @@ function getHandName(hand) {
   return `${RANK_NAMES[r1]}-${RANK_NAMES[r2]} ${suited ? 'Suited' : 'Offsuit'}`;
 }
 
+
+// ─── Street indicator ──────────────────────────────────────────────────────
+
+function getStreet(board) {
+  if (!board || board.length === 0) return 'Preflop';
+  if (board.length === 3) return 'Flop';
+  if (board.length === 4) return 'Turn';
+  return 'River';
+}
+
 // ─── Timer Ring ────────────────────────────────────────────────────────────
 
 function TimerRing({ seconds, totalSeconds }) {
@@ -187,6 +197,11 @@ export default function ScenarioCard({
       <VillainBadge villain={scenario.villain} />
       <TableVisual scenario={scenario} key={currentIndex} />
       <p className="scenario-body">{scenario.body}</p>
+      <hr className="scenario-divider" />
+      <div className="scenario-street">
+        Decision <span>·</span> {getStreet(scenario.board)}
+        {scenario.toCall && <><span>·</span> Pot <span style={{ color: 'var(--gold)', opacity: 1 }}>{scenario.pot}</span></>}
+      </div>
       <p className="scenario-q">{scenario.question}</p>
     </div>
   );

@@ -301,17 +301,40 @@ body {
 
 /* ── Scenario Text ── */
 .scenario-body {
-  font-size: 0.88rem;
-  line-height: 1.72;
-  color: var(--cream-dim);
-  margin-bottom: 6px;
+  font-size: 0.9rem;
+  line-height: 1.75;
+  color: rgba(242,237,227,0.82);
+  margin-bottom: 0;
 }
 
+.scenario-divider {
+  border: none;
+  border-top: 1px solid rgba(200,168,75,0.12);
+  margin: 14px 0;
+}
+
+.scenario-street {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.35);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scenario-street span { color: var(--gold); opacity: 0.7; }
+
 .scenario-q {
-  font-style: italic;
-  font-size: 1rem;
+  font-style: normal;
+  font-size: 1.15rem;
+  font-weight: 700;
   color: var(--cream);
-  margin-top: 12px;
+  line-height: 1.35;
+  margin-top: 0;
+  letter-spacing: -0.01em;
 }
 
 /* ── Action Buttons ── */
