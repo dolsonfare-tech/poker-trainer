@@ -369,9 +369,9 @@ export default function App() {
                       <div className="act-icon">{opt.icon}</div>
                       <div className="act-btn-content">
                         <div className="act-btn-label">{opt.label}</div>
-                        {ACTION_SUBLABELS[opt.cls] && (
-                          <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
-                        )}
+{ACTION_SUBLABELS[opt.cls] && opt.val === opt.cls && (
+  <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
+)}
                       </div>
                     </button>
                   ))}
