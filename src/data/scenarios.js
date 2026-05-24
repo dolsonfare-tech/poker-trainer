@@ -1035,8 +1035,8 @@ feedback: {
     board: ['K♠', '5♦', '3♣'],
     pot: '$18',
     toCall: '$9',
-    body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 7♥6♥ — an OESD.",
-    question: '7♥6♥ on K53 — open-ended straight draw (8 outs). Getting 3:1 pot odds ($9 to win $27). Call or fold?',
+body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 7♥6♥ — a double gutshot straight draw.",
+question: '7♥6♥ on K53 — double gutshot (8 outs). Getting 3:1 pot odds ($9 to win $27). Call or fold?',
     options: [
       { label: 'Fold',               icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Call $9',            icon: '📞', cls: 'call',  val: 'call'  },
@@ -2520,7 +2520,8 @@ grading: {
     pot: '$30',
     toCall: null,
 body: "You raised CO, loose recreational BB called. Turn A♣9♥8♦7♦. You have top pair top kicker. He checks.",
-question: 'AK on A987 — a connected board. Loose rec checks. What size do you bet for value and protection?',    options: [
+question: 'AK on A987 — a connected board. Loose rec checks. What size do you bet for value and protection?',    
+options: [
       { label: 'Check — too dangerous',      icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $15 (half pot)',         icon: '📞', cls: 'call',  val: 'call'  },
       { label: 'Bet $30 (pot)',              icon: '⚡', cls: 'raise', val: 'raise' },
