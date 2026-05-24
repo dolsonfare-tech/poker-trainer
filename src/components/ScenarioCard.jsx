@@ -82,7 +82,7 @@ function TableVisual({ scenario }) {
                 suit={card.slice(-1)}
                 color={isRed(card) ? 'red' : 'black'}
                 small
-                animDelay={`${i * 0.08}s`}
+                animDelay={`${i * 0.12}s`}
               />
             ))}
           </div>
@@ -95,7 +95,7 @@ function TableVisual({ scenario }) {
             rank={card.r}
             suit={card.s}
             color={card.c}
-            animDelay={`${(boardCount * 0.08) + (i * 0.08)}s`}
+            animDelay={`${(boardCount * 0.12) + (i * 0.12)}s`}
           />
         ))}
       </div>

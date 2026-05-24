@@ -556,7 +556,7 @@ body {
 
 .deal-in {
   opacity: 0;
-  animation: deal-in 0.35s ease-out forwards;
+  animation: deal-in 0.5s ease-out forwards;
 }
 
 /* ─── Combo ring appear ───────────────────────────────────────────────────── */
