@@ -2519,9 +2519,8 @@ grading: {
     board: ['A♣', '9♥', '8♦', '7♦'],
     pot: '$30',
     toCall: null,
-    body: "You raised CO, loose recreational BB called. Turn A♣9♥8♦7♦ — a very wet board. You have TPTK. He checks.",
-    question: 'AK on A987 two-tone (flush draw + straight possible). Loose rec checks. How do you size for value and protection?',
-    options: [
+body: "You raised CO, loose recreational BB called. Turn A♣9♥8♦7♦. You have top pair top kicker. He checks.",
+question: 'AK on A987 — a connected board. Loose rec checks. What size do you bet for value and protection?',    options: [
       { label: 'Check — too dangerous',      icon: '🃏', cls: 'fold',  val: 'fold'  },
       { label: 'Bet $15 (half pot)',         icon: '📞', cls: 'call',  val: 'call'  },
       { label: 'Bet $30 (pot)',              icon: '⚡', cls: 'raise', val: 'raise' },
