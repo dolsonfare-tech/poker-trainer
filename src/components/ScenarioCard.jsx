@@ -120,7 +120,7 @@ export default function ScenarioCard({ scenario, currentIndex, total, timerSecon
         </div>
       </div>
       <VillainBadge villain={scenario.villain} />
-      <TableVisual scenario={scenario} />
+<TableVisual scenario={scenario} key={currentIndex} />
       <p className="scenario-body">{scenario.body}</p>
       <p className="scenario-q">{scenario.question}</p>
     </div>
