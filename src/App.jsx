@@ -372,7 +372,7 @@ export default function App() {
                           {opt.label.includes('(') ? opt.label.slice(0, opt.label.indexOf('(')).trim() : opt.label}
                         </div>
                         {opt.label.includes('(') && (
-                          <div className="act-btn-sublabel" style={{ color: '#3a3a3a' }}>
+                          <div className="act-btn-sublabel" style={{ color: '#1a1a1a' }}>
                             {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
                           </div>
                         )}
