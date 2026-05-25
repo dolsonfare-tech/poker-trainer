@@ -8,6 +8,7 @@ import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
+import Dashboard from './components/Dashboard';
 
 // ─── Streak & XP helpers (localStorage) ───────────────────────────────────
 
@@ -55,39 +56,6 @@ function calcStreakAndXP(stats, sessionXP) {
   return { xp: totalXP, streak: newStreak, lastSessionDate: today, sessionXP, streakBonus };
 }
 
-// ─── Streak badge shown in header ─────────────────────────────────────────
-
-function StreakBadge({ streak, xp }) {
-  if (!streak && !xp) return null;
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      gap: '10px', marginTop: '10px', flexWrap: 'wrap',
-    }}>
-      {streak > 0 && (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '5px',
-          background: 'rgba(240,165,0,0.12)', border: '1px solid rgba(240,165,0,0.25)',
-          borderRadius: '20px', padding: '4px 12px',
-          fontFamily: "'Courier New', Courier, monospace", fontSize: '0.62rem',
-          letterSpacing: '0.08em', color: 'var(--yellow)',
-        }}>
-          🔥 {streak}-day streak
-        </div>
-      )}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '5px',
-        background: 'rgba(200,168,75,0.1)', border: '1px solid rgba(200,168,75,0.22)',
-        borderRadius: '20px', padding: '4px 12px',
-        fontFamily: "'Courier New', Courier, monospace", fontSize: '0.62rem',
-        letterSpacing: '0.08em', color: 'var(--gold)',
-      }}>
-        ⚡ {xp.toLocaleString()} XP
-      </div>
-    </div>
-  );
-}
-
 // ─── Combo Ring ────────────────────────────────────────────────────────────
 
 function ComboRing({ combo }) {
@@ -121,7 +89,7 @@ function ComboRing({ combo }) {
   );
 }
 
-// ─── Action sublabels (derived from cls — no scenario data changes needed) ────
+// ─── Action sublabels ──────────────────────────────────────────────────────
 const ACTION_SUBLABELS = {
   fold:  'Give up the hand',
   call:  'Match the bet',
@@ -148,32 +116,31 @@ function ProgressDots({ total, current }) {
 // ─── Main App ──────────────────────────────────────────────────────────────
 
 export default function App() {
-  const [showVillainGuide, setShowVillainGuide] = useState(false);
-  const [screen, setScreen]                     = useState('difficulty');
-  const [difficulty, setDifficulty]             = useState('beginner');
-  const [shuffledScenarios, setShuffledScenarios] = useState([]);
-  const [currentIndex, setCurrentIndex]         = useState(0);
-  const [skillResults, setSkillResults]         = useState({});
-  const [decided, setDecided]                   = useState(false);
-  const [feedback, setFeedback]                 = useState(null);
-  const [showSummary, setShowSummary]           = useState(false);
-  const [coachRead, setCoachRead]               = useState('');
-  const [coachLoading, setCoachLoading]         = useState(false);
-  const [stats, setStats]                       = useState(() => loadStats());
-  const [sessionXP, setSessionXP]               = useState(0);
-  const [xpData, setXpData]                     = useState(null);
-  const [timerSeconds, setTimerSeconds]         = useState(TIMER_SECONDS);
-  const [timedOut, setTimedOut]                 = useState(false);
-  const [combo, setCombo]                       = useState(0);
-  const [correctCount, setCorrectCount]         = useState(0);
-  const timerRef                                = useRef(null);
-  // Keep a ref to current scenario index so the timeout handler always has fresh value
-  const currentIndexRef                         = useRef(0);
-  const shuffledRef                             = useRef([]);
+  const [showVillainGuide, setShowVillainGuide]     = useState(false);
+  // screens: 'dashboard' | 'difficulty' | 'session'
+  const [screen, setScreen]                         = useState('dashboard');
+  const [difficulty, setDifficulty]                 = useState('beginner');
+  const [shuffledScenarios, setShuffledScenarios]   = useState([]);
+  const [currentIndex, setCurrentIndex]             = useState(0);
+  const [skillResults, setSkillResults]             = useState({});
+  const [decided, setDecided]                       = useState(false);
+  const [feedback, setFeedback]                     = useState(null);
+  const [showSummary, setShowSummary]               = useState(false);
+  const [coachRead, setCoachRead]                   = useState('');
+  const [coachLoading, setCoachLoading]             = useState(false);
+  const [stats, setStats]                           = useState(() => loadStats());
+  const [sessionXP, setSessionXP]                   = useState(0);
+  const [xpData, setXpData]                         = useState(null);
+  const [timerSeconds, setTimerSeconds]             = useState(TIMER_SECONDS);
+  const [timedOut, setTimedOut]                     = useState(false);
+  const [combo, setCombo]                           = useState(0);
+  const [correctCount, setCorrectCount]             = useState(0);
+  const timerRef                                    = useRef(null);
+  const currentIndexRef                             = useRef(0);
+  const shuffledRef                                 = useRef([]);
 
   const scenario = shuffledScenarios[currentIndex];
 
-  // Keep refs in sync
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { shuffledRef.current = shuffledScenarios; }, [shuffledScenarios]);
 
@@ -185,14 +152,14 @@ export default function App() {
     }
   };
 
-const handleTimeout = useCallback(() => {
+  const handleTimeout = useCallback(() => {
     clearTimer();
     const s = shuffledRef.current[currentIndexRef.current];
     if (!s) return;
     setTimedOut(true);
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [s.skill]: 'incorrect' }));
-    setSessionXP(prev => prev + 0); // timeout = 0 XP
+    setSessionXP(prev => prev + 0);
     setCombo(0);
     const correctGrading = s.grading[s.correct];
     setFeedback({
@@ -209,16 +176,12 @@ const handleTimeout = useCallback(() => {
     setTimedOut(false);
     timerRef.current = setInterval(() => {
       setTimerSeconds(prev => {
-        if (prev <= 1) {
-          handleTimeout();
-          return 0;
-        }
+        if (prev <= 1) { handleTimeout(); return 0; }
         return prev - 1;
       });
     }, 1000);
   }, [handleTimeout]);
 
-  // Start timer when a new scenario loads
   useEffect(() => {
     if (screen === 'session' && !showSummary && shuffledScenarios.length > 0 && !decided) {
       startTimer();
@@ -226,8 +189,13 @@ const handleTimeout = useCallback(() => {
     return clearTimer;
   }, [currentIndex, screen, showSummary]); // eslint-disable-line
 
-  // Clean up on unmount
   useEffect(() => clearTimer, []);
+
+  // ── Navigation ──
+  const handleStartSession = () => {
+    setScreen('difficulty');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleDifficultySelect = (selected) => {
     setDifficulty(selected);
@@ -293,7 +261,7 @@ const handleTimeout = useCallback(() => {
 
   const handleRestart = () => {
     clearTimer();
-    setScreen('difficulty');
+    setScreen('dashboard');
     setCurrentIndex(0);
     setSkillResults({});
     setDecided(false);
@@ -313,10 +281,16 @@ const handleTimeout = useCallback(() => {
 
   return (
     <div className="app">
+      {/* Header — shown on all screens */}
       <div className="header" style={{ position: 'relative' }}>
-        <div className="logo">Check<em>Raise</em></div>
+        <div
+          className="logo"
+          style={{ cursor: screen !== 'dashboard' ? 'pointer' : 'default' }}
+          onClick={() => screen !== 'dashboard' && handleRestart()}
+        >
+          Check<em>Raise</em>
+        </div>
         <div className="tagline">AI-Powered Skill Training</div>
-        <StreakBadge streak={stats.streak} xp={stats.xp} />
         <button
           onClick={() => setShowVillainGuide(true)}
           style={{
@@ -332,9 +306,18 @@ const handleTimeout = useCallback(() => {
 
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
-      {screen === 'difficulty' ? (
+      {/* ── Dashboard ── */}
+      {screen === 'dashboard' && (
+        <Dashboard onStartSession={handleStartSession} stats={stats} />
+      )}
+
+      {/* ── Difficulty selector ── */}
+      {screen === 'difficulty' && (
         <DifficultySelector onSelect={handleDifficultySelect} />
-      ) : (
+      )}
+
+      {/* ── Session ── */}
+      {screen === 'session' && (
         <>
           <SkillTracker skillResults={skillResults} />
 

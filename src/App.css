@@ -763,4 +763,378 @@ body {
   text-transform: uppercase;
   color: rgba(30,30,30,0.4);
   flex-shrink: 0;
+}/* ═══════════════════════════════════════════════════════════════════════════
+   DASHBOARD
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.dashboard {
+  padding-top: 8px;
+  animation: fadeUp 0.4s ease;
 }
+
+/* ── Top bar ── */
+.db-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.db-account-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 24px;
+  padding: 5px 12px 5px 5px;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.db-account-btn:hover {
+  background: rgba(255,255,255,0.09);
+}
+
+.db-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: var(--felt-dark);
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.db-username {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: var(--cream-dim);
+  text-transform: uppercase;
+}
+
+/* Plan pill */
+.db-plan-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 24px;
+  padding: 5px 5px 5px 12px;
+}
+
+.db-plan-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.4);
+}
+
+.db-gopro-btn {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 18px;
+  padding: 5px 12px;
+  font-family: Georgia, serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--felt-dark);
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.18s;
+}
+
+.db-gopro-btn:hover { opacity: 0.88; }
+
+/* ── Streak warning ── */
+.db-streak-warning {
+  background: rgba(240,165,0,0.1);
+  border: 1px solid rgba(240,165,0,0.25);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  color: var(--yellow);
+  text-align: center;
+  animation: pulse 2s ease infinite;
+}
+
+/* ── Hero: streak + rank ── */
+.db-hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  background: rgba(27,61,42,0.55);
+  border: 1px solid rgba(200,168,75,0.18);
+  border-radius: var(--radius-lg);
+  padding: 24px 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+.db-streak-block,
+.db-rank-block {
+  flex: 1;
+  text-align: center;
+  position: relative;
+}
+
+.db-streak-number,
+.db-rank-number {
+  font-size: 3.2rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 40px rgba(200,168,75,0.35);
+  font-family: Georgia, serif;
+  letter-spacing: -0.03em;
+}
+
+.db-streak-label,
+.db-rank-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+  margin-top: 5px;
+}
+
+.db-streak-flame {
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  font-size: 1.2rem;
+  animation: flicker 1.8s ease infinite alternate;
+}
+
+@keyframes flicker {
+  from { transform: scale(1) rotate(-3deg); opacity: 0.85; }
+  to   { transform: scale(1.12) rotate(3deg); opacity: 1; }
+}
+
+.db-divider {
+  width: 1px;
+  height: 48px;
+  background: rgba(200,168,75,0.15);
+  margin: 0 8px;
+  flex-shrink: 0;
+}
+
+/* ── CTA button ── */
+.db-cta-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(200,168,75,0.22), rgba(200,168,75,0.1));
+  border: 1px solid rgba(200,168,75,0.4);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  color: var(--gold);
+  font-family: Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  margin-bottom: 24px;
+  transition: all 0.18s ease;
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+.db-cta-btn.db-cta-pulse {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.4s ease, transform 0.4s ease, background 0.18s ease;
+}
+
+.db-cta-btn:hover {
+  background: linear-gradient(135deg, rgba(200,168,75,0.32), rgba(200,168,75,0.18));
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(200,168,75,0.15);
+}
+
+.db-cta-arrow {
+  font-size: 1.1rem;
+  transition: transform 0.18s;
+}
+
+.db-cta-btn:hover .db-cta-arrow {
+  transform: translateX(4px);
+}
+
+/* ── Sections ── */
+.db-section {
+  margin-bottom: 20px;
+}
+
+.db-section-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+  margin-bottom: 10px;
+  padding-left: 2px;
+}
+
+/* ── Skill dots grid ── */
+.db-skills-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.db-skill-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-sm);
+  padding: 12px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+
+.db-skill-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: background 0.4s, box-shadow 0.4s;
+}
+
+.db-skill-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream-faint);
+  text-align: center;
+}
+
+/* ── Schema card ── */
+.db-schema-card {
+  background: rgba(27,61,42,0.55);
+  border: 1px solid rgba(200,168,75,0.22);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+}
+
+.db-schema-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gold);
+  font-family: Georgia, serif;
+}
+
+.db-schema-locked {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.db-schema-lock-icon {
+  font-size: 1.4rem;
+  opacity: 0.4;
+}
+
+.db-schema-lock-text {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  color: var(--cream-faint);
+  line-height: 1.5;
+}
+
+.db-schema-progress {
+  width: 100%;
+  height: 3px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.db-schema-progress-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width 0.6s ease;
+}
+
+/* ── Leaderboard ── */
+.db-leaderboard {
+  background: rgba(27,61,42,0.4);
+  border: 1px solid rgba(200,168,75,0.12);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.db-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.15s;
+}
+
+.db-lb-row:last-child { border-bottom: none; }
+
+.db-lb-row-you {
+  background: rgba(200,168,75,0.08);
+  border-left: 2px solid var(--gold);
+}
+
+.db-lb-rank {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  color: var(--cream-faint);
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.db-lb-row-you .db-lb-rank { color: var(--gold); }
+
+.db-lb-name {
+  flex: 1;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  color: var(--cream-dim);
+}
+
+.db-lb-row-you .db-lb-name {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.db-lb-streak {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.58rem;
+  color: var(--cream-faint);
+  letter-spacing: 0.05em;
+}
+
+.db-lb-row-you .db-lb-streak { color: var(--yellow); }
