@@ -146,7 +146,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
       {/* Question */}
       <p className="dp-question">{scenario.question}</p>
 
-      {/* You Hold */}
+{/* You Hold */}
       <div className="dp-you-hold">
         <div className="dp-you-hold-cards">
           {scenario.hand.map((card, i) => (
@@ -159,12 +159,12 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
         <div className="dp-you-hold-info">
           <div className="dp-you-hold-label">You Hold</div>
           {/* HARDCODED hand name — replace with scenario.handDescription in Phase 2 */}
-          <div className="dp-you-hold-name">
-            {getHandName(scenario.hand)}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div className="dp-you-hold-name">{getHandName(scenario.hand)}</div>
+            {POSITION_INFO[heroPos] && (
+              <div className="dp-position-info">{POSITION_INFO[heroPos]}</div>
+            )}
           </div>
-          {POSITION_INFO[heroPos] && (
-            <div className="dp-position-info">{POSITION_INFO[heroPos]}</div>
-          )}
         </div>
       </div>
 
@@ -174,10 +174,12 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
           <span className="dp-vr-icon">⚑</span>
           <span className="dp-vr-label">Villain Read</span>
         </div>
-        <div className="dp-vr-name">{scenario.villain.label}</div>
-        {POSITION_INFO[villainPos] && (
-          <div className="dp-position-info">{POSITION_INFO[villainPos]}</div>
-        )}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="dp-vr-name">{scenario.villain.label}</div>
+          {POSITION_INFO[villainPos] && (
+            <div className="dp-position-info">{POSITION_INFO[villainPos]}</div>
+          )}
+        </div>
         {scenario.villain.notes && (
           <div className="dp-vr-notes">{scenario.villain.notes}</div>
         )}

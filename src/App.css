@@ -762,5 +762,5 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(30,30,30,0.4);
-  margin-top: 3px;
+  flex-shrink: 0;
 }
