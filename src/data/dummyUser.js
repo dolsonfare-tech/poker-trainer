@@ -57,7 +57,7 @@ const DUMMY_USER = {
     total: 1247,
     top: [
       { rank: 1, name: 'Dave245',     streak: 41 },
-      { rank: 2, name: 'RichTone101', streak: 38 },
+      { rank: 2, name: 'TFETonerichguy', streak: 38 },
       { rank: 3, name: 'homegymislife24x7',    streak: 29 },
     ],
   },
