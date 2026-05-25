@@ -131,6 +131,8 @@ function SessionProgress({ currentIndex, total, correctCount }) {
 
 function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels }) {
   const street = getStreet(scenario.board);
+  const heroPos = scenario.positions.find(p => p.state === 'hero')?.label?.split(' ')[0];
+  const villainPos = scenario.positions.find(p => p.state === 'active')?.label?.split(' ')[0];
 
   return (
     <div className="decision-panel">
@@ -144,7 +146,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
       {/* Question */}
       <p className="dp-question">{scenario.question}</p>
 
-{/* You Hold */}
+      {/* You Hold */}
       <div className="dp-you-hold">
         <div className="dp-you-hold-cards">
           {scenario.hand.map((card, i) => (
@@ -236,10 +238,6 @@ export default function ScenarioCard({
 
       {/* Cream decision section */}
       <DecisionPanel
-      function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels }) {
-  const street = getStreet(scenario.board);
-  const heroPos = scenario.positions.find(p => p.state === 'hero')?.label?.split(' ')[0];
-  const villainPos = scenario.positions.find(p => p.state === 'active')?.label?.split(' ')[0];
         scenario={scenario}
         options={options}
         onDecision={onDecision}
