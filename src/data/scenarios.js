@@ -1027,7 +1027,7 @@ const SCENARIOS = [
     pot: '$40',
     toCall: null,
     body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♥3♦. BB checks.',
-    question: 'A♦5♦ — nut flush draw + overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
+    question: 'A♦5♦ — overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
     correct: 'semi_bluff',
     choices: [
       {
@@ -1188,7 +1188,7 @@ const SCENARIOS = [
       5: { label: 'BB (You)',  action: '???',    state: 'hero'   },
     }),
     hand: mkHand(['T','♠'], ['T','♦']),
-    board: ['7♣', '5♦', '2♠'],
+    board: ['7♣', '5♦', '2♠', '3♦', 'J♥'],
     pot: '$20',
     toCall: '$14',
     body: 'BB raised preflop. SB passive player called. Flop 7♣5♦2♠. BB checks. SB checks. Turn is 3♦. SB checks. River J♥. SB suddenly bets $14.',
@@ -3041,20 +3041,20 @@ const SCENARIOS = [
     toCall: null,
     body: "CO vs BB passive player. River T♦ on A♦K♥9♠3♣T♦. You have top set. He checks.",
     question: 'Top set (AA) on AK93T river vs passive player who calls medium bets. He checks. What size?',
-    correct: 'fold',
+correct: 'bet_medium',
     choices: [
       {
-        val: 'fold', label: 'Bet $35 (medium)', icon: '🃏', cls: 'fold',
+        val: 'bet_medium', label: 'Bet $35 (medium)', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Medium Value Extracts Most from Passive Player', emoji: '✅',
         fb: "Medium bet is correct. A passive player calls top pair and two pair with medium bets and folds to overbets. Three streets of $35 extracts more than one street of $130 — keep him in the hand.",
       },
       {
-        val: 'call', label: 'Bet $80 (pot)', icon: '📞', cls: 'call',
+        val: 'bet_large', label: 'Bet $80 (pot)', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Pot May Fold His Top Pair', emoji: '⚠️',
         fb: "Pot-sizing folds out a passive player's top pair and marginal holdings. He needs a reason to call a big bet — medium sizing keeps his weaker hands in and maximizes the number of streets he pays you.",
       },
       {
-        val: 'raise', label: 'Bet $130 (overbet)', icon: '⚡', cls: 'raise',
+        val: 'overbet', label: 'Bet $130 (overbet)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Overbet Folds Everything But the Nuts', emoji: '⚠️',
         fb: "Overbetting a passive player extracts only from his strongest hands. He's folding KK, top pair, everything below two pair — you're leaving massive value on the table against a player built to call medium bets.",
       },
