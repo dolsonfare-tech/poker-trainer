@@ -12,7 +12,7 @@ const mkHand = (...pairs) =>
  * Any seat not listed defaults to folded.
  * Default labels: UTG, HJ, CO, BTN, SB, BB — override by passing `label`.
  */
-const DEFAULT_LABELS = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+const DEFAULT_LABELS = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
 const mkPositions = (seats) =>
   DEFAULT_LABELS.map((defaultLabel, i) =>
     seats[i]

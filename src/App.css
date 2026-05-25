@@ -215,10 +215,10 @@ body {
 
 .pos-name {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 0.5rem;
+  font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--cream-faint);
+  color: rgba(242,237,227,0.55);
   margin-bottom: 3px;
 }
 

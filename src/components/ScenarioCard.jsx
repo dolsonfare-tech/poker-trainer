@@ -98,10 +98,10 @@ function TableVisual({ scenario }) {
             animDelay={`${(boardCount * 0.12) + (i * 0.12)}s`} />
         ))}
       </div>
-      <div className="pot-info">
-        Pot: <span>{scenario.pot}</span>
-        {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
-      </div>
+<div className="pot-info" style={{ fontSize: '0.85rem', letterSpacing: '0.08em', marginTop: '14px' }}>
+  Pot: <span>{scenario.pot}</span>
+  {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
+</div>
     </div>
   );
 }
