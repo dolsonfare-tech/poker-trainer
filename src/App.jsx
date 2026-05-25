@@ -185,7 +185,7 @@ export default function App() {
     }
   };
 
-  const handleTimeout = useCallback(() => {
+const handleTimeout = useCallback(() => {
     clearTimer();
     const s = shuffledRef.current[currentIndexRef.current];
     if (!s) return;
@@ -200,6 +200,7 @@ export default function App() {
       loading: false,
       text: s.feedback.correct,
     });
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, []);
 
   const startTimer = useCallback(() => {
