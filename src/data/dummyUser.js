@@ -37,9 +37,9 @@ const DUMMY_USER = {
 
   // ── Leaderboard (global, hardcoded for Phase 1.5) ─────────────────────
   leaderboard: [
-    { rank: 1,  name: 'FoldEquity',    streak: 41, isUser: false },
-    { rank: 2,  name: 'TexasBluff88',  streak: 38, isUser: false },
-    { rank: 3,  name: 'RiverRat_KC',   streak: 0,  isUser: true  },
+    { rank: 1,  name: 'Dave245',    streak: 41, isUser: false },
+    { rank: 2,  name: 'RichTone101',  streak: 38, isUser: false },
+    { rank: 3,  name: 'Cyrus_homegym',   streak: 0,  isUser: true  },
     { rank: 4,  name: 'NitPickr',      streak: 29, isUser: false },
     { rank: 5,  name: 'PotOddsOnly',   streak: 24, isUser: false },
     { rank: 6,  name: 'CheckRaiser',   streak: 19, isUser: false },
