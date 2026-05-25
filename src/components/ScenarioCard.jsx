@@ -10,15 +10,11 @@ const RANK_NAMES = {
 
 function getHandName(hand) {
   const [c1, c2] = hand;
-  const r1 = c1.r;
-  const r2 = c2.r;
+  const r1 = c1.r; const r2 = c2.r;
   const suited = c1.s === c2.s;
-  if (r1 === r2) {
-    return `Pocket ${RANK_NAMES[r1]}s`;
-  }
+  if (r1 === r2) return `Pocket ${RANK_NAMES[r1]}s`;
   return `${RANK_NAMES[r1]}-${RANK_NAMES[r2]} ${suited ? 'Suited' : 'Offsuit'}`;
 }
-
 
 // ─── Street indicator ──────────────────────────────────────────────────────
 
@@ -34,52 +30,22 @@ function getStreet(board) {
 function TimerRing({ seconds, totalSeconds }) {
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
-  const fraction = seconds / totalSeconds;
-  const offset = circumference * (1 - fraction);
-  const color = seconds <= 10
-    ? 'var(--red)'
-    : seconds <= 30
-    ? 'var(--yellow)'
-    : 'var(--green)';
-
+  const offset = circumference * (1 - seconds / totalSeconds);
+  const color = seconds <= 10 ? 'var(--red)' : seconds <= 30 ? 'var(--yellow)' : 'var(--green)';
   return (
     <div style={{ position: 'relative', width: '42px', height: '42px', flexShrink: 0 }}>
       <svg width="42" height="42" viewBox="0 0 42 42" style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx="21" cy="21" r={radius} fill="none"
-          stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
-        <circle cx="21" cy="21" r={radius} fill="none"
-          stroke={color} strokeWidth="3" strokeLinecap="round"
-          strokeDasharray={circumference} strokeDashoffset={offset}
-          style={{
-            transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease',
-            filter: `drop-shadow(0 0 4px ${color})`,
-          }}
+        <circle cx="21" cy="21" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+        <circle cx="21" cy="21" r={radius} fill="none" stroke={color} strokeWidth="3"
+          strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease', filter: `drop-shadow(0 0 4px ${color})` }}
         />
       </svg>
       <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Courier New', Courier, monospace",
-        fontSize: '10px', fontWeight: '700', color,
-        transition: 'color 0.5s ease',
-      }}>
-        {seconds}
-      </div>
-    </div>
-  );
-}
-
-// ─── Villain Badge ─────────────────────────────────────────────────────────
-
-function VillainBadge({ villain }) {
-  return (
-    <div style={{
-      fontFamily: "'Courier New', Courier, monospace",
-      fontSize: '0.55rem', letterSpacing: '0.12em',
-      textTransform: 'uppercase', color: 'rgba(242,237,227,0.45)',
-      marginBottom: '14px', display: 'flex', alignItems: 'center', gap: '6px',
-    }}>
-      <span style={{ color: '#c8a84b' }}>⚠</span> Villain: {villain.label}
+        position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontFamily: "'Courier New', Courier, monospace", fontSize: '10px', fontWeight: '700',
+        color, transition: 'color 0.5s ease',
+      }}>{seconds}</div>
     </div>
   );
 }
@@ -94,18 +60,12 @@ function BlankCard({ small }) {
   );
 }
 
-// ─── Table Visual ──────────────────────────────────────────────────────────
+// ─── Table Visual (dark felt section) ─────────────────────────────────────
 
 function TableVisual({ scenario }) {
   const isRed = (str) => str.includes('♥') || str.includes('♦');
   const boardCount = scenario.board ? scenario.board.length : 0;
-
-  // Determine street and how many placeholder cards to show
-  // Flop = 3 cards, show 2 blanks (turn + river)
-  // Turn = 4 cards, show 1 blank (river)
-  // River = 5 cards, show 0 blanks
-  const totalBoardSlots = 5;
-  const blankCount = scenario.board ? Math.max(0, totalBoardSlots - boardCount) : 0;
+  const blankCount = scenario.board ? Math.max(0, 5 - boardCount) : 0;
 
   return (
     <div className="table-wrap">
@@ -122,14 +82,8 @@ function TableVisual({ scenario }) {
           <div className="board-label">Board</div>
           <div className="board-row">
             {scenario.board.map((card, i) => (
-              <PlayingCard
-                key={i}
-                rank={card.slice(0, -1)}
-                suit={card.slice(-1)}
-                color={isRed(card) ? 'red' : 'black'}
-                small
-                animDelay={`${i * 0.12}s`}
-              />
+              <PlayingCard key={i} rank={card.slice(0, -1)} suit={card.slice(-1)}
+                color={isRed(card) ? 'red' : 'black'} small animDelay={`${i * 0.12}s`} />
             ))}
             {Array.from({ length: blankCount }, (_, i) => (
               <BlankCard key={`blank-${i}`} small />
@@ -137,23 +91,13 @@ function TableVisual({ scenario }) {
           </div>
         </>
       )}
-
-      {/* Your Hand label + cards */}
-      <div className="hand-label">
-        Your Hand · <span>{getHandName(scenario.hand)}</span>
-      </div>
+      <div className="hand-label">Your Hand · <span>{getHandName(scenario.hand)}</span></div>
       <div className="cards-row">
         {scenario.hand.map((card, i) => (
-          <PlayingCard
-            key={i}
-            rank={card.r}
-            suit={card.s}
-            color={card.c}
-            animDelay={`${(boardCount * 0.12) + (i * 0.12)}s`}
-          />
+          <PlayingCard key={i} rank={card.r} suit={card.s} color={card.c}
+            animDelay={`${(boardCount * 0.12) + (i * 0.12)}s`} />
         ))}
       </div>
-
       <div className="pot-info">
         Pot: <span>{scenario.pot}</span>
         {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
@@ -162,7 +106,7 @@ function TableVisual({ scenario }) {
   );
 }
 
-// ─── Session progress bar ──────────────────────────────────────────────────
+// ─── Session Progress ──────────────────────────────────────────────────────
 
 function SessionProgress({ currentIndex, total, correctCount }) {
   return (
@@ -174,35 +118,115 @@ function SessionProgress({ currentIndex, total, correctCount }) {
   );
 }
 
+// ─── Decision Panel (cream section) ───────────────────────────────────────
+
+function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels }) {
+  const street = getStreet(scenario.board);
+
+  return (
+    <div className="decision-panel">
+
+      {/* Street + pot header */}
+      <div className="dp-header">
+        <span className="dp-street">Decision · {street}</span>
+        <span className="dp-pot">Pot <strong>{scenario.pot}</strong></span>
+      </div>
+
+      {/* Question */}
+      <p className="dp-question">{scenario.question}</p>
+
+      {/* You Hold */}
+      <div className="dp-you-hold">
+        <div className="dp-you-hold-cards">
+          {scenario.hand.map((card, i) => (
+            <div key={i} className={`dp-mini-card ${card.c}`}>
+              <span className="dp-mc-rank">{card.r}</span>
+              <span className="dp-mc-suit">{card.s}</span>
+            </div>
+          ))}
+        </div>
+        <div className="dp-you-hold-info">
+          <div className="dp-you-hold-label">You Hold</div>
+          {/* HARDCODED hand name — replace with scenario.handDescription in Phase 2 */}
+          <div className="dp-you-hold-name">
+            {getHandName(scenario.hand)}
+          </div>
+        </div>
+      </div>
+
+      {/* Villain Read */}
+      <div className="dp-villain-read">
+        <div className="dp-vr-header">
+          <span className="dp-vr-icon">⚑</span>
+          <span className="dp-vr-label">Villain Read</span>
+        </div>
+        <div className="dp-vr-name">{scenario.villain.label}</div>
+        {scenario.villain.notes && (
+          <div className="dp-vr-notes">{scenario.villain.notes}</div>
+        )}
+      </div>
+
+      {/* Action buttons */}
+      <div className="dp-actions">
+        {options.map((opt) => (
+          <button
+            key={opt.val}
+            className={`act-btn ${opt.cls}`}
+            onClick={() => onDecision(opt.val)}
+            disabled={decided}
+          >
+            <div className="act-icon">{opt.icon}</div>
+            <div className="act-btn-content">
+              <div className="act-btn-label">
+                {opt.label.includes('(') ? opt.label.slice(0, opt.label.indexOf('(')).trim() : opt.label}
+              </div>
+              {opt.label.includes('(') && (
+                <div className="act-btn-sublabel" style={{ color: '#1a1a1a' }}>
+                  {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
+                </div>
+              )}
+              {!opt.label.includes('(') && actionSublabels[opt.cls] && opt.val === opt.cls &&
+                ['Fold', 'Call', 'Raise'].some(w => opt.label.toLowerCase().startsWith(w.toLowerCase())) && (
+                <div className="act-btn-sublabel">{actionSublabels[opt.cls]}</div>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+
+    </div>
+  );
+}
+
 // ─── Scenario Card ─────────────────────────────────────────────────────────
 
 export default function ScenarioCard({
   scenario, currentIndex, total,
-  timerSeconds, totalSeconds,
-  correctCount,
+  timerSeconds, totalSeconds, correctCount,
+  options, onDecision, decided, actionSublabels,
 }) {
   return (
     <div className="scenario-card">
+      {/* Dark header: skill tag + timer + progress */}
       <div className="card-meta">
         <div className="skill-tag">{scenario.tag}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <TimerRing seconds={timerSeconds} totalSeconds={totalSeconds} />
-          <SessionProgress
-            currentIndex={currentIndex}
-            total={total}
-            correctCount={correctCount}
-          />
+          <SessionProgress currentIndex={currentIndex} total={total} correctCount={correctCount} />
         </div>
       </div>
-      <VillainBadge villain={scenario.villain} />
+
+      {/* Dark felt: table + board + hand */}
       <TableVisual scenario={scenario} key={currentIndex} />
-      <p className="scenario-body">{scenario.body}</p>
-      <hr className="scenario-divider" />
-      <div className="scenario-street">
-        Decision <span>·</span> {getStreet(scenario.board)}
-        {scenario.toCall && <><span>·</span> Pot <span style={{ color: 'var(--gold)', opacity: 1 }}>{scenario.pot}</span></>}
-      </div>
-      <p className="scenario-q">{scenario.question}</p>
+
+      {/* Cream decision section */}
+      <DecisionPanel
+        scenario={scenario}
+        options={options}
+        onDecision={onDecision}
+        decided={decided}
+        actionSublabels={actionSublabels}
+      />
     </div>
   );
 }

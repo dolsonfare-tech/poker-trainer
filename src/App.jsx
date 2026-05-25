@@ -356,34 +356,11 @@ export default function App() {
                 timerSeconds={timerSeconds}
                 totalSeconds={TIMER_SECONDS}
                 correctCount={correctCount}
+                options={scenario.options}
+                onDecision={handleDecision}
+                decided={decided}
+                actionSublabels={ACTION_SUBLABELS}
               />
-              <div className="actions-panel">
-                <div className="actions">
-                  {scenario.options.map((opt) => (
-                    <button
-                      key={opt.val}
-                      className={`act-btn ${opt.cls}`}
-                      onClick={() => handleDecision(opt.val)}
-                      disabled={decided}
-                    >
-                      <div className="act-icon">{opt.icon}</div>
-                      <div className="act-btn-content">
-                        <div className="act-btn-label">
-                          {opt.label.includes('(') ? opt.label.slice(0, opt.label.indexOf('(')).trim() : opt.label}
-                        </div>
-                        {opt.label.includes('(') && (
-                          <div className="act-btn-sublabel" style={{ color: '#1a1a1a' }}>
-                            {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
-                          </div>
-                        )}
-                        {!opt.label.includes('(') && ACTION_SUBLABELS[opt.cls] && opt.val === opt.cls && (
-                          <div className="act-btn-sublabel">{ACTION_SUBLABELS[opt.cls]}</div>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
               {feedback && (
                 <>
                   <FeedbackPanel

@@ -140,10 +140,11 @@ body {
   background: rgba(27,61,42,0.55);
   border: 1px solid rgba(200,168,75,0.18);
   border-radius: var(--radius-lg);
-  padding: 24px 22px 22px;
+  padding: 24px 22px 0;
   margin-bottom: 14px;
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,0.04);
   backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 
 .card-meta {
@@ -300,52 +301,10 @@ body {
 .pot-info span { color: var(--gold); font-weight: 600; }
 
 /* ── Scenario Text ── */
-.scenario-body {
-  font-size: 0.9rem;
-  line-height: 1.75;
-  color: rgba(242,237,227,0.82);
-  margin-bottom: 0;
-}
-
-.scenario-divider {
-  border: none;
-  border-top: 1px solid rgba(200,168,75,0.12);
-  margin: 14px 0;
-}
-
-.scenario-street {
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 0.52rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(242,237,227,0.35);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.scenario-street span { color: var(--gold); opacity: 0.7; }
-
-.scenario-q {
-  font-style: normal;
-  font-size: 0.90rem;
-  font-weight: 600;
-  color: var(--cream);
-  line-height: 1.35;
-  margin-top: 0;
-  letter-spacing: -0.01em;
-}
+/* scenario text styles moved to .decision-panel */
 
 /* ── Action Buttons ── */
-/* ── Action area — light panel ── */
-.actions-panel {
-  background: #f2ede3;
-  border-radius: var(--radius-lg);
-  padding: 16px 14px;
-  margin-bottom: 14px;
-}
-
+/* .actions-panel removed — actions now live inside .decision-panel */
 .actions { display: grid; gap: 8px; }
 
 .act-btn {
@@ -403,6 +362,151 @@ body {
 .act-btn.fold  .act-icon { background: rgba(192,57,43,0.1); }
 .act-btn.call  .act-icon { background: rgba(240,165,0,0.12); }
 .act-btn.raise .act-icon { background: rgba(46,204,113,0.12); }
+
+
+/* ── Decision Panel (cream section below table) ── */
+.decision-panel {
+  background: #f2ede3;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  padding: 18px 18px 26px;
+  margin: 0 -22px -22px;
+}
+
+.dp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.dp-street {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(30,30,30,0.4);
+}
+
+.dp-pot {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.58rem;
+  color: rgba(30,30,30,0.5);
+  letter-spacing: 0.08em;
+}
+
+.dp-pot strong { color: #1a6e3a; }
+
+.dp-question {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin-bottom: 14px;
+  letter-spacing: -0.01em;
+  font-family: Georgia, serif;
+}
+
+/* You Hold */
+.dp-you-hold {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.dp-you-hold-cards {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.dp-mini-card {
+  width: 36px;
+  height: 50px;
+  background: var(--card-bg);
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  border: 1px solid rgba(0,0,0,0.08);
+  gap: 1px;
+}
+
+.dp-mc-rank { font-size: 0.95rem; font-weight: 700; line-height: 1; }
+.dp-mc-suit { font-size: 0.7rem; line-height: 1; }
+.dp-mini-card.red  { color: #c0392b; }
+.dp-mini-card.black { color: #1a1a1a; }
+
+.dp-you-hold-info { flex: 1; }
+.dp-you-hold-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(30,30,30,0.4);
+  margin-bottom: 3px;
+}
+
+.dp-you-hold-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  font-family: Georgia, serif;
+}
+
+/* Villain Read */
+.dp-villain-read {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.dp-vr-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.dp-vr-icon {
+  font-size: 0.7rem;
+  color: rgba(30,30,30,0.35);
+}
+
+.dp-vr-label {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.5rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(30,30,30,0.4);
+}
+
+.dp-vr-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  font-family: Georgia, serif;
+  margin-bottom: 4px;
+}
+
+.dp-vr-notes {
+  font-size: 0.78rem;
+  color: rgba(30,30,30,0.55);
+  font-style: italic;
+  font-family: Georgia, serif;
+  line-height: 1.4;
+}
+
+/* Actions inside decision panel */
+.dp-actions { display: grid; gap: 8px; }
 
 /* ── Feedback Panel ── */
 .feedback {
