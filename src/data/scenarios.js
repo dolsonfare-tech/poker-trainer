@@ -535,7 +535,7 @@ const SCENARIOS = [
     pot: '$600',
     toCall: null,
     body: 'Folds to you on BTN. SB and BB are both tight recreational players.',
-    question: 'K♦9♦ on BTN with 25BB in a tournament. Tight recs in the blinds. Shove or raise small?',
+    question: 'K♦9♦ on BTN with 25BB in a tournament. Tight recs in the blinds. What do you do?',
     correct: 'shove',
     choices: [
       {
@@ -1073,7 +1073,7 @@ const SCENARIOS = [
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
-        grade: 'incorrect', title: "You're Getting 3:1 With 8 Outs", emoji: '❌',
+        grade: 'incorrect', title: '4 Outs With Strong Implied Odds', emoji: '❌',
         fb: "With 4 outs you're not getting the direct odds to fold — but against a passive player who pays off straights, the implied odds make this a profitable call. Don't fold a draw when the villain's tendencies make hitting it highly profitable.",
       },
       {
@@ -1114,7 +1114,7 @@ const SCENARIOS = [
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
-        grade: 'incorrect', title: '15 Outs Is a Monster Draw', emoji: '❌',
+        grade: 'incorrect', title: '8 Outs Plus Fold Equity', emoji: '❌',
         fb: "Folding 8 outs getting 2.5:1 is a significant error. You have a real draw with fold equity available — this hand has enough equity to semi-raise, let alone call. Don't fold a strong draw to an aggressive regular who bets wide.",
       },
       {
@@ -1692,9 +1692,9 @@ const SCENARIOS = [
     }),
     hand: mkHand(['9','♥'], ['9','♦']),
     board: ['T♣', '6♠', '2♥'],
-    pot: '$14',
+    pot: '$32',
     toCall: null,
-    body: "You called BTN's open from BB with 9♥9♦. Flop T♣6♠2♥. You check. BTN bets $9. You call. Turn is 3♦. You're OOP.",
+    body: "You called BTN's open from BB with 9♥9♦. Flop T♣6♠2♥. You check. BTN bets $9. You call. Turn is 3♦. BTN checks to you. You're OOP.",
     question: '99 OOP on T632 — you called the flop. Turn checks back to you. Bet or check?',
     correct: 'check',
     choices: [
@@ -2198,14 +2198,14 @@ const SCENARIOS = [
     board: ['K♠', 'Q♣', '7♦', '2♥', '5♣'],
     pot: '$55',
     toCall: null,
-    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (nut flush draw on the 7♦). River bricks 5♣ — the flush misses completely and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
-    question: 'A♦4♦ — nut flush draw bricked on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
+    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (backdoor nut flush draw — needs running diamonds). River bricks 5♣ — the flush never materialized and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
+    question: 'A♦4♦ — backdoor flush draw never got there on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
     correct: 'raise',
     choices: [
       {
         val: 'fold', label: 'Check back', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Surrendering with Real Fold Equity', emoji: '⚠️',
-        fb: "Your range is loaded with nut flush combos that just bricked — a tight recreational knows that and is not calling a pot-sized river bet with one pair. The fold equity here is too good to surrender.",
+        fb: "You've barreled two streets representing a strong range — a tight recreational knows you could easily have AK, AQ, or a set here. He's not calling a pot-sized river bet with one pair. The fold equity is too good to surrender.",
       },
       {
         val: 'call', label: 'Bet $25 (half-pot bluff)', icon: '📞', cls: 'call',
@@ -2215,7 +2215,7 @@ const SCENARIOS = [
       {
         val: 'raise', label: 'Bet $55 (pot, polarized bluff)', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Polarized Bluff on the Brick River', emoji: '✅',
-        fb: "Pot-sized bluff is correct. You barreled two streets credibly and your range contains the nut flush — a tight recreational with one pair is folding to a polarized river bet at high frequency on this runout.",
+        fb: "Pot-sized bluff is correct. You barreled two streets credibly representing a strong range — a tight recreational with one pair is folding to a polarized river bet at high frequency on this runout, even without a completed flush in your range.",
       },
     ],
   }),
@@ -3041,7 +3041,7 @@ const SCENARIOS = [
     toCall: null,
     body: "CO vs BB passive player. River T♦ on A♦K♥9♠3♣T♦. You have top set. He checks.",
     question: 'Top set (AA) on AK93T river vs passive player who calls medium bets. He checks. What size?',
-correct: 'bet_medium',
+    correct: 'bet_medium',
     choices: [
       {
         val: 'bet_medium', label: 'Bet $35 (medium)', icon: '🃏', cls: 'fold',
@@ -3322,7 +3322,7 @@ correct: 'bet_medium',
     villain: {
       type: 'calling-station',
       label: 'Calling Station',
-      notes: 'Limps wide and calls any raise; never folds preflop to a single raise',
+      notes: 'All three are calling stations: limp wide from any position and call any preflop raise; never fold before the flop',
     },
     tableContext: "Multiple calling stations have limped in — the pot will be multi-way and contested.",
     positions: mkPositions({
