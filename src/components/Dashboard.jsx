@@ -6,40 +6,36 @@ const SKILL_NAMES = {
   preflop:    'Preflop',
   position:   'Position',
   aggression: 'Aggression',
-  betsize:    'Bet Sizing',
+  betsize:    'Bet Size',
   bluffing:   'Bluffing',
   potodds:    'Pot Odds',
   reads:      'Reads',
   opponent:   'Opponent',
 };
 
-// ─── Streak warning threshold (after 6pm local time) ──────────────────────
+// ─── Streak warning: after 6pm if haven't played today ────────────────────
 function shouldShowStreakWarning(lastSessionDate, streak) {
   if (!streak || streak === 0) return false;
   const today = new Date().toISOString().slice(0, 10);
   if (lastSessionDate === today) return false;
-  const hour = new Date().getHours();
-  return hour >= 18;
+  return new Date().getHours() >= 18;
 }
 
 // ─── Skill dot ────────────────────────────────────────────────────────────
 function SkillDot({ skill, data }) {
   const colorMap = {
-    green:  { bg: 'var(--green)',  glow: 'rgba(46,204,113,0.7)' },
-    yellow: { bg: 'var(--yellow)', glow: 'rgba(240,165,0,0.7)'  },
-    red:    { bg: 'var(--red)',    glow: 'rgba(231,76,60,0.7)'  },
-    gray:   { bg: 'rgba(255,255,255,0.15)', glow: 'none'        },
+    green:  { bg: '#56c878', glow: 'rgba(86,200,120,0.6)'  },
+    yellow: { bg: '#e89028', glow: 'rgba(232,144,40,0.6)'  },
+    red:    { bg: '#e25555', glow: 'rgba(226,85,85,0.6)'   },
+    gray:   { bg: 'rgba(255,255,255,0.15)', glow: 'none'   },
   };
   const { bg, glow } = colorMap[data.rating] || colorMap.gray;
   return (
     <div className="db-skill-item">
-      <div
-        className="db-skill-dot"
-        style={{
-          background: bg,
-          boxShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
-        }}
-      />
+      <div className="db-skill-dot" style={{
+        background: bg,
+        boxShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
+      }} />
       <span className="db-skill-label">{SKILL_NAMES[skill]}</span>
     </div>
   );
@@ -47,25 +43,22 @@ function SkillDot({ skill, data }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard({ onStartSession, stats }) {
-  // Merge localStorage stats with dummy user baseline
   const streak = stats?.streak ?? DUMMY_USER.streak;
   const lastSessionDate = stats?.lastSessionDate ?? DUMMY_USER.lastSessionDate;
   const showWarning = shouldShowStreakWarning(lastSessionDate, streak);
-  const sessionsCompleted = DUMMY_USER.sessionsCompleted;
-  const schemaUnlocked = sessionsCompleted >= DUMMY_USER.sessionsRequiredForSchema;
-  const userRank = DUMMY_USER.leaderboard.find(e => e.isUser)?.rank ?? '—';
 
-  // Pulse animation state for CTA button
   const [pulse, setPulse] = useState(false);
   useEffect(() => {
-    const t = setTimeout(() => setPulse(true), 600);
+    const t = setTimeout(() => setPulse(true), 400);
     return () => clearTimeout(t);
   }, []);
+
+  const { schema, skills, leaderboard, coachGreeting, sessionsCompleted } = DUMMY_USER;
 
   return (
     <div className="dashboard">
 
-      {/* ── Top bar: account + plan ── */}
+      {/* ── Topbar: account + plan ── */}
       <div className="db-topbar">
         <button className="db-account-btn" onClick={() => {}}>
           <div className="db-avatar">{DUMMY_USER.initials}</div>
@@ -84,78 +77,106 @@ export default function Dashboard({ onStartSession, stats }) {
         </div>
       )}
 
-      {/* ── Streak + rank hero ── */}
-      <div className="db-hero">
-        <div className="db-streak-block">
-          <div className="db-streak-number">{streak}</div>
-          <div className="db-streak-label">Day Streak</div>
-          {streak > 0 && <div className="db-streak-flame">🔥</div>}
+      {/* ── Coach greeting ── */}
+      <div className="db-greeting">
+        <div className="db-greeting-av">🎩</div>
+        <div className="db-greeting-text">
+          {coachGreeting}
         </div>
-        <div className="db-divider" />
-        <div className="db-rank-block">
-          <div className="db-rank-number">#{userRank}</div>
-          <div className="db-rank-label">Global Rank</div>
+      </div>
+
+      {/* ── Hero: streak + sessions ── */}
+      <div className="db-hero">
+        <div className="db-hero-stat">
+          <div className="db-hero-num db-hero-gold">
+            {streak}
+            <span className="db-hero-flame">🔥</span>
+          </div>
+          <div className="db-hero-label">Day Streak</div>
+        </div>
+        <div className="db-hero-divider" />
+        <div className="db-hero-stat">
+          <div className="db-hero-num db-hero-cream">{sessionsCompleted}</div>
+          <div className="db-hero-label">Sessions</div>
         </div>
       </div>
 
       {/* ── CTA ── */}
       <button
-        className={`db-cta-btn ${pulse ? 'db-cta-pulse' : ''}`}
+        className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
         onClick={onStartSession}
       >
         Start Today's Session
         <span className="db-cta-arrow">→</span>
       </button>
+      <div className="db-cta-sub">
+        Today's queue · <strong>5 hands targeting aggression</strong>
+      </div>
+
+      {/* ── Schema / Poker Archetype ── */}
+      <div className="db-section">
+        <div className="db-section-label">
+          <span>Poker Archetype</span>
+          <span className="db-section-meta">updated this morning</span>
+        </div>
+        <div className="db-schema-card">
+          <span className="db-schema-corner db-corner-tl" />
+          <span className="db-schema-corner db-corner-tr" />
+          <span className="db-schema-corner db-corner-bl" />
+          <span className="db-schema-corner db-corner-br" />
+          <div className="db-schema-mini-label">
+            Schema · {schema.index} of {schema.total}
+          </div>
+          <div className="db-schema-name">{schema.name}</div>
+          <div className="db-schema-quote">{schema.quote}</div>
+          <div className="db-schema-affected">
+            <div className="db-affected-label">Affecting</div>
+            <div className="db-affected-row">
+              {schema.affected.map(({ skill, level }) => (
+                <div key={skill} className={`db-affected-chip db-chip-${level}`}>
+                  {skill}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── Skill dots ── */}
       <div className="db-section">
-        <div className="db-section-label">Skill Profile</div>
+        <div className="db-section-label">
+          <span>Skill Profile</span>
+          <span className="db-section-meta">last 20 attempts</span>
+        </div>
         <div className="db-skills-grid">
-          {Object.entries(DUMMY_USER.skills).map(([skill, data]) => (
+          {Object.entries(skills).map(([skill, data]) => (
             <SkillDot key={skill} skill={skill} data={data} />
           ))}
         </div>
       </div>
 
-      {/* ── Schema diagnosis ── */}
-      <div className="db-section">
-        <div className="db-section-label">Poker Archetype</div>
-        {schemaUnlocked ? (
-          <div className="db-schema-card">
-            <div className="db-schema-name">{DUMMY_USER.schema}</div>
-          </div>
-        ) : (
-          <div className="db-schema-locked">
-            <div className="db-schema-lock-icon">🃏</div>
-            <div className="db-schema-lock-text">
-              Play {DUMMY_USER.sessionsRequiredForSchema - sessionsCompleted} more session{DUMMY_USER.sessionsRequiredForSchema - sessionsCompleted !== 1 ? 's' : ''} to unlock your poker archetype
-            </div>
-            <div className="db-schema-progress">
-              <div
-                className="db-schema-progress-fill"
-                style={{ width: `${(sessionsCompleted / DUMMY_USER.sessionsRequiredForSchema) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Leaderboard ── */}
-      <div className="db-section">
-        <div className="db-section-label">Leaderboard · Longest Streak</div>
+      {/* ── Leaderboard (collapsed) ── */}
+      <div className="db-section" style={{ marginBottom: 0 }}>
+        <div className="db-section-label">
+          <span>Leaderboard · Longest Streak</span>
+        </div>
         <div className="db-leaderboard">
-          {DUMMY_USER.leaderboard.map(entry => (
-            <div
-              key={entry.rank}
-              className={`db-lb-row ${entry.isUser ? 'db-lb-row-you' : ''}`}
-            >
-              <span className="db-lb-rank">#{entry.rank}</span>
-              <span className="db-lb-name">{entry.name}</span>
-              <span className="db-lb-streak">
-                {entry.streak > 0 ? `🔥 ${entry.streak}` : '—'}
-              </span>
+          <div className="db-lb-rank-line">
+            <div className="db-lb-your-rank">
+              Your rank · <strong>#{leaderboard.yourRank}</strong> of {leaderboard.total.toLocaleString()}
             </div>
-          ))}
+            <button className="db-lb-see-full" onClick={() => {}}>See full →</button>
+          </div>
+          <div className="db-lb-top-label">Top players</div>
+          <div className="db-lb-rows">
+            {leaderboard.top.map(entry => (
+              <div key={entry.rank} className="db-lb-row">
+                <span className="db-lb-rank">#{entry.rank}</span>
+                <span className="db-lb-name">{entry.name}</span>
+                <span className="db-lb-streak">🔥 {entry.streak}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

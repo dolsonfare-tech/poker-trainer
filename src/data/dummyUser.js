@@ -1,53 +1,66 @@
 // ─── Dummy User Data (Phase 1.5) ──────────────────────────────────────────
-// All screens read from this file in Phase 1.5.
-// In Phase 2 this is replaced by real Supabase data.
+// Returning user state — full dummy data for tester validation.
+// New-user state (gray dots, locked schema) built in Phase 2 with real data.
+// In Phase 2 this entire file is replaced by Supabase.
 
 const DUMMY_USER = {
   // ── Identity ──────────────────────────────────────────────────────────
   displayName: 'RiverRat_KC',
   initials: 'RR',
 
-  // ── Streak ────────────────────────────────────────────────────────────
-  // streak: 0 = new user with no sessions yet
-  streak: 0,
-  lastSessionDate: null,
+  // ── Streak & Sessions ─────────────────────────────────────────────────
+  streak: 8,
+  lastSessionDate: null, // null = hasn't played today (triggers warning after 6pm)
+  sessionsCompleted: 47,
 
   // ── XP ────────────────────────────────────────────────────────────────
-  xp: 0,
-  level: 1,
+  xp: 1240,
+  level: 4,
+
+  // ── Coach greeting ────────────────────────────────────────────────────
+  // Phase 2: generated dynamically based on user state
+  coachGreeting: "Eight days running. The hard part is showing up — you already did.",
 
   // ── Skill ratings ─────────────────────────────────────────────────────
   // rating: 'green' | 'yellow' | 'red' | 'gray' (unrated)
   skills: {
-    preflop:    { rating: 'gray', attempts: 0 },
-    position:   { rating: 'gray', attempts: 0 },
-    aggression: { rating: 'gray', attempts: 0 },
-    betsize:    { rating: 'gray', attempts: 0 },
-    bluffing:   { rating: 'gray', attempts: 0 },
-    potodds:    { rating: 'gray', attempts: 0 },
-    reads:      { rating: 'gray', attempts: 0 },
-    opponent:   { rating: 'gray', attempts: 0 },
+    preflop:    { rating: 'green',  attempts: 34 },
+    position:   { rating: 'green',  attempts: 28 },
+    aggression: { rating: 'red',    attempts: 31 },
+    betsize:    { rating: 'yellow', attempts: 22 },
+    bluffing:   { rating: 'red',    attempts: 19 },
+    potodds:    { rating: 'yellow', attempts: 25 },
+    reads:      { rating: 'green',  attempts: 30 },
+    opponent:   { rating: 'gray',   attempts: 4  },
   },
 
   // ── Schema diagnosis ──────────────────────────────────────────────────
-  // null until 5 sessions completed
-  schema: null,
-  sessionsCompleted: 0,
+  // Phase 2: evolves over time based on decision history
+  schema: {
+    name: 'The Conflict Avoider',
+    quote: "I shouldn't put money in unless I'm sure",
+    index: '01',
+    total: '06',
+    affected: [
+      { skill: 'Aggression', level: 'red'    },
+      { skill: 'Bluffing',   level: 'red'    },
+      { skill: 'Bet Sizing', level: 'yellow' },
+    ],
+  },
   sessionsRequiredForSchema: 5,
 
-  // ── Leaderboard (global, hardcoded for Phase 1.5) ─────────────────────
-  leaderboard: [
-    { rank: 1,  name: 'Dave245',    streak: 41, isUser: false },
-    { rank: 2,  name: 'RichTone101',  streak: 38, isUser: false },
-    { rank: 3,  name: 'Cyrus_homegym',   streak: 0,  isUser: true  },
-    { rank: 4,  name: 'NitPickr',      streak: 29, isUser: false },
-    { rank: 5,  name: 'PotOddsOnly',   streak: 24, isUser: false },
-    { rank: 6,  name: 'CheckRaiser',   streak: 19, isUser: false },
-    { rank: 7,  name: 'MindYourBB',    streak: 14, isUser: false },
-    { rank: 8,  name: 'SemiBluffKing', streak: 11, isUser: false },
-    { rank: 9,  name: 'UTGorFold',     streak: 8,  isUser: false },
-    { rank: 10, name: 'Villain_Read',  streak: 5,  isUser: false },
-  ],
+  // ── Leaderboard ───────────────────────────────────────────────────────
+  // Phase 2: real data from Supabase
+  // Phase 1.5: collapsed view — your rank chip + top 3 only
+  leaderboard: {
+    yourRank: 47,
+    total: 1247,
+    top: [
+      { rank: 1, name: 'Dave245',     streak: 41 },
+      { rank: 2, name: 'RichTone101', streak: 38 },
+      { rank: 3, name: 'NitPickr',    streak: 29 },
+    ],
+  },
 };
 
 export default DUMMY_USER;

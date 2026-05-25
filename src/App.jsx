@@ -259,50 +259,7 @@ export default function App() {
     }
   };
 
-  const handleRestart = () => {
-    clearTimer();
-    setScreen('dashboard');
-    setCurrentIndex(0);
-    setSkillResults({});
-    setDecided(false);
-    setFeedback(null);
-    setShowSummary(false);
-    setCoachRead('');
-    setCoachLoading(false);
-    setShuffledScenarios([]);
-    setSessionXP(0);
-    setXpData(null);
-    setTimerSeconds(TIMER_SECONDS);
-    setTimedOut(false);
-    setCombo(0);
-    setCorrectCount(0);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  return (
-    <div className="app">
-      {/* Header — shown on all screens */}
-      <div className="header" style={{ position: 'relative' }}>
-        <div
-          className="logo"
-          style={{ cursor: screen !== 'dashboard' ? 'pointer' : 'default' }}
-          onClick={() => screen !== 'dashboard' && handleRestart()}
-        >
-          Check<em>Raise</em>
-        </div>
-        <div className="tagline">AI-Powered Skill Training</div>
-        <button
-          onClick={() => setShowVillainGuide(true)}
-          style={{
-            position: 'absolute', top: '36px', right: '0',
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '50%', width: '30px', height: '30px',
-            color: 'rgba(242,237,227,0.5)', cursor: 'pointer',
-            fontSize: '0.75rem', fontFamily: "'Courier New', Courier, monospace",
-            fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >i</button>
-      </div>
+q
 
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
