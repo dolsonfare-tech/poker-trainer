@@ -268,6 +268,7 @@ export default function App() {
     }
     const feedbackText = scenario.feedback[gr.g];
     setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
+    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [decided, scenario]);
 
   const handleNext = () => {
