@@ -16,6 +16,15 @@ function getHandName(hand) {
   return `${RANK_NAMES[r1]}-${RANK_NAMES[r2]} ${suited ? 'Suited' : 'Offsuit'}`;
 }
 
+const POSITION_INFO = {
+  'UTG': 'Under the Gun · First to act',
+  'HJ':  'Hijack · Middle position',
+  'CO':  'Cutoff · Strong position',
+  'BTN': 'Button · Best position',
+  'SB':  'Small Blind · Out of position',
+  'BB':  'Big Blind · Closes preflop action',
+};
+
 // ─── Street indicator ──────────────────────────────────────────────────────
 
 function getStreet(board) {

@@ -754,3 +754,13 @@ body {
   border: 1px dashed rgba(255,255,255,0.12) !important;
   box-shadow: none !important;
 }
+
+/* ─── Position info in decision panel ────────────────────────────────────── */
+.dp-position-info {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(30,30,30,0.4);
+  margin-top: 3px;
+}
