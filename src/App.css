@@ -46,6 +46,22 @@ body {
   padding: 28px 18px 80px;
 }
 
+/* Dashboard gets a tighter column with desktop card frame */
+.dashboard {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media (min-width: 700px) {
+  .dashboard {
+    background: rgba(27,61,42,0.25);
+    border: 1px solid rgba(200,168,75,0.1);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+}
+
 /* ── Header ── */
 .header {
   text-align: center;
@@ -771,6 +787,7 @@ body {
 .dashboard {
   padding-top: 4px;
   animation: fadeUp 0.4s ease;
+  /* max-width and desktop frame handled in .app section above */
 }
 
 /* ── Topbar ── */
@@ -905,50 +922,42 @@ body {
   font-family: 'Playfair Display', Georgia, serif;
 }
 
-/* ── Hero: streak + sessions ── */
-.db-hero {
+/* ── Compact stats row ── */
+.db-stats-row {
   display: flex;
   align-items: center;
-  padding: 22px 12px;
-  background:
-    radial-gradient(300px 180px at 50% 0%, rgba(232,144,40,0.08), transparent 70%),
-    linear-gradient(180deg, rgba(29,51,40,0.5), rgba(14,24,18,0.7));
-  border: 1px solid rgba(42,66,52,1);
-  border-radius: var(--radius-lg);
-  margin-bottom: 14px;
-  position: relative;
+  justify-content: center;
+  gap: 0;
+  background: rgba(27,61,42,0.4);
+  border: 1px solid rgba(200,168,75,0.14);
+  border-radius: var(--radius-md);
+  padding: 12px 20px;
+  margin-bottom: 12px;
 }
 
-.db-hero-stat {
+.db-stat-chip {
   flex: 1;
-  text-align: center;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
 }
 
-.db-hero-num {
+.db-stat-num {
   font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-weight: 900;
-  font-size: 4.2rem;
+  font-size: 1.6rem;
   line-height: 1;
-  letter-spacing: -0.02em;
-  display: inline-block;
-  position: relative;
-}
-
-.db-hero-gold {
   color: var(--gold-light);
-  text-shadow: 0 0 28px rgba(226,198,106,0.2);
+  letter-spacing: -0.02em;
 }
 
-.db-hero-cream { color: var(--cream); }
+.db-stat-cream { color: var(--cream); }
 
-.db-hero-flame {
-  position: absolute;
-  top: -10px;
-  right: -22px;
-  font-size: 1.3rem;
-  filter: drop-shadow(0 0 6px rgba(232,144,40,0.7));
+.db-stat-flame {
+  font-size: 0.9rem;
+  filter: drop-shadow(0 0 4px rgba(232,144,40,0.7));
   animation: flicker 1.9s ease infinite alternate;
 }
 
@@ -957,20 +966,19 @@ body {
   to   { transform: scale(1.12) rotate(3deg); opacity: 1; }
 }
 
-.db-hero-label {
+.db-stat-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(242,237,227,0.35);
-  margin-top: 6px;
 }
 
-.db-hero-divider {
+.db-stat-divider {
   width: 1px;
-  align-self: stretch;
-  margin: 6px 8px;
-  background: linear-gradient(180deg, transparent, rgba(42,66,52,1), transparent);
+  height: 28px;
+  background: rgba(200,168,75,0.15);
+  margin: 0 16px;
   flex-shrink: 0;
 }
 
@@ -1211,6 +1219,13 @@ body {
   text-transform: uppercase;
   color: rgba(242,237,227,0.3);
   text-align: center;
+}
+
+
+/* ── CTA block ── */
+.db-cta-block {
+  padding-top: 8px;
+  margin-bottom: 0;
 }
 
 /* ── Leaderboard (collapsed) ── */

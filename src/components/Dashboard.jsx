@@ -53,7 +53,10 @@ export default function Dashboard({ onStartSession, stats }) {
     return () => clearTimeout(t);
   }, []);
 
-  const { schema, skills, leaderboard, coachGreeting, sessionsCompleted } = DUMMY_USER;
+  const { schema, skills, leaderboard, sessionsCompleted } = DUMMY_USER;
+
+  // Coach copy that doesn't mention streak (streak is already visible above)
+  const coachCopy = "Your aggression is the leak. Today's 5 hands are designed to fix it.";
 
   return (
     <div className="dashboard">
@@ -77,40 +80,37 @@ export default function Dashboard({ onStartSession, stats }) {
         </div>
       )}
 
-      {/* ── Coach greeting ── */}
+      {/* ── Compact stats row: streak + sessions ── */}
+      <div className="db-stats-row">
+        <div className="db-stat-chip">
+          <span className="db-stat-num">{streak}</span>
+          <span className="db-stat-flame">🔥</span>
+          <span className="db-stat-label">day streak</span>
+        </div>
+        <div className="db-stat-divider" />
+        <div className="db-stat-chip">
+          <span className="db-stat-num db-stat-cream">{sessionsCompleted}</span>
+          <span className="db-stat-label">sessions</span>
+        </div>
+      </div>
+
+      {/* ── Coach greeting — no streak mention ── */}
       <div className="db-greeting">
         <div className="db-greeting-av">M</div>
-        <div className="db-greeting-text">
-          {coachGreeting}
-        </div>
+        <div className="db-greeting-text">{coachCopy}</div>
       </div>
 
-      {/* ── Hero: streak + sessions ── */}
-      <div className="db-hero">
-        <div className="db-hero-stat">
-          <div className="db-hero-num db-hero-gold">
-            {streak}
-            <span className="db-hero-flame">🔥</span>
-          </div>
-          <div className="db-hero-label">Day Streak</div>
+      {/* ── Skill dots ── */}
+      <div className="db-section">
+        <div className="db-section-label">
+          <span>Skill Profile</span>
+          <span className="db-section-meta">last 20 attempts</span>
         </div>
-        <div className="db-hero-divider" />
-        <div className="db-hero-stat">
-          <div className="db-hero-num db-hero-cream">{sessionsCompleted}</div>
-          <div className="db-hero-label">Sessions</div>
+        <div className="db-skills-grid">
+          {Object.entries(skills).map(([skill, data]) => (
+            <SkillDot key={skill} skill={skill} data={data} />
+          ))}
         </div>
-      </div>
-
-      {/* ── CTA ── */}
-      <button
-        className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
-        onClick={onStartSession}
-      >
-        Start Today's Session
-        <span className="db-cta-arrow">→</span>
-      </button>
-      <div className="db-cta-sub">
-        Today's queue · <strong>5 hands targeting aggression</strong>
       </div>
 
       {/* ── Schema / Poker Archetype ── */}
@@ -142,21 +142,8 @@ export default function Dashboard({ onStartSession, stats }) {
         </div>
       </div>
 
-      {/* ── Skill dots ── */}
-      <div className="db-section">
-        <div className="db-section-label">
-          <span>Skill Profile</span>
-          <span className="db-section-meta">last 20 attempts</span>
-        </div>
-        <div className="db-skills-grid">
-          {Object.entries(skills).map(([skill, data]) => (
-            <SkillDot key={skill} skill={skill} data={data} />
-          ))}
-        </div>
-      </div>
-
       {/* ── Leaderboard (collapsed) ── */}
-      <div className="db-section" style={{ marginBottom: 0 }}>
+      <div className="db-section">
         <div className="db-section-label">
           <span>Leaderboard · Longest Streak</span>
         </div>
@@ -177,6 +164,20 @@ export default function Dashboard({ onStartSession, stats }) {
               </div>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* ── CTA — anchored at bottom for thumb reach ── */}
+      <div className="db-cta-block">
+        <button
+          className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
+          onClick={onStartSession}
+        >
+          Start Today's Session
+          <span className="db-cta-arrow">→</span>
+        </button>
+        <div className="db-cta-sub">
+          Today's queue · <strong>5 hands targeting aggression</strong>
         </div>
       </div>
 
