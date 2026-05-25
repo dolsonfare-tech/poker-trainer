@@ -50,8 +50,41 @@ const mkScenario = ({ choices, ...rest }) => {
   const feedback = Object.fromEntries(
     choices.map(({ grade, fb }) => [grade, fb])
   );
-  return { options, grading, feedback, ...rest };
+  if (!VILLAIN_LABELS[rest.villain?.type])
+    console.warn(`Scenario ${rest.id}: unknown villain type '${rest.villain?.type}'`);
+  if (!SKILL_TAGS[rest.skill])
+    console.warn(`Scenario ${rest.id}: unknown skill '${rest.skill}'`);
+  const tag = SKILL_TAGS[rest.skill];
+  const villain = { ...rest.villain, label: VILLAIN_LABELS[rest.villain?.type] };
+  return { options, grading, feedback, ...rest, tag, villain };
 };
+// ─── Villain label lookup ─────────────────────────────────────────────────
+
+const VILLAIN_LABELS = {
+  'aggressive':      'Aggressive Regular',
+  'passive':         'Passive Player',
+  'tight':           'Tight Recreational',
+  'loose':           'Loose Recreational',
+  'calling-station': 'Calling Station',
+  'maniac':          'Maniac',
+  'nit':             'Tight Nit',
+  'unknown':         'Unknown',
+};
+
+// ─── Skill tag lookup ─────────────────────────────────────────────────────
+
+const SKILL_TAGS = {
+  'preflop':   'Preflop Hand Selection',
+  'position':  'Position Awareness',
+  'aggression':'Aggression & Bluffing',
+  'betsize':   'Bet Sizing',
+  'bluffing':  'Bluff Frequency',
+  'potodds':   'Pot Odds / Calling',
+  'reads':     'Reading Betting Patterns',
+  'opponent':  'Opponent Modeling',
+};
+
+
 
 // ─── scenarios ───────────────────────────────────────────────────────────────
 
@@ -61,13 +94,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 1,
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Opens wide, 3-bets frequently, applies pressure on all streets',
     },
     positions: mkPositions({
@@ -102,13 +133,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 2,
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls too wide preflop and postflop, rarely folds to aggression, does not bluff',
     },
     positions: mkPositions({
@@ -144,13 +173,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 3,
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Regular',
       notes: 'Bets for value only, rarely bluffs, folds to large raises when holding marginal hands',
     },
     positions: mkPositions({
@@ -168,7 +195,7 @@ const SCENARIOS = [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Folding Equity Left Behind', emoji: '❌',
-        fb: "You have 10 outs (4 to the nut straight, 6 overcard outs) and you're getting 3.6:1 — this is a mandatory call. Folding KQ on this board gives up too much equity against a passive player who isn't even likely to barrel future streets.",
+        fb: "You have 10 outs to the nuts and you're getting 3.6:1 — this is a mandatory call. Folding KQ on this board gives up too much equity against a passive player who isn't even likely to barrel future streets.",
       },
       {
         val: 'call', label: 'Call $15', icon: '📞', cls: 'call',
@@ -185,13 +212,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 4,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only plays premium hands, folds to any aggression without top pair or better, almost never bluffs',
     },
     positions: mkPositions({
@@ -226,13 +251,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 5,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls down with any pair or draw, never folds to aggression, does not respond to bluffs',
     },
     positions: mkPositions({
@@ -267,13 +290,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 6,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Raises and re-raises constantly, bluffs at very high frequency, hard to put on a hand',
     },
     positions: mkPositions({
@@ -308,13 +329,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 7,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only continues postflop with strong made hands, folds to large bets on scary boards, never bluffs',
     },
     positions: mkPositions({
@@ -349,13 +368,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 8,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Will call any bet size with any pair, draw, or gut shot — bluffing is completely ineffective',
     },
     positions: mkPositions({
@@ -392,13 +409,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 9,
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only opens top 10% of hands, rarely bluffs.',
     },
     positions: mkPositions({
@@ -433,13 +448,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 10,
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls everything, rarely raises, limped wide here.',
     },
     positions: mkPositions({
@@ -475,13 +488,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 11,
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: '3-bets wide from BTN, folds to 4-bets frequently.',
     },
     positions: mkPositions({
@@ -493,7 +504,7 @@ const SCENARIOS = [
     pot: '$5',
     toCall: null,
     body: 'Folds to you in CO. BTN is an aggressive regular.',
-    question: 'K♠Q♠ in CO with an aggressive regular behind on BTN. What do you do?',
+    question: 'K♠Q♠ in CO with an aggressive regular behind on BTN. Open or fold?',
     correct: 'raise',
     choices: [
       {
@@ -516,13 +527,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 12,
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: 'Tight recs defend blinds too narrow — fold to shoves ~80% of the time.',
     },
     positions: mkPositions({
@@ -535,7 +544,7 @@ const SCENARIOS = [
     pot: '$600',
     toCall: null,
     body: 'Folds to you on BTN. SB and BB are both tight recreational players.',
-    question: 'K♦9♦ on BTN with 25BB in a tournament. Tight recs in the blinds. What do you do?',
+    question: 'K9s on BTN with 25BB in a tournament. Tight recs in the blinds. Shove or raise small?',
     correct: 'shove',
     choices: [
       {
@@ -558,13 +567,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 13,
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Checks and calls, rarely raises, almost never bluffs.',
     },
     positions: mkPositions({
@@ -576,7 +583,7 @@ const SCENARIOS = [
     pot: '$22',
     toCall: null,
     body: 'You raised preflop. BB passive player called. Flop J♥8♦3♠. BB checks to you.',
-    question: "T♣9♣ on J83 rainbow — you have an open-ended straight draw. In position. Passive BB checks. What do you do?",
+    question: "T9s on J83 rainbow — you have an open-ended straight draw. In position. Passive BB checks. What do you do?",
     correct: 'bet_medium',
     choices: [
       {
@@ -599,13 +606,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 14,
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Bets and raises constantly, bluffs frequently, unpredictable.',
     },
     positions: mkPositions({
@@ -640,13 +645,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 15,
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'C-bets 75% of flops, barrels many turns — understands board texture.',
     },
     positions: mkPositions({
@@ -681,13 +684,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 16,
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Never folds a pair, calls any bet size, never bluffs.',
     },
     positions: mkPositions({
@@ -722,13 +723,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 17,
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Donk-bets as a probe with weak top pairs, draws, and occasionally strong hands.',
     },
     positions: mkPositions({
@@ -763,13 +762,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 18,
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only bets flops with top pair or better — rarely has draws in his range here.',
     },
     positions: mkPositions({
@@ -804,13 +801,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 19,
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Plays too many hands, will call big bets with weak aces and any pair.',
     },
     positions: mkPositions({
@@ -845,13 +840,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 20,
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Calls medium c-bets but folds to large ones with air; raises light occasionally.',
     },
     positions: mkPositions({
@@ -886,13 +879,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 21,
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Calls medium bets with top pair, check-folds to very large bets with marginal hands.',
     },
     positions: mkPositions({
@@ -927,13 +918,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 22,
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls every flop bet, will not fold any pair or overcards.',
     },
     positions: mkPositions({
@@ -968,13 +957,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 23,
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: "Folds to c-bets without a made hand, doesn't call without top pair or a flush.",
     },
     positions: mkPositions({
@@ -1009,13 +996,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 24,
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Calls c-bets with wide range, check-raises draws and strong hands, rarely gives up.',
     },
     positions: mkPositions({
@@ -1050,13 +1035,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 25,
-    tag: 'Pot Odds',
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Bets made hands, rarely bluffs — his bet almost always means a real hand.',
     },
     positions: mkPositions({
@@ -1067,37 +1050,35 @@ const SCENARIOS = [
     board: ['K♠', '5♦', '3♣'],
     pot: '$18',
     toCall: '$9',
-    body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 7♥6♥ — a gutshot straight draw (needs a 4).",
-    question: '7♥6♥ on K53 — gutshot (4 outs). Getting 3:1 pot odds ($9 to win $27). What do you do?',
+    body: "BTN bets $9 into $18 pot on K♠5♦3♣. You're in BB with 7♥6♥ — a double gutshot straight draw.",
+    question: '7♥6♥ on K53 — double gutshot (8 outs). Getting 3:1 pot odds ($9 to win $27). Call or fold?',
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
-        grade: 'incorrect', title: '4 Outs With Strong Implied Odds', emoji: '❌',
-        fb: "With 4 outs you're not getting the direct odds to fold — but against a passive player who pays off straights, the implied odds make this a profitable call. Don't fold a draw when the villain's tendencies make hitting it highly profitable.",
+        grade: 'incorrect', title: "You're Getting 3:1 With 8 Outs", emoji: '❌',
+        fb: "Folding an open-ended straight draw getting 3:1 is a significant mistake. Even without implied odds you're close to the break-even point — against a passive player who pays off draws, this is a comfortable call.",
       },
       {
         val: 'call', label: 'Call $9', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Easy Call for the Draw', emoji: '✅',
-        fb: "4 outs at 3:1 isn't enough on direct odds alone — you'd need closer to 4:1. But a passive player who bets made hands and pays off draws gives you the implied odds to justify the call. When you hit, you get paid. Note: when a 4 puts the straight on the board, passive villains slow down with one pair — but the implied odds from sets and two pair make this call profitable over time.",
+        fb: "With 8 outs and 3:1 pot odds, this is a straightforward call. You need roughly 4:1 for a pure call, but implied odds against a passive player who bets made hands push this well into profitable territory.",
       },
       {
         val: 'raise', label: 'Check-raise to $30', icon: '⚡', cls: 'raise',
         grade: 'incorrect', title: 'Check-Raise Kills Implied Odds', emoji: '❌',
-        fb: "Check-raising with 4 outs kills your implied odds entirely. A passive player who bets for value won't fold — you lose the very edge that makes this call profitable. Take the price and play for the implied odds.",
+        fb: "Check-raising here turns a profitable call into a bluff that kills your implied odds. A passive player who bets for value won't fold to your raise — call, hit your draw, and get paid on later streets.",
       },
     ],
   }),
 
   mkScenario({
     id: 26,
-    tag: 'Pot Odds',
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Bets wide on this board — has draws, top pairs, and bluffs.',
     },
     positions: mkPositions({
@@ -1108,37 +1089,35 @@ const SCENARIOS = [
     board: ['T♠', '9♣', '2♦'],
     pot: '$24',
     toCall: '$16',
-    body: "BTN bets $16 into $24 pot on T♠9♣2♦. You're in BB with Q♦J♦ — OESD plus backdoor flush draw.",
-    question: 'Q♦J♦ on T92 with OESD + backdoor flush draw (8 outs). Getting 2.5:1. Call, raise, or fold?',
+    body: "BTN bets $16 into $24 pot on T♠9♣2♦. You're in BB with Q♦J♦ — OESD + flush draw.",
+    question: 'Q♦J♦ on T92 with OESD + flush draw (~15 outs). Getting 2.5:1. Call, raise, or fold?',
     correct: 'raise',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
-        grade: 'incorrect', title: '8 Outs Plus Fold Equity', emoji: '❌',
-        fb: "Folding 8 outs getting 2.5:1 is a significant error. You have a real draw with fold equity available — this hand has enough equity to semi-raise, let alone call. Don't fold a strong draw to an aggressive regular who bets wide.",
+        grade: 'incorrect', title: '15 Outs Is a Monster Draw', emoji: '❌',
+        fb: "Folding 15 outs is a major error. With an OESD and a flush draw you're approximately 54% to improve by the river. You should be raising, not folding — this hand has enough equity to go all the way.",
       },
       {
         val: 'call', label: 'Call $16', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Calling Undersells Your Equity', emoji: '⚠️',
-        fb: "Calling is not wrong but undersells your hand. With 8 outs and fold equity available, check-raising denies him free cards and puts him to a decision for his stack. Calling passively gives the aggressive regular exactly the cheap card he wants.",
+        fb: "Calling with 15 outs is not wrong but undersells your hand. You're almost a favorite to win the pot — check-raising denies him free cards and puts him to a decision for his stack with a hand that may be behind.",
       },
       {
         val: 'raise', label: 'Check-raise to $55', icon: '⚡', cls: 'raise',
         grade: 'correct', title: "Semi-Raise — You're a Slight Favorite", emoji: '✅',
-        fb: "With 8 outs (~32% by the river) plus fold equity against an aggressive regular who bets wide, check-raising is correct. You don't need coin-flip equity to justify a semi-raise — fold equity plus 32% when called is enough. Students often think semi-bluffs need 50% equity; the real bar is much lower when you have real fold equity.",
+        fb: "With 15 outs you're roughly a coin flip with any made hand — check-raising is correct. You have fold equity, massive draw equity, and are semi-bluffing from a position of genuine strength against an aggressive regular who bets wide.",
       },
     ],
   }),
 
   mkScenario({
     id: 27,
-    tag: 'Pot Odds',
     skill: 'potodds',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Never bets this board without a strong flush — J-high or better. His range here is essentially the top of the spade distribution.',
     },
     tableContext: null,
@@ -1174,13 +1153,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 28,
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Checks and calls every street — has never bet the river in this session.',
     },
     positions: mkPositions({
@@ -1215,13 +1192,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 29,
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Raises 60%+ of flops, almost never check-folds, fires multiple streets as bluffs.',
     },
     positions: mkPositions({
@@ -1256,13 +1231,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 30,
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Donk-bets this board with strong hands AND as a probe with medium holdings — hard to read.',
     },
     positions: mkPositions({
@@ -1297,13 +1270,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 31,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only bets when he has top pair or better. Never bluffs on dry boards.',
     },
     positions: mkPositions({
@@ -1338,13 +1309,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 32,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Donk-bets with any ace, any pair, any draw — will call any raise and never folds.',
     },
     positions: mkPositions({
@@ -1379,13 +1348,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 33,
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: "Raises with top pair or better AND draws, gambles, doesn't fold two pair, bluffs occasionally.",
     },
     positions: mkPositions({
@@ -1422,13 +1389,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_034',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: '3-bets over 25% from any position, folds to 4-bets less than 30% of the time',
     },
     tableContext: null,
@@ -1441,7 +1406,7 @@ const SCENARIOS = [
     pot: '$27',
     toCall: '$14 more',
     body: "You open to $6 from CO with A♣J♣. The Button — a maniac who 3-bets over 25% of hands and rarely folds to 4-bets — squeezes to $20.",
-    question: 'A♣J♣ vs a maniac 3-bet. What do you do?',
+    question: 'AJs vs a maniac 3-bet. What do you do?',
     correct: 'call',
     choices: [
       {
@@ -1464,13 +1429,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_035',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Limps wide from any position, calls raises with dominated aces and any pair',
     },
     tableContext: "Two loose recreationals have already limped — the pot is multi-way and likely to be called by at least one.",
@@ -1508,13 +1471,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_036',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: '4-bets a polarized range — AA/KK for value and A5s/76s as bluffs; folds QQ/JJ to 4-bets',
     },
     tableContext: null,
@@ -1550,13 +1511,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_037',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Calls preflop raises but almost never 3-bets; plays very straightforwardly postflop',
     },
     tableContext: null,
@@ -1569,7 +1528,7 @@ const SCENARIOS = [
     pot: '$3',
     toCall: null,
     body: "Everyone folds to you in the SB with 6♦5♦. The BB is a passive player who calls raises but almost never 3-bets.",
-    question: '6♦5♦ in the SB heads-up vs a passive BB. What do you do?',
+    question: '65s in the SB heads-up vs a passive BB. What do you do?',
     correct: 'raise',
     choices: [
       {
@@ -1592,13 +1551,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_038',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: 'Defends BB with only top 15% of hands; folds to 3-bets from any position with less than TT/AQ',
     },
     tableContext: null,
@@ -1634,13 +1591,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_039',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Check-calls with any pair, rarely raises, never bluffs on the river',
     },
     tableContext: null,
@@ -1676,13 +1631,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_040',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Fires two barrels frequently, probes turns aggressively when checked to',
     },
     tableContext: null,
@@ -1692,11 +1645,11 @@ const SCENARIOS = [
     }),
     hand: mkHand(['9','♥'], ['9','♦']),
     board: ['T♣', '6♠', '2♥'],
-    pot: '$32',
+    pot: '$14',
     toCall: null,
-    body: "You called BTN's open from BB with 9♥9♦. Flop T♣6♠2♥. You check. BTN bets $9. You call. Turn is 3♦. BTN checks to you. You're OOP.",
+    body: "You called BTN's open from BB with 9♥9♦. Flop T♣6♠2♥. You check. BTN bets $9. You call. Turn is 3♦. You're OOP.",
     question: '99 OOP on T632 — you called the flop. Turn checks back to you. Bet or check?',
-    correct: 'check',
+    correct: 'call',
     choices: [
       {
         val: 'donk', label: 'Donk-bet $12', icon: '🃏', cls: 'fold',
@@ -1718,13 +1671,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_041',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Calls wide on flop and turn, gives up on rivers with missed draws, bets big when he makes a hand',
     },
     tableContext: null,
@@ -1738,20 +1689,20 @@ const SCENARIOS = [
     toCall: null,
     body: "You raised CO, loose recreational BTN called. Turn A♦8♣5♠2♦. You're in position with top pair. You bet flop, he called. He checks the turn.",
     question: 'A♠9♠ (top pair, turn) in position vs loose rec who check-called flop. What now?',
-    correct: 'bet_medium',
+    correct: 'call',
     choices: [
       {
-        val: 'check', label: 'Check back — pot control', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Check back — pot control', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Checking Surrenders Value', emoji: '⚠️',
         fb: "Checking back top pair in position against a loose player who calls wide is passive and incorrect. He's calling one more bet with all his weaker holdings — don't give him a free card.",
       },
       {
-        val: 'bet_medium', label: 'Bet $10', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $10', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Bet for Value in Position', emoji: '✅',
         fb: "Bet $10 in position on the turn. A loose recreational calls flops and turns wide — any ace, any pair, any draw. You're ahead of most of it and position lets you control the river regardless.",
       },
       {
-        val: 'bet_large', label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Pot May Fold His Draws', emoji: '⚠️',
         fb: "Pot-betting might fold out his draws and weaker aces who would call $10 easily. Keep him in with a medium bet — a loose rec who called the flop is not folding a reasonable turn bet.",
       },
@@ -1760,13 +1711,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_042',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Check-folds turns with less than top pair; barrels only the top of his range',
     },
     tableContext: null,
@@ -1778,8 +1727,8 @@ const SCENARIOS = [
     board: ['J♦', '9♥', '2♣', 'K♠'],
     pot: '$20',
     toCall: null,
-    body: "BTN vs BB nit. Flop J♦9♥2♣ — you c-bet, he called. Turn K♠. Nit checks to you. You have T♣8♣ — an open-ended straight draw (needs Q or 7).",
-    question: 'T♣8♣ (OESD, 8 outs) in position on J92K — nit check-calls flop and checks turn. Bet or check?',
+    body: "BTN vs BB nit. Flop J♦9♥2♣ — you c-bet, he called. Turn K♠. Nit checks to you. You have T♣8♣ — a gutshot straight draw.",
+    question: 'T♣8♣ (gutshot) in position on J92K — nit check-calls flop and checks turn. Bet or check?',
     correct: 'raise',
     choices: [
       {
@@ -1802,13 +1751,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_043',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Rarely donk-bets; when he leads, it almost always means a strong hand',
     },
     tableContext: null,
@@ -1821,7 +1768,7 @@ const SCENARIOS = [
     pot: '$14',
     toCall: '$10',
     body: "You raised CO, passive BB called. Flop K♣Q♥J♠. The passive player — who almost never leads — donk-bets $10 into you.",
-    question: 'Top set on KQJ. Passive player leads $10. What do you do?',
+    question: 'Top set on KQJ. Passive player leads $10. Raise or call?',
     correct: 'call',
     choices: [
       {
@@ -1844,13 +1791,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_044',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls all three streets with any pair, never raises, checks back rivers with missed draws',
     },
     tableContext: null,
@@ -1886,13 +1831,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_045',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Check-raises flops at high frequency on wet boards; folds to re-raises with draws only',
     },
     tableContext: null,
@@ -1928,13 +1871,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_046',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Folds any bet when he has no pair or weak draw; calls small bets with top pair but folds large bets with second pair',
     },
     tableContext: null,
@@ -1948,20 +1889,20 @@ const SCENARIOS = [
     toCall: null,
     body: "BTN vs BB nit. Flop A♥T♣4♦. Nit checks. You have top set.",
     question: 'Top set on A-T-4 rainbow vs a tight nit. What size extracts the most value?',
-    correct: 'bet_small',
+    correct: 'fold',
     choices: [
       {
-        val: 'bet_small', label: 'Bet $5 (small, keep him in)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $5 (small, keep him in)', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Small Bet Keeps Him In', emoji: '✅',
         fb: "Small bet is correct against a nit. He's calling with his tens and folds to large bets with second pair — keep the pot small on the flop, let him improve on the turn, and extract three streets of value.",
       },
       {
-        val: 'bet_medium', label: 'Bet $9 (medium)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $9 (medium)', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Medium is Fine, Small is Best', emoji: '⚠️',
         fb: "Medium works but you're leaving value behind. A nit who calls $9 with a ten probably folds to $14 — sizing down to $5 keeps his entire calling range in and sets up bigger bets on later streets.",
       },
       {
-        val: 'bet_large', label: 'Bet $14 (pot, maximize now)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $14 (pot, maximize now)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Pot Bet Folds His Weak Tens', emoji: '⚠️',
         fb: "Pot-betting AA on A-T-4 folds out all his second pairs and weak draws. A nit isn't calling a pot bet without top pair — slow the sizing down so he can call three streets instead of one.",
       },
@@ -1970,13 +1911,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_047',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Raises any bet size with draws; calls huge bets with top pair; never folds river',
     },
     tableContext: null,
@@ -1990,20 +1929,20 @@ const SCENARIOS = [
     toCall: null,
     body: "You've bet flop and turn for value with top set vs maniac BB. River J♥. He checks. Pot is $90 and you have the best hand almost always.",
     question: 'KK (top set) on K832J river vs maniac who called two streets. He checks. What size on the river?',
-    correct: 'overbet',
+    correct: 'raise',
     choices: [
       {
-        val: 'bet_medium', label: 'Bet $40 (under half pot)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $40 (under half pot)', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Too Small vs a Never-Fold Villain', emoji: '⚠️',
         fb: "Under-betting against a maniac who won't fold is the most common value leak at the table. He's calling anything — size up aggressively and get paid for the whole stack.",
       },
       {
-        val: 'bet_large', label: 'Bet $70 (¾ pot)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $70 (¾ pot)', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Good, But Overbet is Optimal', emoji: '⚠️',
         fb: "¾ pot is good but undersells the situation. A maniac who called two streets has a jack, a pair, maybe a draw he chased — he's calling $120 just as readily as $40 and you're leaving $80 on the table otherwise.",
       },
       {
-        val: 'overbet', label: 'Bet $120 (overbet)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $120 (overbet)', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Overbet the Station-Maniac River', emoji: '✅',
         fb: "Overbet the river. A maniac who called two streets has a jack, a pair, maybe a draw he chased — he's calling $120 just as readily as $40 and you're leaving $80 on the table otherwise.",
       },
@@ -2012,13 +1951,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_048',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: 'Calls 33% pot bets with any pair; folds to 75%+ pot bets with second pair or worse',
     },
     tableContext: null,
@@ -2032,20 +1969,20 @@ const SCENARIOS = [
     toCall: null,
     body: "CO raised, tight recreational BB called. Flop A♠K♦7♣ — you missed completely. He checks to you.",
     question: '5♣4♣ (pure air) on AK7 rainbow vs tight rec. What sizing is most efficient for a bluff?',
-    correct: 'bet_small',
+    correct: 'fold',
     choices: [
       {
-        val: 'bet_small', label: 'Bet $5 (33% pot)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $5 (33% pot)', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Cheap Bluff, Maximum Fold Equity', emoji: '✅',
         fb: "33% pot is the most efficient bluff size against a tight recreational who folds second pair and worse to any bet. You achieve the same fold with $5 as you do with $14 — risk less, get the same result.",
       },
       {
-        val: 'bet_medium', label: 'Bet $10 (66% pot)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $10 (66% pot)', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Works But Risks More Than Needed', emoji: '⚠️',
         fb: "66% works but you're over-investing. A tight rec folds weak hands to any bet — the small size accomplishes the same goal at less than half the cost. Save the bigger sizing for value hands.",
       },
       {
-        val: 'bet_large', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Same Folds for More Chips Lost', emoji: '⚠️',
         fb: "Pot-betting as a bluff against a tight player is burning chips unnecessarily. He folds his weak hands to $5 just as readily as $14 — use the minimum effective size and preserve your stack.",
       },
@@ -2054,13 +1991,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_049',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Re-raises polarized hands on the river; calls medium bets with bluff-catchers; folds draws to overbets',
     },
     tableContext: null,
@@ -2096,13 +2031,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_050',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Bets only top pair or better; folds any hand without a made pair to two barrels',
     },
     tableContext: null,
@@ -2138,13 +2071,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_051',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Check-calls with any pair on the flop and turn; folds to river bets without a strong hand',
     },
     tableContext: null,
@@ -2180,13 +2111,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_052',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: 'Gives up rivers with one pair when facing big bets; never bluffs rivers himself',
     },
     tableContext: null,
@@ -2198,14 +2127,14 @@ const SCENARIOS = [
     board: ['K♠', 'Q♣', '7♦', '2♥', '5♣'],
     pot: '$55',
     toCall: null,
-    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (backdoor nut flush draw — needs running diamonds). River bricks 5♣ — the flush never materialized and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
-    question: 'A♦4♦ — backdoor flush draw never got there on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
+    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (nut flush draw on the 7♦). River bricks 5♣ — the flush misses completely and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
+    question: 'A♦4♦ — nut flush draw bricked on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
     correct: 'raise',
     choices: [
       {
         val: 'fold', label: 'Check back', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Surrendering with Real Fold Equity', emoji: '⚠️',
-        fb: "You've barreled two streets representing a strong range — a tight recreational knows you could easily have AK, AQ, or a set here. He's not calling a pot-sized river bet with one pair. The fold equity is too good to surrender.",
+        fb: "Your range is loaded with nut flush combos that just bricked — a tight recreational knows that and is not calling a pot-sized river bet with one pair. The fold equity here is too good to surrender.",
       },
       {
         val: 'call', label: 'Bet $25 (half-pot bluff)', icon: '📞', cls: 'call',
@@ -2215,20 +2144,18 @@ const SCENARIOS = [
       {
         val: 'raise', label: 'Bet $55 (pot, polarized bluff)', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Polarized Bluff on the Brick River', emoji: '✅',
-        fb: "Pot-sized bluff is correct. You barreled two streets credibly representing a strong range — a tight recreational with one pair is folding to a polarized river bet at high frequency on this runout, even without a completed flush in your range.",
+        fb: "Pot-sized bluff is correct. You barreled two streets credibly and your range contains the nut flush — a tight recreational with one pair is folding to a polarized river bet at high frequency on this runout.",
       },
     ],
   }),
 
   mkScenario({
     id: 'sc_053',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Rarely bluffs; when he bets the flop it usually means a real pair or draw',
     },
     tableContext: null,
@@ -2241,7 +2168,7 @@ const SCENARIOS = [
     pot: '$15',
     toCall: '$10',
     body: "Passive BTN bets $10 into a $15 pot on A♦7♥3♣. You're in BB with A♠5♣ — top pair, weak kicker.",
-    question: 'Top pair weak kicker on A73 rainbow. Passive villain bets $10. Getting 2.5:1. What do you do?',
+    question: 'Top pair weak kicker on A73 rainbow. Passive villain bets $10. Getting 2.5:1. Call or fold?',
     correct: 'call',
     choices: [
       {
@@ -2264,13 +2191,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_054',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Triple-barrels missed draws and air at very high frequency; river bet is a bluff 60% of the time',
     },
     tableContext: null,
@@ -2283,7 +2208,7 @@ const SCENARIOS = [
     pot: '$50',
     toCall: '$40',
     body: "Maniac BTN fires three streets on K823Q. River Q♣. He shoves $40 into $50. You have T♥9♥ — total air, no pair, no draw.",
-    question: 'T♥9♥ (nothing) on K823Q. Maniac shoves river, 60% bluff frequency. Getting 2.25:1. What do you do?',
+    question: 'T♥9♥ (nothing) on K823Q. Maniac shoves river, 60% bluff frequency. Getting 2.25:1. Call or fold?',
     correct: 'call',
     choices: [
       {
@@ -2306,13 +2231,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_055',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'River bets are exclusively value — he has never been caught bluffing in this session',
     },
     tableContext: null,
@@ -2348,13 +2271,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_056',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Check-calls flop and turn passively, but raises river only with strong hands',
     },
     tableContext: null,
@@ -2367,7 +2288,7 @@ const SCENARIOS = [
     pot: '$65',
     toCall: '$50',
     body: "BTN vs BB passive player. You bet flop and turn for value with QQ (top set). River J♣. You bet $35. Passive player — who called both previous streets without raising — now RAISES to $100.",
-    question: 'QQ (top set) on QT43J. You bet river $35. Passive player raises to $100 for the first time all hand. What do you do?',
+    question: 'QQ (top set) on QT43J. You bet river $35. Passive player raises to $100 for the first time all hand. Call or fold?',
     correct: 'call',
     choices: [
       {
@@ -2390,13 +2311,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_057',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Bets flop and turn aggressively, but when he checks the turn after betting the flop, it usually signals a capped range',
     },
     tableContext: null,
@@ -2432,13 +2351,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_058',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: "Fires three barrels indiscriminately; when he suddenly checks the turn, he almost always has a strong made hand he's trapping with",
     },
     tableContext: null,
@@ -2452,20 +2369,20 @@ const SCENARIOS = [
     toCall: null,
     body: "CO vs BTN maniac. Flop A♣J♦7♠ — you c-bet, maniac called (unusual for him not to raise). Turn 8♦. You check. Maniac — who fires 90% of turns — also checks. This is a major red flag.",
     question: 'AQ (TPTK) on AJ78. You check turn. Maniac — who fires 90% of turns — also checks. What does this mean and what do you do on the river?',
-    correct: 'check_fold',
+    correct: 'raise',
     choices: [
       {
-        val: 'bet', label: 'Bet river big for value', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet river big for value', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: "He Has a Monster — Don't Bet", emoji: '❌',
         fb: "Betting into a maniac who just broke his 90% turn-barreling habit is walking into a trap. His turn check is the tell — he has a monster. Check and be prepared to fold to aggression on the river.",
       },
       {
-        val: 'check_call', label: 'Check river and call a bet', icon: '📞', cls: 'call',
+        val: 'call', label: 'Check river and call a bet', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Calling is Okay But Risky', emoji: '⚠️',
         fb: "Calling a river bet from a maniac who showed turn weakness is defensible with TPTK, but his pattern (called flop, checked back a high-action turn) screams a strong hand he's disguising. Proceed cautiously.",
       },
       {
-        val: 'check_fold', label: 'Check river and fold to a big bet', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Check river and fold to a big bet', icon: '⚡', cls: 'raise',
         grade: 'correct', title: "Read the Check — He's Trapping", emoji: '✅',
         fb: "Check river and fold to a big bet. A maniac who checks the turn after calling a flop c-bet has flopped a monster — sets, two pair, maybe a disguised straight draw that got there. His check is a trap, not weakness.",
       },
@@ -2474,13 +2391,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_059',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Plays any two suited cards; chases all draws to the river regardless of price; rarely bluffs',
     },
     tableContext: null,
@@ -2516,13 +2431,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_060',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Continuation-bets 95% of flops regardless of texture; folds to check-raises with air about 50% of the time',
     },
     tableContext: null,
@@ -2535,7 +2448,7 @@ const SCENARIOS = [
     pot: '$14',
     toCall: '$10',
     body: "BB maniac raised preflop. You called CO. Flop J♦6♠2♥ — you flopped top set. He c-bets $10 (as he does 95% of flops). You're OOP.",
-    question: 'Top set on J62 rainbow. Maniac c-bets as expected. What do you do?',
+    question: 'Top set on J62 rainbow. Maniac c-bets as expected. Check-raise or call?',
     correct: 'call',
     choices: [
       {
@@ -2558,13 +2471,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_061',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Rarely raises; when he check-raises the flop, he has two pair or better — almost no bluffs',
     },
     tableContext: null,
@@ -2600,13 +2511,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_062',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls every flop and turn bet; only folds on rivers when he missed completely — never folds a made hand',
     },
     tableContext: null,
@@ -2642,13 +2551,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_063',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Only defends 3-bets with AA, KK, QQ, AK — folds everything else including JJ and AQ',
     },
     tableContext: null,
@@ -2661,7 +2568,7 @@ const SCENARIOS = [
     pot: '$27',
     toCall: '$14 more',
     body: "You open CO to $6 with A♠5♠. The BB — a nit who only 3-bets AA, KK, QQ, AK — squeezes to $20.",
-    question: 'A♠5♠ vs a nit BB 3-bet who only has AA/KK/QQ/AK. What do you do?',
+    question: 'A♠5♠ vs a nit BB 3-bet who only has AA/KK/QQ/AK. Fold or 4-bet bluff?',
     correct: 'raise',
     choices: [
       {
@@ -2684,13 +2591,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_064',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: "Slow-plays sets and two pair frequently to \"trap\"; rarely bets strong hands immediately",
     },
     tableContext: null,
@@ -2726,13 +2631,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_065',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Squeezes 3-bets at 15%+ from the BB; folds to 4-bets about 65% of the time',
     },
     tableContext: "CO is an unknown player who limped — the limp is likely a trap or weak hand.",
@@ -2769,13 +2672,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_066',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls any size on any street with any pair — never check-raises, never folds a pair',
     },
     tableContext: null,
@@ -2789,20 +2690,20 @@ const SCENARIOS = [
     toCall: null,
     body: "SB vs BB calling station. Flop Q♠7♣3♥ — you have top pair weak kicker, OOP.",
     question: 'Q♦4♦ (top pair, terrible kicker) OOP on Q73 rainbow vs calling station. Lead or check?',
-    correct: 'bet_medium',
+    correct: 'call',
     choices: [
       {
-        val: 'check', label: 'Check — pot control OOP', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Check — pot control OOP', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Checking Gives Free Cards', emoji: '⚠️',
         fb: "Checking top pair OOP against a calling station gives him a free card with his worse pairs and draws. Even OOP, you lead for thin value — the station won't exploit your positional disadvantage.",
       },
       {
-        val: 'bet_medium', label: 'Bet $8 (value)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $8 (value)', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Bet for Thin Value', emoji: '✅',
         fb: "Bet $8 for thin value. A calling station calls this with any seven, any three, and any queen — you're ahead of most of it despite the weak kicker. Being OOP doesn't change the fact you should be extracting value.",
       },
       {
-        val: 'bet_large', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Pot-Bet Keeps Too Many Calls', emoji: '⚠️',
         fb: "Pot-betting top pair with a terrible kicker OOP invites calls from better queens and sets. Size down to $8 to extract value from his weaker pairs while keeping the pot manageable.",
       },
@@ -2811,13 +2712,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_067',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'nit',
-      label: 'Tight Nit',
       notes: 'Folds to any bet without at least top pair; never bluffs; checks any hand below top pair',
     },
     tableContext: null,
@@ -2831,20 +2730,20 @@ const SCENARIOS = [
     toCall: null,
     body: "BTN vs BB nit. Flop A♦K♠7♣ rainbow. Nit checks. You have 55 — no pair on this board.",
     question: '55 on AK7 vs nit who checks. C-bet bluff or check back?',
-    correct: 'bet_small',
+    correct: 'fold',
     choices: [
       {
-        val: 'bet_small', label: 'Bet $9 (c-bet bluff)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $9 (c-bet bluff)', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'C-Bet the Nit Off His Air', emoji: '✅',
         fb: "C-bet $9. A nit who checks AK7 doesn't have an ace or a king — he'd lead or check-raise with those. His checking range is medium pairs and air, which fold to any bet. Steal the pot cheaply.",
       },
       {
-        val: 'check', label: 'Check back', icon: '📞', cls: 'call',
+        val: 'call', label: 'Check back', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Checking Up Has Some Merit', emoji: '⚠️',
         fb: "Checking back gives the nit a free card when you could easily take the pot down. His check on AK7 signals weakness — any bet takes this away from him without needing to risk much.",
       },
       {
-        val: 'bet_large', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $14 (pot)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Works But Wastes Chips', emoji: '⚠️',
         fb: "Pot-betting as a bluff is fine but wastes chips. A nit folds to $9 or $14 at the same frequency — use the minimum effective size and get the same result for less cost.",
       },
@@ -2853,13 +2752,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_068',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Fires two barrels frequently on blank turns; gives up rivers with missed draws about 70% of the time',
     },
     tableContext: null,
@@ -2871,8 +2768,8 @@ const SCENARIOS = [
     board: ['J♥', '9♦', '4♠', 'K♣', '2♥'],
     pot: '$55',
     toCall: null,
-    body: "BB vs BTN aggressive regular. You called preflop, called flop, called turn on J9K. River 2♥ — he checks to you. You have T♠8♠ — an OESD that missed.",
-    question: 'T♠8♠ missed draw on J94K2 river. Aggressive regular who gives up rivers 70% of the time checks. Bluff or check?',
+    body: "BB vs BTN aggressive regular. You called preflop, called flop, called turn on J9K. River 2♥ — he checks to you. You have T♣8♣ — an OESD that missed.",
+    question: 'T♣8♣ missed draw on J94K2 river. Aggressive regular who gives up rivers 70% of the time checks. Bluff or check?',
     correct: 'call',
     choices: [
       {
@@ -2895,13 +2792,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_069',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Bets this board texture frequently with both strong hands and semi-bluffs',
     },
     tableContext: null,
@@ -2914,7 +2809,7 @@ const SCENARIOS = [
     pot: '$14',
     toCall: '$9',
     body: "BTN aggressive regular bets $9 on T♣8♣2♦. You have J♣5♣ — a flush draw plus gutshot (potentially 12 outs).",
-    question: 'J♣5♣ (flush draw + gutshot, ~12 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. What do you do?',
+    question: 'J♣5♣ (flush draw + gutshot, ~12 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. Call or raise?',
     correct: 'call',
     choices: [
       {
@@ -2937,13 +2832,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_070',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
       notes: 'Calls everything but has one tell: when he raises, he always has two pair or better',
     },
     tableContext: null,
@@ -2979,13 +2872,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_071',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: "Bets small on the river as a blocker when he has a medium-strength hand he's unsure about; bets large when he wants a fold or has the nuts",
     },
     tableContext: null,
@@ -2998,7 +2889,7 @@ const SCENARIOS = [
     pot: '$40',
     toCall: '$8',
     body: "CO vs BB tight recreational. River 5♥. You checked. Tight rec leads $8 into a $40 pot (20% pot).",
-    question: 'JT (top pair) on J8325 river. Tight rec leads $8 (20% pot) — his tell for a medium-strength blocker bet. What do you do?',
+    question: 'JT (top pair) on J8325 river. Tight rec leads $8 (20% pot) — his tell for a medium-strength blocker bet. Call or fold?',
     correct: 'call',
     choices: [
       {
@@ -3021,13 +2912,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_072',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Calls medium bets with top pair; folds to overbets with anything below two pair; never raises without the nuts',
     },
     tableContext: null,
@@ -3041,7 +2930,7 @@ const SCENARIOS = [
     toCall: null,
     body: "CO vs BB passive player. River T♦ on A♦K♥9♠3♣T♦. You have top set. He checks.",
     question: 'Top set (AA) on AK93T river vs passive player who calls medium bets. He checks. What size?',
-    correct: 'bet_medium',
+correct: 'bet_medium',
     choices: [
       {
         val: 'bet_medium', label: 'Bet $35 (medium)', icon: '🃏', cls: 'fold',
@@ -3063,13 +2952,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_073',
-    tag: 'Position Awareness',
     skill: 'position',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Calls wide on flops but tends to give up when checked to on the turn; occasionally fires a big bet with made hands',
     },
     tableContext: null,
@@ -3083,20 +2970,20 @@ const SCENARIOS = [
     toCall: null,
     body: "SB vs BB loose recreational. Turn K♦ on J♠7♥3♦K♦. You have second pair plus nut flush draw, OOP. He checks to you.",
     question: 'A♦J♦ (second pair + nut flush draw) OOP on J73K with flush draw. He checks turn. Bet or check?',
-    correct: 'semi_bluff',
+    correct: 'call',
     choices: [
       {
-        val: 'check', label: 'Check — pot control OOP', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Check — pot control OOP', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Checking Gives Him a Free Card', emoji: '⚠️',
         fb: "Checking OOP with 12+ outs and fold equity surrenders too much. A loose rec who gives up when checked to means you're giving him a free card with a potentially losing hand. Semi-bluff for value.",
       },
       {
-        val: 'semi_bluff', label: 'Bet $14 (semi-bluff)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $14 (semi-bluff)', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Semi-Bluff With Your Monster Draw', emoji: '✅',
         fb: "Bet $14 OOP with a nut flush draw plus second pair. The King is a strong scare card that represents your preflop raising range — a semi-bluff here folds out his missed floats and charges his pairs.",
       },
       {
-        val: 'bet_large', label: 'Bet $22 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $22 (pot)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: "Pot-Bet May Fold His Weaker Hands", emoji: '⚠️',
         fb: "Pot-sizing OOP might fold out the hands you want to charge. $14 semi-bluff achieves fold equity from his weaker holdings while keeping pot-control for the river if he calls.",
       },
@@ -3105,13 +2992,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_074',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
-      label: 'Tight Recreational',
       notes: 'Folds to large river bets with one pair; calls small bets hoping to catch a bluff',
     },
     tableContext: null,
@@ -3147,13 +3032,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_075',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Checks most turns and rivers; occasionally value-bets strong hands small; never bluffs',
     },
     tableContext: null,
@@ -3189,13 +3072,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_076',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Bets with any pair or any draw on the flop; range is very wide and often weak',
     },
     tableContext: null,
@@ -3208,7 +3089,7 @@ const SCENARIOS = [
     pot: '$14',
     toCall: '$10',
     body: "BB vs BTN loose recreational. Flop K♠8♦4♥ rainbow. You check. He bets $10 with a wide range.",
-    question: 'K♥3♥ (top pair, terrible kicker) on K84 rainbow. Loose rec bets $10. Getting 2.4:1. What do you do?',
+    question: 'K♥3♥ (top pair, terrible kicker) on K84 rainbow. Loose rec bets $10. Getting 2.4:1. Call or fold?',
     correct: 'call',
     choices: [
       {
@@ -3231,13 +3112,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_077',
-    tag: 'Opponent Modeling',
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Makes continuation bets on 80% of flops; recognizes board textures and slows down on very wet boards',
     },
     tableContext: null,
@@ -3250,7 +3129,7 @@ const SCENARIOS = [
     pot: '$14',
     toCall: null,
     body: "BTN aggressive regular raised. You called BB with T♦7♦. Flop T♠7♥3♣ — you flopped bottom two pair. He c-bets $9.",
-    question: 'Bottom two pair (T7) on T73 rainbow vs aggressive regular c-bet. What do you do?',
+    question: 'Bottom two pair (T7) on T73 rainbow vs aggressive regular c-bet. Call or check-raise?',
     correct: 'raise',
     choices: [
       {
@@ -3273,13 +3152,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_078',
-    tag: 'Reading Betting Patterns',
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Overbets rivers with both the nuts and complete air; calling requires reading his previous streets carefully',
     },
     tableContext: null,
@@ -3292,7 +3169,7 @@ const SCENARIOS = [
     pot: '$60',
     toCall: '$70',
     body: "CO vs BB loose recreational. You bet flop and turn on K♦8♥4♠. River 9♦. He check-called both streets then suddenly leads $70 (overbet) on the river.",
-    question: 'KK (top set → full house) on K8429. Loose rec who called two streets now overbets $70 on the river. What do you do?',
+    question: 'KK (top set → full house) on K8429. Loose rec who called two streets now overbets $70 on the river. Call or fold?',
     correct: 'raise',
     choices: [
       {
@@ -3315,14 +3192,12 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_079',
-    tag: 'Preflop Hand Selection',
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'calling-station',
-      label: 'Calling Station',
-      notes: 'All three are calling stations: limp wide from any position and call any preflop raise; never fold before the flop',
+      notes: 'Limps wide and calls any raise; never folds preflop to a single raise',
     },
     tableContext: "Multiple calling stations have limped in — the pot will be multi-way and contested.",
     positions: mkPositions({
@@ -3360,13 +3235,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_080',
-    tag: 'Aggression & Bluffing',
     skill: 'aggression',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'passive',
-      label: 'Passive Player',
       notes: 'Checks most turns even with strong hands; bets the river for thin value occasionally; never triple-barrels',
     },
     tableContext: null,
@@ -3378,22 +3251,22 @@ const SCENARIOS = [
     board: ['T♠', '8♠', '3♥', 'A♣'],
     pot: '$26',
     toCall: null,
-    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J♦9♦ — an open-ended straight draw (needs Q or 8). He checks.",
-    question: 'J♦9♦ (OESD, 8 outs) on T83A. Passive player checks the turn after calling the flop. Double barrel or give up?',
-    correct: 'bet_medium',
+    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J♦9♦ — a gutshot straight draw. He checks.",
+    question: 'J♦9♦ (gutshot) on T83A. Passive player checks the turn after calling the flop. Double barrel or give up?',
+    correct: 'call',
     choices: [
       {
-        val: 'check', label: 'Check back — give up', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Check back — give up', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Checking Up Has Some Merit', emoji: '⚠️',
         fb: "Checking surrenders a clear semi-bluff opportunity. The ace heavily favors your preflop raising range — a passive player who checks twice has a medium hand that folds to a second barrel.",
       },
       {
-        val: 'bet_medium', label: 'Bet $16 (second barrel)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $16 (second barrel)', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Represent the Ace — Second Barrel', emoji: '✅',
         fb: "Second barrel $16 — the ace is a perfect scare card for the BTN's opening range. A passive player who checked a second time on this board doesn't have an ace. Fire and take the pot.",
       },
       {
-        val: 'bet_large', label: 'Bet $26 (pot, all-in with ace)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $26 (pot, all-in with ace)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: "Pot-Bet Is Too Much for a Semi-Bluff", emoji: '⚠️',
         fb: "Pot-betting a second barrel with a semi-bluff over-commits. $16 achieves the same fold from a passive player and preserves chips if called — a smaller bet does the work more efficiently.",
       },
@@ -3402,13 +3275,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_081',
-    tag: 'Bet Sizing',
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
     villain: {
       type: 'loose',
-      label: 'Loose Recreational',
       notes: 'Calls any bet with a flush draw; will call to the river with any diamond draw',
     },
     tableContext: null,
@@ -3422,20 +3293,20 @@ const SCENARIOS = [
     toCall: null,
     body: "BTN vs BB loose recreational. Flop A♦K♦5♦ — a monotone diamond board. You have top set but a diamond flush is possible. He checks.",
     question: 'AA (top set) on AK5 all-diamonds. Loose rec will chase any diamond draw to the river. What size?',
-    correct: 'bet_large',
+    correct: 'raise',
     choices: [
       {
-        val: 'bet_small', label: 'Bet $5 (small, let him chase)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $5 (small, let him chase)', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Small Bet Gives Draws Cheap Odds', emoji: '❌',
         fb: "Small bets on a monotone board against a player who chases every draw are dangerous. He's hitting his flush cheaply and cracking your set for pennies — bet pot to charge him the correct price.",
       },
       {
-        val: 'bet_medium', label: 'Bet $10 (medium)', icon: '📞', cls: 'call',
+        val: 'call', label: 'Bet $10 (medium)', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Medium Works But Pot is Better', emoji: '⚠️',
         fb: "Medium bet is reasonable but a flush-chasing loose recreational calls any size. Since you have top set that needs protection and he calls regardless, go pot and maximize value while denying cheap equity.",
       },
       {
-        val: 'bet_large', label: 'Bet $14 (pot, deny equity)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $14 (pot, deny equity)', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Pot Bet on the Flush Board', emoji: '✅',
         fb: "Pot-bet the monotone board. You need to charge the loose recreational maximum for his diamond draws — small bets give him free odds to hit the flush. Bet big, protect your set, and make him pay.",
       },
@@ -3444,13 +3315,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_082',
-    tag: 'Bluff Frequency',
     skill: 'bluffing',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'maniac',
-      label: 'Maniac',
       notes: 'Calls nearly any bet on any street; only folds to overbets when he has complete air',
     },
     tableContext: null,
@@ -3464,20 +3333,20 @@ const SCENARIOS = [
     toCall: null,
     body: "BTN vs BB maniac. Turn A♠K♣Q♦J♠ — a very scary board for most hands. He checks to you. You have 3♥2♥ — complete air.",
     question: '3♥2♥ (pure air) on AKQJ — the scariest possible board. Maniac checks. Bluff or give up?',
-    correct: 'check',
+    correct: 'call',
     choices: [
       {
-        val: 'bluff_small', label: 'Bet $12 (bluff)', icon: '🃏', cls: 'fold',
+        val: 'fold', label: 'Bet $12 (bluff)', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Bluffing a Maniac = Bad', emoji: '❌',
         fb: "Small bluff, big bluff — it doesn't matter against a maniac who calls with air. Check back and take the free river card. There is never a good time to bluff a player who doesn't fold.",
       },
       {
-        val: 'check', label: 'Check back', icon: '📞', cls: 'call',
+        val: 'call', label: 'Check back', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Never Bluff a Maniac — Check Back', emoji: '✅',
         fb: "Check back. Even on the most terrifying board in poker, bluffing a maniac is a mistake. He calls nearly any bet with any two cards — checking is the only sensible play with nothing.",
       },
       {
-        val: 'bluff_large', label: 'Bet $18 (pot)', icon: '⚡', cls: 'raise',
+        val: 'raise', label: 'Bet $18 (pot)', icon: '⚡', cls: 'raise',
         grade: 'incorrect', title: 'Burning Chips vs a Calling Machine', emoji: '❌',
         fb: "Pot-betting a maniac with 3-high is the definition of throwing money away. His calling range here includes garbage — he's not scared of AKQJ, he's hoping to catch you bluffing. Check.",
       },
@@ -3486,13 +3355,11 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_083',
-    tag: 'Pot Odds / Calling',
     skill: 'potodds',
     difficulty: 'advanced',
     weight: 1.0,
     villain: {
       type: 'aggressive',
-      label: 'Aggressive Regular',
       notes: 'Triple-barrels with high frequency; bluffs rivers roughly 40% of the time; bet sizing tells nothing',
     },
     tableContext: null,
@@ -3505,7 +3372,7 @@ const SCENARIOS = [
     pot: '$70',
     toCall: '$55',
     body: "BB vs BTN aggressive regular. Three streets of betting on Q♦9♠4♥2♦K♠. He fires river $55 into $70. You have QT — middle top pair, decent kicker. He bluffs rivers 40% of the time.",
-    question: 'QT (top pair) on Q942K river. Aggressive regular who bluffs rivers 40% fires $55. Getting 2.27:1. What do you do?',
+    question: 'QT (top pair) on Q942K river. Aggressive regular who bluffs rivers 40% fires $55. Getting 2.27:1. Call or fold?',
     correct: 'call',
     choices: [
       {
