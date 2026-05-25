@@ -43,8 +43,8 @@ function SkillDot({ skill, data }) {
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard({ onStartSession, stats }) {
-  const streak = stats?.streak ?? DUMMY_USER.streak;
-  const lastSessionDate = stats?.lastSessionDate ?? DUMMY_USER.lastSessionDate;
+  const streak = DUMMY_USER.streak;
+  const lastSessionDate = DUMMY_USER.lastSessionDate;
   const showWarning = shouldShowStreakWarning(lastSessionDate, streak);
 
   const [pulse, setPulse] = useState(false);
@@ -79,7 +79,7 @@ export default function Dashboard({ onStartSession, stats }) {
 
       {/* ── Coach greeting ── */}
       <div className="db-greeting">
-        <div className="db-greeting-av">🎩</div>
+        <div className="db-greeting-av">M</div>
         <div className="db-greeting-text">
           {coachGreeting}
         </div>

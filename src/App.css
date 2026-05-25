@@ -67,7 +67,7 @@ body {
 }
 
 .tagline {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -94,7 +94,7 @@ body {
 }
 
 .skill-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -155,7 +155,7 @@ body {
 }
 
 .skill-tag {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -167,7 +167,7 @@ body {
 }
 
 .scenario-counter {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   color: var(--cream-faint);
   letter-spacing: 0.08em;
@@ -214,7 +214,7 @@ body {
 .pos.active { background: rgba(46,204,113,0.1);  border-color: rgba(46,204,113,0.28); }
 
 .pos-name {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -232,7 +232,7 @@ body {
 
 /* ── Board ── */
 .board-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -288,7 +288,7 @@ body {
 
 /* ── Pot Info ── */
 .pot-info {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.1em;
   color: var(--cream-faint);
@@ -337,7 +337,7 @@ body {
 .act-btn-content { flex: 1; }
 .act-btn-label { font-size: 0.88rem; font-weight: 600; color: #1a1a1a; }
 .act-btn-sublabel {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -380,7 +380,7 @@ body {
 }
 
 .dp-street {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -388,7 +388,7 @@ body {
 }
 
 .dp-pot {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.58rem;
   color: rgba(30,30,30,0.5);
   letter-spacing: 0.08em;
@@ -445,7 +445,7 @@ body {
 
 .dp-you-hold-info { flex: 1; }
 .dp-you-hold-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -482,7 +482,7 @@ body {
 }
 
 .dp-vr-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -521,7 +521,7 @@ body {
 }
 
 .ai-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -560,7 +560,7 @@ body {
 }
 
 .grade-sub {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -575,7 +575,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -598,7 +598,7 @@ body {
 }
 
 .thinking {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.72rem;
   color: var(--gold);
   text-align: center;
@@ -644,7 +644,7 @@ body {
 }
 
 .summary-sub {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -667,7 +667,7 @@ body {
 .skill-row-name { font-size: 0.85rem; color: var(--cream); }
 
 .status-pill {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.56rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -720,7 +720,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   color: var(--cream-faint);
@@ -732,7 +732,7 @@ body {
 
 /* ─── Your Hand label ─────────────────────────────────────────────────────── */
 .hand-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -757,13 +757,14 @@ body {
 
 /* ─── Position info in decision panel ────────────────────────────────────── */
 .dp-position-info {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(30,30,30,0.4);
   flex-shrink: 0;
-}/* ═══════════════════════════════════════════════════════════════════════════
+}
+/* ═══════════════════════════════════════════════════════════════════════════
    DASHBOARD — Phase 1.5
    ═══════════════════════════════════════════════════════════════════════════ */
 
@@ -801,7 +802,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem;
   font-weight: 700;
   color: #1a1208;
@@ -809,7 +810,7 @@ body {
 }
 
 .db-username {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   letter-spacing: 0.08em;
   color: rgba(242,237,227,0.7);
@@ -827,7 +828,7 @@ body {
 }
 
 .db-plan-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -857,7 +858,7 @@ body {
   border-radius: var(--radius-md);
   padding: 10px 14px;
   margin-bottom: 12px;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.08em;
   color: var(--yellow);
@@ -881,11 +882,15 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a3a20, #1c1408);
+  background: radial-gradient(circle at 35% 30%, #8a6a2a, #4a3818);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 1rem;
+  color: var(--gold-light);
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px rgba(232,144,40,0.4);
 }
@@ -894,9 +899,10 @@ body {
   flex: 1;
   font-size: 0.82rem;
   font-style: italic;
+  font-weight: 400;
   color: rgba(242,237,227,0.75);
   line-height: 1.4;
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 /* ── Hero: streak + sessions ── */
@@ -920,10 +926,10 @@ body {
 }
 
 .db-hero-num {
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
-  font-weight: 700;
-  font-size: 3.4rem;
+  font-weight: 900;
+  font-size: 4.2rem;
   line-height: 1;
   letter-spacing: -0.02em;
   display: inline-block;
@@ -952,7 +958,7 @@ body {
 }
 
 .db-hero-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -980,10 +986,10 @@ body {
   border-radius: var(--radius-md);
   padding: 16px;
   color: var(--gold-light);
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 900;
   cursor: pointer;
   letter-spacing: 0.01em;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
@@ -1013,7 +1019,7 @@ body {
 
 .db-cta-sub {
   text-align: center;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.52rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1033,7 +1039,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.26em;
   text-transform: uppercase;
@@ -1075,7 +1081,7 @@ body {
 .db-corner-br { bottom: 9px; right: 9px; border-left: none;  border-top: none; }
 
 .db-schema-mini-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.48rem;
   letter-spacing: 0.28em;
   text-transform: uppercase;
@@ -1085,9 +1091,9 @@ body {
 }
 
 .db-schema-name {
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
-  font-weight: 700;
+  font-weight: 900;
   font-size: 2rem;
   color: var(--cream);
   text-align: center;
@@ -1098,8 +1104,9 @@ body {
 }
 
 .db-schema-quote {
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
+  font-weight: 400;
   font-size: 0.82rem;
   color: rgba(242,237,227,0.6);
   text-align: center;
@@ -1117,7 +1124,7 @@ body {
 }
 
 .db-affected-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.46rem;
   letter-spacing: 0.24em;
   text-transform: uppercase;
@@ -1134,7 +1141,7 @@ body {
 }
 
 .db-affected-chip {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.58rem;
   letter-spacing: 0.06em;
   padding: 5px 10px;
@@ -1198,7 +1205,7 @@ body {
 }
 
 .db-skill-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.46rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -1224,7 +1231,7 @@ body {
 }
 
 .db-lb-your-rank {
-  font-family: Georgia, serif;
+  font-family: 'Playfair Display', Georgia, serif;
   font-style: italic;
   font-size: 0.82rem;
   color: var(--cream-dim);
@@ -1239,7 +1246,7 @@ body {
 .db-lb-see-full {
   background: none;
   border: none;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.5rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -1250,7 +1257,7 @@ body {
 .db-lb-see-full:hover { color: var(--gold-light); }
 
 .db-lb-top-label {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.46rem;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -1270,7 +1277,7 @@ body {
 }
 
 .db-lb-rank {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem;
   font-weight: 700;
   color: var(--gold);
@@ -1280,14 +1287,14 @@ body {
 
 .db-lb-name {
   flex: 1;
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.62rem;
   letter-spacing: 0.03em;
   color: rgba(242,237,227,0.65);
 }
 
 .db-lb-streak {
-  font-family: 'Courier New', Courier, monospace;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.6rem;
   color: var(--yellow);
   display: flex;
