@@ -12,7 +12,28 @@ const SKILL_NAMES = {
   opponent:   'Opponent',
 };
 
+const SKILL_DESCRIPTIONS = {
+  preflop:    'Right starting hands by position',
+  position:   'Adjusting play based on your seat',
+  aggression: 'Calibrating when to bet and raise',
+  betsize:    'Sizing bets to achieve their purpose',
+  bluffing:   'Bluffing at the right frequency',
+  potodds:    'Calling profitably vs. over-folding',
+  reads:      'Reacting to villain betting patterns',
+  opponent:   'Adjusting strategy for villain type',
+};
+
+const COLOR_LABELS = {
+  green:  'Strong · 75%+ accuracy',
+  yellow: 'Work On · 50–74% accuracy',
+  red:    'Weak · below 50% accuracy',
+  gray:   'Unrated · fewer than 5 attempts',
+};
+
+// ─── Skill dot with tap-for-description ───────────────────────────────────
 function SkillDot({ skill, data }) {
+  const [expanded, setExpanded] = useState(false);
+
   const colorMap = {
     green:  { bg: '#56c878', glow: 'rgba(86,200,120,0.6)'  },
     yellow: { bg: '#e89028', glow: 'rgba(232,144,40,0.6)'  },
@@ -20,13 +41,24 @@ function SkillDot({ skill, data }) {
     gray:   { bg: 'rgba(255,255,255,0.15)', glow: 'none'   },
   };
   const { bg, glow } = colorMap[data.rating] || colorMap.gray;
+
   return (
-    <div className="db-skill-item">
+    <div
+      className={`db-skill-item ${expanded ? 'db-skill-expanded' : ''}`}
+      onClick={() => setExpanded(e => !e)}
+      style={{ cursor: 'pointer' }}
+    >
       <div className="db-skill-dot" style={{
         background: bg,
         boxShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
       }} />
       <span className="db-skill-label">{SKILL_NAMES[skill]}</span>
+      {expanded && (
+        <div className="db-skill-desc">
+          <div className="db-skill-desc-text">{SKILL_DESCRIPTIONS[skill]}</div>
+          <div className="db-skill-desc-rating">{COLOR_LABELS[data.rating]}</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -98,14 +130,13 @@ export default function Dashboard({ onStartSession }) {
       <div className="db-section">
         <div className="db-section-label">
           <span>Skill Profile</span>
-          <span className="db-section-meta">last 20 attempts</span>
+          <span className="db-section-meta">tap a skill to learn more</span>
         </div>
         <div className="db-skills-grid">
           {Object.entries(skills).map(([skill, data]) => (
             <SkillDot key={skill} skill={skill} data={data} />
           ))}
         </div>
-        {/* Color legend */}
         <div className="db-skill-legend">
           <span className="db-legend-item"><span className="db-legend-dot db-legend-green" />Strong</span>
           <span className="db-legend-item"><span className="db-legend-dot db-legend-yellow" />Work On</span>
@@ -114,25 +145,26 @@ export default function Dashboard({ onStartSession }) {
         </div>
       </div>
 
-      {/* ── Leaderboard ── */}
+      {/* ── Friends Leaderboard ── */}
       <div className="db-section">
         <div className="db-section-label">
-          <span>Leaderboard · Longest Streak</span>
+          <span>Friends · Longest Streak</span>
         </div>
         <div className="db-leaderboard">
           <div className="db-lb-rank-line">
             <div className="db-lb-your-rank">
-              Your rank · <strong>#{leaderboard.yourRank}</strong> of {leaderboard.total.toLocaleString()}
+              Your rank · <strong>#{leaderboard.yourRank}</strong> of {leaderboard.total}
             </div>
-            <button className="db-lb-see-full" onClick={() => {}}>See full →</button>
+            <button className="db-lb-see-full" onClick={() => {}}>Invite →</button>
           </div>
-          <div className="db-lb-top-label">Top players</div>
           <div className="db-lb-rows">
             {leaderboard.top.map(entry => (
-              <div key={entry.rank} className="db-lb-row">
+              <div key={entry.rank} className={`db-lb-row ${entry.isUser ? 'db-lb-row-you' : ''}`}>
                 <span className="db-lb-rank">#{entry.rank}</span>
                 <span className="db-lb-name">{entry.name}</span>
-                <span className="db-lb-streak">🔥 {entry.streak}</span>
+                <span className="db-lb-streak">
+                  {entry.streak > 0 ? `🔥 ${entry.streak}` : '—'}
+                </span>
               </div>
             ))}
           </div>

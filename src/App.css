@@ -1826,3 +1826,66 @@ body {
   transition: opacity 0.18s;
 }
 .db-gopro-btn:hover { opacity: 0.88; }
+/* ─── Skill dot tap-for-description ─────────────────────────────────────── */
+.db-skill-item {
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.db-skill-item:hover {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.12);
+}
+
+.db-skill-expanded {
+  grid-column: span 2;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 10px;
+  background: rgba(200,168,75,0.06) !important;
+  border-color: rgba(200,168,75,0.2) !important;
+}
+
+.db-skill-expanded .db-skill-dot {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.db-skill-expanded .db-skill-label {
+  display: none;
+}
+
+.db-skill-desc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.db-skill-desc-text {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  color: rgba(242,237,227,0.7);
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.db-skill-desc-rating {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.1em;
+  color: rgba(242,237,227,0.35);
+  text-transform: uppercase;
+}
+
+/* ─── Friends leaderboard — your row highlighted ────────────────────────── */
+.db-lb-row-you {
+  background: rgba(200,168,75,0.08) !important;
+  border-left: 2px solid var(--gold);
+}
+
+.db-lb-row-you .db-lb-rank { color: var(--gold); }
+.db-lb-row-you .db-lb-name { color: var(--gold-light); font-weight: 700; }
+.db-lb-row-you .db-lb-streak { color: var(--yellow); }

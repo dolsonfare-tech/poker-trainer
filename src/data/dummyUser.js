@@ -1,6 +1,5 @@
 // ─── Dummy User Data (Phase 1.5) ──────────────────────────────────────────
 // Returning user state — full dummy data for tester validation.
-// New-user state (gray dots, locked schema) built in Phase 2 with real data.
 // In Phase 2 this entire file is replaced by Supabase.
 
 const DUMMY_USER = {
@@ -10,19 +9,10 @@ const DUMMY_USER = {
 
   // ── Streak & Sessions ─────────────────────────────────────────────────
   streak: 8,
-  lastSessionDate: null, // null = hasn't played today (triggers warning after 6pm)
+  lastSessionDate: null,
   sessionsCompleted: 47,
 
-  // ── XP ────────────────────────────────────────────────────────────────
-  xp: 1240,
-  level: 4,
-
-  // ── Coach greeting ────────────────────────────────────────────────────
-  // Phase 2: generated dynamically based on user state
-  coachGreeting: "Eight days running. The hard part is showing up — you already did.",
-
   // ── Skill ratings ─────────────────────────────────────────────────────
-  // rating: 'green' | 'yellow' | 'red' | 'gray' (unrated)
   skills: {
     preflop:    { rating: 'green',  attempts: 34 },
     position:   { rating: 'green',  attempts: 28 },
@@ -35,7 +25,6 @@ const DUMMY_USER = {
   },
 
   // ── Schema diagnosis ──────────────────────────────────────────────────
-  // Phase 2: evolves over time based on decision history
   schema: {
     name: 'The Conflict Avoider',
     quote: "I shouldn't put money in unless I'm sure",
@@ -49,16 +38,19 @@ const DUMMY_USER = {
   },
   sessionsRequiredForSchema: 5,
 
-  // ── Leaderboard ───────────────────────────────────────────────────────
-  // Phase 2: real data from Supabase
-  // Phase 1.5: collapsed view — your rank chip + top 3 only
+  // ── Friends Leaderboard ───────────────────────────────────────────────
+  // Phase 2: real friends from Supabase social graph
+  // isUser flags the current user's row for highlighting
   leaderboard: {
-    yourRank: 47,
-    total: 1247,
+    yourRank: 3,
+    total: 6,
     top: [
-      { rank: 1, name: 'Dave245',     streak: 41 },
-      { rank: 2, name: 'TFETonerichguy', streak: 38 },
-      { rank: 3, name: 'homegymislife24x7',    streak: 29 },
+      { rank: 1, name: 'Dave245',          streak: 41, isUser: false },
+      { rank: 2, name: 'TFETonerichguy',   streak: 38, isUser: false },
+      { rank: 3, name: 'RiverRat_KC',      streak: 8,  isUser: true  },
+      { rank: 4, name: 'homegymislife24x7',streak: 5,  isUser: false },
+      { rank: 5, name: 'NitPickr',         streak: 3,  isUser: false },
+      { rank: 6, name: 'CheckRaiser',      streak: 1,  isUser: false },
     ],
   },
 };
