@@ -46,22 +46,6 @@ body {
   padding: 28px 18px 80px;
 }
 
-/* Dashboard gets a tighter column with desktop card frame */
-.dashboard {
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-@media (min-width: 700px) {
-  .dashboard {
-    background: rgba(27,61,42,0.25);
-    border: 1px solid rgba(200,168,75,0.1);
-    border-radius: 28px;
-    padding: 24px;
-    box-shadow: 0 40px 80px rgba(0,0,0,0.4);
-  }
-}
-
 /* ── Header ── */
 .header {
   text-align: center;
@@ -69,8 +53,10 @@ body {
 }
 
 .logo {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
   font-size: 2.6rem;
-  font-weight: 700;
+  font-weight: 900;
   letter-spacing: -0.03em;
   color: var(--gold);
   text-shadow: 0 0 60px rgba(200,168,75,0.25);
@@ -780,6 +766,7 @@ body {
   color: rgba(30,30,30,0.4);
   flex-shrink: 0;
 }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    DASHBOARD — Phase 1.5
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -787,7 +774,6 @@ body {
 .dashboard {
   padding-top: 4px;
   animation: fadeUp 0.4s ease;
-  /* max-width and desktop frame handled in .app section above */
 }
 
 /* ── Topbar ── */
@@ -916,10 +902,9 @@ body {
   flex: 1;
   font-size: 0.82rem;
   font-style: italic;
-  font-weight: 400;
   color: rgba(242,237,227,0.75);
   line-height: 1.4;
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: Georgia, serif;
 }
 
 /* ── Compact stats row ── */
@@ -927,12 +912,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0;
   background: rgba(27,61,42,0.4);
   border: 1px solid rgba(200,168,75,0.14);
   border-radius: var(--radius-md);
   padding: 12px 20px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .db-stat-chip {
@@ -1221,13 +1205,6 @@ body {
   text-align: center;
 }
 
-
-/* ── CTA block ── */
-.db-cta-block {
-  padding-top: 8px;
-  margin-bottom: 0;
-}
-
 /* ── Leaderboard (collapsed) ── */
 .db-leaderboard {
   padding: 14px;
@@ -1315,4 +1292,92 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+/* ─── Dashboard skill legend ─────────────────────────────────────────────── */
+.db-skill-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.db-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.35);
+}
+
+.db-legend-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.db-legend-green  { background: #56c878; box-shadow: 0 0 5px rgba(86,200,120,0.5); }
+.db-legend-yellow { background: #e89028; box-shadow: 0 0 5px rgba(232,144,40,0.5); }
+.db-legend-red    { background: #e25555; box-shadow: 0 0 5px rgba(226,85,85,0.5); }
+.db-legend-gray   { background: rgba(255,255,255,0.2); }
+
+/* ─── Session summary legend & skill descriptions ────────────────────────── */
+.ss-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-sm);
+}
+
+.ss-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.48rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.45);
+}
+
+.ss-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ss-dot-green  { background: var(--green);  box-shadow: 0 0 5px rgba(46,204,113,0.5); }
+.ss-dot-yellow { background: var(--yellow); box-shadow: 0 0 5px rgba(240,165,0,0.5); }
+.ss-dot-red    { background: var(--red);    box-shadow: 0 0 5px rgba(231,76,60,0.5); }
+
+.skill-row-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.skill-row-desc {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.46rem;
+  letter-spacing: 0.08em;
+  color: rgba(242,237,227,0.3);
+}
+
+/* ─── CTA block ── */
+.db-cta-block {
+  padding-top: 8px;
+  margin-bottom: 0;
 }

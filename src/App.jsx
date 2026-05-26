@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
-import SkillTracker from './components/SkillTracker';
 import ScenarioCard from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
@@ -10,20 +9,17 @@ import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 import Dashboard from './components/Dashboard';
 
-// ─── Streak & XP helpers (localStorage) ───────────────────────────────────
-
-const XP_VALUES = { correct: 10, partial: 5, incorrect: 0 };
-const XP_SESSION_BONUS = 25;
-const XP_STREAK_BONUS = 10;
+// ─── Constants ────────────────────────────────────────────────────────────
 const SESSION_LENGTH = 5;
 const TIMER_SECONDS = 60; // HARDCODED — pull from user settings in Phase 2
 
+// ─── Streak helpers (localStorage) ────────────────────────────────────────
 function loadStats() {
   try {
     const raw = localStorage.getItem('cr_stats');
     if (raw) return JSON.parse(raw);
   } catch {}
-  return { xp: 0, streak: 0, lastSessionDate: null };
+  return { streak: 0, lastSessionDate: null };
 }
 
 function saveStats(stats) {
@@ -34,7 +30,7 @@ function todayString() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function calcStreakAndXP(stats, sessionXP) {
+function calcStreak(stats) {
   const today = todayString();
   const last = stats.lastSessionDate;
   const yesterday = new Date();
@@ -43,21 +39,17 @@ function calcStreakAndXP(stats, sessionXP) {
 
   let newStreak = stats.streak;
   if (last === today) {
-    // already played today — don't increment streak again
+    // already played today — don't increment
   } else if (last === yesterdayStr) {
     newStreak = stats.streak + 1;
   } else {
     newStreak = 1;
   }
 
-  const streakBonus = last !== today ? XP_STREAK_BONUS * newStreak : 0;
-  const totalXP = stats.xp + sessionXP + XP_SESSION_BONUS + streakBonus;
-
-  return { xp: totalXP, streak: newStreak, lastSessionDate: today, sessionXP, streakBonus };
+  return { streak: newStreak, lastSessionDate: today };
 }
 
 // ─── Combo Ring ────────────────────────────────────────────────────────────
-
 function ComboRing({ combo }) {
   if (combo < 2) return null;
   return (
@@ -72,13 +64,13 @@ function ComboRing({ combo }) {
       <span style={{ fontSize: combo >= 5 ? '22px' : '18px', lineHeight: 1 }}>🔥</span>
       <div style={{ lineHeight: 1.1 }}>
         <div style={{
-          fontFamily: "'Courier New', Courier, monospace", fontSize: '0.7rem',
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '0.7rem',
           fontWeight: '700', color: 'var(--yellow)', letterSpacing: '0.05em',
         }}>
           ×{combo} streak
         </div>
         <div style={{
-          fontFamily: "'Courier New', Courier, monospace", fontSize: '0.5rem',
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '0.5rem',
           letterSpacing: '0.12em', color: 'rgba(242,237,227,0.45)',
           textTransform: 'uppercase', marginTop: '2px',
         }}>
@@ -97,7 +89,6 @@ const ACTION_SUBLABELS = {
 };
 
 // ─── Utility ──────────────────────────────────────────────────────────────
-
 function getFilteredScenarios(difficulty) {
   const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
   return [...filtered].sort(() => Math.random() - 0.5).slice(0, SESSION_LENGTH);
@@ -114,42 +105,34 @@ function ProgressDots({ total, current }) {
 }
 
 // ─── Main App ──────────────────────────────────────────────────────────────
-
 export default function App() {
-  const [showVillainGuide, setShowVillainGuide]     = useState(false);
-  // screens: 'dashboard' | 'difficulty' | 'session'
-  const [screen, setScreen]                         = useState('dashboard');
-  const [difficulty, setDifficulty]                 = useState('beginner');
-  const [shuffledScenarios, setShuffledScenarios]   = useState([]);
-  const [currentIndex, setCurrentIndex]             = useState(0);
-  const [skillResults, setSkillResults]             = useState({});
-  const [decided, setDecided]                       = useState(false);
-  const [feedback, setFeedback]                     = useState(null);
-  const [showSummary, setShowSummary]               = useState(false);
-  const [coachRead, setCoachRead]                   = useState('');
-  const [coachLoading, setCoachLoading]             = useState(false);
-  const [stats, setStats]                           = useState(() => loadStats());
-  const [sessionXP, setSessionXP]                   = useState(0);
-  const [xpData, setXpData]                         = useState(null);
-  const [timerSeconds, setTimerSeconds]             = useState(TIMER_SECONDS);
-  const [timedOut, setTimedOut]                     = useState(false);
-  const [combo, setCombo]                           = useState(0);
-  const [correctCount, setCorrectCount]             = useState(0);
-  const timerRef                                    = useRef(null);
-  const currentIndexRef                             = useRef(0);
-  const shuffledRef                                 = useRef([]);
+  const [showVillainGuide, setShowVillainGuide]   = useState(false);
+  const [screen, setScreen]                       = useState('dashboard');
+  const [difficulty, setDifficulty]               = useState('beginner');
+  const [shuffledScenarios, setShuffledScenarios] = useState([]);
+  const [currentIndex, setCurrentIndex]           = useState(0);
+  const [skillResults, setSkillResults]           = useState({});
+  const [decided, setDecided]                     = useState(false);
+  const [feedback, setFeedback]                   = useState(null);
+  const [showSummary, setShowSummary]             = useState(false);
+  const [coachRead, setCoachRead]                 = useState('');
+  const [coachLoading, setCoachLoading]           = useState(false);
+  const [stats, setStats]                         = useState(() => loadStats());
+  const [timerSeconds, setTimerSeconds]           = useState(TIMER_SECONDS);
+  const [timedOut, setTimedOut]                   = useState(false);
+  const [combo, setCombo]                         = useState(0);
+  const [correctCount, setCorrectCount]           = useState(0);
+  const timerRef                                  = useRef(null);
+  const currentIndexRef                           = useRef(0);
+  const shuffledRef                               = useRef([]);
 
   const scenario = shuffledScenarios[currentIndex];
 
   useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
   useEffect(() => { shuffledRef.current = shuffledScenarios; }, [shuffledScenarios]);
 
-  // ── Timer helpers ──
   const clearTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   };
 
   const handleTimeout = useCallback(() => {
@@ -159,14 +142,9 @@ export default function App() {
     setTimedOut(true);
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [s.skill]: 'incorrect' }));
-    setSessionXP(prev => prev + 0);
     setCombo(0);
     const correctGrading = s.grading[s.correct];
-    setFeedback({
-      grade: { ...correctGrading, skill: s.tag },
-      loading: false,
-      text: s.feedback.correct,
-    });
+    setFeedback({ grade: { ...correctGrading, skill: s.tag }, loading: false, text: s.feedback.correct });
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, []);
 
@@ -191,7 +169,6 @@ export default function App() {
 
   useEffect(() => clearTimer, []);
 
-  // ── Navigation ──
   const handleStartSession = () => {
     setScreen('difficulty');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -204,8 +181,6 @@ export default function App() {
     shuffledRef.current = scenarios;
     setCombo(0);
     setCorrectCount(0);
-    setSessionXP(0);
-    setXpData(null);
     setScreen('session');
   };
 
@@ -214,9 +189,7 @@ export default function App() {
     try {
       const text = await fetchCoachRead(shuffledScenarios, results, lastIndex);
       setCoachRead(text);
-    } catch {
-      setCoachRead('');
-    }
+    } catch { setCoachRead(''); }
     setCoachLoading(false);
   };
 
@@ -227,8 +200,6 @@ export default function App() {
     setTimedOut(false);
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
-    const earned = XP_VALUES[gr.g] || 0;
-    setSessionXP(prev => prev + earned);
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -240,14 +211,13 @@ export default function App() {
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [decided, scenario]);
 
-const handleNext = () => {
+  const handleNext = () => {
     const next = currentIndex + 1;
     if (next >= shuffledScenarios.length) {
       clearTimer();
-      const newStats = calcStreakAndXP(stats, sessionXP);
+      const newStats = calcStreak(stats);
       saveStats(newStats);
       setStats(newStats);
-      setXpData(newStats);
       setShowSummary(true);
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
@@ -270,8 +240,6 @@ const handleNext = () => {
     setCoachRead('');
     setCoachLoading(false);
     setShuffledScenarios([]);
-    setSessionXP(0);
-    setXpData(null);
     setTimerSeconds(TIMER_SECONDS);
     setTimedOut(false);
     setCombo(0);
@@ -297,7 +265,7 @@ const handleNext = () => {
             background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: '50%', width: '30px', height: '30px',
             color: 'rgba(242,237,227,0.5)', cursor: 'pointer',
-            fontSize: '0.75rem', fontFamily: "'Courier New', Courier, monospace",
+            fontSize: '0.75rem', fontFamily: "'JetBrains Mono', 'Courier New', monospace",
             fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}
         >i</button>
@@ -305,21 +273,16 @@ const handleNext = () => {
 
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
-      {/* ── Dashboard ── */}
       {screen === 'dashboard' && (
         <Dashboard onStartSession={handleStartSession} stats={stats} />
       )}
 
-      {/* ── Difficulty selector ── */}
       {screen === 'difficulty' && (
         <DifficultySelector onSelect={handleDifficultySelect} />
       )}
 
-      {/* ── Session ── */}
       {screen === 'session' && (
         <>
-          <SkillTracker skillResults={skillResults} />
-
           {showSummary ? (
             <SessionSummary
               skillResults={skillResults}
@@ -327,7 +290,6 @@ const handleNext = () => {
               coachLoading={coachLoading}
               difficulty={difficulty}
               onRestart={handleRestart}
-              xpData={xpData}
             />
           ) : (
             <>
