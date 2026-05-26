@@ -1,34 +1,6 @@
 import { useState, useEffect } from 'react';
 import DUMMY_USER from '../data/dummyUser';
-
-const SKILL_NAMES = {
-  preflop:    'Preflop',
-  position:   'Position',
-  aggression: 'Aggression',
-  betsize:    'Bet Size',
-  bluffing:   'Bluffing',
-  potodds:    'Pot Odds',
-  reads:      'Reads',
-  opponent:   'Opponent',
-};
-
-const SKILL_DESCRIPTIONS = {
-  preflop:    'Right starting hands by position',
-  position:   'Adjusting play based on your seat',
-  aggression: 'Calibrating when to bet and raise',
-  betsize:    'Sizing bets to achieve their purpose',
-  bluffing:   'Bluffing at the right frequency',
-  potodds:    'Calling profitably vs. over-folding',
-  reads:      'Reacting to villain betting patterns',
-  opponent:   'Adjusting strategy for villain type',
-};
-
-const COLOR_LABELS = {
-  green:  'Strong · 75%+ accuracy',
-  yellow: 'Work On · 50–74% accuracy',
-  red:    'Weak · below 50% accuracy',
-  gray:   'Unrated · fewer than 5 attempts',
-};
+import { SKILL_NAMES, SKILL_DESCRIPTIONS, COLOR_LABELS } from '../data/constants';
 
 // ─── Skill dot with tap-for-description ───────────────────────────────────
 function SkillDot({ skill, data }) {
@@ -63,14 +35,18 @@ function SkillDot({ skill, data }) {
   );
 }
 
-export default function Dashboard({ onStartSession }) {
+export default function Dashboard({ onStartSession, stats }) {
   const [pulse, setPulse] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPulse(true), 400);
     return () => clearTimeout(t);
   }, []);
 
-  const { schema, skills, leaderboard, streak, sessionsCompleted } = DUMMY_USER;
+  const { schema, skills, leaderboard, sessionsCompleted } = DUMMY_USER;
+
+  // Use live localStorage streak if the user has played at least once,
+  // otherwise fall back to dummy data so fresh testers see a realistic view.
+  const streak = stats?.lastSessionDate ? stats.streak : DUMMY_USER.streak;
 
   return (
     <div className="dashboard">

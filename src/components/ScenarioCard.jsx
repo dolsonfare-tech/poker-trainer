@@ -184,8 +184,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
                   {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
                 </div>
               )}
-              {!opt.label.includes('(') && actionSublabels[opt.cls] && opt.val === opt.cls &&
-                ['Fold', 'Call', 'Raise'].some(w => opt.label.toLowerCase().startsWith(w.toLowerCase())) && (
+              {!opt.label.includes('(') && actionSublabels[opt.cls] && (
                 <div className="act-btn-sublabel">{actionSublabels[opt.cls]}</div>
               )}
             </div>

@@ -40,95 +40,29 @@ const POSITIONS = [
 export default function VillainGuide({ onClose }) {
   const [activeTab, setActiveTab] = useState('players');
 
-  const tabStyle = (tab) => ({
-    flex: 1,
-    padding: '10px',
-    background: activeTab === tab ? 'rgba(200,168,75,0.12)' : 'transparent',
-    border: 'none',
-    borderBottom: activeTab === tab
-      ? '2px solid rgba(200,168,75,0.6)'
-      : '2px solid rgba(255,255,255,0.07)',
-    color: activeTab === tab ? 'var(--gold)' : 'rgba(242,237,227,0.4)',
-    fontFamily: "'Courier New', Courier, monospace",
-    fontSize: '0.6rem',
-    letterSpacing: '0.15em',
-    textTransform: 'uppercase',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  });
-
   const items = activeTab === 'players' ? VILLAINS : activeTab === 'positions' ? POSITIONS : GLOSSARY;
 
   return (
-    <div
-      onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.75)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-        backdropFilter: 'blur(4px)',
-        animation: 'fadeUp 0.25s ease',
-      }}
-    >
-      <div
-        onClick={e => e.stopPropagation()}
-        style={{
-          background: '#0e2019',
-          border: '1px solid rgba(200,168,75,0.2)',
-          borderRadius: '20px 20px 0 0',
-          padding: '28px 20px 40px',
-          width: '100%',
-          maxWidth: '660px',
-          maxHeight: '82vh',
-          overflowY: 'auto',
-        }}
-      >
-        <div style={{ width: '36px', height: '4px', background: 'rgba(255,255,255,0.15)', borderRadius: '2px', margin: '0 auto 24px' }} />
+    <div className="vg-overlay" onClick={onClose}>
+      <div className="vg-panel" onClick={e => e.stopPropagation()}>
+        <div className="vg-handle" />
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <div style={{ fontFamily: 'Georgia, serif', fontSize: '1.3rem', fontWeight: '700', color: 'var(--cream)' }}>
-            Reference Guide
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'rgba(255,255,255,0.06)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '50%',
-              width: '34px',
-              height: '34px',
-              color: 'rgba(242,237,227,0.6)',
-              cursor: 'pointer',
-              fontSize: '1rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            ✕
-          </button>
+        <div className="vg-header">
+          <div className="vg-title">Reference Guide</div>
+          <button className="vg-close" onClick={onClose}>✕</button>
         </div>
 
-        <div style={{ display: 'flex', marginBottom: '20px' }}>
-          <button style={tabStyle('players')} onClick={() => setActiveTab('players')}>Player Types</button>
-          <button style={tabStyle('positions')} onClick={() => setActiveTab('positions')}>Positions</button>
-          <button style={tabStyle('glossary')} onClick={() => setActiveTab('glossary')}>Glossary</button>
+        <div className="vg-tabs">
+          <button className={`vg-tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>Player Types</button>
+          <button className={`vg-tab ${activeTab === 'positions' ? 'active' : ''}`} onClick={() => setActiveTab('positions')}>Positions</button>
+          <button className={`vg-tab ${activeTab === 'glossary' ? 'active' : ''}`} onClick={() => setActiveTab('glossary')}>Glossary</button>
         </div>
 
-        <div style={{ display: 'grid', gap: '10px' }}>
+        <div className="vg-list">
           {items.map((item, i) => (
-            <div key={i} style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px 16px' }}>
-              <div style={{ fontFamily: 'Georgia, serif', fontSize: '0.9rem', fontWeight: '600', color: 'var(--gold)', marginBottom: '5px' }}>
-                {item.label}
-              </div>
-              <div style={{ fontSize: '0.78rem', lineHeight: '1.6', color: 'rgba(242,237,227,0.55)', fontFamily: "'Courier New', Courier, monospace" }}>
-                {item.desc}
-              </div>
+            <div key={i} className="vg-item">
+              <div className="vg-item-label">{item.label}</div>
+              <div className="vg-item-desc">{item.desc}</div>
             </div>
           ))}
         </div>

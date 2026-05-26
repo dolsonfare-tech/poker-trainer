@@ -178,7 +178,6 @@ export default function App() {
     setDifficulty(selected);
     const scenarios = getFilteredScenarios(selected);
     setShuffledScenarios(scenarios);
-    shuffledRef.current = scenarios;
     setCombo(0);
     setCorrectCount(0);
     setScreen('session');
