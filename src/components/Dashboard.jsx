@@ -145,7 +145,7 @@ export default function Dashboard({ onStartSession }) {
           className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
           onClick={onStartSession}
         >
-          Train Now
+          Deal Me In
           <span className="db-cta-arrow">→</span>
         </button>
       </div>
