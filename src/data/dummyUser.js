@@ -48,7 +48,7 @@ const DUMMY_USER = {
       { rank: 1, name: 'Dave245',          streak: 41, isUser: false },
       { rank: 2, name: 'TFETonerichguy',   streak: 38, isUser: false },
       { rank: 3, name: 'homegymislife24x7',      streak: 8,  isUser: true  },
-      { rank: 4, name: 'RiverRat_KC',streak: 5,  isUser: false },
+      { rank: 4, name: 'TickBite69',streak: 5,  isUser: false },
     ],
   },
 };
