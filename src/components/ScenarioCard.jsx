@@ -52,7 +52,7 @@ function TimerRing({ seconds, totalSeconds }) {
       </svg>
       <div style={{
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'Courier New', Courier, monospace", fontSize: '10px', fontWeight: '700',
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '10px', fontWeight: '700',
         color, transition: 'color 0.5s ease',
       }}>{seconds}</div>
     </div>
@@ -86,6 +86,8 @@ function TableVisual({ scenario }) {
           </div>
         ))}
       </div>
+
+      {/* Board cards */}
       {scenario.board && (
         <>
           <div className="board-label">Board</div>
@@ -100,16 +102,11 @@ function TableVisual({ scenario }) {
           </div>
         </>
       )}
+
+      {/* Pot info — single location */}
       <div className="pot-info" style={{ fontSize: '0.85rem', letterSpacing: '0.08em', marginTop: '14px' }}>
         Pot: <span>{scenario.pot}</span>
         {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
-      </div>
-      <div className="hand-label">Your Hand · <span>{getHandName(scenario.hand)}</span></div>
-      <div className="cards-row">
-        {scenario.hand.map((card, i) => (
-          <PlayingCard key={i} rank={card.r} suit={card.s} color={card.c}
-            animDelay={`${(boardCount * 0.12) + (i * 0.12)}s`} />
-        ))}
       </div>
     </div>
   );
@@ -130,23 +127,16 @@ function SessionProgress({ currentIndex, total, correctCount }) {
 // ─── Decision Panel (cream section) ───────────────────────────────────────
 
 function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels }) {
-  const street = getStreet(scenario.board);
   const heroPos = scenario.positions.find(p => p.state === 'hero')?.label?.split(' ')[0];
   const villainPos = scenario.positions.find(p => p.state === 'active')?.label?.split(' ')[0];
 
   return (
     <div className="decision-panel">
 
-      {/* Street + pot header */}
-      <div className="dp-header">
-        <span className="dp-street">Decision · {street}</span>
-        <span className="dp-pot">Pot <strong>{scenario.pot}</strong></span>
-      </div>
-
       {/* Question */}
       <p className="dp-question">{scenario.question}</p>
 
-{/* You Hold */}
+      {/* You Hold */}
       <div className="dp-you-hold">
         <div className="dp-you-hold-cards">
           {scenario.hand.map((card, i) => (
@@ -158,7 +148,6 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
         </div>
         <div className="dp-you-hold-info">
           <div className="dp-you-hold-label">You Hold</div>
-          {/* HARDCODED hand name — replace with scenario.handDescription in Phase 2 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div className="dp-you-hold-name">{getHandName(scenario.hand)}</div>
             {POSITION_INFO[heroPos] && (
@@ -235,7 +224,7 @@ export default function ScenarioCard({
         </div>
       </div>
 
-      {/* Dark felt: table + board + hand */}
+      {/* Dark felt: positions + board + pot only */}
       <TableVisual scenario={scenario} key={currentIndex} />
 
       {/* Cream decision section */}
