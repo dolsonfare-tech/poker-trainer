@@ -43,14 +43,12 @@ const DUMMY_USER = {
   // isUser flags the current user's row for highlighting
   leaderboard: {
     yourRank: 3,
-    total: 6,
+    total: 4,
     top: [
       { rank: 1, name: 'Dave245',          streak: 41, isUser: false },
       { rank: 2, name: 'TFETonerichguy',   streak: 38, isUser: false },
       { rank: 3, name: 'RiverRat_KC',      streak: 8,  isUser: true  },
       { rank: 4, name: 'homegymislife24x7',streak: 5,  isUser: false },
-      { rank: 5, name: 'NitPickr',         streak: 3,  isUser: false },
-      { rank: 6, name: 'CheckRaiser',      streak: 1,  isUser: false },
     ],
   },
 };
