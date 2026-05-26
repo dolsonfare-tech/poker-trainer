@@ -25,15 +25,6 @@ const POSITION_INFO = {
   'BB':  'Big Blind · Closes preflop action',
 };
 
-// ─── Street indicator ──────────────────────────────────────────────────────
-
-function getStreet(board) {
-  if (!board || board.length === 0) return 'Preflop';
-  if (board.length === 3) return 'Flop';
-  if (board.length === 4) return 'Turn';
-  return 'River';
-}
-
 // ─── Timer Ring ────────────────────────────────────────────────────────────
 
 function TimerRing({ seconds, totalSeconds }) {
