@@ -79,7 +79,7 @@ export default function Dashboard({ onStartSession, stats }) {
 
       <div className="db-grid-layout">
 
-        {/* ── Left column: Poker Archetype ── */}
+        {/* ── Left column: Poker Archetype + Skill Profile ── */}
         <div className="db-col-left">
           <div className="db-section">
             <div className="db-section-label">
@@ -104,10 +104,6 @@ export default function Dashboard({ onStartSession, stats }) {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* ── Right column: Skill Profile + Leaderboard + CTA ── */}
-        <div className="db-col-right">
 
           {/* ── Skill profile ── */}
           <div className="db-section">
@@ -127,6 +123,10 @@ export default function Dashboard({ onStartSession, stats }) {
               <span className="db-legend-item"><span className="db-legend-dot db-legend-gray" />Unrated</span>
             </div>
           </div>
+        </div>
+
+        {/* ── Right column: Leaderboard + CTA ── */}
+        <div className="db-col-right">
 
           {/* ── Friends Leaderboard ── */}
           <div className="db-section">

@@ -162,7 +162,7 @@ export default function App() {
 
   useEffect(() => {
     if (screen === 'session' && !showSummary && shuffledScenarios.length > 0 && !decided) {
-      startTimer();
+      if (difficulty !== 'beginner') startTimer();
     }
     return clearTimer;
   }, [currentIndex, screen, showSummary]); // eslint-disable-line
@@ -305,6 +305,7 @@ export default function App() {
                 onDecision={handleDecision}
                 decided={decided}
                 actionSublabels={ACTION_SUBLABELS}
+                showTimer={difficulty !== 'beginner'}
               />
               {feedback && (
                 <>

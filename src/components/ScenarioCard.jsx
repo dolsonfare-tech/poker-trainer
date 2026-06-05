@@ -43,7 +43,7 @@ function TimerRing({ seconds, totalSeconds }) {
       </svg>
       <div style={{
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '10px', fontWeight: '700',
+        fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '13px', fontWeight: '700',
         color, transition: 'color 0.5s ease',
       }}>{seconds}</div>
     </div>
@@ -165,6 +165,9 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
         )}
       </div>
 
+      {/* Action header divider */}
+      <div className="dp-action-header">Action</div>
+
       {/* Action buttons */}
       <div className="dp-actions">
         {options.map((opt) => (
@@ -202,6 +205,7 @@ export default function ScenarioCard({
   scenario, currentIndex, total,
   timerSeconds, totalSeconds, correctCount,
   options, onDecision, decided, actionSublabels,
+  showTimer,
 }) {
   return (
     <div className="scenario-card">
@@ -209,22 +213,22 @@ export default function ScenarioCard({
       <div className="card-meta">
         <div className="skill-tag">{scenario.tag}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <TimerRing seconds={timerSeconds} totalSeconds={totalSeconds} />
+          {showTimer && <TimerRing seconds={timerSeconds} totalSeconds={totalSeconds} />}
           <SessionProgress currentIndex={currentIndex} total={total} correctCount={correctCount} />
         </div>
       </div>
 
-      {/* Dark felt: positions + board + pot only */}
-      <TableVisual scenario={scenario} key={currentIndex} />
-
-      {/* Cream decision section */}
-      <DecisionPanel
-        scenario={scenario}
-        options={options}
-        onDecision={onDecision}
-        decided={decided}
-        actionSublabels={actionSublabels}
-      />
+      {/* Dark felt (left) + cream Q&A (right) — side by side on tablet/desktop */}
+      <div className="scenario-card-body">
+        <TableVisual scenario={scenario} key={currentIndex} />
+        <DecisionPanel
+          scenario={scenario}
+          options={options}
+          onDecision={onDecision}
+          decided={decided}
+          actionSublabels={actionSublabels}
+        />
+      </div>
     </div>
   );
 }
