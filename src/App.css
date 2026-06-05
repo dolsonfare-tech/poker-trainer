@@ -46,6 +46,20 @@ body {
   padding: 28px 18px 80px;
 }
 
+@media (min-width: 768px) {
+  .app {
+    max-width: 880px;
+    padding: 32px 32px 80px;
+  }
+}
+
+@media (min-width: 1100px) {
+  .app {
+    max-width: 1240px;
+    padding: 40px 48px 80px;
+  }
+}
+
 /* ── Header ── */
 .header {
   text-align: center;
@@ -708,8 +722,6 @@ body {
 .dashboard {
   padding-top: 4px;
   animation: fadeUp 0.4s ease;
-  max-width: 480px;
-  margin: 0 auto;
 }
 
 @media (min-width: 700px) {
@@ -719,6 +731,40 @@ body {
     border-radius: 28px;
     padding: 24px;
     box-shadow: 0 40px 80px rgba(0,0,0,0.4);
+  }
+}
+
+/* ── Dashboard 2-column grid (desktop) ── */
+.db-grid-layout {
+  /* single column on mobile/tablet — children flow normally */
+}
+
+@media (min-width: 1100px) {
+  .db-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 28px;
+    align-items: start;
+  }
+}
+
+/* ── Session screen: constrain width on large screens ── */
+.session-container {
+  /* no constraint on mobile/tablet */
+}
+
+@media (min-width: 1100px) {
+  .session-container {
+    max-width: 780px;
+    margin: 0 auto;
+  }
+}
+
+/* ── Difficulty selector: constrain on large screens ── */
+@media (min-width: 1100px) {
+  .ds-container {
+    max-width: 640px;
+    margin: 0 auto;
   }
 }
 

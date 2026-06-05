@@ -281,7 +281,7 @@ export default function App() {
       )}
 
       {screen === 'session' && (
-        <>
+        <div className="session-container">
           {showSummary ? (
             <SessionSummary
               skillResults={skillResults}
@@ -324,7 +324,7 @@ export default function App() {
               )}
             </>
           )}
-        </>
+        </div>
       )}
     </div>
   );
