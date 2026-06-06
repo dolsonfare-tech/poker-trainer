@@ -154,18 +154,18 @@ export default function Dashboard({ onStartSession, stats }) {
             </div>
           </div>
 
-          {/* ── CTA ── */}
-          <div className="db-cta-block">
-            <button
-              className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
-              onClick={onStartSession}
-            >
-              Deal Me In
-              <span className="db-cta-arrow">→</span>
-            </button>
-          </div>
-
         </div>
+      </div>
+
+      {/* ── CTA — full width below both columns ── */}
+      <div className="db-cta-block">
+        <button
+          className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
+          onClick={onStartSession}
+        >
+          Deal Me In
+          <span className="db-cta-arrow">→</span>
+        </button>
       </div>
 
     </div>

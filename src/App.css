@@ -55,8 +55,8 @@ body {
 
 @media (min-width: 1100px) {
   .app {
-    max-width: 1240px;
-    padding: 40px 48px 80px;
+    max-width: 1060px;
+    padding: 28px 40px 72px;
   }
 }
 
@@ -64,6 +64,14 @@ body {
 .header {
   text-align: center;
   padding: 36px 0 32px;
+}
+
+@media (min-width: 1100px) {
+  .header {
+    padding: 18px 0 16px;
+  }
+  .logo { font-size: 2.2rem; }
+  .tagline { margin-top: 5px; }
 }
 
 .logo {
@@ -777,7 +785,7 @@ body {
 @media (min-width: 1100px) {
   .db-grid-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 55fr 45fr;
     gap: 0 28px;
     align-items: start;
   }
@@ -790,7 +798,7 @@ body {
 
 @media (min-width: 1100px) {
   .session-container {
-    max-width: 780px;
+    max-width: 920px;
     margin: 0 auto;
   }
 }
