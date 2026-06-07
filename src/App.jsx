@@ -248,7 +248,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="header" style={{ position: 'relative' }}>
+      <div className="header">
         <div
           className="logo"
           style={{ cursor: screen !== 'dashboard' ? 'pointer' : 'default' }}
@@ -257,17 +257,7 @@ export default function App() {
           Check<em>Raise</em>
         </div>
         <div className="tagline">AI-Powered Skill Training</div>
-        <button
-          onClick={() => setShowVillainGuide(true)}
-          style={{
-            position: 'absolute', top: '36px', right: '0',
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '50%', width: '30px', height: '30px',
-            color: 'rgba(242,237,227,0.5)', cursor: 'pointer',
-            fontSize: '0.75rem', fontFamily: "'JetBrains Mono', 'Courier New', monospace",
-            fontWeight: '700', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}
-        >i</button>
+        <button className="info-btn" onClick={() => setShowVillainGuide(true)}>i</button>
       </div>
 
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}

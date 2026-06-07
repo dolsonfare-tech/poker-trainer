@@ -44,7 +44,7 @@ export default function DifficultySelector({ onSelect }) {
             className={`ds-card ${selected === d.key ? 'selected' : ''}`}
             onClick={() => setSelected(d.key)}
           >
-            {selected === d.key && <div className="ds-card-dot" />}
+            {selected === d.key && <div className="ds-card-selected-badge">Selected</div>}
             <div className="ds-card-body">
               <div className="ds-card-icon">{d.icon}</div>
               <div>

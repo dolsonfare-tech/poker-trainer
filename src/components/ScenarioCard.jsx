@@ -50,6 +50,36 @@ function TimerRing({ seconds, totalSeconds }) {
   );
 }
 
+// ─── Villain History strip ────────────────────────────────────────────────
+
+const STREET_NAMES = ['Preflop', 'Flop', 'Turn', 'River'];
+
+function VillainHistory({ scenario }) {
+  const boardLen = scenario.board ? scenario.board.length : 0;
+  const streetIndex = boardLen === 0 ? 0 : boardLen === 3 ? 1 : boardLen === 4 ? 2 : 3;
+  const villain = scenario.positions.find(p => p.state === 'active');
+  const rawAction = villain?.action || '';
+  const villainAction = (rawAction && rawAction !== 'Active') ? rawAction : null;
+
+  return (
+    <div className="villain-history">
+      <div className="vh-label">Villain This Hand</div>
+      <div className="vh-timeline">
+        {STREET_NAMES.slice(0, streetIndex + 1).map((name, i) => (
+          <div key={name} className="vh-timeline-item">
+            {i > 0 && <div className="vh-connector" />}
+            <div className={`vh-street ${i === streetIndex ? 'vh-street-now' : ''}`}>
+              {name}
+              {i === streetIndex && <span className="vh-now-dot" />}
+            </div>
+          </div>
+        ))}
+      </div>
+      {villainAction && <div className="vh-action">{villainAction}</div>}
+    </div>
+  );
+}
+
 // ─── Blank card placeholder ────────────────────────────────────────────────
 
 function BlankCard({ small }) {
@@ -99,6 +129,8 @@ function TableVisual({ scenario }) {
         Pot: <span>{scenario.pot}</span>
         {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
       </div>
+
+      <VillainHistory scenario={scenario} />
     </div>
   );
 }

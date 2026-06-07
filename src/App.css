@@ -55,7 +55,7 @@ body {
 
 @media (min-width: 1100px) {
   .app {
-    max-width: 1060px;
+    max-width: 1200px;
     padding: 28px 40px 72px;
   }
 }
@@ -64,14 +64,48 @@ body {
 .header {
   text-align: center;
   padding: 36px 0 32px;
+  position: relative;
+}
+
+.info-btn {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  color: rgba(242,237,227,0.5);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s, color 0.18s;
+}
+.info-btn:hover {
+  background: rgba(255,255,255,0.11);
+  color: rgba(242,237,227,0.85);
 }
 
 @media (min-width: 1100px) {
   .header {
-    padding: 18px 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0 10px;
+    text-align: left;
+    position: relative;
   }
-  .logo { font-size: 2.2rem; }
-  .tagline { margin-top: 5px; }
+  .tagline { display: none; }
+  .logo { font-size: 1.9rem; }
+  .info-btn {
+    position: static;
+    order: 3;
+  }
 }
 
 .logo {
@@ -281,6 +315,84 @@ body {
 
 .pot-info span { color: var(--gold); font-weight: 600; }
 
+/* ── Villain History ── */
+.villain-history {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(200,168,75,0.1);
+  position: relative;
+  z-index: 1;
+}
+
+.vh-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.28);
+  margin-bottom: 10px;
+}
+
+.vh-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.vh-timeline-item {
+  display: flex;
+  align-items: center;
+}
+
+.vh-connector {
+  width: 20px;
+  height: 1px;
+  background: rgba(200,168,75,0.2);
+  margin: 0 2px;
+}
+
+.vh-street {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: rgba(242,237,227,0.35);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.vh-street-now {
+  color: var(--gold-light);
+}
+
+.vh-now-dot {
+  display: inline-block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(200,168,75,0.7);
+}
+
+.vh-action {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--cream);
+  margin-bottom: 8px;
+}
+
+.vh-notes {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.4);
+}
+
 /* ── Scenario Text ── */
 /* scenario text styles moved to .decision-panel */
 
@@ -349,7 +461,7 @@ body {
 @media (min-width: 768px) {
   .scenario-card-body {
     display: grid;
-    grid-template-columns: 1fr 1.2fr;
+    grid-template-columns: 1fr 1.15fr;
     align-items: stretch;
     margin: 0 -22px -22px;
   }
@@ -798,16 +910,116 @@ body {
 
 @media (min-width: 1100px) {
   .session-container {
-    max-width: 920px;
+    max-width: 960px;
     margin: 0 auto;
+  }
+  .scenario-card-body {
+    grid-template-columns: 1.25fr 1fr;
+  }
+  .positions-grid .pos {
+    padding: 10px 6px;
+  }
+  .pos-name {
+    font-size: 0.78rem;
+  }
+  .pos-action {
+    font-size: 0.78rem;
   }
 }
 
-/* ── Difficulty selector: constrain on large screens ── */
+/* ── Difficulty selector: 3-column layout on large screens ── */
 @media (min-width: 1100px) {
   .ds-container {
-    max-width: 640px;
+    max-width: 920px;
     margin: 0 auto;
+  }
+  .ds-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .ds-card.selected {
+    transform: none;
+  }
+  .ds-card-body {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+  }
+  .ds-card-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .ds-card-sublabel {
+    margin-left: 0;
+  }
+  .ds-card-icon {
+    font-size: 2rem;
+    margin-top: 4px;
+  }
+  .ds-confirm-btn {
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    border-color: transparent;
+    color: #1a1208;
+    padding: 20px;
+    font-size: 1.1rem;
+    max-width: 400px;
+    margin: 0 auto;
+    display: block;
+    width: 100%;
+  }
+  .ds-confirm-btn:hover {
+    background: linear-gradient(180deg, #f0d870, var(--gold-light));
+    opacity: 1;
+  }
+}
+
+/* ── Desktop typography + CTA scale + hover states ── */
+@media (min-width: 1024px) {
+  .db-hero-num {
+    font-size: 5rem;
+  }
+  .db-schema-name {
+    font-size: 2.6rem;
+  }
+  .db-stat-num {
+    font-size: 2.2rem;
+  }
+  .db-cta-btn {
+    background: linear-gradient(180deg, var(--gold-light), var(--gold));
+    border-color: transparent;
+    color: #1a1208;
+    padding: 20px 24px;
+    font-size: 1.2rem;
+  }
+  .db-cta-btn:hover {
+    background: linear-gradient(180deg, #f0d870, var(--gold-light));
+    opacity: 1;
+  }
+  /* Stronger desktop hover treatments */
+  .ds-card:hover {
+    background: rgba(200,168,75,0.07);
+    border-color: rgba(200,168,75,0.28);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  }
+  .ds-card.selected:hover {
+    transform: translateY(-2px);
+  }
+  .db-schema-card:hover {
+    border-color: rgba(200,168,75,0.35);
+  }
+  .db-skill-item:hover {
+    background: rgba(200,168,75,0.08);
+  }
+  .act-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+  }
+  .vg-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(200,168,75,0.2);
   }
 }
 
@@ -852,7 +1064,6 @@ body {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
   color: rgba(242,237,227,0.7);
-  text-transform: uppercase;
 }
 
 .db-plan-pill {
@@ -1073,6 +1284,47 @@ body {
 .db-cta-sub strong {
   color: var(--gold-light);
   font-weight: 600;
+}
+
+/* ── Coach's Note ── */
+.db-coach-note {
+  background: rgba(27,61,42,0.35);
+  border: 1px solid rgba(42,66,52,0.9);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+}
+
+.db-coach-note-body {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: rgba(242,237,227,0.75);
+  margin: 0 0 14px;
+}
+
+.db-coach-note-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(42,66,52,0.9);
+}
+
+.db-coach-note-focus-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.3);
+}
+
+.db-coach-note-focus {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--yellow);
 }
 
 /* ── Sections ── */
@@ -1554,20 +1806,24 @@ body {
 
 .ds-card.selected {
   background: rgba(200,168,75,0.12);
-  border-color: rgba(200,168,75,0.45);
+  border-color: rgba(200,168,75,0.7);
   transform: translateX(4px);
+  box-shadow: 0 0 0 1px rgba(200,168,75,0.25);
 }
 
-.ds-card-dot {
+.ds-card-selected-badge {
   position: absolute;
-  top: 50%;
-  right: 18px;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+  top: 12px;
+  right: 14px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #1a1208;
   background: var(--gold);
-  box-shadow: 0 0 10px rgba(200,168,75,0.7);
+  border-radius: 99px;
+  padding: 3px 8px;
+  box-shadow: 0 0 10px rgba(200,168,75,0.4);
 }
 
 .ds-card-body {
@@ -1669,6 +1925,22 @@ body {
   overflow-y: auto;
 }
 
+@media (min-width: 1024px) {
+  .vg-overlay {
+    align-items: center;
+  }
+  .vg-panel {
+    max-width: 900px;
+    border-radius: 20px;
+    max-height: 80vh;
+    padding: 32px 36px 44px;
+  }
+  .vg-handle { display: none; }
+  .vg-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 .vg-handle {
   width: 36px;
   height: 4px;
@@ -1717,13 +1989,16 @@ body {
   background: transparent;
   border: none;
   border-bottom: 2px solid rgba(255,255,255,0.07);
-  color: rgba(242,237,227,0.4);
+  color: rgba(242,237,227,0.55);
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.76rem;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   cursor: pointer;
   transition: all 0.2s ease;
+}
+.vg-tab:hover {
+  color: rgba(242,237,227,0.8);
 }
 
 .vg-tab.active {
@@ -1757,6 +2032,19 @@ body {
   font-size: 0.78rem;
   line-height: 1.6;
   color: rgba(242,237,227,0.55);
+}
+
+.pos-diagram {
+  display: block;
+  width: 100%;
+  max-width: 260px;
+  margin: 0 auto 20px;
+}
+
+@media (min-width: 1024px) {
+  .pos-diagram {
+    max-width: 320px;
+  }
 }
 
 /* ── Skill legend (Dashboard) ── */

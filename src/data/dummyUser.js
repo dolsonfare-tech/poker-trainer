@@ -38,6 +38,13 @@ const DUMMY_USER = {
   },
   sessionsRequiredForSchema: 5,
 
+  // ── Coach's Note ─────────────────────────────────────────────────────
+  // Phase 2: generated per-session based on recent skill data
+  coachNote: {
+    body: "You're avoiding confrontation with draws. When you flop a flush draw on a wet board, lean into the aggression — opponents can't call profitably every time. Passive play here gifts them a free card and kills your fold equity.",
+    focus: 'Aggression',
+  },
+
   // ── Friends Leaderboard ───────────────────────────────────────────────
   // Phase 2: real friends from Supabase social graph
   // isUser flags the current user's row for highlighting

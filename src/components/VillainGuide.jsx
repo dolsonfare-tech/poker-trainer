@@ -37,6 +37,76 @@ const POSITIONS = [
   { label: 'BB — Big Blind', desc: 'Posts the full big blind, acts last preflop, and acts second on every postflop street — better than SB but still out of position most of the time.' },
 ];
 
+// ─── Position diagram ─────────────────────────────────────────────────────
+
+const SEAT_ANGLES = [
+  { key: 'BTN', angle: 0,   dealer: true  },
+  { key: 'CO',  angle: 60,  dealer: false },
+  { key: 'HJ',  angle: 120, dealer: false },
+  { key: 'UTG', angle: 180, dealer: false },
+  { key: 'SB',  angle: 240, dealer: false },
+  { key: 'BB',  angle: 300, dealer: false },
+];
+
+function PositionDiagram() {
+  const cx = 105, cy = 82, rx = 72, ry = 50;
+  const seats = SEAT_ANGLES.map(({ key, angle, dealer }) => {
+    const rad = (angle - 90) * (Math.PI / 180);
+    return {
+      key, dealer,
+      x:  cx + rx * Math.cos(rad),
+      y:  cy + ry * Math.sin(rad),
+      ix: cx + (rx - 22) * Math.cos(rad),
+      iy: cy + (ry - 18) * Math.sin(rad),
+    };
+  });
+
+  return (
+    <svg viewBox="0 0 210 164" className="pos-diagram" aria-hidden="true">
+      {/* Table felt */}
+      <ellipse cx={cx} cy={cy} rx={rx - 22} ry={ry - 18}
+        fill="rgba(27,61,42,0.85)" stroke="rgba(200,168,75,0.25)" strokeWidth="1.5" />
+      <text x={cx} y={cy + 5} textAnchor="middle"
+        fontSize="7" fill="rgba(242,237,227,0.18)"
+        fontFamily="JetBrains Mono, monospace" letterSpacing="2">
+        6-MAX
+      </text>
+
+      {seats.map(s => (
+        <g key={s.key}>
+          {/* Connector line from seat to table edge */}
+          <line x1={s.x} y1={s.y} x2={s.ix} y2={s.iy}
+            stroke="rgba(200,168,75,0.1)" strokeWidth="1" />
+
+          {/* Seat circle */}
+          <circle cx={s.x} cy={s.y} r="13"
+            fill="rgba(14,32,24,0.95)" stroke="rgba(200,168,75,0.35)" strokeWidth="1.2" />
+
+          {/* Seat label */}
+          <text x={s.x} y={s.y + 3.5} textAnchor="middle"
+            fontSize={s.key === 'UTG' ? '5.5' : '6.5'}
+            fill="rgba(226,198,106,0.85)"
+            fontFamily="JetBrains Mono, monospace" fontWeight="700">
+            {s.key}
+          </text>
+
+          {/* Dealer button */}
+          {s.dealer && (
+            <circle cx={s.x + 11} cy={s.y - 11} r="5"
+              fill="var(--gold)" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" />
+          )}
+          {s.dealer && (
+            <text x={s.x + 11} y={s.y - 8.5} textAnchor="middle"
+              fontSize="4.5" fill="#1a1208" fontFamily="JetBrains Mono, monospace" fontWeight="900">
+              D
+            </text>
+          )}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 export default function VillainGuide({ onClose }) {
   const [activeTab, setActiveTab] = useState('players');
 
@@ -57,6 +127,8 @@ export default function VillainGuide({ onClose }) {
           <button className={`vg-tab ${activeTab === 'positions' ? 'active' : ''}`} onClick={() => setActiveTab('positions')}>Positions</button>
           <button className={`vg-tab ${activeTab === 'glossary' ? 'active' : ''}`} onClick={() => setActiveTab('glossary')}>Glossary</button>
         </div>
+
+        {activeTab === 'positions' && <PositionDiagram />}
 
         <div className="vg-list">
           {items.map((item, i) => (

@@ -42,7 +42,7 @@ export default function Dashboard({ onStartSession, stats }) {
     return () => clearTimeout(t);
   }, []);
 
-  const { schema, skills, leaderboard, sessionsCompleted } = DUMMY_USER;
+  const { schema, skills, leaderboard, sessionsCompleted, coachNote } = DUMMY_USER;
 
   // Use live localStorage streak if the user has played at least once,
   // otherwise fall back to dummy data so fresh testers see a realistic view.
@@ -150,6 +150,20 @@ export default function Dashboard({ onStartSession, stats }) {
                     </span>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Coach's Note ── */}
+          <div className="db-section">
+            <div className="db-section-label">
+              <span>Coach's Note</span>
+            </div>
+            <div className="db-coach-note">
+              <p className="db-coach-note-body">{coachNote.body}</p>
+              <div className="db-coach-note-footer">
+                <span className="db-coach-note-focus-label">Focus this session</span>
+                <span className="db-coach-note-focus">{coachNote.focus}</span>
               </div>
             </div>
           </div>
