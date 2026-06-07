@@ -125,8 +125,22 @@ export default function Dashboard({ onStartSession, stats }) {
           </div>
         </div>
 
-        {/* ── Right column: Leaderboard + CTA ── */}
+        {/* ── Right column: Coach's Note + Leaderboard ── */}
         <div className="db-col-right">
+
+          {/* ── Coach's Note ── */}
+          <div className="db-section">
+            <div className="db-section-label">
+              <span>Coach's Note</span>
+            </div>
+            <div className="db-coach-note">
+              <p className="db-coach-note-body">{coachNote.body}</p>
+              <div className="db-coach-note-footer">
+                <span className="db-coach-note-focus-label">Focus this session</span>
+                <span className="db-coach-note-focus">{coachNote.focus}</span>
+              </div>
+            </div>
+          </div>
 
           {/* ── Friends Leaderboard ── */}
           <div className="db-section">
@@ -150,20 +164,6 @@ export default function Dashboard({ onStartSession, stats }) {
                     </span>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── Coach's Note ── */}
-          <div className="db-section">
-            <div className="db-section-label">
-              <span>Coach's Note</span>
-            </div>
-            <div className="db-coach-note">
-              <p className="db-coach-note-body">{coachNote.body}</p>
-              <div className="db-coach-note-footer">
-                <span className="db-coach-note-focus-label">Focus this session</span>
-                <span className="db-coach-note-focus">{coachNote.focus}</span>
               </div>
             </div>
           </div>
