@@ -171,7 +171,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
         </div>
         <div className="dp-you-hold-info">
           <div className="dp-you-hold-label">You Hold</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="dp-name-row">
             <div className="dp-you-hold-name">{getHandName(scenario.hand)}</div>
             {POSITION_INFO[heroPos] && (
               <div className="dp-position-info">{POSITION_INFO[heroPos]}</div>
@@ -186,7 +186,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
           <span className="dp-vr-icon">⚑</span>
           <span className="dp-vr-label">Villain Read</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="dp-name-row">
           <div className="dp-vr-name">{scenario.villain.label}</div>
           {POSITION_INFO[villainPos] && (
             <div className="dp-position-info">{POSITION_INFO[villainPos]}</div>

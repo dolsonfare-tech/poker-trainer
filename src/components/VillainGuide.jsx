@@ -128,7 +128,14 @@ export default function VillainGuide({ onClose }) {
           <button className={`vg-tab ${activeTab === 'glossary' ? 'active' : ''}`} onClick={() => setActiveTab('glossary')}>Glossary</button>
         </div>
 
-        {activeTab === 'positions' && <PositionDiagram />}
+        {activeTab === 'positions' && (
+          <>
+            <PositionDiagram />
+            <p className="vg-positions-note">
+              This app uses 6-max tables (6 seats). Full ring games (9 seats) add UTG+1, UTG+2, and a Lojack between UTG and HJ — the strategic concepts here transfer directly.
+            </p>
+          </>
+        )}
 
         <div className="vg-list">
           {items.map((item, i) => (
