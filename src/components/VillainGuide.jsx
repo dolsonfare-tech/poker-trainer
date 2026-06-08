@@ -40,20 +40,20 @@ const POSITIONS = [
 // ─── Position diagram ─────────────────────────────────────────────────────
 
 const SEAT_ANGLES = [
-  { key: 'BTN', angle: 0,   dealer: true  },
-  { key: 'CO',  angle: 60,  dealer: false },
-  { key: 'HJ',  angle: 120, dealer: false },
-  { key: 'UTG', angle: 180, dealer: false },
-  { key: 'SB',  angle: 240, dealer: false },
-  { key: 'BB',  angle: 300, dealer: false },
+  { key: 'BTN', angle: 0   },
+  { key: 'SB',  angle: 60  },
+  { key: 'BB',  angle: 120 },
+  { key: 'UTG', angle: 180 },
+  { key: 'HJ',  angle: 240 },
+  { key: 'CO',  angle: 300 },
 ];
 
 function PositionDiagram() {
   const cx = 105, cy = 82, rx = 72, ry = 50;
-  const seats = SEAT_ANGLES.map(({ key, angle, dealer }) => {
+  const seats = SEAT_ANGLES.map(({ key, angle }) => {
     const rad = (angle - 90) * (Math.PI / 180);
     return {
-      key, dealer,
+      key,
       x:  cx + rx * Math.cos(rad),
       y:  cy + ry * Math.sin(rad),
       ix: cx + (rx - 22) * Math.cos(rad),
@@ -90,11 +90,6 @@ function PositionDiagram() {
             {s.key}
           </text>
 
-          {/* Dealer button */}
-          {s.dealer && (
-            <circle cx={s.x + 11} cy={s.y - 11} r="5"
-              fill="var(--gold)" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" />
-          )}
         </g>
       ))}
     </svg>
