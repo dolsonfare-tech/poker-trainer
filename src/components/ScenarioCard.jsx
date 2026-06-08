@@ -205,7 +205,7 @@ function BlankCard({ small }) {
 function TableVisual({ scenario }) {
   const isRed = (str) => str.includes('♥') || str.includes('♦');
   const boardCount = scenario.board ? scenario.board.length : 0;
-  const blankCount = scenario.board ? Math.max(0, 5 - boardCount) : 0;
+  const blankCount = Math.max(0, 5 - boardCount);
 
   return (
     <div className="table-wrap">
@@ -227,21 +227,17 @@ function TableVisual({ scenario }) {
         </div>
       )}
 
-      {/* Board cards */}
-      {scenario.board && (
-        <>
-          <div className="board-label">Board</div>
-          <div className="board-row">
-            {scenario.board.map((card, i) => (
-              <PlayingCard key={i} rank={card.slice(0, -1)} suit={card.slice(-1)}
-                color={isRed(card) ? 'red' : 'black'} animDelay={`${i * 0.12}s`} />
-            ))}
-            {Array.from({ length: blankCount }, (_, i) => (
-              <BlankCard key={`blank-${i}`} />
-            ))}
-          </div>
-        </>
-      )}
+      {/* Board — always show all 5 slots */}
+      <div className="board-label">Board</div>
+      <div className="board-row">
+        {scenario.board && scenario.board.map((card, i) => (
+          <PlayingCard key={i} rank={card.slice(0, -1)} suit={card.slice(-1)}
+            color={isRed(card) ? 'red' : 'black'} animDelay={`${i * 0.12}s`} />
+        ))}
+        {Array.from({ length: blankCount }, (_, i) => (
+          <BlankCard key={`blank-${i}`} />
+        ))}
+      </div>
 
       {/* Pot info — shown below table only in grid mode */}
       {!USE_OVAL_TABLE && (
