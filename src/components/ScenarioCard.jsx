@@ -98,7 +98,7 @@ function VillainHistory({ scenario }) {
 
 // ─── Oval table ───────────────────────────────────────────────────────────
 
-function TableOval({ scenario }) {
+function TableOval({ scenario, pot }) {
   const heroIdx = scenario.positions.findIndex(p => p.state === 'hero');
   const heroBase = BASE_SEAT_ANGLES[heroIdx] ?? 120;
   const offset = (180 - heroBase + 360) % 360;
@@ -134,6 +134,18 @@ function TableOval({ scenario }) {
       {/* Inner subtle highlight */}
       <ellipse cx={cx} cy={cy - 3} rx={tableRx - 10} ry={tableRy - 8}
         fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
+
+      {/* Pot info centered on felt */}
+      <text x={cx} y={cy - 4} textAnchor="middle"
+        fontSize="5.5" fill="rgba(242,237,227,0.22)"
+        fontFamily="JetBrains Mono, monospace" letterSpacing="1.5">
+        POT
+      </text>
+      <text x={cx} y={cy + 11} textAnchor="middle"
+        fontSize="14" fill="rgba(200,168,75,0.92)"
+        fontFamily="JetBrains Mono, monospace" fontWeight="700">
+        {pot}
+      </text>
 
       {seats.map((s, i) => {
         const isHero   = s.state === 'hero';
@@ -200,7 +212,7 @@ function TableVisual({ scenario }) {
       <StreetBar boardLength={boardCount} />
 
       {USE_OVAL_TABLE ? (
-        <TableOval scenario={scenario} />
+        <TableOval scenario={scenario} pot={scenario.pot} />
       ) : (
         <div className="positions-grid">
           {TABLE_DISPLAY_ORDER.map(idx => {
@@ -231,11 +243,13 @@ function TableVisual({ scenario }) {
         </>
       )}
 
-      {/* Pot info — single location */}
-      <div className="pot-info" style={{ fontSize: '0.85rem', letterSpacing: '0.08em', marginTop: '14px' }}>
-        Pot: <span>{scenario.pot}</span>
-        {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
-      </div>
+      {/* Pot info — shown below table only in grid mode */}
+      {!USE_OVAL_TABLE && (
+        <div className="pot-info" style={{ fontSize: '0.85rem', letterSpacing: '0.08em', marginTop: '14px' }}>
+          Pot: <span>{scenario.pot}</span>
+          {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
+        </div>
+      )}
 
       <VillainHistory scenario={scenario} />
     </div>
