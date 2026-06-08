@@ -1,5 +1,8 @@
 import PlayingCard from './PlayingCard';
 
+// Display positions clockwise around the table: CO | HJ | UTG (far) / BTN | BB | SB (near, hero centered)
+const TABLE_DISPLAY_ORDER = [2, 1, 0, 3, 5, 4];
+
 // ─── Hand name derivation ──────────────────────────────────────────────────
 
 const RANK_NAMES = {
@@ -50,32 +53,38 @@ function TimerRing({ seconds, totalSeconds }) {
   );
 }
 
-// ─── Villain History strip ────────────────────────────────────────────────
+// ─── Street indicator bar ─────────────────────────────────────────────────
 
 const STREET_NAMES = ['Preflop', 'Flop', 'Turn', 'River'];
 
+function StreetBar({ boardLength }) {
+  const current = boardLength === 0 ? 0 : boardLength === 3 ? 1 : boardLength === 4 ? 2 : 3;
+  return (
+    <div className="street-bar">
+      {STREET_NAMES.map((name, i) => (
+        <div key={name} className="street-item">
+          {i > 0 && <span className="street-sep" />}
+          <span className={`street-pip${i < current ? ' street-past' : i === current ? ' street-current' : ''}`}>
+            {name}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Villain action strip ────────────────────────────────────────────────
+
 function VillainHistory({ scenario }) {
-  const boardLen = scenario.board ? scenario.board.length : 0;
-  const streetIndex = boardLen === 0 ? 0 : boardLen === 3 ? 1 : boardLen === 4 ? 2 : 3;
   const villain = scenario.positions.find(p => p.state === 'active');
   const rawAction = villain?.action || '';
   const villainAction = (rawAction && rawAction !== 'Active') ? rawAction : null;
+  if (!villainAction) return null;
 
   return (
     <div className="villain-history">
       <div className="vh-label">Villain This Hand</div>
-      <div className="vh-timeline">
-        {STREET_NAMES.slice(0, streetIndex + 1).map((name, i) => (
-          <div key={name} className="vh-timeline-item">
-            {i > 0 && <div className="vh-connector" />}
-            <div className={`vh-street ${i === streetIndex ? 'vh-street-now' : ''}`}>
-              {name}
-              {i === streetIndex && <span className="vh-now-dot" />}
-            </div>
-          </div>
-        ))}
-      </div>
-      {villainAction && <div className="vh-action">{villainAction}</div>}
+      <div className="vh-action">{villainAction}</div>
     </div>
   );
 }
@@ -99,13 +108,18 @@ function TableVisual({ scenario }) {
 
   return (
     <div className="table-wrap">
+      <StreetBar boardLength={boardCount} />
+
       <div className="positions-grid">
-        {scenario.positions.map((p, i) => (
-          <div key={i} className={`pos ${p.state}`}>
-            <div className="pos-name">{p.label}</div>
-            <div className="pos-action">{p.action}</div>
-          </div>
-        ))}
+        {TABLE_DISPLAY_ORDER.map(idx => {
+          const p = scenario.positions[idx];
+          return (
+            <div key={idx} className={`pos ${p.state}`}>
+              <div className="pos-name">{p.label}</div>
+              <div className="pos-action">{p.action}</div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Board cards */}
@@ -115,10 +129,10 @@ function TableVisual({ scenario }) {
           <div className="board-row">
             {scenario.board.map((card, i) => (
               <PlayingCard key={i} rank={card.slice(0, -1)} suit={card.slice(-1)}
-                color={isRed(card) ? 'red' : 'black'} small animDelay={`${i * 0.12}s`} />
+                color={isRed(card) ? 'red' : 'black'} animDelay={`${i * 0.12}s`} />
             ))}
             {Array.from({ length: blankCount }, (_, i) => (
-              <BlankCard key={`blank-${i}`} small />
+              <BlankCard key={`blank-${i}`} />
             ))}
           </div>
         </>
