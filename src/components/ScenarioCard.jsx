@@ -103,9 +103,9 @@ function TableOval({ scenario, pot }) {
   const heroBase = BASE_SEAT_ANGLES[heroIdx] ?? 120;
   const offset = (180 - heroBase + 360) % 360;
 
-  const cx = 140, cy = 108;
-  const tableRx = 74, tableRy = 50;
-  const orbitRx = 106, orbitRy = 74;
+  const cx = 140, cy = 110;
+  const tableRx = 76, tableRy = 52;
+  const orbitRx = 112, orbitRy = 78;
 
   const seats = scenario.positions.map((p, i) => {
     const angleDeg = ((BASE_SEAT_ANGLES[i] + offset) % 360 + 360) % 360;
@@ -124,7 +124,7 @@ function TableOval({ scenario, pot }) {
   });
 
   return (
-    <svg viewBox="0 0 280 220" className="table-oval" aria-hidden="true">
+    <svg viewBox="0 0 280 232" className="table-oval" aria-hidden="true">
       {/* Outer rail */}
       <ellipse cx={cx} cy={cy} rx={tableRx + 7} ry={tableRy + 7}
         fill="rgba(8,18,12,0.7)" stroke="rgba(160,120,40,0.45)" strokeWidth="3.5" />
@@ -136,13 +136,13 @@ function TableOval({ scenario, pot }) {
         fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
 
       {/* Pot info centered on felt */}
-      <text x={cx} y={cy - 4} textAnchor="middle"
-        fontSize="5.5" fill="rgba(242,237,227,0.22)"
+      <text x={cx} y={cy - 6} textAnchor="middle"
+        fontSize="7" fill="rgba(242,237,227,0.25)"
         fontFamily="JetBrains Mono, monospace" letterSpacing="1.5">
         POT
       </text>
-      <text x={cx} y={cy + 11} textAnchor="middle"
-        fontSize="14" fill="rgba(200,168,75,0.92)"
+      <text x={cx} y={cy + 14} textAnchor="middle"
+        fontSize="20" fill="rgba(200,168,75,0.92)"
         fontFamily="JetBrains Mono, monospace" fontWeight="700">
         {pot}
       </text>
@@ -164,12 +164,12 @@ function TableOval({ scenario, pot }) {
         return (
           <g key={i}>
             {/* Seat circle */}
-            <circle cx={s.x} cy={s.y} r="15.5"
+            <circle cx={s.x} cy={s.y} r="18"
               fill={circleFill} stroke={circleStroke} strokeWidth={strokeW} />
 
             {/* Position label inside circle */}
-            <text x={s.x} y={s.y + 3.5} textAnchor="middle"
-              fontSize={s.pos.length > 2 ? '6.2' : '7.5'}
+            <text x={s.x} y={s.y + 4} textAnchor="middle"
+              fontSize={s.pos.length > 2 ? '7.5' : '9.5'}
               fill={labelColor}
               fontFamily="JetBrains Mono, monospace" fontWeight="700" letterSpacing="0.3">
               {s.pos}
@@ -177,8 +177,8 @@ function TableOval({ scenario, pot }) {
 
             {/* Hero label */}
             {isHero && (
-              <text x={tx} y={ty + 2.5} textAnchor="middle"
-                fontSize="5.5" fill="rgba(226,198,106,0.55)"
+              <text x={tx} y={ty + 3} textAnchor="middle"
+                fontSize="7" fill="rgba(226,198,106,0.6)"
                 fontFamily="JetBrains Mono, monospace" letterSpacing="0.5">
                 YOU
               </text>

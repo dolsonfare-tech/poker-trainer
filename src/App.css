@@ -248,11 +248,19 @@ body {
 /* ── Oval table ── */
 .table-oval {
   width: 100%;
-  max-width: 300px;
   display: block;
   margin: 0 auto 4px;
   position: relative;
   z-index: 1;
+}
+
+/* ── Mobile: give the table section more breathing room ── */
+@media (max-width: 600px) {
+  .scenario-card { padding-left: 12px; padding-right: 12px; }
+  .decision-panel { margin-left: -12px; margin-right: -12px; }
+  .table-wrap { padding-left: 6px; padding-right: 6px; }
+  .playing-card { width: 52px; height: 72px; }
+  .board-row { gap: 4px; }
 }
 
 /* ── Board ── */
@@ -287,8 +295,8 @@ body {
 }
 
 .playing-card {
-  width: 50px;
-  height: 70px;
+  width: 56px;
+  height: 78px;
   background: var(--card-bg);
   border-radius: 7px;
   display: flex;
