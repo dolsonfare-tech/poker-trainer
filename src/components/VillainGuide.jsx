@@ -30,11 +30,11 @@ const GLOSSARY = [
 
 const POSITIONS = [
   { label: 'BTN — Button', desc: 'The best seat at the table — you act last on every postflop street, giving you maximum information before making a decision.' },
-  { label: 'CO — Cutoff', desc: 'One seat right of the Button, second best position — you act last preflop if the BTN folds and nearly last postflop.' },
-  { label: 'HJ — Hijack', desc: 'Two seats right of the Button — decent position with three players still to act behind you preflop.' },
-  { label: 'UTG — Under the Gun', desc: "First to act preflop, the worst position — you have no information about anyone else's hand when you make your decision." },
   { label: 'SB — Small Blind', desc: 'Posts half the big blind and acts first on every postflop street — the worst position postflop despite acting late preflop.' },
   { label: 'BB — Big Blind', desc: 'Posts the full big blind, acts last preflop, and acts second on every postflop street — better than SB but still out of position most of the time.' },
+  { label: 'UTG — Under the Gun', desc: "First to act preflop, the worst position — you have no information about anyone else's hand when you make your decision." },
+  { label: 'HJ — Hijack', desc: 'Two seats right of the Button — decent position with three players still to act behind you preflop.' },
+  { label: 'CO — Cutoff', desc: 'One seat right of the Button, second best position — you act last preflop if the BTN folds and nearly last postflop.' },
 ];
 
 // ─── Position diagram ─────────────────────────────────────────────────────
