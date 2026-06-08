@@ -248,6 +248,7 @@ body {
 /* ── Oval table ── */
 .table-oval {
   width: 100%;
+  max-width: 310px;
   display: block;
   margin: 0 auto 4px;
   position: relative;
@@ -261,6 +262,13 @@ body {
   .table-wrap { padding-left: 6px; padding-right: 6px; }
   .playing-card { width: 52px; height: 72px; }
   .board-row { gap: 4px; }
+}
+
+/* ── Desktop side-by-side: don't clip board cards below the oval ── */
+@media (min-width: 768px) {
+  .scenario-card-body .table-wrap {
+    overflow: visible;
+  }
 }
 
 /* ── Board ── */
