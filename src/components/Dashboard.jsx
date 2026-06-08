@@ -66,6 +66,14 @@ export default function Dashboard({ onStartSession, stats }) {
       {/* ── Stats row ── */}
       <div className="db-stats-row">
         <div className="db-stat-chip">
+          <span className="db-stat-num db-stat-cream">
+            {pokerScore ?? '—'}
+            {pokerScore != null && <span className="db-stat-denom">/100</span>}
+          </span>
+          <span className="db-stat-label">poker score</span>
+        </div>
+        <div className="db-stat-divider" />
+        <div className="db-stat-chip">
           <span className="db-stat-num">{streak}</span>
           <span className="db-stat-flame">🔥</span>
           <span className="db-stat-label">day streak</span>
@@ -74,14 +82,6 @@ export default function Dashboard({ onStartSession, stats }) {
         <div className="db-stat-chip">
           <span className="db-stat-num db-stat-cream">{sessionsCompleted}</span>
           <span className="db-stat-label">sessions</span>
-        </div>
-        <div className="db-stat-divider" />
-        <div className="db-stat-chip">
-          <span className="db-stat-num db-stat-cream">
-            {pokerScore ?? '—'}
-            {pokerScore != null && <span className="db-stat-denom">/100</span>}
-          </span>
-          <span className="db-stat-label">poker score</span>
         </div>
       </div>
 
