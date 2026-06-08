@@ -4,8 +4,8 @@
 
 const DUMMY_USER = {
   // ── Identity ──────────────────────────────────────────────────────────
-  displayName: 'HomeGymIsLife24x7',
-  initials: 'AA',
+  displayName: 'RiverRat72',
+  initials: 'RR',
 
   // ── Streak & Sessions ─────────────────────────────────────────────────
   streak: 8,
@@ -60,7 +60,7 @@ const DUMMY_USER = {
     top: [
       { rank: 1, name: 'Dave245',          streak: 41, isUser: false },
       { rank: 2, name: 'HinduHustler420',   streak: 38, isUser: false },
-      { rank: 3, name: 'HomeGymIsLife24x7',      streak: 8,  isUser: true  },
+      { rank: 3, name: 'RiverRat72',      streak: 8,  isUser: true  },
       { rank: 4, name: 'TickBite69',streak: 5,  isUser: false },
     ],
   },
