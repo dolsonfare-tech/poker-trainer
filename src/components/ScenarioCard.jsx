@@ -103,7 +103,7 @@ function TableOval({ scenario, pot }) {
   const heroBase = BASE_SEAT_ANGLES[heroIdx] ?? 120;
   const offset = (180 - heroBase + 360) % 360;
 
-  const cx = 140, cy = 110;
+  const cx = 150, cy = 110;
   const tableRx = 76, tableRy = 52;
   const orbitRx = 112, orbitRy = 78;
 
@@ -124,7 +124,7 @@ function TableOval({ scenario, pot }) {
   });
 
   return (
-    <svg viewBox="0 0 280 232" className="table-oval" aria-hidden="true">
+    <svg viewBox="0 0 300 232" className="table-oval" aria-hidden="true">
       {/* Outer rail */}
       <ellipse cx={cx} cy={cy} rx={tableRx + 7} ry={tableRy + 7}
         fill="rgba(8,18,12,0.7)" stroke="rgba(160,120,40,0.45)" strokeWidth="3.5" />
