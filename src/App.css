@@ -930,18 +930,7 @@ body {
 }
 
 /* ── Dashboard 2-column grid (desktop) ── */
-.db-grid-layout {
-  /* single column on mobile/tablet — children flow normally */
-}
-
-@media (min-width: 1100px) {
-  .db-grid-layout {
-    display: grid;
-    grid-template-columns: 55fr 45fr;
-    gap: 0 28px;
-    align-items: start;
-  }
-}
+/* Dashboard is single-column on all screen sizes */
 
 /* ── Session screen: constrain width on large screens ── */
 .session-container {
@@ -1667,6 +1656,15 @@ body {
 }
 
 .db-stat-cream { color: var(--cream); }
+
+.db-stat-denom {
+  font-size: 0.55em;
+  font-weight: 400;
+  opacity: 0.5;
+  letter-spacing: 0;
+  margin-left: 1px;
+  vertical-align: baseline;
+}
 
 .db-stat-flame {
   font-size: 0.9rem;

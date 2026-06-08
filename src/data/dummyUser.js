@@ -45,6 +45,12 @@ const DUMMY_USER = {
     focus: 'Aggression',
   },
 
+  // ── Poker Score ───────────────────────────────────────────────────────
+  // Phase 2: calculated from difficulty level + skill ratings over time.
+  // Requires 20 sessions to unlock. Beginner-only play caps at ~70.
+  // Algorithm TBD — this is a placeholder for UI validation.
+  pokerScore: 68,
+
   // ── Friends Leaderboard ───────────────────────────────────────────────
   // Phase 2: real friends from Supabase social graph
   // isUser flags the current user's row for highlighting
