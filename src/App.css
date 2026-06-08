@@ -245,6 +245,16 @@ body {
   font-weight: 600;
 }
 
+/* ── Oval table ── */
+.table-oval {
+  width: 100%;
+  max-width: 300px;
+  display: block;
+  margin: 0 auto 4px;
+  position: relative;
+  z-index: 1;
+}
+
 /* ── Board ── */
 .board-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;

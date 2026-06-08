@@ -1,7 +1,14 @@
 import PlayingCard from './PlayingCard';
 
-// Display positions clockwise around the table: CO | HJ | UTG (far) / BTN | BB | SB (near, hero centered)
+// ─── Feature flag: set false to revert to 3×2 grid ───────────────────────
+const USE_OVAL_TABLE = true;
+
+// Grid fallback: CO | HJ | UTG (far) / BTN | BB | SB (near, hero centered)
 const TABLE_DISPLAY_ORDER = [2, 1, 0, 3, 5, 4];
+
+// Oval table: natural clockwise seat angles; hero is rotated to always sit at the bottom.
+// Positions array = [UTG(0), HJ(1), CO(2), BTN(3), SB(4), BB(5)]
+const BASE_SEAT_ANGLES = [180, 240, 300, 0, 60, 120];
 
 // ─── Hand name derivation ──────────────────────────────────────────────────
 
@@ -89,6 +96,88 @@ function VillainHistory({ scenario }) {
   );
 }
 
+// ─── Oval table ───────────────────────────────────────────────────────────
+
+function TableOval({ scenario }) {
+  const heroIdx = scenario.positions.findIndex(p => p.state === 'hero');
+  const heroBase = BASE_SEAT_ANGLES[heroIdx] ?? 120;
+  const offset = (180 - heroBase + 360) % 360;
+
+  const cx = 140, cy = 108;
+  const tableRx = 74, tableRy = 50;
+  const orbitRx = 106, orbitRy = 74;
+
+  const seats = scenario.positions.map((p, i) => {
+    const angleDeg = ((BASE_SEAT_ANGLES[i] + offset) % 360 + 360) % 360;
+    const rad = (angleDeg - 90) * (Math.PI / 180);
+    const x = cx + orbitRx * Math.cos(rad);
+    const y = cy + orbitRy * Math.sin(rad);
+    const mag = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) || 1;
+    return {
+      pos: p.label.split(' ')[0],
+      action: p.action,
+      state: p.state,
+      x, y,
+      dirX: (x - cx) / mag,
+      dirY: (y - cy) / mag,
+    };
+  });
+
+  return (
+    <svg viewBox="0 0 280 220" className="table-oval" aria-hidden="true">
+      {/* Outer rail */}
+      <ellipse cx={cx} cy={cy} rx={tableRx + 7} ry={tableRy + 7}
+        fill="rgba(8,18,12,0.7)" stroke="rgba(160,120,40,0.45)" strokeWidth="3.5" />
+      {/* Felt */}
+      <ellipse cx={cx} cy={cy} rx={tableRx} ry={tableRy}
+        fill="#163222" stroke="rgba(200,168,75,0.18)" strokeWidth="1" />
+      {/* Inner subtle highlight */}
+      <ellipse cx={cx} cy={cy - 3} rx={tableRx - 10} ry={tableRy - 8}
+        fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
+
+      {seats.map((s, i) => {
+        const isHero   = s.state === 'hero';
+        const isActive = s.state === 'active';
+        const isFolded = s.state === 'folded';
+
+        const circleFill   = isHero ? 'rgba(200,168,75,0.22)' : isActive ? 'rgba(46,204,113,0.16)' : 'rgba(12,26,18,0.95)';
+        const circleStroke = isHero ? 'rgba(200,168,75,0.88)' : isActive ? 'rgba(46,204,113,0.65)' : 'rgba(255,255,255,0.13)';
+        const strokeW      = isHero || isActive ? 1.8 : 1.1;
+        const labelColor   = isHero ? '#e2c97e' : isActive ? '#2ecc71' : isFolded ? 'rgba(242,237,227,0.18)' : 'rgba(242,237,227,0.5)';
+
+        // action text position: push away from center along the seat's direction
+        const tx = s.x + s.dirX * 24;
+        const ty = s.y + s.dirY * 24;
+
+        return (
+          <g key={i}>
+            {/* Seat circle */}
+            <circle cx={s.x} cy={s.y} r="15.5"
+              fill={circleFill} stroke={circleStroke} strokeWidth={strokeW} />
+
+            {/* Position label inside circle */}
+            <text x={s.x} y={s.y + 3.5} textAnchor="middle"
+              fontSize={s.pos.length > 2 ? '6.2' : '7.5'}
+              fill={labelColor}
+              fontFamily="JetBrains Mono, monospace" fontWeight="700" letterSpacing="0.3">
+              {s.pos}
+            </text>
+
+            {/* Hero label */}
+            {isHero && (
+              <text x={tx} y={ty + 2.5} textAnchor="middle"
+                fontSize="5.5" fill="rgba(226,198,106,0.55)"
+                fontFamily="JetBrains Mono, monospace" letterSpacing="0.5">
+                YOU
+              </text>
+            )}
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 // ─── Blank card placeholder ────────────────────────────────────────────────
 
 function BlankCard({ small }) {
@@ -110,17 +199,21 @@ function TableVisual({ scenario }) {
     <div className="table-wrap">
       <StreetBar boardLength={boardCount} />
 
-      <div className="positions-grid">
-        {TABLE_DISPLAY_ORDER.map(idx => {
-          const p = scenario.positions[idx];
-          return (
-            <div key={idx} className={`pos ${p.state}`}>
-              <div className="pos-name">{p.label}</div>
-              <div className="pos-action">{p.action}</div>
-            </div>
-          );
-        })}
-      </div>
+      {USE_OVAL_TABLE ? (
+        <TableOval scenario={scenario} />
+      ) : (
+        <div className="positions-grid">
+          {TABLE_DISPLAY_ORDER.map(idx => {
+            const p = scenario.positions[idx];
+            return (
+              <div key={idx} className={`pos ${p.state}`}>
+                <div className="pos-name">{p.label}</div>
+                <div className="pos-action">{p.action}</div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Board cards */}
       {scenario.board && (
@@ -206,9 +299,6 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
             <div className="dp-position-info">{POSITION_INFO[villainPos]}</div>
           )}
         </div>
-        {scenario.villain.notes && (
-          <div className="dp-vr-notes">{scenario.villain.notes}</div>
-        )}
       </div>
 
       {/* Action header divider */}

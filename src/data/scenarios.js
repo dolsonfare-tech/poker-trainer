@@ -3128,14 +3128,14 @@ const SCENARIOS = [
     board: ['T♠', '7♥', '3♣'],
     pot: '$14',
     toCall: null,
-    body: "BTN aggressive regular raised. You called BB with T♦7♦. Flop T♠7♥3♣ — you flopped bottom two pair. He c-bets $9.",
-    question: 'Bottom two pair (T7) on T73 rainbow vs aggressive regular c-bet. What do you do?',
+    body: "BTN aggressive regular raised. You called BB with T♦7♦. Flop T♠7♥3♣ — you flopped top two pair. He c-bets $9.",
+    question: 'Top two pair (T7) on T73 rainbow vs aggressive regular c-bet. What do you do?',
     correct: 'raise',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Never Fold Two Pair', emoji: '❌',
-        fb: "Folding bottom two pair on T73 rainbow is impossible. Check-raise and extract maximum value before the board gets dangerous.",
+        fb: "Folding top two pair on T73 rainbow is impossible. Check-raise and extract maximum value before the board gets dangerous.",
       },
       {
         val: 'call', label: 'Call $9', icon: '📞', cls: 'call',
@@ -3145,7 +3145,7 @@ const SCENARIOS = [
       {
         val: 'raise', label: 'Check-raise to $28', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Check-Raise for Value and Protection', emoji: '✅',
-        fb: "Check-raise to $28. Bottom two pair needs protection against an aggressive regular who c-bets 80% and has overcards and draws in his range. Build the pot now while you're ahead and make draws pay.",
+        fb: "Check-raise to $28. Top two pair needs protection against an aggressive regular who c-bets 80% and has overcards and draws in his range. Build the pot now while you're ahead and make draws pay.",
       },
     ],
   }),
