@@ -7,12 +7,12 @@ function SkillDot({ skill, data }) {
   const [expanded, setExpanded] = useState(false);
 
   const colorMap = {
-    green:  { bg: '#56c878', glow: 'rgba(86,200,120,0.6)'  },
-    yellow: { bg: '#e89028', glow: 'rgba(232,144,40,0.6)'  },
-    red:    { bg: '#e25555', glow: 'rgba(226,85,85,0.6)'   },
-    gray:   { bg: 'rgba(255,255,255,0.15)', glow: 'none'   },
+    green:  { color: '#56c878', glow: 'rgba(86,200,120,0.6)',  symbol: '●' },
+    yellow: { color: '#e89028', glow: 'rgba(232,144,40,0.6)',  symbol: '◆' },
+    red:    { color: '#e25555', glow: 'rgba(226,85,85,0.6)',   symbol: '▼' },
+    gray:   { color: 'rgba(255,255,255,0.25)', glow: 'none',   symbol: '○' },
   };
-  const { bg, glow } = colorMap[data.rating] || colorMap.gray;
+  const { color, glow, symbol } = colorMap[data.rating] || colorMap.gray;
 
   return (
     <div
@@ -20,10 +20,10 @@ function SkillDot({ skill, data }) {
       onClick={() => setExpanded(e => !e)}
       style={{ cursor: 'pointer' }}
     >
-      <div className="db-skill-dot" style={{
-        background: bg,
-        boxShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
-      }} />
+      <span className="db-skill-dot" style={{
+        color,
+        textShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
+      }}>{symbol}</span>
       <span className="db-skill-label">{SKILL_NAMES[skill]}</span>
       {expanded && (
         <div className="db-skill-desc">
@@ -70,7 +70,7 @@ export default function Dashboard({ onStartSession, stats }) {
             {pokerScore ?? '—'}
             {pokerScore != null && <span className="db-stat-denom">/100</span>}
           </span>
-          <span className="db-stat-label">poker score</span>
+          <span className="db-stat-label">poker iq</span>
         </div>
         <div className="db-stat-divider" />
         <div className="db-stat-chip">
@@ -89,7 +89,6 @@ export default function Dashboard({ onStartSession, stats }) {
       <div className="db-section">
         <div className="db-section-label">
           <span>Poker Archetype</span>
-          <span className="db-section-meta">updated this morning</span>
         </div>
         <div className="db-schema-card">
           <span className="db-schema-corner db-corner-tl" />
@@ -122,10 +121,10 @@ export default function Dashboard({ onStartSession, stats }) {
           ))}
         </div>
         <div className="db-skill-legend">
-          <span className="db-legend-item"><span className="db-legend-dot db-legend-green" />Strong</span>
-          <span className="db-legend-item"><span className="db-legend-dot db-legend-yellow" />Work On</span>
-          <span className="db-legend-item"><span className="db-legend-dot db-legend-red" />Weak</span>
-          <span className="db-legend-item"><span className="db-legend-dot db-legend-gray" />Unrated</span>
+          <span className="db-legend-item"><span className="db-legend-sym db-legend-green">●</span>Strong</span>
+          <span className="db-legend-item"><span className="db-legend-sym db-legend-yellow">◆</span>Work On</span>
+          <span className="db-legend-item"><span className="db-legend-sym db-legend-red">▼</span>Weak</span>
+          <span className="db-legend-item"><span className="db-legend-sym db-legend-gray">○</span>Unrated</span>
         </div>
       </div>
 

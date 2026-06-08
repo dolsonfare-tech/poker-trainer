@@ -95,12 +95,6 @@ function PositionDiagram() {
             <circle cx={s.x + 11} cy={s.y - 11} r="5"
               fill="var(--gold)" stroke="rgba(0,0,0,0.3)" strokeWidth="0.8" />
           )}
-          {s.dealer && (
-            <text x={s.x + 11} y={s.y - 8.5} textAnchor="middle"
-              fontSize="4.5" fill="#1a1208" fontFamily="JetBrains Mono, monospace" fontWeight="900">
-              D
-            </text>
-          )}
         </g>
       ))}
     </svg>
