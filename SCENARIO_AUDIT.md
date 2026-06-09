@@ -134,6 +134,7 @@ Rules derived from real issues found in production review. Each rule has: a dete
 | sc_057 | ✅ Fixed (logic) | R2, R4 | Turn scenario. Villain `"Raises $6"` (preflop). `toCall: null`. Hero leads. | Trail hidden |
 | sc_068 | ✅ Fixed (logic) | R2, R4 | River scenario. Villain `"Raises $6"` (preflop). `toCall: null`. Hero bluffs. | Trail hidden |
 | sc_077 | ✅ Fixed (logic) | R2, R4 | Flop scenario. Villain `"Raises $6"` (preflop). `toCall: null`. But call button = `"Call $9"`. | Logic derives `"BTN bets $9"` from call button label |
+| sc_004 | ✅ Fixed | R1 | BTN hero has no blind but `toCall: "$4 more"` implied $2 already invested. Copy-paste from a BB scenario. | Changed to `toCall: "$6"` and call button to `"Call $6"` |
 | generic sublabels | ✅ Removed | R3 | `ACTION_SUBLABELS` map attached "Give up the hand" to any `cls: fold` button, regardless of what the button did. | Removed fallback. Only parenthetical sublabels remain. |
 | VillainHistory stale | ✅ Fixed | R5 | "Villain This Hand: Called $4" on river scenarios — preflop call surfacing as current info. | VillainHistory now filters to only current-street actions on postflop scenarios. |
 | Missing check trail | ✅ Fixed | R6 | 26 scenarios where villain checked to IP hero showed no action context. | Trail infers "checks" from positional acting order when toCall=null and villain acts before hero. |
@@ -145,6 +146,7 @@ Rules derived from real issues found in production review. Each rule has: a dete
 | Check | Result |
 |-------|--------|
 | Card collision (hole cards vs board) | ✅ Clean — all 83 scenarios |
+| Preflop call math (raise − blind = toCall) | ✅ Clean — 1 bug found and fixed (sc_004) |
 
 ---
 

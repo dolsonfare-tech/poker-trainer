@@ -226,7 +226,7 @@ const SCENARIOS = [
     hand: mkHand(['J','♦'], ['J','♣']),
     board: null,
     pot: '$9',
-    toCall: '$4 more',
+    toCall: '$6',
     body: "UTG raises to $6. This player is a well-known nit — he has been sitting for 3 hours and this is only his second raise. He plays exclusively premium hands from early position. You're on the Button with J♦J♣.",
     question: 'The nit raises UTG. What do you do with pocket Jacks?',
     correct: 'call',
@@ -237,7 +237,7 @@ const SCENARIOS = [
         fb: "JJ against a nit still has plenty of equity. You're not dominated preflop — just call, keep the pot controlled, and fold if the board comes A, K, or Q and he continues firing.",
       },
       {
-        val: 'call', label: 'Call $4 more', icon: '📞', cls: 'call',
+        val: 'call', label: 'Call $6', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Smart Play vs a Nit', emoji: '✅',
         fb: "JJ is too strong to fold but the nit's UTG range — AA, KK, QQ, AK — dominates you badly when an overcard hits. Calling keeps the pot small and lets you fold cleanly on A, K, or Q boards.",
       },
