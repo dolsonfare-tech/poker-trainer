@@ -1362,7 +1362,7 @@ const SCENARIOS = [
     hand: mkHand(['J','♠'], ['T','♠']),
     board: ['J♥', 'T♣', '4♦'],
     pot: '$55',
-    toCall: '$35',
+    toCall: '$55',
     body: 'SB raised preflop. BTN loose recreational called. Flop J♥T♣4♦. SB bets $25. BTN raises to $80.',
     question: 'Two pair (JT on JT4). Loose rec raises your c-bet to $80. 3-bet or call?',
     correct: 'raise',

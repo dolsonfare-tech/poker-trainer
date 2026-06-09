@@ -82,33 +82,65 @@ function StreetBar({ boardLength }) {
 
 // ─── Action trail (decision panel) ───────────────────────────────────────
 
+const THREAT_RE = /^(Bets?|Raises?|Check.Raises?|3.Bets?|4.Bets?|Donks?|All.?[Ii]n)/i;
+const extractAmt = str => str?.match(/\$(\d[\d,]*)/)?.[1];
+
 function buildActionTrail(scenario) {
-  return scenario.positions
-    .filter(p => {
-      const a = p.action;
-      return a && a !== 'Folds' && a !== 'Active' && a !== '???';
-    })
-    .map(p => ({
-      label: p.state === 'hero' ? 'You' : p.label.split(' ')[0],
-      action: p.action,
-      isHero: p.state === 'hero',
-    }));
+  const villain = scenario.positions.find(p => p.state === 'active');
+  if (!villain) return null;
+
+  const pos = villain.label.split(' ')[0];
+  const isPostflop = scenario.board && scenario.board.length > 0;
+
+  if (villain.action && THREAT_RE.test(villain.action)) {
+    if (isPostflop) {
+      const actionAmt = extractAmt(villain.action);
+      const callAmt   = extractAmt(scenario.toCall);
+
+      if (callAmt && actionAmt !== callAmt) {
+        // Villain's stored action is a stale preflop raise; toCall has the current bet
+        const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
+        return { pos, action: `bets ${amount}` };
+      }
+
+      if (!callAmt) {
+        // No toCall — check if the call button label has an explicit amount
+        // (e.g. "Call $9" when toCall wasn't set on the scenario)
+        const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
+        const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
+        if (btnAmt && actionAmt !== btnAmt.slice(1)) {
+          return { pos, action: `bets ${btnAmt}` };
+        }
+        // Villain's action is preflop context and hero has no call to make — hide trail
+        return null;
+      }
+    }
+    // Preflop, or postflop with matching amounts — show the explicit action
+    return { pos, action: villain.action };
+  }
+
+  // Villain has no explicit bet/raise — derive from toCall or call button label
+  if (scenario.toCall) {
+    const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
+    return { pos, action: `bets ${amount}` };
+  }
+
+  const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
+  const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
+  if (btnAmt) return { pos, action: `bets ${btnAmt}` };
+
+  return null;
 }
 
 function ActionTrail({ scenario }) {
-  const steps = buildActionTrail(scenario);
-  if (steps.length === 0) return null;
+  const trail = buildActionTrail(scenario);
+  if (!trail) return null;
   return (
     <div className="dp-action-trail">
       <div className="dp-at-label">Action to you</div>
       <div className="dp-at-steps">
-        {steps.map((s, i) => (
-          <span key={i} className={`dp-at-step${s.isHero ? ' dp-at-step-hero' : ''}`}>
-            {i > 0 && <span className="dp-at-arrow"> → </span>}
-            <span className="dp-at-pos">{s.label}</span>
-            {' '}<span className="dp-at-act">{s.action}</span>
-          </span>
-        ))}
+        <span className="dp-at-pos">{trail.pos}</span>
+        {' '}<span className="dp-at-act">{trail.action}</span>
       </div>
     </div>
   );
