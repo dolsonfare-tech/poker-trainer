@@ -346,22 +346,22 @@ const SCENARIOS = [
     toCall: null,
     body: "You raised CO with 9♠8♠ and the Nit called on the Button. Flop: K♠ 7♠ 2♥. You missed but picked up a flush draw. You're first to act. The nit only continues with strong hands — a King or better.",
     question: 'You have a flush draw on a King-high board vs a nit. What do you do?',
-    correct: 'bet_large',
+    correct: 'bet_small',
     choices: [
       {
         val: 'check', label: 'Check', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Give Up Too Early', emoji: '❌',
-        fb: "Checking here surrenders your fold equity entirely. A nit without a King has very little reason to continue — a pot-sized bet represents top pair with a draw and forces the folds you need.",
+        fb: "Checking surrenders your fold equity entirely. A nit who missed this board has no reason to bluff — you need to bet to win the pot.",
       },
       {
         val: 'bet_small', label: 'Bet $8', icon: '📞', cls: 'call',
-        grade: 'partial', title: 'Small Bet, Small Fold Equity', emoji: '⚠️',
-        fb: "A small bet doesn't do enough work against a nit. He'll float with pocket pairs hoping you give up — you need a size that makes continuing with less than top pair genuinely uncomfortable.",
+        grade: 'correct', title: 'Semi-Bluff at the Right Price', emoji: '✅',
+        fb: "Half-pot is correct here. A nit folds the same weak hands to $8 as to $15, so your fold equity is the same — but when called, you've paid less to see your flush draw on the turn. No reason to charge yourself more.",
       },
       {
         val: 'bet_large', label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise',
-        grade: 'correct', title: 'Nits Fold to Pressure', emoji: '✅',
-        fb: "Pot-sized pressure on a nit is exactly right. He called preflop but without a King in his range, most of his hand either missed or has weak equity. A big bet forces him to fold all his air and pocket pairs.",
+        grade: 'partial', title: 'Too Much to Pay for a Draw', emoji: '⚠️',
+        fb: "Betting is right, but pot-sized costs you more when called without improving your fold equity. A nit folds the same range to $8 — betting $15 just means you've invested more if you need to hit the flush on the turn.",
       },
     ],
   }),
