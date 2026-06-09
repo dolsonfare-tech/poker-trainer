@@ -140,6 +140,14 @@ Rules derived from real issues found in production review. Each rule has: a dete
 
 ---
 
+## Passed Checks
+
+| Check | Result |
+|-------|--------|
+| Card collision (hole cards vs board) | ✅ Clean — all 83 scenarios |
+
+---
+
 ## Open Questions
 
 - **R2 data fix:** The 8 R2 scenarios above are "fixed in logic" — the UI derives correctly from `toCall`. But the root cause is stale preflop data in `positions.action`. These should eventually be corrected in `scenarios.js` to store current-street actions. Blocked on: confirming the exact street action for each affected scenario against the body text.
