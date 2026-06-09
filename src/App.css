@@ -420,39 +420,6 @@ body {
   text-shadow: 0 0 10px rgba(226,198,106,0.45);
 }
 
-/* ── Villain History ── */
-.villain-history {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(200,168,75,0.1);
-  position: relative;
-  z-index: 1;
-}
-
-.vh-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: rgba(242,237,227,0.28);
-  margin-bottom: 8px;
-}
-
-.vh-action {
-  font-family: 'Playfair Display', Georgia, serif;
-  font-style: italic;
-  font-weight: 700;
-  font-size: 1.05rem;
-  color: var(--cream);
-  margin-bottom: 8px;
-}
-
-.vh-notes {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.72rem;
-  line-height: 1.5;
-  color: rgba(242,237,227,0.4);
-}
 
 /* ── Scenario Text ── */
 /* scenario text styles moved to .decision-panel */

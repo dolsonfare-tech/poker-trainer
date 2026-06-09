@@ -81,13 +81,6 @@ function ComboRing({ combo }) {
   );
 }
 
-// ─── Action sublabels ──────────────────────────────────────────────────────
-const ACTION_SUBLABELS = {
-  fold:  'Give up the hand',
-  call:  'Match the bet',
-  raise: 'Apply pressure',
-};
-
 // ─── Utility ──────────────────────────────────────────────────────────────
 function getFilteredScenarios(difficulty) {
   const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
@@ -294,7 +287,6 @@ export default function App() {
                 options={scenario.options}
                 onDecision={handleDecision}
                 decided={decided}
-                actionSublabels={ACTION_SUBLABELS}
                 showTimer={difficulty !== 'beginner'}
               />
               {feedback && (

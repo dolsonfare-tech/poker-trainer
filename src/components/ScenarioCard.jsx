@@ -83,14 +83,29 @@ function StreetBar({ boardLength }) {
 // ─── Action trail (decision panel) ───────────────────────────────────────
 
 const THREAT_RE = /^(Bets?|Raises?|Check.Raises?|3.Bets?|4.Bets?|Donks?|All.?[Ii]n)/i;
+const CHECK_RE  = /^Checks?d?$/i;
 const extractAmt = str => str?.match(/\$(\d[\d,]*)/)?.[1];
 
-function buildActionTrail(scenario) {
-  const villain = scenario.positions.find(p => p.state === 'active');
-  if (!villain) return null;
+// Postflop acting order by seat index (SB=idx4 acts first, BTN=idx3 acts last)
+// positions array: [UTG(0), HJ(1), CO(2), BTN(3), SB(4), BB(5)]
+const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
 
+function buildActionTrail(scenario) {
+  const villainIdx = scenario.positions.findIndex(p => p.state === 'active');
+  if (villainIdx === -1) return null;
+
+  const villain = scenario.positions[villainIdx];
   const pos = villain.label.split(' ')[0];
   const isPostflop = scenario.board && scenario.board.length > 0;
+  const heroIdx = scenario.positions.findIndex(p => p.state === 'hero');
+  // True when villain seats before hero in postflop acting order (villain bets/checks first)
+  const villainActsFirst = heroIdx !== -1 &&
+    POSTFLOP_ORDER[villainIdx] < POSTFLOP_ORDER[heroIdx];
+
+  // Villain explicitly checked this street
+  if (villain.action && CHECK_RE.test(villain.action)) {
+    return { pos, action: 'checks' };
+  }
 
   if (villain.action && THREAT_RE.test(villain.action)) {
     if (isPostflop) {
@@ -98,28 +113,24 @@ function buildActionTrail(scenario) {
       const callAmt   = extractAmt(scenario.toCall);
 
       if (callAmt && actionAmt !== callAmt) {
-        // Villain's stored action is a stale preflop raise; toCall has the current bet
+        // Stale preflop raise stored; current bet is in toCall
         const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
         return { pos, action: `bets ${amount}` };
       }
 
       if (!callAmt) {
-        // No toCall — check if the call button label has an explicit amount
-        // (e.g. "Call $9" when toCall wasn't set on the scenario)
         const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
         const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
-        if (btnAmt && actionAmt !== btnAmt.slice(1)) {
-          return { pos, action: `bets ${btnAmt}` };
-        }
-        // Villain's action is preflop context and hero has no call to make — hide trail
+        if (btnAmt && actionAmt !== btnAmt.slice(1)) return { pos, action: `bets ${btnAmt}` };
+        // No current bet — infer villain checked if they act before hero
+        if (villainActsFirst) return { pos, action: 'checks' };
         return null;
       }
     }
-    // Preflop, or postflop with matching amounts — show the explicit action
     return { pos, action: villain.action };
   }
 
-  // Villain has no explicit bet/raise — derive from toCall or call button label
+  // No explicit threat — derive from toCall or call button label
   if (scenario.toCall) {
     const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
     return { pos, action: `bets ${amount}` };
@@ -128,6 +139,9 @@ function buildActionTrail(scenario) {
   const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
   const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
   if (btnAmt) return { pos, action: `bets ${btnAmt}` };
+
+  // No bet at all — infer villain checked if they act before hero
+  if (isPostflop && villainActsFirst) return { pos, action: 'checks' };
 
   return null;
 }
@@ -146,21 +160,6 @@ function ActionTrail({ scenario }) {
   );
 }
 
-// ─── Villain action strip ────────────────────────────────────────────────
-
-function VillainHistory({ scenario }) {
-  const villain = scenario.positions.find(p => p.state === 'active');
-  const rawAction = villain?.action || '';
-  const villainAction = (rawAction && rawAction !== 'Active') ? rawAction : null;
-  if (!villainAction) return null;
-
-  return (
-    <div className="villain-history">
-      <div className="vh-label">Villain This Hand</div>
-      <div className="vh-action">{villainAction}</div>
-    </div>
-  );
-}
 
 // ─── Oval table ───────────────────────────────────────────────────────────
 
@@ -313,7 +312,6 @@ function TableVisual({ scenario }) {
         </div>
       )}
 
-      <VillainHistory scenario={scenario} />
     </div>
   );
 }
@@ -332,7 +330,7 @@ function SessionProgress({ currentIndex, total, correctCount }) {
 
 // ─── Decision Panel (cream section) ───────────────────────────────────────
 
-function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels }) {
+function DecisionPanel({ scenario, options, onDecision, decided }) {
   const heroPos = scenario.positions.find(p => p.state === 'hero')?.label?.split(' ')[0];
   const villainPos = scenario.positions.find(p => p.state === 'active')?.label?.split(' ')[0];
 
@@ -399,9 +397,6 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
                   {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
                 </div>
               )}
-              {!opt.label.includes('(') && actionSublabels[opt.cls] && (
-                <div className="act-btn-sublabel">{actionSublabels[opt.cls]}</div>
-              )}
             </div>
           </button>
         ))}
@@ -416,7 +411,7 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
 export default function ScenarioCard({
   scenario, currentIndex, total,
   timerSeconds, totalSeconds, correctCount,
-  options, onDecision, decided, actionSublabels,
+  options, onDecision, decided,
   showTimer,
 }) {
   return (
@@ -438,7 +433,6 @@ export default function ScenarioCard({
           options={options}
           onDecision={onDecision}
           decided={decided}
-          actionSublabels={actionSublabels}
         />
       </div>
     </div>
