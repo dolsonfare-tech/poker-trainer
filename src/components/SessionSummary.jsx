@@ -3,7 +3,7 @@ import { SKILL_NAMES, SKILL_DESCRIPTIONS } from '../data/constants';
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
   intermediate: 'Intermediate',
-  advanced:     'Advanced',
+  expert:       'Expert',
 };
 
 export default function SessionSummary({ skillResults, coachRead, coachLoading, difficulty, onRestart }) {

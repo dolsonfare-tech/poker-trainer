@@ -369,7 +369,7 @@ const SCENARIOS = [
   mkScenario({
     id: 8,
     skill: 'opponent',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'calling-station',
@@ -528,7 +528,7 @@ const SCENARIOS = [
   mkScenario({
     id: 12,
     skill: 'preflop',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
@@ -646,7 +646,7 @@ const SCENARIOS = [
   mkScenario({
     id: 15,
     skill: 'position',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -763,7 +763,7 @@ const SCENARIOS = [
   mkScenario({
     id: 18,
     skill: 'aggression',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
@@ -880,7 +880,7 @@ const SCENARIOS = [
   mkScenario({
     id: 21,
     skill: 'betsize',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
@@ -997,7 +997,7 @@ const SCENARIOS = [
   mkScenario({
     id: 24,
     skill: 'bluffing',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -1114,7 +1114,7 @@ const SCENARIOS = [
   mkScenario({
     id: 27,
     skill: 'potodds',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
@@ -1232,7 +1232,7 @@ const SCENARIOS = [
   mkScenario({
     id: 30,
     skill: 'reads',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -1349,7 +1349,7 @@ const SCENARIOS = [
   mkScenario({
     id: 33,
     skill: 'opponent',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'loose',
@@ -1552,7 +1552,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_038',
     skill: 'preflop',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
@@ -1712,7 +1712,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_042',
     skill: 'position',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
@@ -1832,7 +1832,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_045',
     skill: 'aggression',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -1992,7 +1992,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_049',
     skill: 'betsize',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -2112,7 +2112,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_052',
     skill: 'bluffing',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
@@ -2232,7 +2232,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_055',
     skill: 'potodds',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
@@ -2352,7 +2352,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_058',
     skill: 'reads',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
@@ -2552,7 +2552,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_063',
     skill: 'opponent',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'nit',
@@ -2592,7 +2592,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_064',
     skill: 'opponent',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'loose',
@@ -2632,7 +2632,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_065',
     skill: 'preflop',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',
@@ -2873,7 +2873,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_071',
     skill: 'reads',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'tight',
@@ -2913,7 +2913,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_072',
     skill: 'betsize',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
@@ -2953,7 +2953,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_073',
     skill: 'position',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'loose',
@@ -3236,7 +3236,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_080',
     skill: 'aggression',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'passive',
@@ -3316,7 +3316,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_082',
     skill: 'bluffing',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'maniac',
@@ -3356,7 +3356,7 @@ const SCENARIOS = [
   mkScenario({
     id: 'sc_083',
     skill: 'potodds',
-    difficulty: 'advanced',
+    difficulty: 'intermediate',
     weight: 1.0,
     villain: {
       type: 'aggressive',

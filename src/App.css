@@ -675,6 +675,51 @@ body {
   line-height: 1.4;
 }
 
+/* Action trail */
+.dp-action-trail {
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.dp-at-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(30,30,30,0.4);
+  margin-bottom: 6px;
+}
+
+.dp-at-steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.82rem;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.dp-at-step { display: inline; }
+
+.dp-at-step-hero .dp-at-pos { color: rgba(30,30,30,0.45); }
+
+.dp-at-pos {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.dp-at-act { color: #1a1a1a; }
+
+.dp-at-arrow {
+  color: rgba(30,30,30,0.3);
+  font-size: 0.7rem;
+}
+
 /* Action header divider inside decision panel */
 .dp-action-header {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
@@ -1977,6 +2022,27 @@ body {
   font-size: 0.78rem;
   color: rgba(242,237,227,0.45);
   line-height: 1.5;
+}
+
+.ds-card.disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ds-card-coming-badge {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.55);
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 99px;
+  padding: 3px 8px;
 }
 
 .ds-confirm-btn {

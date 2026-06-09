@@ -80,6 +80,40 @@ function StreetBar({ boardLength }) {
   );
 }
 
+// ─── Action trail (decision panel) ───────────────────────────────────────
+
+function buildActionTrail(scenario) {
+  return scenario.positions
+    .filter(p => {
+      const a = p.action;
+      return a && a !== 'Folds' && a !== 'Active' && a !== '???';
+    })
+    .map(p => ({
+      label: p.state === 'hero' ? 'You' : p.label.split(' ')[0],
+      action: p.action,
+      isHero: p.state === 'hero',
+    }));
+}
+
+function ActionTrail({ scenario }) {
+  const steps = buildActionTrail(scenario);
+  if (steps.length === 0) return null;
+  return (
+    <div className="dp-action-trail">
+      <div className="dp-at-label">Action to you</div>
+      <div className="dp-at-steps">
+        {steps.map((s, i) => (
+          <span key={i} className={`dp-at-step${s.isHero ? ' dp-at-step-hero' : ''}`}>
+            {i > 0 && <span className="dp-at-arrow"> → </span>}
+            <span className="dp-at-pos">{s.label}</span>
+            {' '}<span className="dp-at-act">{s.action}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // ─── Villain action strip ────────────────────────────────────────────────
 
 function VillainHistory({ scenario }) {
@@ -273,9 +307,6 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
   return (
     <div className="decision-panel">
 
-      {/* Question */}
-      <p className="dp-question">{scenario.question}</p>
-
       {/* You Hold */}
       <div className="dp-you-hold">
         <div className="dp-you-hold-cards">
@@ -311,8 +342,11 @@ function DecisionPanel({ scenario, options, onDecision, decided, actionSublabels
         </div>
       </div>
 
+      {/* Action trail */}
+      <ActionTrail scenario={scenario} />
+
       {/* Action header divider */}
-      <div className="dp-action-header">Action</div>
+      <div className="dp-action-header">Your Move</div>
 
       {/* Action buttons */}
       <div className="dp-actions">

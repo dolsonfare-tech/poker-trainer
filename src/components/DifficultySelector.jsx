@@ -7,20 +7,23 @@ const DIFFICULTIES = [
     sublabel: 'Learning the game',
     desc: 'Preflop fundamentals, position basics, simple value decisions',
     icon: '🂡',
+    disabled: false,
   },
   {
     key: 'intermediate',
     label: 'Intermediate',
     sublabel: 'Solid foundation',
-    desc: 'Postflop play, pot odds, bet sizing, reading passive opponents',
+    desc: 'Postflop play, bet sizing, bluff frequency, exploitative reads',
     icon: '♠',
+    disabled: false,
   },
   {
-    key: 'advanced',
-    label: 'Advanced',
-    sublabel: 'Playing to win',
-    desc: 'Bluff frequency, exploitative reads, tournament pressure spots',
+    key: 'expert',
+    label: 'Expert',
+    sublabel: 'Coming soon',
+    desc: 'Equity calculations, pot odds math, multi-street planning',
     icon: '⚡',
+    disabled: true,
   },
 ];
 
@@ -41,10 +44,14 @@ export default function DifficultySelector({ onSelect }) {
         {DIFFICULTIES.map((d) => (
           <button
             key={d.key}
-            className={`ds-card ${selected === d.key ? 'selected' : ''}`}
-            onClick={() => setSelected(d.key)}
+            className={`ds-card ${selected === d.key ? 'selected' : ''} ${d.disabled ? 'disabled' : ''}`}
+            onClick={() => !d.disabled && setSelected(d.key)}
+            disabled={d.disabled}
           >
-            {selected === d.key && <div className="ds-card-selected-badge">Selected</div>}
+            {d.disabled
+              ? <div className="ds-card-coming-badge">Coming Soon</div>
+              : selected === d.key && <div className="ds-card-selected-badge">Selected</div>
+            }
             <div className="ds-card-body">
               <div className="ds-card-icon">{d.icon}</div>
               <div>
