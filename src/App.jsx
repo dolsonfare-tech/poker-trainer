@@ -115,6 +115,7 @@ export default function App() {
   const [timedOut, setTimedOut]                   = useState(false);
   const [combo, setCombo]                         = useState(0);
   const [correctCount, setCorrectCount]           = useState(0);
+  const [sessionHistory, setSessionHistory]       = useState([]);
   const timerRef                                  = useRef(null);
   const currentIndexRef                           = useRef(0);
   const shuffledRef                               = useRef([]);
@@ -135,6 +136,7 @@ export default function App() {
     setTimedOut(true);
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [s.skill]: 'incorrect' }));
+    setSessionHistory(prev => [...prev, { scenario: s, choiceVal: null, result: 'incorrect' }]);
     setCombo(0);
     const correctGrading = s.grading[s.correct];
     setFeedback({ grade: { ...correctGrading, skill: s.tag }, loading: false, text: s.feedback.correct });
@@ -192,6 +194,7 @@ export default function App() {
     setTimedOut(false);
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
+    setSessionHistory(prev => [...prev, { scenario, choiceVal: choice, result: gr.g }]);
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -236,6 +239,7 @@ export default function App() {
     setTimedOut(false);
     setCombo(0);
     setCorrectCount(0);
+    setSessionHistory([]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -268,6 +272,7 @@ export default function App() {
           {showSummary ? (
             <SessionSummary
               skillResults={skillResults}
+              sessionHistory={sessionHistory}
               coachRead={coachRead}
               coachLoading={coachLoading}
               difficulty={difficulty}
