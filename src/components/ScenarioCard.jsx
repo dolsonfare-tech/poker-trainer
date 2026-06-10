@@ -90,7 +90,7 @@ const extractAmt = str => str?.match(/\$(\d[\d,]*)/)?.[1];
 // positions array: [UTG(0), HJ(1), CO(2), BTN(3), SB(4), BB(5)]
 const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
 
-function buildActionTrail(scenario) {
+export function buildActionTrail(scenario) {
   const villainIdx = scenario.positions.findIndex(p => p.state === 'active');
   if (villainIdx === -1) return null;
 

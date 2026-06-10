@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import DUMMY_USER from '../data/dummyUser';
 import { SKILL_NAMES } from '../data/constants';
+import { buildActionTrail } from './ScenarioCard';
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -28,13 +29,34 @@ function HandReview({ entry }) {
   const handStr       = scenario.hand.map(c => c.r + c.s).join(' ');
   const boardStr      = scenario.board.join(' ');
   const showCorrect   = choiceVal !== scenario.correct;
+  const trail         = buildActionTrail(scenario);
 
   return (
     <div className="ss-hand-review">
       <div className="ss-hr-cards">
         <span className="ss-hr-hand">{handStr}</span>
-        <span className="ss-hr-divider">·</span>
-        <span className="ss-hr-board">{boardStr}</span>
+        {boardStr && <><span className="ss-hr-divider">·</span><span className="ss-hr-board">{boardStr}</span></>}
+      </div>
+      <div className="ss-hr-context">
+        {trail && (
+          <span className="ss-hr-action">
+            <span className="ss-hr-ctx-label">Action to you: </span>
+            {trail.pos} {trail.action}
+          </span>
+        )}
+        {scenario.pot && (
+          <span className="ss-hr-pot">
+            <span className="ss-hr-ctx-label">Pot: </span>
+            {scenario.pot}
+            {scenario.toCall && <> · To call: {scenario.toCall}</>}
+          </span>
+        )}
+        {scenario.villain?.label && (
+          <span className="ss-hr-villain">
+            <span className="ss-hr-ctx-label">Opponent: </span>
+            {scenario.villain.label}
+          </span>
+        )}
       </div>
       <div className="ss-hr-plays">
         <div className="ss-hr-play">
@@ -99,32 +121,34 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
           </div>
         </div>
 
-        {testedSkills.map(([key, result]) => {
-          const before = DUMMY_USER.skills[key]?.rating ?? 'gray';
-          const after  = nextRating(before, result);
-          const baseForCompare = before === 'gray' ? 'red' : before;
-          const changed  = before !== after;
-          const wentUp   = changed && RATING_ORDER.indexOf(after) > RATING_ORDER.indexOf(baseForCompare);
-          const tappable = changed;
-
-          return (
-            <div
-              key={key}
-              className={`ss-impact-row${tappable ? ' ss-impact-row-tappable' : ''}`}
-              onClick={tappable ? () => setActiveSkill(key) : undefined}
-            >
-              <span className="ss-impact-name">{SKILL_NAMES[key]}</span>
-              <div className="ss-impact-right">
-                {changed && (
+        {testedSkills
+          .map(([key, result]) => {
+            const before = DUMMY_USER.skills[key]?.rating ?? 'gray';
+            const after  = nextRating(before, result);
+            const baseForCompare = before === 'gray' ? 'red' : before;
+            const changed  = before !== after;
+            const wentUp   = changed && RATING_ORDER.indexOf(after) > RATING_ORDER.indexOf(baseForCompare);
+            return { key, changed, wentUp };
+          })
+          .filter(({ changed }) => changed)
+          .map(({ key, wentUp }) => {
+            const tappable = !wentUp;
+            return (
+              <div
+                key={key}
+                className={`ss-impact-row${tappable ? ' ss-impact-row-tappable' : ''}`}
+                onClick={tappable ? () => setActiveSkill(key) : undefined}
+              >
+                <span className="ss-impact-name">{SKILL_NAMES[key]}</span>
+                <div className="ss-impact-right">
                   <span className="ss-rating-change" style={{ color: wentUp ? '#56c878' : '#e25555' }}>
                     {wentUp ? '↑' : '↓'}
                   </span>
-                )}
-                {tappable && <span className="ss-impact-chevron">›</span>}
+                  {tappable && <span className="ss-impact-chevron">›</span>}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       <button className="restart-btn" onClick={onRestart}>Train Again</button>
