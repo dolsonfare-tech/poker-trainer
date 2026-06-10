@@ -12,17 +12,35 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 
 ---
 
+## Phase 1.0 — COMPLETE
+
+- 83 scenarios built and structured
+- Core gameplay loop (scenario → feedback → summary) working
+- SME review of scenario gradings still needed (carry forward)
+- Both founders to play through 10+ times each (carry forward)
+
+---
+
 ## Current Phase: 1.5 — UX & Design Validation
 
 **The philosophy:** Build the full logged-in experience with dummy data before touching a database. Validate the UX, then engineer it.
 
 All Phase 1.5 screens read from `src/data/dummyUser.js`. No backend exists yet. In Phase 2, `dummyUser.js` is replaced entirely by Supabase.
 
-**Phase 1.5 is complete when:**
-- All screens designed and tested with dummy data
-- Developer friend has reviewed architecture
-- 5+ testers have experienced the full logged-in flow
-- Phase 2 scope is locked based on feedback
+**Status:**
+- ✅ Session summary refinements complete
+- ✅ Dashboard covers skill profile — dedicated screen not needed
+- ✅ Developer friend UX/UI review done
+- ✅ Testers reviewing and providing feedback
+- ⏳ Strategic questions below not yet answered
+
+**Phase 1.5 is complete when these strategic questions are answered (founders review):**
+- What is the Poker IQ algorithm? How should it work?
+- Are the 6 player schemas right? Do they cover the real patterns?
+- Do we have the right 8 skills? Any missing or redundant?
+- What does the paid version include? What's free?
+
+Once these are answered and no tester feedback points to structural UX changes that would reshape the data model, Phase 2 scope can be locked and engineering can begin.
 
 ---
 
@@ -86,12 +104,10 @@ checkraise/
 
 **Dashboard:**
 - Dashboard is the entry point (`screen === 'dashboard'`), not DifficultySelector
-- Section order: Stats row → Archetype → Skill Profile → Leaderboard → CTA
-- Leaderboard is friends-only (not global) — `isUser` flag highlights your row
+- Section order: Stats row → Archetype → Skill Profile → CTA
 - Skill dots are tappable — expand to show description + color meaning
-- New-user state (gray dots, locked schema) deferred to Phase 2
-- Streak warning shows after 6pm if user hasn't played today
-- Coach greeting and streak warning removed from current build — dashboard is cleaner without them
+- New-user state (gray dots, locked schema) deferred — see post-1.5 work
+- Coach greeting, streak warning, and leaderboard excluded from dashboard — moved to backlog
 
 **Fonts:**
 - Playfair Display — logo, hero numbers, schema name, schema quote, CTA button
@@ -99,9 +115,7 @@ checkraise/
 - Both loaded via Google Fonts in `public/index.html`
 - Georgia and Courier New are fallbacks only
 
-**Monetization:** Decision deferred until Phase 1.5 UX validation complete. Architecture keeps all doors open.
-
-**Bundle ID:** Deferred — cannot change after App Store submission. Decide before Phase 3.
+**Monetization:** Decision deferred — one of the strategic questions to answer in Phase 1.5. Architecture keeps all doors open.
 
 ---
 
@@ -184,19 +198,36 @@ Phase 2 timeline estimate: 6–8 weeks with a developer.
 
 ---
 
-## What's Still To Build (Phase 1.5)
+## Phase 1.6 — Scenario Scale & Expert Level
 
-- Session summary refinements (schema insight, streak celebration)
-- Skill Profile screen (full breakdown over time)
-- Developer friend architecture review
-- 5+ external testers through the full flow
-- Phase 2 scope locked from tester feedback
+*Begins after Phase 1.5 strategic questions are answered.*
 
-## Phase 1 Still Outstanding
+- Scale up total scenario count significantly
+- Build out Expert difficulty scenarios
+- Expert-level features TBD based on Phase 1.5 findings
+- Lock in Bundle ID (cannot change after App Store submission — decide here, before Phase 3)
+- SME review of all scenario gradings (carried from Phase 1.0)
+- Both founders play through 10+ times each (carried from Phase 1.0)
 
-- SME review of all 83 scenario gradings
-- Both founders play through 10+ times each
-- Bundle ID locked in
+---
+
+## Post-Phase 1.5 Work (no phase yet)
+
+*Deferred until strategic questions are answered. Scope depends on those answers.*
+
+- Replace placeholder utils (`spacedrep.js`, `gamification.js`, `skillrating.js`) with full logic
+- New user experience — gray dots, locked schema, onboarding flow
+
+---
+
+## Backlog (no defined phase)
+
+Features excluded from current build. May return based on tester feedback or strategic direction.
+
+- **Leaderboard** — friends-only, `isUser` row highlight. Data shape preserved in `dummyUser.js`.
+- **Streak warning** — show after 6pm if user hasn't played today
+- **Coach greeting** — personalized dashboard greeting
+- **Streak badges / celebrations** — milestone rewards
 
 ---
 
