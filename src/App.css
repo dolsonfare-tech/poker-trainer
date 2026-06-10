@@ -662,7 +662,7 @@ body {
 
 .dp-at-steps {
   font-family: Georgia, serif;
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   color: #1a1a1a;
   line-height: 1.5;
 }
@@ -997,13 +997,6 @@ body {
   letter-spacing: 0.04em;
 }
 
-.ss-hr-body {
-  font-size: 0.82rem;
-  color: rgba(242,237,227,0.55);
-  line-height: 1.55;
-  font-style: italic;
-}
-
 .ss-hr-plays {
   display: flex;
   gap: 12px;
@@ -1028,20 +1021,6 @@ body {
   font-family: Georgia, serif;
   font-size: 0.88rem;
   font-weight: 600;
-}
-
-.ss-hr-play-title {
-  font-size: 0.72rem;
-  color: rgba(242,237,227,0.4);
-  font-style: italic;
-}
-
-.ss-hr-feedback {
-  font-size: 0.82rem;
-  color: rgba(242,237,227,0.72);
-  line-height: 1.65;
-  border-top: 1px solid rgba(255,255,255,0.06);
-  padding-top: 10px;
 }
 
 .ss-hr-empty {

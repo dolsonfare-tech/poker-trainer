@@ -25,8 +25,6 @@ function HandReview({ entry }) {
   const { scenario, choiceVal, result } = entry;
   const userOption    = scenario.options.find(o => o.val === choiceVal);
   const correctOption = scenario.options.find(o => o.val === scenario.correct);
-  const gradeInfo     = choiceVal ? scenario.grading[choiceVal] : null;
-  const feedbackText  = scenario.feedback[result];
   const handStr       = scenario.hand.map(c => c.r + c.s).join(' ');
   const boardStr      = scenario.board.join(' ');
   const showCorrect   = choiceVal !== scenario.correct;
@@ -38,16 +36,12 @@ function HandReview({ entry }) {
         <span className="ss-hr-divider">·</span>
         <span className="ss-hr-board">{boardStr}</span>
       </div>
-      <div className="ss-hr-body">{scenario.body}</div>
       <div className="ss-hr-plays">
         <div className="ss-hr-play">
           <span className="ss-hr-play-label">You played</span>
           <span className="ss-hr-play-name" style={{ color: RESULT_COLOR[result] }}>
             {choiceVal ? (userOption?.label ?? choiceVal) : 'Time ran out'}
           </span>
-          {gradeInfo?.title && (
-            <span className="ss-hr-play-title">{gradeInfo.title}</span>
-          )}
         </div>
         {showCorrect && (
           <div className="ss-hr-play">
@@ -58,9 +52,6 @@ function HandReview({ entry }) {
           </div>
         )}
       </div>
-      {feedbackText && (
-        <div className="ss-hr-feedback">{feedbackText}</div>
-      )}
     </div>
   );
 }
@@ -73,12 +64,10 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
   const correctCount   = Object.values(skillResults).filter(r => r === 'correct').length;
   const incorrectCount = Object.values(skillResults).filter(r => r === 'incorrect').length;
   const iqDelta  = correctCount * 2 - incorrectCount;
-  const iqBefore = DUMMY_USER.pokerScore;
-  const iqAfter  = iqBefore + iqDelta;
   const iqDir    = iqDelta > 0 ? 'up' : iqDelta < 0 ? 'down' : 'flat';
 
   const handsForSkill = (skillKey) =>
-    sessionHistory.filter(h => h.scenario.skill === skillKey);
+    sessionHistory.filter(h => h.scenario.skill === skillKey && h.result === 'incorrect');
 
   const activeHands = activeSkill ? handsForSkill(activeSkill) : [];
 

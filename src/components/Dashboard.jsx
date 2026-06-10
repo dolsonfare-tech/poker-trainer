@@ -2,9 +2,51 @@ import { useState, useEffect } from 'react';
 import DUMMY_USER from '../data/dummyUser';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, COLOR_LABELS } from '../data/constants';
 
-// ─── Skill dot with tap-for-description ───────────────────────────────────
-function SkillDot({ skill, data }) {
+// ─── Count-up animation ───────────────────────────────────────────────────
+function useCountUp(to, from, duration = 900, delay = 0) {
+  const [value, setValue] = useState(from);
+  useEffect(() => {
+    setValue(from);
+    if (from === to) return;
+    let start = null;
+    let raf;
+    const timer = setTimeout(() => {
+      const tick = (ts) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+        setValue(Math.round(from + (to - from) * eased));
+        if (p < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    }, delay);
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
+  }, [to, from]); // eslint-disable-line
+  return value;
+}
+
+// ─── Rating transition helper ─────────────────────────────────────────────
+const RATING_ORDER = ['red', 'yellow', 'green'];
+function nextRating(current, result) {
+  const base = current === 'gray' ? 'red' : current;
+  const i = RATING_ORDER.indexOf(base);
+  if (result === 'correct')   return RATING_ORDER[Math.min(i + 1, 2)];
+  if (result === 'incorrect') return RATING_ORDER[Math.max(i - 1, 0)];
+  return current;
+}
+
+// ─── Skill dot ────────────────────────────────────────────────────────────
+function SkillDot({ skill, data, sessionResult, index }) {
   const [expanded, setExpanded] = useState(false);
+  const [displayRating, setDisplayRating] = useState(data.rating);
+
+  useEffect(() => {
+    if (!sessionResult) return;
+    const newRating = nextRating(data.rating, sessionResult);
+    if (newRating === data.rating) return;
+    const t = setTimeout(() => setDisplayRating(newRating), 1000 + index * 80);
+    return () => clearTimeout(t);
+  }, [sessionResult]); // eslint-disable-line
 
   const colorMap = {
     green:  { color: '#56c878', glow: 'rgba(86,200,120,0.6)',  symbol: '●' },
@@ -12,7 +54,7 @@ function SkillDot({ skill, data }) {
     red:    { color: '#e25555', glow: 'rgba(226,85,85,0.6)',   symbol: '▼' },
     gray:   { color: 'rgba(255,255,255,0.25)', glow: 'none',   symbol: '○' },
   };
-  const { color, glow, symbol } = colorMap[data.rating] || colorMap.gray;
+  const { color, glow, symbol } = colorMap[displayRating] || colorMap.gray;
 
   return (
     <div
@@ -28,14 +70,15 @@ function SkillDot({ skill, data }) {
       {expanded && (
         <div className="db-skill-desc">
           <div className="db-skill-desc-text">{SKILL_DESCRIPTIONS[skill]}</div>
-          <div className="db-skill-desc-rating">{COLOR_LABELS[data.rating]}</div>
+          <div className="db-skill-desc-rating">{COLOR_LABELS[displayRating]}</div>
         </div>
       )}
     </div>
   );
 }
 
-export default function Dashboard({ onStartSession, stats }) {
+// ─── Dashboard ────────────────────────────────────────────────────────────
+export default function Dashboard({ onStartSession, stats, sessionDelta }) {
   const [pulse, setPulse] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPulse(true), 400);
@@ -44,9 +87,18 @@ export default function Dashboard({ onStartSession, stats }) {
 
   const { schema, skills, sessionsCompleted, coachNote, pokerScore } = DUMMY_USER;
 
-  // Use live localStorage streak if the user has played at least once,
-  // otherwise fall back to dummy data so fresh testers see a realistic view.
   const streak = stats?.lastSessionDate ? stats.streak : DUMMY_USER.streak;
+
+  // Animation targets — when no sessionDelta, from === to so no animation runs
+  const iqFrom       = pokerScore ?? 0;
+  const iqTo         = sessionDelta ? iqFrom + sessionDelta.iqDelta : iqFrom;
+  const streakFrom   = sessionDelta ? sessionDelta.prevStreak : streak;
+  const sessionsFrom = sessionsCompleted;
+  const sessionsTo   = sessionDelta ? sessionsCompleted + 1 : sessionsCompleted;
+
+  const displayIQ       = useCountUp(iqTo,       iqFrom,       900, 300);
+  const displayStreak   = useCountUp(streak,      streakFrom,   700, 150);
+  const displaySessions = useCountUp(sessionsTo,  sessionsFrom, 700, 500);
 
   return (
     <div className="dashboard">
@@ -67,20 +119,20 @@ export default function Dashboard({ onStartSession, stats }) {
       <div className="db-stats-row">
         <div className="db-stat-chip">
           <span className="db-stat-num db-stat-cream">
-            {pokerScore ?? '—'}
+            {displayIQ ?? '—'}
             {pokerScore != null && <span className="db-stat-denom">/100</span>}
           </span>
           <span className="db-stat-label">poker iq</span>
         </div>
         <div className="db-stat-divider" />
         <div className="db-stat-chip">
-          <span className="db-stat-num">{streak}</span>
+          <span className="db-stat-num">{displayStreak}</span>
           <span className="db-stat-flame">🔥</span>
           <span className="db-stat-label">day streak</span>
         </div>
         <div className="db-stat-divider" />
         <div className="db-stat-chip">
-          <span className="db-stat-num db-stat-cream">{sessionsCompleted}</span>
+          <span className="db-stat-num db-stat-cream">{displaySessions}</span>
           <span className="db-stat-label">sessions</span>
         </div>
       </div>
@@ -116,8 +168,14 @@ export default function Dashboard({ onStartSession, stats }) {
           <span className="db-section-meta">tap a skill to learn more</span>
         </div>
         <div className="db-skills-grid">
-          {Object.entries(skills).map(([skill, data]) => (
-            <SkillDot key={skill} skill={skill} data={data} />
+          {Object.entries(skills).map(([skill, data], idx) => (
+            <SkillDot
+              key={skill}
+              skill={skill}
+              data={data}
+              sessionResult={sessionDelta?.skillResults?.[skill]}
+              index={idx}
+            />
           ))}
         </div>
         <div className="db-skill-legend">

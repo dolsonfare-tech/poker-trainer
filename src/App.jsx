@@ -116,6 +116,7 @@ export default function App() {
   const [combo, setCombo]                         = useState(0);
   const [correctCount, setCorrectCount]           = useState(0);
   const [sessionHistory, setSessionHistory]       = useState([]);
+  const [sessionDelta, setSessionDelta]           = useState(null);
   const timerRef                                  = useRef(null);
   const currentIndexRef                           = useRef(0);
   const shuffledRef                               = useRef([]);
@@ -175,6 +176,7 @@ export default function App() {
     setShuffledScenarios(scenarios);
     setCombo(0);
     setCorrectCount(0);
+    setSessionDelta(null);
     setScreen('session');
   };
 
@@ -210,9 +212,13 @@ export default function App() {
     const next = currentIndex + 1;
     if (next >= shuffledScenarios.length) {
       clearTimer();
+      const prevStreak = stats.streak;
       const newStats = calcStreak(stats);
       saveStats(newStats);
       setStats(newStats);
+      const correct   = Object.values(skillResults).filter(r => r === 'correct').length;
+      const incorrect = Object.values(skillResults).filter(r => r === 'incorrect').length;
+      setSessionDelta({ iqDelta: correct * 2 - incorrect, prevStreak, skillResults: { ...skillResults } });
       setShowSummary(true);
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
@@ -260,7 +266,7 @@ export default function App() {
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartSession={handleStartSession} stats={stats} />
+        <Dashboard onStartSession={handleStartSession} stats={stats} sessionDelta={sessionDelta} />
       )}
 
       {screen === 'difficulty' && (
