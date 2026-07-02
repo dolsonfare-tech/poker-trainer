@@ -1,7 +1,5 @@
 import { useState } from 'react';
-import DUMMY_USER from '../data/dummyUser';
 import { SKILL_NAMES } from '../data/constants';
-import { buildActionTrail } from './ScenarioCard';
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -22,14 +20,28 @@ function nextRating(current, result) {
   return current; // partial: no change
 }
 
+function personalizeBody(scenario) {
+  if (!scenario.body) return null;
+  const heroPos    = scenario.positions?.find(p => p.state === 'hero');
+  const villainPos = scenario.positions?.find(p => p.state === 'active');
+  const heroBase    = heroPos?.label?.split(' ')[0];
+  const villainBase = villainPos?.label?.split(' ')[0];
+  let text = scenario.body;
+  if (villainBase) text = text.replace(new RegExp(`\\b${villainBase}\\b`, 'g'), 'Villain');
+  if (heroBase) {
+    text = text.replace(new RegExp(`\\b${heroBase} has\\b`, 'g'), 'You have');
+    text = text.replace(new RegExp(`\\b${heroBase}\\b`, 'g'), 'You');
+  }
+  return text;
+}
+
 function HandReview({ entry }) {
   const { scenario, choiceVal, result } = entry;
   const userOption    = scenario.options.find(o => o.val === choiceVal);
   const correctOption = scenario.options.find(o => o.val === scenario.correct);
   const handStr       = scenario.hand.map(c => c.r + c.s).join(' ');
   const boardStr      = scenario.board.join(' ');
-  const showCorrect   = choiceVal !== scenario.correct;
-  const trail         = buildActionTrail(scenario);
+  const showCorrect = choiceVal !== scenario.correct;
 
   return (
     <div className="ss-hand-review">
@@ -38,23 +50,14 @@ function HandReview({ entry }) {
         {boardStr && <><span className="ss-hr-divider">·</span><span className="ss-hr-board">{boardStr}</span></>}
       </div>
       <div className="ss-hr-context">
-        {trail && (
-          <span className="ss-hr-action">
-            <span className="ss-hr-ctx-label">Action to you: </span>
-            {trail.pos} {trail.action}
-          </span>
+        {scenario.body && (
+          <span className="ss-hr-situation">{personalizeBody(scenario)}</span>
         )}
         {scenario.pot && (
           <span className="ss-hr-pot">
             <span className="ss-hr-ctx-label">Pot: </span>
             {scenario.pot}
             {scenario.toCall && <> · To call: {scenario.toCall}</>}
-          </span>
-        )}
-        {scenario.villain?.label && (
-          <span className="ss-hr-villain">
-            <span className="ss-hr-ctx-label">Opponent: </span>
-            {scenario.villain.label}
           </span>
         )}
       </div>
@@ -78,20 +81,24 @@ function HandReview({ entry }) {
   );
 }
 
-export default function SessionSummary({ skillResults, sessionHistory = [], coachRead, coachLoading, difficulty, onRestart }) {
+export default function SessionSummary({ skillResults, sessionHistory = [], coachRead, coachLoading, difficulty, userSkills = {}, onRestart }) {
   const [activeSkill, setActiveSkill] = useState(null);
 
   const testedSkills = Object.entries(skillResults);
 
-  const correctCount   = Object.values(skillResults).filter(r => r === 'correct').length;
-  const incorrectCount = Object.values(skillResults).filter(r => r === 'incorrect').length;
+  // Use sessionHistory for accurate totals — skillResults dedupes by skill key
+  const correctCount   = sessionHistory.filter(h => h.result === 'correct').length;
+  const incorrectCount = sessionHistory.filter(h => h.result === 'incorrect').length;
+  const totalHands     = sessionHistory.length;
   const iqDelta  = correctCount * 2 - incorrectCount;
   const iqDir    = iqDelta > 0 ? 'up' : iqDelta < 0 ? 'down' : 'flat';
 
   const handsForSkill = (skillKey) =>
-    sessionHistory.filter(h => h.scenario.skill === skillKey && h.result === 'incorrect');
+    sessionHistory.filter(h => h.scenario.skill === skillKey && h.result !== 'correct');
 
   const activeHands = activeSkill ? handsForSkill(activeSkill) : [];
+
+  const missedHands = sessionHistory.filter(h => h.result !== 'correct');
 
   return (
     <div className="summary-card">
@@ -99,6 +106,13 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
       {difficulty && (
         <div className="ss-difficulty-chip">{DIFFICULTY_LABELS[difficulty]}</div>
       )}
+
+      <div className="ss-score-line">
+        <span className="ss-score-correct">{correctCount}</span>
+        <span className="ss-score-sep"> / </span>
+        <span className="ss-score-total">{totalHands}</span>
+        <span className="ss-score-label"> correct</span>
+      </div>
 
       <div className="ss-coach-read">
         <div className="ss-coach-label">🧠 Coach's Read</div>
@@ -123,7 +137,7 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
 
         {testedSkills
           .map(([key, result]) => {
-            const before = DUMMY_USER.skills[key]?.rating ?? 'gray';
+            const before = userSkills[key]?.rating ?? 'gray';
             const after  = nextRating(before, result);
             const baseForCompare = before === 'gray' ? 'red' : before;
             const changed  = before !== after;
@@ -150,6 +164,17 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
             );
           })}
       </div>
+
+      {missedHands.length > 0 && (
+        <div className="ss-missed-section">
+          <div className="summary-sub" style={{ marginBottom: '12px' }}>
+            Hands to Review ({missedHands.length})
+          </div>
+          <div className="ss-missed-list">
+            {missedHands.map((entry, i) => <HandReview key={i} entry={entry} />)}
+          </div>
+        </div>
+      )}
 
       <button className="restart-btn" onClick={onRestart}>Train Again</button>
 

@@ -2,52 +2,18 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
+import { loadUser, saveUser, createUser, applySessionResults } from './utils/userStorage';
 import ScenarioCard from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 import Dashboard from './components/Dashboard';
+import UsernameEntry from './components/UsernameEntry';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 const SESSION_LENGTH = 5;
 const TIMER_SECONDS = 60; // HARDCODED — pull from user settings in Phase 2
-
-// ─── Streak helpers (localStorage) ────────────────────────────────────────
-function loadStats() {
-  try {
-    const raw = localStorage.getItem('cr_stats');
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return { streak: 0, lastSessionDate: null };
-}
-
-function saveStats(stats) {
-  try { localStorage.setItem('cr_stats', JSON.stringify(stats)); } catch {}
-}
-
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function calcStreak(stats) {
-  const today = todayString();
-  const last = stats.lastSessionDate;
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
-
-  let newStreak = stats.streak;
-  if (last === today) {
-    // already played today — don't increment
-  } else if (last === yesterdayStr) {
-    newStreak = stats.streak + 1;
-  } else {
-    newStreak = 1;
-  }
-
-  return { streak: newStreak, lastSessionDate: today };
-}
 
 // ─── Combo Ring ────────────────────────────────────────────────────────────
 function ComboRing({ combo }) {
@@ -100,6 +66,7 @@ function ProgressDots({ total, current }) {
 // ─── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
   const [showVillainGuide, setShowVillainGuide]   = useState(false);
+  const [user, setUser]                           = useState(() => loadUser());
   const [screen, setScreen]                       = useState('dashboard');
   const [difficulty, setDifficulty]               = useState('beginner');
   const [shuffledScenarios, setShuffledScenarios] = useState([]);
@@ -110,7 +77,6 @@ export default function App() {
   const [showSummary, setShowSummary]             = useState(false);
   const [coachRead, setCoachRead]                 = useState('');
   const [coachLoading, setCoachLoading]           = useState(false);
-  const [stats, setStats]                         = useState(() => loadStats());
   const [timerSeconds, setTimerSeconds]           = useState(TIMER_SECONDS);
   const [timedOut, setTimedOut]                   = useState(false);
   const [combo, setCombo]                         = useState(0);
@@ -120,6 +86,7 @@ export default function App() {
   const timerRef                                  = useRef(null);
   const currentIndexRef                           = useRef(0);
   const shuffledRef                               = useRef([]);
+  const sessionUserRef                            = useRef(null);
 
   const scenario = shuffledScenarios[currentIndex];
 
@@ -182,10 +149,23 @@ export default function App() {
 
   const handleFetchCoachRead = async (results, lastIndex) => {
     setCoachLoading(true);
+    const prevUser = sessionUserRef.current;
     try {
       const text = await fetchCoachRead(shuffledScenarios, results, lastIndex);
       setCoachRead(text);
-    } catch { setCoachRead(''); }
+      if (prevUser) {
+        const updated = applySessionResults(prevUser, results, text);
+        setUser(updated);
+        saveUser(updated);
+      }
+    } catch {
+      setCoachRead('');
+      if (prevUser) {
+        const updated = applySessionResults(prevUser, results, null);
+        setUser(updated);
+        saveUser(updated);
+      }
+    }
     setCoachLoading(false);
   };
 
@@ -212,13 +192,17 @@ export default function App() {
     const next = currentIndex + 1;
     if (next >= shuffledScenarios.length) {
       clearTimer();
-      const prevStreak = stats.streak;
-      const newStats = calcStreak(stats);
-      saveStats(newStats);
-      setStats(newStats);
       const correct   = Object.values(skillResults).filter(r => r === 'correct').length;
       const incorrect = Object.values(skillResults).filter(r => r === 'incorrect').length;
-      setSessionDelta({ iqDelta: correct * 2 - incorrect, prevStreak, skillResults: { ...skillResults } });
+      sessionUserRef.current = user;
+      setSessionDelta({
+        iqDelta: correct * 2 - incorrect,
+        prevStreak: user?.streak ?? 0,
+        prevSessions: user?.sessionsCompleted ?? 0,
+        prevPokerScore: user?.pokerScore ?? null,
+        prevSkills: user ? { ...user.skills } : {},
+        skillResults: { ...skillResults },
+      });
       setShowSummary(true);
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
@@ -249,6 +233,16 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleCreateUser = (username) => {
+    const newUser = createUser(username);
+    setUser(newUser);
+    saveUser(newUser);
+  };
+
+  if (!user) {
+    return <UsernameEntry onSubmit={handleCreateUser} />;
+  }
+
   return (
     <div className="app">
       <div className="header">
@@ -266,7 +260,7 @@ export default function App() {
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartSession={handleStartSession} stats={stats} sessionDelta={sessionDelta} />
+        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} />
       )}
 
       {screen === 'difficulty' && (
@@ -282,6 +276,7 @@ export default function App() {
               coachRead={coachRead}
               coachLoading={coachLoading}
               difficulty={difficulty}
+              userSkills={sessionDelta?.prevSkills ?? user.skills}
               onRestart={handleRestart}
             />
           ) : (

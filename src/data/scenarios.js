@@ -855,7 +855,7 @@ const SCENARIOS = [
     board: ['T♠', '7♥', '2♣'],
     pot: '$20',
     toCall: null,
-    body: 'CO raised preflop. BTN aggressive regular called. Flop T♠7♥2♣. CO has OESD.',
+    body: 'You raised preflop from CO. BTN aggressive regular called. Flop T♠7♥2♣. You act first with an open-ended straight draw.',
     question: '9♦8♦ — open-ended straight draw on T72 rainbow. Aggressive BTN called preflop. What sizing for your semi-bluff c-bet?',
     correct: 'bet_large',
     choices: [
@@ -1101,7 +1101,7 @@ const SCENARIOS = [
       {
         val: 'call', label: 'Call $16', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Calling Undersells Your Equity', emoji: '⚠️',
-        fb: "Calling is not wrong but undersells your hand. With 8 outs and fold equity available, check-raising denies him free cards and puts him to a decision for his stack. Calling passively gives the aggressive regular exactly the cheap card he wants.",
+        fb: "Calling is not wrong but undersells your hand. Against an aggressive regular who bets wide, you have real fold equity here — calling throws that away entirely. Check-raising wins the pot immediately when he folds, and builds a bigger pot when he calls and you hit your draw. Calling leaves you out of position on every future street with no initiative and nothing gained.",
       },
       {
         val: 'raise', label: 'Check-raise to $55', icon: '⚡', cls: 'raise',
@@ -1207,8 +1207,8 @@ const SCENARIOS = [
     board: ['K♥', '9♦', '4♣'],
     pot: '$22',
     toCall: null,
-    body: 'CO raised preflop. BTN maniac called. Flop K♥9♦4♣. BTN checks. CO has top pair.',
-    question: 'KQ (top pair, 2nd kicker) on K94 rainbow. Maniac BTN checks to you. Bet or check-raise trap?',
+    body: 'You raised preflop from CO. BTN maniac called. Flop K♥9♦4♣. You act first with top pair.',
+    question: 'KQ (top pair, 2nd kicker) on K94 rainbow. You act first vs a maniac BTN. Bet out or check to set up a check-raise?',
     correct: 'check_raise',
     choices: [
       {

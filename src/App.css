@@ -1015,6 +1015,14 @@ body {
   letter-spacing: 0.12em;
 }
 
+.ss-hr-situation {
+  font-size: 0.74rem;
+  line-height: 1.55;
+  color: rgba(242,237,227,0.6);
+  letter-spacing: 0.02em;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+}
+
 .ss-hr-plays {
   display: flex;
   gap: 12px;
@@ -1977,6 +1985,47 @@ body {
    SESSION SUMMARY — additions
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Score line ── */
+.ss-score-line {
+  margin: 6px 0 18px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: rgba(242,237,227,0.5);
+}
+
+.ss-score-correct {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #56c878;
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.ss-score-sep,
+.ss-score-total {
+  font-size: 1.1rem;
+  color: rgba(242,237,227,0.35);
+}
+
+.ss-score-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.35);
+  margin-left: 4px;
+}
+
+/* ── Missed hands section ── */
+.ss-missed-section {
+  margin-top: 28px;
+  text-align: left;
+}
+
+.ss-missed-list {
+  display: grid;
+  gap: 10px;
+}
+
 /* ── Difficulty chip ── */
 .ss-difficulty-chip {
   display: inline-block;
@@ -2380,4 +2429,151 @@ body {
 .db-legend-yellow { color: #e89028; text-shadow: 0 0 5px rgba(232,144,40,0.5); }
 .db-legend-red    { color: #e25555; text-shadow: 0 0 5px rgba(226,85,85,0.5); }
 .db-legend-gray   { color: rgba(255,255,255,0.25); }
+
+/* ── Schema locked state ── */
+.db-schema-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  border: 1px solid rgba(242,237,227,0.1);
+  border-radius: 10px;
+  background: rgba(242,237,227,0.03);
+}
+
+.db-schema-locked-icon {
+  font-size: 22px;
+  opacity: 0.5;
+}
+
+.db-schema-locked-text {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: rgba(242,237,227,0.35);
+  text-align: center;
+}
+
+/* ── Username Entry screen ── */
+.ue-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg, #0e1117);
+}
+
+.ue-card {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.ue-logo {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--cream, #f2ede3);
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.ue-logo em {
+  font-style: italic;
+  color: var(--yellow, #f0a500);
+}
+
+.ue-title {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--cream, #f2ede3);
+}
+
+.ue-subtitle {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(242,237,227,0.4);
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.ue-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.ue-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(242,237,227,0.18);
+  background: rgba(242,237,227,0.05);
+  color: var(--cream, #f2ede3);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9rem;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+
+.ue-input::placeholder {
+  color: rgba(242,237,227,0.25);
+}
+
+.ue-input:focus {
+  border-color: rgba(240,165,0,0.5);
+}
+
+.ue-input.ue-input-error {
+  border-color: rgba(226,85,85,0.6);
+}
+
+.ue-error {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: #e25555;
+  padding-left: 4px;
+}
+
+.ue-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--yellow, #f0a500);
+  color: #0e1117;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.ue-submit-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.ue-submit-btn:not(:disabled):hover {
+  opacity: 0.92;
+}
+
+.ue-submit-btn:not(:disabled):active {
+  transform: scale(0.98);
+}
 
