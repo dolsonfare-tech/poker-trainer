@@ -11,6 +11,9 @@ const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e255
 
 function personalizeBody(scenario) {
   if (!scenario.body) return null;
+  // Bodies already written to the player ("You called BTN's open…") must be
+  // shown verbatim — blind token replacement mangles them ("You raised You").
+  if (/\bYou\b/.test(scenario.body)) return scenario.body;
   const heroPos    = scenario.positions?.find(p => p.state === 'hero');
   const villainPos = scenario.positions?.find(p => p.state === 'active');
   const heroBase    = heroPos?.label?.split(' ')[0];
@@ -21,6 +24,8 @@ function personalizeBody(scenario) {
     text = text.replace(new RegExp(`\\b${heroBase} has\\b`, 'g'), 'You have');
     text = text.replace(new RegExp(`\\b${heroBase}\\b`, 'g'), 'You');
   }
+  // Fix verb agreement after substitution: "You bets $25" → "You bet $25"
+  text = text.replace(/\bYou (bet|check|call|raise|fold|shove|jam|limp|lead|donk)s\b/g, 'You $1');
   return text;
 }
 

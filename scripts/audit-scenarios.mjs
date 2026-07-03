@@ -1,0 +1,140 @@
+// Scenario auditor — implements the Agent Rules + Audit Checklist from
+// SCENARIO_AUDIT.md against all scenarios in src/data/scenarios.js.
+//
+// Run:  node scripts/audit-scenarios.mjs
+// Exit code 1 if any ERROR-level findings (safe for CI).
+
+import SCENARIOS from '../src/data/scenarios.js';
+
+const findings = [];
+const flag = (sev, id, rule, msg) => findings.push({ sev, id, rule, msg });
+
+const amt = (str) => {
+  const m = String(str ?? '').match(/\$([\d,]+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+};
+const THREAT_RE = /^(Bets?|Raises?|Check.Raises?|3.Bets?|4.Bets?|Donks?|All.?[Ii]n)/i;
+const CHECK_RE = /^Checks?d?$/i;
+
+for (const s of SCENARIOS) {
+  const id = String(s.id).startsWith('sc_') ? String(s.id) : `sc_${String(s.id).padStart(3, '0')}`;
+  const hero = s.positions.find(p => p.state === 'hero');
+  const villain = s.positions.find(p => p.state === 'active');
+  const callOpt = s.options.find(o => o.cls === 'call');
+  const callAmt = callOpt ? amt(callOpt.label) : null;
+  const toCallAmt = amt(s.toCall);
+  const potAmt = amt(s.pot);
+  const isPostflop = Array.isArray(s.board) && s.board.length > 0;
+
+  // ── Structural sanity ────────────────────────────────────────────────
+  if (!hero) flag('ERROR', id, 'struct', 'no hero seat');
+  if (!villain) flag('WARN', id, 'struct', 'no active villain seat');
+  if (s.positions.filter(p => p.state === 'hero').length > 1)
+    flag('ERROR', id, 'struct', 'multiple hero seats');
+  if (s.board != null && ![3, 4, 5].includes(s.board.length))
+    flag('ERROR', id, 'struct', `board has ${s.board.length} cards`);
+
+  const vals = s.options.map(o => o.val);
+  if (new Set(vals).size !== vals.length)
+    flag('ERROR', id, 'struct', `duplicate option vals: ${vals}`);
+  if (!vals.includes(s.correct))
+    flag('ERROR', id, 'struct', `correct '${s.correct}' not among options`);
+  const corrects = Object.values(s.grading).filter(g => g.g === 'correct').length;
+  if (corrects !== 1)
+    flag('ERROR', id, 'struct', `${corrects} options graded 'correct' (want exactly 1)`);
+
+  // ── Card collisions (hole cards vs board, duplicates) ────────────────
+  const holeCards = s.hand.map(c => c.r + c.s);
+  const allCards = [...holeCards, ...(s.board ?? [])];
+  if (new Set(allCards).size !== allCards.length)
+    flag('ERROR', id, 'cards', `duplicate card among hand+board: ${allCards}`);
+
+  // ── R1: toCall matches call button amount ────────────────────────────
+  if (toCallAmt != null && callAmt != null && toCallAmt !== callAmt)
+    flag('ERROR', id, 'R1', `toCall ${s.toCall} ≠ call button '${callOpt.label}'`);
+
+  // ── R2: stale preflop action stored on postflop scenario ─────────────
+  if (isPostflop && villain?.action && THREAT_RE.test(villain.action)) {
+    const va = amt(villain.action);
+    if (va != null && toCallAmt != null && va !== toCallAmt)
+      flag('WARN', id, 'R2', `villain.action '${villain.action}' is stale preflop context (toCall ${s.toCall}) — UI derives around it; fix data eventually`);
+  }
+
+  // ── R4/open question: toCall null but a genuine call exists ──────────
+  if (s.toCall == null && callAmt != null && /^Call\s*\$/.test(callOpt.label))
+    flag('ERROR', id, 'R4', `toCall is null but call button is '${callOpt.label}' — missing toCall`);
+
+  // ── Preflop call math (blinds $1/$2) ─────────────────────────────────
+  if (!isPostflop && villain?.action && /Raises/i.test(villain.action)) {
+    const raise = amt(villain.action);
+    const heroLabel = hero?.label ?? '';
+    const invested = /\bBB\b/.test(heroLabel) ? 2 : /\bSB\b/.test(heroLabel) ? 1 : 0;
+    if (raise != null && toCallAmt != null && toCallAmt !== raise - invested)
+      flag('ERROR', id, 'math', `preflop: raise to $${raise}, hero invested $${invested}, expected toCall $${raise - invested}, got ${s.toCall}`);
+  }
+
+  // ── Pot claims in body vs pot field ──────────────────────────────────
+  const bodyPot = String(s.body ?? '').match(/[Pp]ot(?:\s+\w+){0,2}\s+(?:is\s+|of\s+|at\s+)?\$([\d,]+)/);
+  if (bodyPot && potAmt != null && parseFloat(bodyPot[1].replace(/,/g, '')) !== potAmt)
+    flag('ERROR', id, 'pot', `body says pot $${bodyPot[1]} but pot field is ${s.pot}`);
+
+  // ── Board cards mentioned in body must match board field ─────────────
+  if (isPostflop && s.body) {
+    const bodyCards = s.body.match(/(?:[AKQJT2-9]|10)[♠♥♦♣]/g) ?? [];
+    for (const c of bodyCards) {
+      if (!allCards.includes(c) && !holeCards.includes(c))
+        flag('ERROR', id, 'cards', `body mentions ${c} — not in hand or board`);
+    }
+  }
+
+  // ── Pot-odds claims in question/body vs actual numbers ───────────────
+  const oddsClaim = `${s.question ?? ''} ${s.body ?? ''}`.match(/([\d.]+)\s*:\s*1/);
+  if (oddsClaim && potAmt != null && toCallAmt != null && toCallAmt > 0) {
+    const claimed = parseFloat(oddsClaim[1]);
+    const potIncludesBet = (potAmt + toCallAmt) / toCallAmt;   // pot field = before villain's bet
+    const potIsCurrent = potAmt / toCallAmt;                   // pot field = at decision time
+    const near = (x) => Math.abs(x - claimed) <= 0.25;
+    if (!near(potIncludesBet) && !near(potIsCurrent))
+      flag('ERROR', id, 'odds', `claims ${claimed}:1 but pot ${s.pot} / call ${s.toCall} gives ${potIsCurrent.toFixed(1)}:1 (or ${potIncludesBet.toFixed(1)}:1 incl. bet)`);
+  }
+
+  // ── Positional claims in body/question vs actual seat order ──────────
+  // Postflop acting order by seat index: SB→BB→UTG→HJ→CO→BTN
+  if (isPostflop) {
+    const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
+    const heroIdx = s.positions.findIndex(p => p.state === 'hero');
+    const vilIdx = s.positions.findIndex(p => p.state === 'active');
+    if (heroIdx !== -1 && vilIdx !== -1) {
+      const heroIP = POSTFLOP_ORDER[heroIdx] > POSTFLOP_ORDER[vilIdx];
+      const txt = `${s.body ?? ''} ${s.question ?? ''}`;
+      const claimsOOP = /out of position|\bOOP\b/i.test(txt);
+      const claimsIP = !claimsOOP && /\bin position\b|\bIP\b/.test(txt);
+      if (claimsIP && !heroIP)
+        flag('ERROR', id, 'position', `body/question claims hero is in position but ${s.positions[heroIdx].label} acts before ${s.positions[vilIdx].label} postflop`);
+      if (claimsOOP && heroIP)
+        flag('ERROR', id, 'position', `body/question claims OOP but ${s.positions[heroIdx].label} acts after ${s.positions[vilIdx].label} postflop`);
+    }
+  }
+
+  // ── Street language in body vs board length ──────────────────────────
+  if (s.body) {
+    const streets = { flop: 3, turn: 4, river: 5 };
+    for (const [word, len] of Object.entries(streets)) {
+      const re = new RegExp(`(?:on|to|at)\\s+the\\s+${word}\\b|\\b${word}\\s+(?:comes?|brings?|is|falls?)\\b`, 'i');
+      if (re.test(s.body) && (s.board?.length ?? 0) < len)
+        flag('WARN', id, 'street', `body references the ${word} but board has ${s.board?.length ?? 0} cards`);
+    }
+  }
+}
+
+// ── Report ──────────────────────────────────────────────────────────────
+const bySev = { ERROR: [], WARN: [] };
+for (const f of findings) bySev[f.sev].push(f);
+
+for (const sev of ['ERROR', 'WARN']) {
+  if (!bySev[sev].length) continue;
+  console.log(`\n${sev === 'ERROR' ? '🔴' : '🟡'} ${sev} (${bySev[sev].length})`);
+  for (const f of bySev[sev]) console.log(`  ${f.id} [${f.rule}] ${f.msg}`);
+}
+console.log(`\n${SCENARIOS.length} scenarios audited · ${bySev.ERROR.length} errors · ${bySev.WARN.length} warnings`);
+process.exit(bySev.ERROR.length ? 1 : 0);

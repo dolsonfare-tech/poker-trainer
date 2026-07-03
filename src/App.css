@@ -491,7 +491,9 @@ body {
     display: grid;
     grid-template-columns: 1fr 1.15fr;
     align-items: stretch;
-    margin: 0 -22px -22px;
+    /* No negative bottom margin — with overflow:hidden on .scenario-card it
+       shaves 22px off the taller column (was amputating the board cards) */
+    margin: 0 -22px 0;
   }
 
   .scenario-card-body .table-wrap {
@@ -500,6 +502,7 @@ body {
     border-right: 1px solid rgba(200,168,75,0.15);
     border-radius: 0;
     padding-left: 22px;
+    padding-bottom: 20px;
   }
 
   .scenario-card-body .decision-panel {
@@ -642,37 +645,48 @@ body {
   line-height: 1.4;
 }
 
-/* Action trail */
-.dp-action-trail {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.08);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-
-.dp-at-label {
+/* ── Situation ticker (felt, under street bar) ──
+   Replaces the old "Action to you" trail in the decision panel. */
+.st-ticker {
+  display: block;
+  background: rgba(14, 32, 25, 0.75);
+  border: 1px solid rgba(200, 168, 75, 0.3);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 0 auto 12px;
+  max-width: 340px;
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(30,30,30,0.4);
-  margin-bottom: 6px;
+  font-size: 0.7rem;
+  line-height: 1.8;
+  color: var(--cream);
 }
 
-.dp-at-steps {
-  font-family: Georgia, serif;
-  font-size: 0.92rem;
-  color: #1a1a1a;
-  line-height: 1.5;
+.st-row {
+  display: block;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.st-row::-webkit-scrollbar { display: none; }
+
+.st-stakes {
+  color: var(--cream-faint);
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
 }
 
-.dp-at-pos {
+.st-street {
+  color: var(--gold-light);
   font-weight: 700;
-  color: #1a1a1a;
+  letter-spacing: 0.08em;
+  display: inline-block;
+  min-width: 5ch; /* RIVER is 5 chars — labels shorter than this stay aligned */
+  margin-right: 0.9ch;
 }
 
-.dp-at-act { color: #1a1a1a; }
+.st-you { color: var(--green); }
+
+.st-sep { color: var(--cream-faint); }
 
 /* Action header divider inside decision panel */
 .dp-action-header {

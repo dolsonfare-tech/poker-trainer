@@ -2,6 +2,10 @@
 
 > Living document. Log every scenario issue here — what went wrong, what the fix was, and what rule it teaches. The goal is to build an agent that can audit all 83 scenarios automatically against these rules.
 
+**Note (July 2026):** the "action trail" logic referenced in R2/R4/R6 now lives in `src/utils/ticker.js` (`buildTicker`), which renders the situation ticker on the felt. Same inference rules; `ScenarioCard.buildActionTrail` no longer exists.
+
+**The automated auditor now exists: `npm run audit:scenarios`** (`scripts/audit-scenarios.mjs`). It implements R1, R2, R4, card collisions, preflop call math, pot-claims-vs-pot-field, board-cards-vs-body, pot-odds claims, and street-language-vs-board-length. Run it after any scenarios.js change; it exits non-zero on errors. Checks it can NOT do (needs a human/SME): pot accuracy across multi-street action, acting-order plausibility in body prose, and whether the graded answer is actually correct poker.
+
 ---
 
 ## Agent Rules
@@ -107,6 +111,16 @@ Rules derived from real issues found in production review. Each rule has: a dete
 
 ---
 
+### R7 — Positional claims in body/question must match seat order
+
+**Problem:** Scenarios claim "you're in position" / "you're OOP" while the hero/villain seat assignments say the opposite. The graded options and feedback are usually written for the *claimed* position (e.g. check-raise lines imply OOP), so the seats are what's wrong — fix seats to match the lesson, not the other way around.
+
+**Detection (automated in `scripts/audit-scenarios.mjs`):** postflop scenario + body/question contains "in position"/"IP" or "OOP"/"out of position" → compare hero vs villain in `POSTFLOP_ORDER`. Mismatch = error.
+
+**Taught by:** sc_041 (claimed IP; hero was CO vs BTN — seats swapped to BTN vs CO) and sc_060 (claimed OOP with check-raise options; hero was CO vs BB — seats swapped to BB vs CO).
+
+---
+
 ### R4 — `action trail` hides when hero has no call to make (hero acts first)
 
 **Problem:** Some postflop scenarios have `toCall: null` and the villain's stored action is a preflop raise. The action trail must not show stale preflop context. The correct behavior is to show nothing (trail hidden) so the UI doesn't mislead.
@@ -138,6 +152,12 @@ Rules derived from real issues found in production review. Each rule has: a dete
 | generic sublabels | ✅ Removed | R3 | `ACTION_SUBLABELS` map attached "Give up the hand" to any `cls: fold` button, regardless of what the button did. | Removed fallback. Only parenthetical sublabels remain. |
 | VillainHistory stale | ✅ Fixed | R5 | "Villain This Hand: Called $4" on river scenarios — preflop call surfacing as current info. | VillainHistory now filters to only current-street actions on postflop scenarios. |
 | Missing check trail | ✅ Fixed | R6 | 26 scenarios where villain checked to IP hero showed no action context. | Trail infers "checks" from positional acting order when toCall=null and villain acts before hero. |
+| sc_040 | ✅ Fixed | — | Body described a turn decision ("Turn is 3♦") but board had only 3 flop cards; pot $32 didn't match action ($6+$6+$1 + $9+$9 = $31); "BTN checks to you" impossible (OOP hero acts first on turn). | Added 3♦ to board, pot → $31, body/question reworded to "You're first to act" |
+| sc_061 | ✅ Fixed | R1 | Check-raise to $25 over hero's $9 c-bet: `toCall: '$25'` but call button 'Call $16 more'. | `toCall` → `'$16 more'` |
+| sc_070 | ✅ Fixed | R1 | Raise to $30 over hero's $9 bet: `toCall: '$30'` but call button 'Call $21 more'. | `toCall` → `'$21 more'` |
+| sc_077 | ✅ Fixed | R4 | `toCall: null` despite genuine $9 c-bet (call button 'Call $9'). Was the open item that taught R4's exception. | `toCall` → `'$9'` |
+| sc_041 | ✅ Fixed | R7 | Claimed "in position" but hero CO acts before villain BTN; "he checks the turn" impossible; body said flop was bet-called but pot ($15) and "Bet $15 (pot)" option assume no flop action; `personalizeBody` rendered opener as "You raised You". | Seats → BTN (You) vs CO (LR); story → limp, raise, flop checks through; personalizeBody now shows 2nd-person bodies verbatim |
+| sc_060 | ✅ Fixed | R7 | Claimed "You're OOP" with check-raise options, but hero CO acts after villain BB (IP). Options/feedback all written for OOP — seats were the error. Pot $14 didn't match $6+$6+$1. | Seats → BB (You) vs CO (M); pot → $13; body rewritten to match |
 
 ---
 

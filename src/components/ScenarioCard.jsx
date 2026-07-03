@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import PlayingCard from './PlayingCard';
+import { buildTicker } from '../utils/ticker';
 
 // ─── Feature flag: set false to revert to 3×2 grid ───────────────────────
 const USE_OVAL_TABLE = true;
@@ -102,82 +103,27 @@ function StreetBar({ boardLength }) {
   );
 }
 
-// ─── Action trail (decision panel) ───────────────────────────────────────
+// ─── Situation ticker (felt) ──────────────────────────────────────────────
+// Street-by-street action summary. Derivation logic (incl. the R2/R4/R6
+// inference rules that used to live in buildActionTrail) is in utils/ticker.js.
 
-const THREAT_RE = /^(Bets?|Raises?|Check.Raises?|3.Bets?|4.Bets?|Donks?|All.?[Ii]n)/i;
-const CHECK_RE  = /^Checks?d?$/i;
-const extractAmt = str => str?.match(/\$(\d[\d,]*)/)?.[1];
-
-// Postflop acting order by seat index (SB=idx4 acts first, BTN=idx3 acts last)
-// positions array: [UTG(0), HJ(1), CO(2), BTN(3), SB(4), BB(5)]
-const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
-
-export function buildActionTrail(scenario) {
-  const villainIdx = scenario.positions.findIndex(p => p.state === 'active');
-  if (villainIdx === -1) return null;
-
-  const villain = scenario.positions[villainIdx];
-  const pos = villain.label.split(' ')[0];
-  const isPostflop = scenario.board && scenario.board.length > 0;
-  const heroIdx = scenario.positions.findIndex(p => p.state === 'hero');
-  // True when villain seats before hero in postflop acting order (villain bets/checks first)
-  const villainActsFirst = heroIdx !== -1 &&
-    POSTFLOP_ORDER[villainIdx] < POSTFLOP_ORDER[heroIdx];
-
-  // Villain explicitly checked this street
-  if (villain.action && CHECK_RE.test(villain.action)) {
-    return { pos, action: 'checks' };
-  }
-
-  if (villain.action && THREAT_RE.test(villain.action)) {
-    if (isPostflop) {
-      const actionAmt = extractAmt(villain.action);
-      const callAmt   = extractAmt(scenario.toCall);
-
-      if (callAmt && actionAmt !== callAmt) {
-        // Stale preflop raise stored; current bet is in toCall
-        const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
-        return { pos, action: `bets ${amount}` };
-      }
-
-      if (!callAmt) {
-        const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
-        const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
-        if (btnAmt && actionAmt !== btnAmt.slice(1)) return { pos, action: `bets ${btnAmt}` };
-        // No current bet — infer villain checked if they act before hero
-        if (villainActsFirst) return { pos, action: 'checks' };
-        return null;
-      }
-    }
-    return { pos, action: villain.action };
-  }
-
-  // No explicit threat — derive from toCall or call button label
-  if (scenario.toCall) {
-    const amount = scenario.toCall.replace(/\s*more\s*/i, '').trim();
-    return { pos, action: `bets ${amount}` };
-  }
-
-  const callOpt = scenario.options.find(o => o.cls === 'call' && /^Call\s*\$/.test(o.label));
-  const btnAmt  = callOpt?.label.match(/\$[\d,]+/)?.[0];
-  if (btnAmt) return { pos, action: `bets ${btnAmt}` };
-
-  // No bet at all — infer villain checked if they act before hero
-  if (isPostflop && villainActsFirst) return { pos, action: 'checks' };
-
-  return null;
-}
-
-function ActionTrail({ scenario }) {
-  const trail = buildActionTrail(scenario);
-  if (!trail) return null;
+function SituationTicker({ scenario }) {
+  const { stakes, rows } = buildTicker(scenario);
+  if (rows.length === 0) return null;
   return (
-    <div className="dp-action-trail">
-      <div className="dp-at-label">Action to you</div>
-      <div className="dp-at-steps">
-        <span className="dp-at-pos">{trail.pos}</span>
-        {' '}<span className="dp-at-act">{trail.action}</span>
-      </div>
+    <div className="st-ticker">
+      <span className="st-row st-stakes">{stakes}</span>
+      {rows.map((row) => (
+        <span key={row.street} className="st-row">
+          <span className="st-street">{row.street}</span>
+          {row.segments.map((seg, i) => (
+            <span key={i}>
+              {i > 0 && <span className="st-sep"> · </span>}
+              <span className={seg.you ? 'st-you' : undefined}>{seg.text}</span>
+            </span>
+          ))}
+        </span>
+      ))}
     </div>
   );
 }
@@ -297,6 +243,7 @@ function TableVisual({ scenario }) {
   return (
     <div className="table-wrap">
       <StreetBar boardLength={boardCount} />
+      <SituationTicker scenario={scenario} />
 
       {USE_OVAL_TABLE ? (
         <TableOval scenario={scenario} pot={scenario.pot} />
@@ -393,9 +340,6 @@ function DecisionPanel({ scenario, options, onDecision, decided }) {
           )}
         </div>
       </div>
-
-      {/* Action trail */}
-      <ActionTrail scenario={scenario} />
 
       {/* Action header divider */}
       <div className="dp-action-header">Your Move</div>

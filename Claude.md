@@ -108,6 +108,8 @@ checkraise/
 - `/api/coach-read` hardening: max 10 decisions per request, string fields clamped to 200 chars, `max_tokens: 300`, upstream errors surface as 502
 - XP system removed entirely — streak is the sole engagement metric
 - SkillTracker removed from gameplay screen — results shown on session summary only
+- **Situation ticker** (`src/utils/ticker.js` + `SituationTicker` in ScenarioCard) — street-by-street action summary on the felt, under the street bar. Replaced the "Action to you" line in the decision panel (July 2026). Derives only provable facts from structured fields; never guesses unknowable history; hero actions shown in green. Scenarios may set an authored `actionHistory` field to override derivation — formalize authoring it in Phase 1.6.
+- `scenario.question` is never displayed — founders consider it redundant. Never repeat info shown elsewhere on the gameplay screen (hand/board/pot appear once each).
 
 **Dashboard:**
 - Dashboard is the entry point (`screen === 'dashboard'`), not DifficultySelector
@@ -213,6 +215,7 @@ Phase 2 timeline estimate: 6–8 weeks with a developer.
 
 - Scale up total scenario count significantly
 - Build out Expert difficulty scenarios
+- Add effective stack sizes to the scenario data model and gameplay display — players can't evaluate all-in or big-raise decisions without stack depth. Requires authoring a stack value for all existing scenarios.
 - Expert-level features TBD based on Phase 1.5 findings
 - Lock in Bundle ID (cannot change after App Store submission — decide here, before Phase 3)
 - SME review of all scenario gradings (carried from Phase 1.0)

@@ -1,0 +1,112 @@
+// ─── Situation ticker ───────────────────────────────────────────────────────
+// Builds the street-by-street action summary shown on the felt during
+// gameplay (replaces the old "Action to you" line in the decision panel).
+//
+// Honesty rule: derive only what the structured scenario data can prove.
+// Middle-street history that lives only in body prose is omitted, never
+// guessed. When the sequence this street is unknowable (e.g. check-raise
+// spots where toCall says "$X more"), the ticker states the neutral truth
+// ("$X more to call") instead of asserting who did what.
+//
+// Phase 1.6: scenarios may set an authored `actionHistory` field —
+//   actionHistory: [{ street: 'PRE'|'FLOP'|'TURN'|'RIVER',
+//                     segments: [{ text, you?: true }] }]
+// — which overrides derivation entirely.
+//
+// Inference rules R2/R4/R6 from SCENARIO_AUDIT.md live here (moved from
+// ScenarioCard's buildActionTrail, which this supersedes).
+
+const CHECK_RE = /^Checks?d?$/i;
+const extractAmt = (str) => String(str ?? '').match(/\$([\d,]+)/)?.[1] ?? null;
+
+// positions array index = seat (UTG..BB); index order = preflop acting order
+const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
+const STREET_BY_BOARD = { 0: 'PRE', 3: 'FLOP', 4: 'TURN', 5: 'RIVER' };
+
+// All scenarios are authored against a $1/$2 six-max cash game.
+export const TICKER_STAKES = '$1/$2 CASH · 6-MAX';
+
+const basePos = (label) => String(label ?? '').split(' ')[0];
+
+// Preflop verbs only — bet/check/overbet actions on postflop scenarios are
+// current-street, not preflop context, and are handled separately below.
+function preflopSegment(p, isHero) {
+  const a = p.action;
+  if (!a || a === '???' || a === 'Active' || /^Folds?$/i.test(a)) return null;
+  const amt = extractAmt(a);
+  const pos = basePos(p.label);
+  if (/^Limps?\b/i.test(a))   return { text: isHero ? 'you limp' : `${pos} limps`, you: isHero, order: 0 };
+  if (/^3.Bets?\b/i.test(a))  return { text: isHero ? `you 3-bet to $${amt}` : `${pos} 3-bets to $${amt}`, you: isHero, order: 2 + Number(amt) / 1e6 };
+  if (/^Raises?d?\b/i.test(a)) return { text: isHero ? `you raise to $${amt}` : `${pos} raises to $${amt}`, you: isHero, order: 1 + Number(amt) / 1e6 };
+  if (/^Call(s|ed)?\b/i.test(a)) return { text: isHero ? 'you call' : `${pos} calls`, you: isHero, order: 3 };
+  return null; // current-street verb (Bets/Checks/Overbets) or unrecognized
+}
+
+export function buildTicker(scenario) {
+  if (Array.isArray(scenario.actionHistory)) {
+    return { stakes: TICKER_STAKES, rows: scenario.actionHistory };
+  }
+
+  const rows = [];
+  const positions = scenario.positions ?? [];
+  const heroIdx = positions.findIndex((p) => p.state === 'hero');
+  const villainIdx = positions.findIndex((p) => p.state === 'active');
+  const villain = positions[villainIdx];
+  const villainPos = basePos(villain?.label);
+  const boardLen = scenario.board?.length ?? 0;
+  const isPostflop = boardLen > 0;
+
+  // ── PRE row: chronological (limps → raises → 3-bets → calls) ──────────
+  const pre = positions
+    .map((p, i) => preflopSegment(p, i === heroIdx))
+    .filter(Boolean)
+    .sort((a, b) => a.order - b.order)
+    .map(({ text, you }) => ({ text, you }));
+
+  if (pre.length > 0) {
+    rows.push({ street: 'PRE', segments: pre });
+  } else if (!isPostflop) {
+    rows.push({ street: 'PRE', segments: [{ text: 'folds to you' }] });
+  }
+
+  // ── Current street row (postflop only) ────────────────────────────────
+  if (isPostflop && villain) {
+    const heroFirst = heroIdx !== -1 &&
+      POSTFLOP_ORDER[heroIdx] < POSTFLOP_ORDER[villainIdx];
+    const vAmt = extractAmt(villain.action);
+    const toCallAmt = extractAmt(scenario.toCall);
+    const callOpt = scenario.options?.find(
+      (o) => o.cls === 'call' && /^Call\s*\$/.test(o.label)
+    );
+    const callBtnAmt = extractAmt(callOpt?.label);
+    const owed = toCallAmt ?? callBtnAmt;
+    const heroInvestedThisStreet = /more/i.test(scenario.toCall ?? '');
+
+    const segments = [];
+    if (villain.action && CHECK_RE.test(villain.action)) {
+      // Villain explicitly checked this street
+      if (heroFirst) segments.push({ text: 'you check', you: true });
+      segments.push({ text: `${villainPos} checks` });
+    } else if (owed != null && heroInvestedThisStreet) {
+      // Hero already has chips in this street (check-raise class) — the
+      // exact sequence isn't derivable, so state only what's certain.
+      segments.push({ text: `$${owed} more to call` });
+    } else if (owed != null) {
+      // A live bet this street. If the stored action is the current bet,
+      // use its own verb (bets/overbets); stale preflop context (R2)
+      // derives a plain "bets".
+      const verb = vAmt === owed && /^Overbets?/i.test(villain.action ?? '')
+        ? 'overbets' : 'bets';
+      if (heroFirst) segments.push({ text: 'you check', you: true });
+      segments.push({ text: `${villainPos} ${verb} $${owed}` });
+    } else if (heroFirst) {
+      segments.push({ text: "you're first to act", you: true });
+    } else {
+      // No bet and villain acts first → villain checked (R6 inference)
+      segments.push({ text: `${villainPos} checks` });
+    }
+    rows.push({ street: STREET_BY_BOARD[boardLen] ?? 'NOW', segments });
+  }
+
+  return { stakes: TICKER_STAKES, rows };
+}
