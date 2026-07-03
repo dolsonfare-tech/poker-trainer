@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import PlayingCard from './PlayingCard';
 
 // ─── Feature flag: set false to revert to 3×2 grid ───────────────────────
@@ -36,8 +37,29 @@ const POSITION_INFO = {
 };
 
 // ─── Timer Ring ────────────────────────────────────────────────────────────
+// Owns its own countdown so the 1-second tick re-renders only the ring, not
+// the whole app tree. Remounted per scenario via key; frozen via `paused`.
 
-function TimerRing({ seconds, totalSeconds }) {
+function TimerRing({ totalSeconds, paused, onTimeout }) {
+  const [seconds, setSeconds] = useState(totalSeconds);
+  const onTimeoutRef = useRef(onTimeout);
+  useEffect(() => { onTimeoutRef.current = onTimeout; });
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => {
+      setSeconds(prev => {
+        if (prev <= 1) {
+          clearInterval(id);
+          onTimeoutRef.current();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [paused]);
+
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - seconds / totalSeconds);
@@ -410,9 +432,9 @@ function DecisionPanel({ scenario, options, onDecision, decided }) {
 
 export default function ScenarioCard({
   scenario, currentIndex, total,
-  timerSeconds, totalSeconds, correctCount,
+  totalSeconds, correctCount,
   options, onDecision, decided,
-  showTimer,
+  showTimer, onTimeout,
 }) {
   return (
     <div className="scenario-card">
@@ -420,7 +442,14 @@ export default function ScenarioCard({
       <div className="card-meta">
         <div className="skill-tag">{scenario.tag}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {showTimer && <TimerRing seconds={timerSeconds} totalSeconds={totalSeconds} />}
+          {showTimer && (
+            <TimerRing
+              key={currentIndex}
+              totalSeconds={totalSeconds}
+              paused={decided}
+              onTimeout={onTimeout}
+            />
+          )}
           <SessionProgress currentIndex={currentIndex} total={total} correctCount={correctCount} />
         </div>
       </div>

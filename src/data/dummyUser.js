@@ -13,15 +13,18 @@ const DUMMY_USER = {
   sessionsCompleted: 47,
 
   // ── Skill ratings ─────────────────────────────────────────────────────
+  // rating derives from correct/attempts (see constants.js deriveRating):
+  // green ≥75%, yellow 50–74%, red <50%, gray until 5 attempts.
+  // partial answers earn 0.5 correct.
   skills: {
-    preflop:    { rating: 'green',  attempts: 34 },
-    position:   { rating: 'green',  attempts: 28 },
-    aggression: { rating: 'red',    attempts: 31 },
-    betsize:    { rating: 'yellow', attempts: 22 },
-    bluffing:   { rating: 'red',    attempts: 19 },
-    potodds:    { rating: 'yellow', attempts: 25 },
-    reads:      { rating: 'green',  attempts: 30 },
-    opponent:   { rating: 'gray',   attempts: 4  },
+    preflop:    { rating: 'green',  attempts: 34, correct: 28   },
+    position:   { rating: 'green',  attempts: 28, correct: 22   },
+    aggression: { rating: 'red',    attempts: 31, correct: 12.5 },
+    betsize:    { rating: 'yellow', attempts: 22, correct: 13   },
+    bluffing:   { rating: 'red',    attempts: 19, correct: 7    },
+    potodds:    { rating: 'yellow', attempts: 25, correct: 15.5 },
+    reads:      { rating: 'green',  attempts: 30, correct: 24   },
+    opponent:   { rating: 'gray',   attempts: 4,  correct: 2    },
   },
 
   // ── Schema diagnosis ──────────────────────────────────────────────────

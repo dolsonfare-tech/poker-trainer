@@ -4,9 +4,12 @@ export default async function handler(req, res) {
   }
 
   const { decisionsPlayed } = req.body;
-  if (!Array.isArray(decisionsPlayed) || decisionsPlayed.length === 0) {
+  const MAX_DECISIONS = 10; // sessions are 5 scenarios; anything larger is abuse
+  if (!Array.isArray(decisionsPlayed) || decisionsPlayed.length === 0 || decisionsPlayed.length > MAX_DECISIONS) {
     return res.status(400).json({ error: 'Invalid request body' });
   }
+
+  const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
 
   const apiKey = process.env.CLAUDE_API_KEY;
   if (!apiKey) {
@@ -16,9 +19,10 @@ export default async function handler(req, res) {
   const prompt = `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
 
 Session decisions:
-${decisionsPlayed.map(d =>
-  `- ${d.scenario} vs ${d.villain} (${d.villainNotes})${d.tableContext ? ` | Table: ${d.tableContext}` : ''}: ${d.result}`
-).join('\n')}
+${decisionsPlayed.map(d => {
+  const table = clamp(d.tableContext);
+  return `- ${clamp(d.scenario)} vs ${clamp(d.villain)} (${clamp(d.villainNotes)})${table ? ` | Table: ${table}` : ''}: ${clamp(d.result, 20)}`;
+}).join('\n')}
 
 Write 2-3 sentences identifying the pattern. Rules:
 - Sound like a human coach, not an AI
@@ -38,11 +42,15 @@ Write 2-3 sentences identifying the pattern. Rules:
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
-        max_tokens: 1000,
+        model: 'claude-sonnet-5',
+        max_tokens: 300,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
+
+    if (!response.ok) {
+      return res.status(502).json({ error: 'Upstream API error' });
+    }
 
     const data = await response.json();
     const text = data.content?.find(b => b.type === 'text')?.text || '';

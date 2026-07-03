@@ -1,0 +1,42 @@
+// Integration test: a brand-new user plays their first full session and
+// must land on a rendered session summary. Guards against render crashes
+// (blank screen) anywhere in the flow.
+import '@testing-library/jest-dom';
+import { render, screen, fireEvent } from '@testing-library/react';
+import App from './App';
+
+test('new user completes first session and sees the summary', async () => {
+  localStorage.clear();
+  const { container } = render(<App />);
+
+  // Create profile
+  fireEvent.change(screen.getByPlaceholderText('Choose a username'), {
+    target: { value: 'Tester' },
+  });
+  fireEvent.click(screen.getByText(/Let's Play/));
+
+  // Dashboard → difficulty (beginner is pre-selected) → session
+  fireEvent.click(screen.getByText(/Deal Me In/));
+  fireEvent.click(screen.getByText(/Start Session/));
+
+  // Play all 5 hands — always pick the first action button
+  for (let i = 0; i < 5; i++) {
+    fireEvent.click(container.querySelector('.act-btn'));
+    const next = await screen.findByText(i < 4 ? /Next Scenario/ : /See My Results/);
+    fireEvent.click(next);
+  }
+
+  // The summary must render — a crash here is the "blank screen" bug
+  expect(await screen.findByText('Session Complete')).toBeInTheDocument();
+  expect(container.querySelector('.ss-score-line')).toBeInTheDocument();
+  expect(screen.getByText('Session Impact')).toBeInTheDocument();
+
+  // Let the coach-read fetch settle (no API in tests → fallback copy)
+  expect(
+    await screen.findByText('No pattern identified yet.')
+  ).toBeInTheDocument();
+
+  // Back to dashboard without crashing
+  fireEvent.click(screen.getByText('Train Again'));
+  expect(await screen.findByText(/Deal Me In/)).toBeInTheDocument();
+});

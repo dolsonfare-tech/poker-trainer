@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { SKILL_NAMES } from '../data/constants';
+import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -7,18 +7,7 @@ const DIFFICULTY_LABELS = {
   expert:       'Expert',
 };
 
-const RATING_ORDER = ['red', 'yellow', 'green'];
-
-
 const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e25555' };
-
-function nextRating(current, result) {
-  const base = current === 'gray' ? 'red' : current;
-  const i = RATING_ORDER.indexOf(base);
-  if (result === 'correct')   return RATING_ORDER[Math.min(i + 1, 2)];
-  if (result === 'incorrect') return RATING_ORDER[Math.max(i - 1, 0)];
-  return current; // partial: no change
-}
 
 function personalizeBody(scenario) {
   if (!scenario.body) return null;
@@ -40,7 +29,7 @@ function HandReview({ entry }) {
   const userOption    = scenario.options.find(o => o.val === choiceVal);
   const correctOption = scenario.options.find(o => o.val === scenario.correct);
   const handStr       = scenario.hand.map(c => c.r + c.s).join(' ');
-  const boardStr      = scenario.board.join(' ');
+  const boardStr      = scenario.board ? scenario.board.join(' ') : ''; // preflop scenarios have board: null
   const showCorrect = choiceVal !== scenario.correct;
 
   return (
@@ -85,6 +74,19 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
   const [activeSkill, setActiveSkill] = useState(null);
 
   const testedSkills = Object.entries(skillResults);
+
+  // Replay this session's hands through the rating engine to get post-session
+  // ratings — same math as userStorage.applySessionResults.
+  const afterSkills = (() => {
+    const sim = Object.fromEntries(
+      Object.entries(userSkills).map(([k, d]) => [k, { ...d }])
+    );
+    for (const h of sessionHistory) {
+      const key = h.scenario.skill;
+      if (sim[key]) sim[key] = applyHandToSkill(sim[key], h.result);
+    }
+    return sim;
+  })();
 
   // Use sessionHistory for accurate totals — skillResults dedupes by skill key
   const correctCount   = sessionHistory.filter(h => h.result === 'correct').length;
@@ -136,9 +138,9 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
         </div>
 
         {testedSkills
-          .map(([key, result]) => {
+          .map(([key]) => {
             const before = userSkills[key]?.rating ?? 'gray';
-            const after  = nextRating(before, result);
+            const after  = afterSkills[key]?.rating ?? before;
             const baseForCompare = before === 'gray' ? 'red' : before;
             const changed  = before !== after;
             const wentUp   = changed && RATING_ORDER.indexOf(after) > RATING_ORDER.indexOf(baseForCompare);

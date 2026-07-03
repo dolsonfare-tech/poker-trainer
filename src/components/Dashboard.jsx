@@ -24,28 +24,18 @@ function useCountUp(to, from, duration = 900, delay = 0) {
   return value;
 }
 
-// ─── Rating transition helper ─────────────────────────────────────────────
-const RATING_ORDER = ['red', 'yellow', 'green'];
-function nextRating(current, result) {
-  const base = current === 'gray' ? 'red' : current;
-  const i = RATING_ORDER.indexOf(base);
-  if (result === 'correct')   return RATING_ORDER[Math.min(i + 1, 2)];
-  if (result === 'incorrect') return RATING_ORDER[Math.max(i - 1, 0)];
-  return current;
-}
-
 // ─── Skill dot ────────────────────────────────────────────────────────────
-function SkillDot({ skill, data, sessionResult, index }) {
+function SkillDot({ skill, data, targetRating, index }) {
   const [expanded, setExpanded] = useState(false);
   const [displayRating, setDisplayRating] = useState(data.rating);
 
+  // Animate from the pre-session rating to the actual stored post-session
+  // rating — no re-derivation, so it can never disagree with the engine.
   useEffect(() => {
-    if (!sessionResult) return;
-    const newRating = nextRating(data.rating, sessionResult);
-    if (newRating === data.rating) return;
-    const t = setTimeout(() => setDisplayRating(newRating), 1000 + index * 80);
+    if (!targetRating || targetRating === data.rating) return;
+    const t = setTimeout(() => setDisplayRating(targetRating), 1000 + index * 80);
     return () => clearTimeout(t);
-  }, [sessionResult]); // eslint-disable-line
+  }, [targetRating]); // eslint-disable-line
 
   const colorMap = {
     green:  { color: '#56c878', glow: 'rgba(86,200,120,0.6)',  symbol: '●' },
@@ -182,7 +172,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta }) {
               key={skill}
               skill={skill}
               data={data}
-              sessionResult={sessionDelta?.skillResults?.[skill]}
+              targetRating={sessionDelta ? skills[skill]?.rating : null}
               index={idx}
             />
           ))}

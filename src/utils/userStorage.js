@@ -1,20 +1,41 @@
+import { deriveRating, applyHandToSkill } from '../data/constants';
+
 const USER_KEY = 'cr_user';
 
 const DEFAULT_SKILLS = {
-  preflop:    { rating: 'gray', attempts: 0 },
-  position:   { rating: 'gray', attempts: 0 },
-  aggression: { rating: 'gray', attempts: 0 },
-  betsize:    { rating: 'gray', attempts: 0 },
-  bluffing:   { rating: 'gray', attempts: 0 },
-  potodds:    { rating: 'gray', attempts: 0 },
-  reads:      { rating: 'gray', attempts: 0 },
-  opponent:   { rating: 'gray', attempts: 0 },
+  preflop:    { rating: 'gray', attempts: 0, correct: 0 },
+  position:   { rating: 'gray', attempts: 0, correct: 0 },
+  aggression: { rating: 'gray', attempts: 0, correct: 0 },
+  betsize:    { rating: 'gray', attempts: 0, correct: 0 },
+  bluffing:   { rating: 'gray', attempts: 0, correct: 0 },
+  potodds:    { rating: 'gray', attempts: 0, correct: 0 },
+  reads:      { rating: 'gray', attempts: 0, correct: 0 },
+  opponent:   { rating: 'gray', attempts: 0, correct: 0 },
 };
+
+// One-time migration: pre-accuracy users have no `correct` count. Seed it
+// from their old ladder rating so their history isn't wiped, then let real
+// results take over from here.
+const RATING_SEED = { green: 0.8, yellow: 0.6, red: 0.3, gray: 0.5 };
+
+function migrateUser(user) {
+  if (!user?.skills) return user;
+  let changed = false;
+  const skills = Object.fromEntries(
+    Object.entries(user.skills).map(([k, d]) => {
+      if (typeof d.correct === 'number') return [k, d];
+      changed = true;
+      const correct = Math.round(d.attempts * (RATING_SEED[d.rating] ?? 0.5) * 2) / 2;
+      return [k, { ...d, correct, rating: deriveRating(correct, d.attempts) }];
+    })
+  );
+  return changed ? { ...user, skills } : user;
+}
 
 export function loadUser() {
   try {
     const raw = localStorage.getItem(USER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    return raw ? migrateUser(JSON.parse(raw)) : null;
   } catch { return null; }
 }
 
@@ -88,41 +109,35 @@ function derivePokerScore(skills) {
   return Math.round(rated.reduce((sum, d) => sum + (SCORE[d.rating] ?? 0), 0) / rated.length);
 }
 
-// ── Rating progression ─────────────────────────────────────────────────────────
-const RATING_ORDER = ['red', 'yellow', 'green'];
-
-function nextRating(current, result) {
-  const base = current === 'gray' ? 'red' : current;
-  const i = RATING_ORDER.indexOf(base);
-  if (result === 'correct')   return RATING_ORDER[Math.min(i + 1, 2)];
-  if (result === 'incorrect') return RATING_ORDER[Math.max(i - 1, 0)];
-  return base;
-}
-
 // ── Streak ────────────────────────────────────────────────────────────────────
-function todayString() {
-  return new Date().toISOString().slice(0, 10);
+// Local time, not UTC — a day rolls over at the player's midnight.
+function toLocalDateString(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 }
 
 function calcStreak(user) {
-  const today = todayString();
+  const today = toLocalDateString(new Date());
   if (user.lastSessionDate === today) return { streak: user.streak, lastSessionDate: today };
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
+  const yesterdayStr = toLocalDateString(yesterday);
   const newStreak = user.lastSessionDate === yesterdayStr ? user.streak + 1 : 1;
   return { streak: newStreak, lastSessionDate: today };
 }
 
 // ── Apply session ─────────────────────────────────────────────────────────────
-export function applySessionResults(user, skillResults, coachRead) {
+// `hands` is one entry per hand played: [{ skill, result }] — every hand
+// counts toward that skill's accuracy, including duplicates within a session.
+export function applySessionResults(user, hands, coachRead) {
   const skills = Object.fromEntries(
-    Object.entries(user.skills).map(([key, data]) => {
-      const result = skillResults[key];
-      if (!result) return [key, data];
-      return [key, { rating: nextRating(data.rating, result), attempts: data.attempts + 1 }];
-    })
+    Object.entries(user.skills).map(([k, d]) => [k, { ...d }])
   );
+  for (const { skill, result } of hands) {
+    if (skills[skill]) skills[skill] = applyHandToSkill(skills[skill], result);
+  }
 
   const { streak, lastSessionDate } = calcStreak(user);
   const sessionsCompleted = user.sessionsCompleted + 1;

@@ -48,13 +48,16 @@ Once these are answered and no tester feedback points to structural UX changes t
 
 ```
 checkraise/
+├── api/
+│   └── coach-read.js       ← Vercel serverless function — the ONLY code that calls the Claude API
 ├── public/
 │   └── index.html          ← Google Fonts link tags live here
 ├── src/
 │   ├── components/
 │   │   ├── App.jsx             ← Screen routing only. Screens: 'dashboard' | 'difficulty' | 'session'
 │   │   ├── Dashboard.jsx       ← Entry point screen — Phase 1.5 BUILT
-│   │   ├── ScenarioCard.jsx    ← Gameplay card with table, board, decision panel
+│   │   ├── UsernameEntry.jsx   ← First-run profile creation (shown when no stored user)
+│   │   ├── ScenarioCard.jsx    ← Gameplay card with table, board, decision panel; owns the countdown timer
 │   │   ├── FeedbackPanel.jsx   ← Post-decision feedback
 │   │   ├── SessionSummary.jsx  ← End of session results + Coach's Read
 │   │   ├── DifficultySelector.jsx
@@ -63,14 +66,17 @@ checkraise/
 │   │   └── PlayingCard.jsx
 │   ├── data/
 │   │   ├── scenarios.js        ← 83 scenarios. DO NOT edit for UI work.
+│   │   ├── constants.js        ← Shared skill names/descriptions, COLOR_LABELS, rating ladder (nextRating)
 │   │   └── dummyUser.js        ← Phase 1.5 fake user data. Shape informs Phase 2 schema.
 │   ├── utils/
-│   │   ├── claude.js           ← All Claude API calls. Only file that calls the API.
+│   │   ├── claude.js           ← Client fetch to /api/coach-read. Never calls Anthropic directly.
+│   │   ├── userStorage.js      ← localStorage user profile: ratings, streak, Poker IQ, schema derivation
 │   │   ├── spacedrep.js        ← Placeholder → Phase 2
 │   │   ├── gamification.js     ← Placeholder → Phase 2
 │   │   └── skillrating.js      ← Placeholder → Phase 2
 │   └── index.js
-├── .env                    ← REACT_APP_CLAUDE_API_KEY (never commit)
+├── vercel.json             ← Static build + api/ serverless functions
+├── .env                    ← CLAUDE_API_KEY (server-side; set in Vercel env vars — never commit)
 └── package.json
 ```
 
@@ -83,7 +89,7 @@ checkraise/
 - Supabase chosen for Phase 2 backend (PostgreSQL, not Firebase)
 - No backend in Phase 1.5 — all data hardcoded in `dummyUser.js`
 - `dummyUser.js` data shape informs the Phase 2 database schema
-- API logic isolated in `src/utils/claude.js` — no other file calls the API directly
+- Claude API called only from the serverless function `api/coach-read.js` — the key (`CLAUDE_API_KEY`) never reaches the browser. Client code goes through `fetchCoachRead` in `src/utils/claude.js`, which hits `/api/coach-read`.
 - App component is routing only — screen state: `'dashboard' | 'difficulty' | 'session'`
 
 **Scenarios:**
@@ -97,8 +103,9 @@ checkraise/
 - SESSION_LENGTH = 5 scenarios per session
 - TIMER_SECONDS = 60 (HARDCODED — move server-side in Phase 2)
 - Per-scenario feedback is pre-written static (instant, no API call)
-- One live Claude API call per session — `fetchCoachRead` in `claude.js` — session summary only
-- Model: `claude-sonnet-4-5`
+- One live Claude API call per session — `fetchCoachRead` in `claude.js` → `/api/coach-read` — session summary only
+- Model: `claude-sonnet-5`
+- `/api/coach-read` hardening: max 10 decisions per request, string fields clamped to 200 chars, `max_tokens: 300`, upstream errors surface as 502
 - XP system removed entirely — streak is the sole engagement metric
 - SkillTracker removed from gameplay screen — results shown on session summary only
 
@@ -144,6 +151,8 @@ Logo tap returns to Dashboard from any screen.
 
 Skill ratings: Green = 75%+ accuracy · Yellow = 50–74% · Red = below 50% · Gray = fewer than 5 attempts
 
+Rating engine (`src/data/constants.js`): ratings are **derived from true accuracy** — `correct / attempts` per skill, thresholds exactly as above. Correct = 1 credit, partial = 0.5, incorrect = 0. Every hand played counts (duplicate skills in a session count twice). Skills stay gray until 5 attempts, which also delays archetype detection for new users — accepted tradeoff, decided July 2026.
+
 ---
 
 ## The 6 Player Schemas
@@ -168,7 +177,7 @@ Phase 1.5: surfaced as text using current session data only. Phase 2: full track
   displayName, initials,
   streak, lastSessionDate, sessionsCompleted,
   skills: {
-    [skillKey]: { rating: 'green'|'yellow'|'red'|'gray', attempts: N }
+    [skillKey]: { rating: 'green'|'yellow'|'red'|'gray', attempts: N, correct: N }
   },
   schema: {
     name, quote, index, total,
@@ -233,8 +242,9 @@ Features excluded from current build. May return based on tester feedback or str
 
 ## What to Never Do
 
-- Never hardcode the Claude API key — use `REACT_APP_CLAUDE_API_KEY` env variable
-- Never call the Claude API from any file except `src/utils/claude.js`
+- Never hardcode the Claude API key — use the `CLAUDE_API_KEY` env variable (server-side only, set in Vercel)
+- Never call the Claude API from any file except `api/coach-read.js` — client code goes through `src/utils/claude.js`
+- Never expose the API key to the browser (no `REACT_APP_`-prefixed key variables)
 - Never add `tag` or `villain.label` fields back to scenario objects — they're derived at runtime
 - Never use shorthand card notation (KQs, 98d) — always use suit symbols
 - Never add Tailwind to existing Phase 1 CSS — only on new screens if adopted

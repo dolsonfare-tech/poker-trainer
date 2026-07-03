@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
@@ -49,8 +49,13 @@ function ComboRing({ combo }) {
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 function getFilteredScenarios(difficulty) {
-  const filtered = SCENARIOS.filter(s => s.difficulty === difficulty);
-  return [...filtered].sort(() => Math.random() - 0.5).slice(0, SESSION_LENGTH);
+  const pool = SCENARIOS.filter(s => s.difficulty === difficulty);
+  // Fisher–Yates — Math.random() in sort() gives a biased shuffle
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, SESSION_LENGTH);
 }
 
 function ProgressDots({ total, current }) {
@@ -77,60 +82,27 @@ export default function App() {
   const [showSummary, setShowSummary]             = useState(false);
   const [coachRead, setCoachRead]                 = useState('');
   const [coachLoading, setCoachLoading]           = useState(false);
-  const [timerSeconds, setTimerSeconds]           = useState(TIMER_SECONDS);
   const [timedOut, setTimedOut]                   = useState(false);
   const [combo, setCombo]                         = useState(0);
   const [correctCount, setCorrectCount]           = useState(0);
   const [sessionHistory, setSessionHistory]       = useState([]);
   const [sessionDelta, setSessionDelta]           = useState(null);
-  const timerRef                                  = useRef(null);
-  const currentIndexRef                           = useRef(0);
-  const shuffledRef                               = useRef([]);
   const sessionUserRef                            = useRef(null);
 
   const scenario = shuffledScenarios[currentIndex];
 
-  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
-  useEffect(() => { shuffledRef.current = shuffledScenarios; }, [shuffledScenarios]);
-
-  const clearTimer = () => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-  };
-
+  // Countdown lives inside TimerRing (ScenarioCard) — this only handles expiry
   const handleTimeout = useCallback(() => {
-    clearTimer();
-    const s = shuffledRef.current[currentIndexRef.current];
-    if (!s) return;
+    if (!scenario || decided) return;
     setTimedOut(true);
     setDecided(true);
-    setSkillResults(prev => ({ ...prev, [s.skill]: 'incorrect' }));
-    setSessionHistory(prev => [...prev, { scenario: s, choiceVal: null, result: 'incorrect' }]);
+    setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
+    setSessionHistory(prev => [...prev, { scenario, choiceVal: null, result: 'incorrect' }]);
     setCombo(0);
-    const correctGrading = s.grading[s.correct];
-    setFeedback({ grade: { ...correctGrading, skill: s.tag }, loading: false, text: s.feedback.correct });
+    const correctGrading = scenario.grading[scenario.correct];
+    setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct });
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
-  }, []);
-
-  const startTimer = useCallback(() => {
-    clearTimer();
-    setTimerSeconds(TIMER_SECONDS);
-    setTimedOut(false);
-    timerRef.current = setInterval(() => {
-      setTimerSeconds(prev => {
-        if (prev <= 1) { handleTimeout(); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-  }, [handleTimeout]);
-
-  useEffect(() => {
-    if (screen === 'session' && !showSummary && shuffledScenarios.length > 0 && !decided) {
-      if (difficulty !== 'beginner') startTimer();
-    }
-    return clearTimer;
-  }, [currentIndex, screen, showSummary]); // eslint-disable-line
-
-  useEffect(() => clearTimer, []);
+  }, [scenario, decided]);
 
   const handleStartSession = () => {
     setScreen('difficulty');
@@ -150,18 +122,20 @@ export default function App() {
   const handleFetchCoachRead = async (results, lastIndex) => {
     setCoachLoading(true);
     const prevUser = sessionUserRef.current;
+    // Every hand played counts toward accuracy — not the per-skill deduped results
+    const hands = sessionHistory.map(h => ({ skill: h.scenario.skill, result: h.result }));
     try {
       const text = await fetchCoachRead(shuffledScenarios, results, lastIndex);
       setCoachRead(text);
       if (prevUser) {
-        const updated = applySessionResults(prevUser, results, text);
+        const updated = applySessionResults(prevUser, hands, text);
         setUser(updated);
         saveUser(updated);
       }
     } catch {
       setCoachRead('');
       if (prevUser) {
-        const updated = applySessionResults(prevUser, results, null);
+        const updated = applySessionResults(prevUser, hands, null);
         setUser(updated);
         saveUser(updated);
       }
@@ -171,7 +145,6 @@ export default function App() {
 
   const handleDecision = useCallback((choice) => {
     if (decided) return;
-    clearTimer();
     setDecided(true);
     setTimedOut(false);
     const gr = scenario.grading[choice];
@@ -191,9 +164,9 @@ export default function App() {
   const handleNext = () => {
     const next = currentIndex + 1;
     if (next >= shuffledScenarios.length) {
-      clearTimer();
-      const correct   = Object.values(skillResults).filter(r => r === 'correct').length;
-      const incorrect = Object.values(skillResults).filter(r => r === 'incorrect').length;
+      // Count every hand played — matches SessionSummary, not the per-skill deduped skillResults
+      const correct   = sessionHistory.filter(h => h.result === 'correct').length;
+      const incorrect = sessionHistory.filter(h => h.result === 'incorrect').length;
       sessionUserRef.current = user;
       setSessionDelta({
         iqDelta: correct * 2 - incorrect,
@@ -215,7 +188,6 @@ export default function App() {
   };
 
   const handleRestart = () => {
-    clearTimer();
     setScreen('dashboard');
     setCurrentIndex(0);
     setSkillResults({});
@@ -225,7 +197,6 @@ export default function App() {
     setCoachRead('');
     setCoachLoading(false);
     setShuffledScenarios([]);
-    setTimerSeconds(TIMER_SECONDS);
     setTimedOut(false);
     setCombo(0);
     setCorrectCount(0);
@@ -287,13 +258,13 @@ export default function App() {
                 scenario={scenario}
                 currentIndex={currentIndex}
                 total={shuffledScenarios.length}
-                timerSeconds={timerSeconds}
                 totalSeconds={TIMER_SECONDS}
                 correctCount={correctCount}
                 options={scenario.options}
                 onDecision={handleDecision}
                 decided={decided}
                 showTimer={difficulty !== 'beginner'}
+                onTimeout={handleTimeout}
               />
               {feedback && (
                 <>
