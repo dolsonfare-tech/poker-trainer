@@ -35,9 +35,11 @@ function preflopSegment(p, isHero) {
   if (!a || a === '???' || a === 'Active' || /^Folds?$/i.test(a)) return null;
   const amt = extractAmt(a);
   const pos = basePos(p.label);
+  // Amountless raise/3-bet actions render without "to $X" — never "$null"
+  const to = amt != null ? ` to $${amt}` : '';
   if (/^Limps?\b/i.test(a))   return { text: isHero ? 'you limp' : `${pos} limps`, you: isHero, order: 0 };
-  if (/^3.Bets?\b/i.test(a))  return { text: isHero ? `you 3-bet to $${amt}` : `${pos} 3-bets to $${amt}`, you: isHero, order: 2 + Number(amt) / 1e6 };
-  if (/^Raises?d?\b/i.test(a)) return { text: isHero ? `you raise to $${amt}` : `${pos} raises to $${amt}`, you: isHero, order: 1 + Number(amt) / 1e6 };
+  if (/^3.Bets?\b/i.test(a))  return { text: isHero ? `you 3-bet${to}` : `${pos} 3-bets${to}`, you: isHero, order: 2 + Number(amt ?? 0) / 1e6 };
+  if (/^Raises?d?\b/i.test(a)) return { text: isHero ? `you raise${to}` : `${pos} raises${to}`, you: isHero, order: 1 + Number(amt ?? 0) / 1e6 };
   if (/^Call(s|ed)?\b/i.test(a)) return { text: isHero ? 'you call' : `${pos} calls`, you: isHero, order: 3 };
   return null; // current-street verb (Bets/Checks/Overbets) or unrecognized
 }

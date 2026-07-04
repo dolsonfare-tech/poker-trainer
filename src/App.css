@@ -2764,6 +2764,10 @@ body {
 /* Mobile: portrait table, strip instead of bubble, stacked thumb-zone actions */
 @media (max-width: 700px) {
   .sc2 { padding: 16px 12px 18px; }
+  /* Long skill tags + timer + hand count can't share one line on phones —
+     stack them: tag on top, timer + count centered beneath */
+  .sc2-chrome { flex-direction: column; gap: 7px; min-height: 0; margin-bottom: 10px; }
+  .sc2-chrome-right { position: static; transform: none; }
   .sc2-table { height: 430px; }
   .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
   .sc2-bubble { display: none; }

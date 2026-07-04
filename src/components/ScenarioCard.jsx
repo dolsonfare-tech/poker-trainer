@@ -53,11 +53,17 @@ function TimerRing({ totalSeconds, paused, onTimeout }) {
 
   useEffect(() => {
     if (paused) return;
+    // fired guard: in throttled background tabs, callbacks already queued
+    // can still run after clearInterval — the timeout must fire exactly once
+    let fired = false;
     const id = setInterval(() => {
       setSeconds(prev => {
         if (prev <= 1) {
           clearInterval(id);
-          onTimeoutRef.current();
+          if (!fired) {
+            fired = true;
+            onTimeoutRef.current();
+          }
           return 0;
         }
         return prev - 1;

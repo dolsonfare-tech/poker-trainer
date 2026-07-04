@@ -88,22 +88,33 @@ export default function App() {
   const [sessionHistory, setSessionHistory]       = useState([]);
   const [sessionDelta, setSessionDelta]           = useState(null);
   const sessionUserRef                            = useRef(null);
+  // Synchronous decided guard — state/effect updates can lag in throttled
+  // background tabs, so this ref is the authoritative "already answered" flag
+  const decidedRef                                = useRef(false);
 
   const scenario = shuffledScenarios[currentIndex];
 
+  // History holds exactly one entry per hand slot — a duplicate append for the
+  // same hand (e.g. a double-fired timeout) is dropped, protecting the summary
+  // display, IQ delta, and stored accuracy in one place.
+  const appendHistory = useCallback((idx, entry) => {
+    setSessionHistory(prev => (prev.length > idx ? prev : [...prev, entry]));
+  }, []);
+
   // Countdown lives inside TimerRing (ScenarioCard) — this only handles expiry
   const handleTimeout = useCallback(() => {
-    if (!scenario || decided) return;
+    if (!scenario || decided || decidedRef.current) return;
+    decidedRef.current = true;
     setTimedOut(true);
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
-    setSessionHistory(prev => [...prev, { scenario, choiceVal: null, result: 'incorrect' }]);
+    appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect' });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct });
     // Canvas layout: feedback overlays the table at the top; legacy: it appears below
     setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
-  }, [scenario, decided]);
+  }, [scenario, decided, currentIndex, appendHistory]);
 
   const handleStartSession = () => {
     setScreen('difficulty');
@@ -111,6 +122,7 @@ export default function App() {
   };
 
   const handleDifficultySelect = (selected) => {
+    decidedRef.current = false;
     setDifficulty(selected);
     const scenarios = getFilteredScenarios(selected);
     setShuffledScenarios(scenarios);
@@ -145,12 +157,13 @@ export default function App() {
   };
 
   const handleDecision = useCallback((choice) => {
-    if (decided) return;
+    if (decided || decidedRef.current) return;
+    decidedRef.current = true;
     setDecided(true);
     setTimedOut(false);
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
-    setSessionHistory(prev => [...prev, { scenario, choiceVal: choice, result: gr.g }]);
+    appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -160,7 +173,7 @@ export default function App() {
     const feedbackText = scenario.feedback[gr.g];
     setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
     setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
-  }, [decided, scenario]);
+  }, [decided, scenario, currentIndex, appendHistory]);
 
   const handleNext = () => {
     const next = currentIndex + 1;
@@ -180,6 +193,7 @@ export default function App() {
       setShowSummary(true);
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
+      decidedRef.current = false;
       setCurrentIndex(next);
       setDecided(false);
       setFeedback(null);
@@ -189,6 +203,7 @@ export default function App() {
   };
 
   const handleRestart = () => {
+    decidedRef.current = false;
     setScreen('dashboard');
     setCurrentIndex(0);
     setSkillResults({});

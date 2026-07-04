@@ -111,6 +111,44 @@ for (const s of SCENARIOS) {
       flag('ERROR', id, 'odds', `claims ${claimed}:1 but pot ${s.pot} / call ${s.toCall} gives ${potIsCurrent.toFixed(1)}:1 (or ${potIncludesBet.toFixed(1)}:1 incl. bet)`);
   }
 
+  // ── Authored actionHistory validation ────────────────────────────────
+  if (Array.isArray(s.actionHistory)) {
+    const ORDER = ['PRE', 'FLOP', 'TURN', 'RIVER'];
+    const current = { 0: 'PRE', 3: 'FLOP', 4: 'TURN', 5: 'RIVER' }[s.board?.length ?? 0];
+    let prev = -1;
+    for (const r of s.actionHistory) {
+      const oi = ORDER.indexOf(r?.street);
+      if (oi === -1) { flag('ERROR', id, 'hist', `bad street '${r?.street}'`); continue; }
+      if (oi <= prev) flag('ERROR', id, 'hist', `streets out of order at '${r.street}'`);
+      prev = oi;
+      if (oi > ORDER.indexOf(current))
+        flag('ERROR', id, 'hist', `row '${r.street}' is beyond the current street (${current})`);
+      if (!Array.isArray(r.segments) || r.segments.length === 0 ||
+          r.segments.some(x => typeof x?.text !== 'string' || !x.text))
+        flag('ERROR', id, 'hist', `empty/malformed segments on ${r.street}`);
+    }
+    const last = s.actionHistory[s.actionHistory.length - 1];
+    if (last?.street !== current)
+      flag('ERROR', id, 'hist', `history ends on ${last?.street}; current street is ${current}`);
+    // The live bet must appear in the final row. Skipped when the hero has
+    // chips invested this street ('more' labels, or a raise-over-bet row —
+    // there the row shows the raise-to amount, not the difference owed).
+    if (toCallAmt != null && !/more/i.test(callOpt?.label ?? '')) {
+      const txt = (last?.segments ?? []).map(x => x.text).join(' ');
+      if (!txt.includes(`$${toCallAmt}`) && !/raises to/i.test(txt))
+        flag('WARN', id, 'hist', `toCall $${toCallAmt} missing from final history row`);
+    }
+  }
+
+  // ── "checks to you" prose requires the villain to act first ──────────
+  if (isPostflop && /checks? to you/i.test(s.body ?? '')) {
+    const POSTFLOP_ORDER = [2, 3, 4, 5, 0, 1];
+    const hIdx = s.positions.findIndex(p => p.state === 'hero');
+    const vIdx = s.positions.findIndex(p => p.state === 'active');
+    if (hIdx !== -1 && vIdx !== -1 && POSTFLOP_ORDER[vIdx] > POSTFLOP_ORDER[hIdx])
+      flag('ERROR', id, 'order', `body says villain "checks to you" but ${s.positions[vIdx].label} acts AFTER ${s.positions[hIdx].label}`);
+  }
+
   // ── Positional claims in body/question vs actual seat order ──────────
   // Postflop acting order by seat index: SB→BB→UTG→HJ→CO→BTN
   if (isPostflop) {

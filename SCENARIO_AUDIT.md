@@ -161,6 +161,18 @@ Rules derived from real issues found in production review. Each rule has: a dete
 | sc_009 | ✅ Fixed | R8 | Villain's raise stored as `action: 'Active'` — ticker showed "folds to you" while the player faced Call $6. Also hid a pot error: $6 stored, $9 actual ($6 + blinds). | CO action → `'Raises $6'`; pot → $9 |
 | sc_010 | ✅ Fixed | R8 | UTG limp and CO raise-to-$8 both stored as `'Active'` — ticker showed "folds to you". Pot $9 stored, $13 actual ($2 limp + $8 + $1 + $2). | UTG → `'Limps'`, CO → `'Raises $8'`; pot → $13 |
 
+### R9 — Turn/river scenarios carry an authored `actionHistory`; prose acting order must be possible
+
+**Problem 1:** Middle-street action (flop bets on a turn decision, etc.) exists only in body prose — the ticker can't derive it, so the player missed the exact betting pattern many scenarios test. **Fix:** 22 turn/river scenarios now carry an authored `actionHistory` field (transcribed from their bodies, amounts included only where the body states them); the auditor validates structure, street order, that history ends on the current street, and that the live bet amount appears in the final row. The other 7 turn/river scenarios derive fully and need no authoring.
+
+**Problem 2:** Several bodies described impossible sequences — "BB checks to you" when the hero acts first (sc_039, sc_068, sc_073), "River action" on a 4-card board (sc_044, sc_062), a raise amount that didn't match the call price (sc_056: body said $100, buttons said $50 more over a $35 bet → $85). The "checks to you" class is now an automated check.
+
+**Flop-scenario PRE gap (July 2026):** 21 early flop scenarios stored seat actions as `'Active'`/`'???'`, so the ticker showed no preflop row. 17 now carry authored PRE+FLOP `actionHistory` (transcribed from bodies, no invented amounts). **Still open (bodies give no preflop info — needs SME authoring):** ids 3, 25, 26, 27 — their tickers show the current street only. Three more acting-order bugs fixed in the same sweep: id 23 (seats swapped — the "check back and bluff" lesson requires hero IP; nit is now the CO raiser who skips his c-bet), id 31 (impossible "BTN checks" sentence removed; the nit's $14 lead is the story), id 32 (villain BTN → BB — all three feedbacks describe a donk-bet, which only an OOP player can make).
+
+**Issue rows:** sc_039 (body + "Check behind" label fixed — fb confirms OOP lesson) · sc_044 (river 3♦ added, body rewritten) · sc_056 (body $100 → $85) · sc_057 (body "he checks" → "you're first to act") · sc_062 (river 2♥ added; fb's "TJ (straight)" corrected to "QJ (straight)" — founder-confirmed July 2026) · sc_068 (seats → CO (AR) vs BTN (You): fb's "bluff after he checks" requires hero in position) · sc_071 (body: the check-back was the turn) · sc_073 (body "he checks to you" → "you're first to act").
+
+---
+
 ### R8 — Preflop raises must be recorded on a seat, never hidden as 'Active'
 
 **Problem:** If the raiser's `positions.action` is `'Active'`, the UI has no way to know a raise happened — the ticker falls back to "folds to you" while the call button charges real money. Automated in `scripts/audit-scenarios.mjs`: preflop scenario + (`toCall` set OR call button says "Call $X") + no seat action matching a raise/bet pattern → error. Limp/complete/open options in unopened pots are excluded.
