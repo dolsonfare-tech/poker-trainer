@@ -42,6 +42,28 @@ function preflopSegment(p, isHero) {
   return null; // current-street verb (Bets/Checks/Overbets) or unrecognized
 }
 
+const POSITION_NAMES = {
+  UTG: 'Under the Gun', HJ: 'Hijack', CO: 'Cutoff',
+  BTN: 'Button', SB: 'Small Blind', BB: 'Big Blind',
+};
+
+/**
+ * Villain identity + position relation, for the table bubble / tell strip.
+ * Returns { label, monogram, pos, posName, actsAfter } or null.
+ */
+export function villainSummary(scenario) {
+  const positions = scenario.positions ?? [];
+  const heroIdx = positions.findIndex((p) => p.state === 'hero');
+  const villainIdx = positions.findIndex((p) => p.state === 'active');
+  if (villainIdx === -1) return null;
+  const label = scenario.villain?.label ?? 'Unknown';
+  const monogram = label.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const pos = basePos(positions[villainIdx].label);
+  const actsAfter = heroIdx !== -1 &&
+    POSTFLOP_ORDER[villainIdx] > POSTFLOP_ORDER[heroIdx];
+  return { label, monogram, pos, posName: POSITION_NAMES[pos] ?? pos, actsAfter };
+}
+
 export function buildTicker(scenario) {
   if (Array.isArray(scenario.actionHistory)) {
     return { stakes: TICKER_STAKES, rows: scenario.actionHistory };

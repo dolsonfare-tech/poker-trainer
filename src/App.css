@@ -2591,3 +2591,183 @@ body {
   transform: scale(0.98);
 }
 
+
+/* ═══ Single-canvas gameplay layout (sc2) ═══════════════════════════════════
+   One table, one column. Everything lives where it lives in a real game.
+   Flag: USE_SINGLE_CANVAS in ScenarioCard.jsx. */
+
+.sc2 {
+  padding: 20px 22px 22px; max-width: 780px; margin-left: auto; margin-right: auto;
+  /* Darker surround so the felt reads as a table in a room, not a shape on a card */
+  background: linear-gradient(180deg, rgba(13,28,20,0.94) 0%, rgba(10,21,15,0.96) 100%);
+}
+
+/* Header: skill tag centered, timer + hand count right */
+.sc2-chrome { position: relative; display: flex; justify-content: center; align-items: center; min-height: 44px; margin-bottom: 6px; }
+.sc2-chrome-right { position: absolute; right: 0; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 10px; }
+
+/* Stage wraps the table so the feedback overlay can cover exactly it */
+.sc2-stage { position: relative; }
+
+.sc2-table { position: relative; height: 400px; max-width: 720px; margin: 0 auto; }
+.sc2-felt {
+  position: absolute; inset: 7% 6% 13% 6%;
+  /* Fabric grain (inline SVG noise) over a baize-green radial — reads as real felt */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 50% 40%, #275a3d 0%, #1c452c 55%, #143523 100%);
+  border: 3px solid rgba(170, 128, 45, 0.55);
+  border-radius: 50% / 46%;
+  box-shadow:
+    inset 0 0 50px rgba(0,0,0,0.4),
+    0 0 0 7px rgba(10,21,15,0.9),
+    0 0 0 8px rgba(200,168,75,0.22),
+    0 8px 28px rgba(0,0,0,0.4);
+}
+
+.sc2-seat {
+  position: absolute; width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(12,26,18,0.97); border: 1px solid rgba(255,255,255,0.14);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.55rem; font-weight: 700; color: rgba(242,237,227,0.45);
+  transform: translate(-50%, -50%); z-index: 4;
+}
+.sc2-seat.folded { opacity: 0.32; }
+.sc2-seat.vill {
+  width: 38px; height: 38px;
+  background: rgba(24,52,38,1); border-color: rgba(46,204,113,0.75); color: var(--green);
+}
+
+/* Villain bubble — persistent, inside the felt, tail up to the seat */
+.sc2-bubble {
+  position: absolute; width: 185px; transform: translateX(-50%); z-index: 5;
+  background: var(--cream); color: #241f16; border-radius: 10px;
+  padding: 8px 11px; box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.sc2-bub-tail {
+  position: absolute; top: -8px; margin-left: -9px;
+  border: 9px solid transparent; border-bottom-color: var(--cream); border-top: none;
+}
+.sc2-bub-head { display: flex; align-items: center; gap: 8px; }
+.sc2-bub-name { font-family: Georgia, serif; font-weight: 700; font-size: 0.8rem; }
+.sc2-bub-pos {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.5rem; letter-spacing: 0.09em; text-transform: uppercase;
+  color: rgba(36,31,22,0.5); margin-top: 5px;
+}
+.sc2-monogram {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(46,164,100,0.14); border: 1.5px solid rgba(46,164,100,0.45);
+  color: #2e7d4f; font-family: Georgia, serif; font-weight: 700; font-size: 0.68rem;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Pot + board, table center */
+.sc2-center {
+  position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px; z-index: 2;
+}
+.sc2-pot { display: flex; flex-direction: column; align-items: center; font-family: 'JetBrains Mono', 'Courier New', monospace; }
+.sc2-pot-label { font-size: 0.72rem; font-weight: 400; letter-spacing: 0.22em; color: var(--gold); }
+.sc2-pot-amt { font-size: 1.3rem; font-weight: 700; color: var(--gold); }
+.sc2-board { display: flex; gap: 5px; }
+.sc2-board .playing-card, .sc2-board .blank-card { width: 46px; height: 64px; }
+
+/* Hide the mirrored bottom-right corner index at canvas sizes — reads as a glyph bug */
+.sc2 .playing-card .c-br { display: none; }
+
+/* Hero cards at your seat */
+.sc2-hero {
+  position: absolute; left: 50%; bottom: -8px; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 5px; z-index: 3;
+}
+.sc2-hero-cards { display: flex; }
+.sc2-hero-cards .playing-card { width: 50px; height: 70px; outline: 1.5px solid rgba(226,201,126,0.9); outline-offset: 1.5px; }
+.sc2-hero-cards .playing-card:last-child { margin-left: -14px; transform: rotate(7deg); }
+.sc2-hand-name {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.56rem; letter-spacing: 0.12em; color: var(--gold-light);
+}
+.sc2-you-chip {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.52rem; letter-spacing: 0.14em; font-weight: 700;
+  color: #10150f; background: var(--gold-light); border-radius: 999px; padding: 2px 9px;
+}
+
+/* Villain strip (mobile replacement for the bubble) */
+.sc2-strip {
+  display: none; align-items: center; gap: 9px;
+  background: var(--cream); color: #241f16; border-radius: 9px;
+  padding: 8px 12px; margin: 18px 0 0;
+}
+.sc2-strip-text { font-family: Georgia, serif; font-weight: 700; font-size: 0.82rem; }
+.sc2-strip-pos {
+  display: block; font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-weight: 400; font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: rgba(36,31,22,0.5); margin-top: 2px;
+}
+
+/* Street history below the table */
+.sc2-history { margin: 20px auto 16px; max-width: 340px; }
+.sc2-history-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.55rem; letter-spacing: 0.2em; color: var(--cream-faint);
+  text-align: center; margin-bottom: 5px;
+}
+.sc2-history .st-ticker { margin: 0; max-width: none; }
+
+/* Actions: white cards + semantic chips (✕ / = / ↑) */
+.sc2-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; max-width: 660px; margin: 0 auto; }
+.sc2-btn.act-btn, .sc2-btn.act-btn.fold, .sc2-btn.act-btn.call, .sc2-btn.act-btn.raise {
+  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
+  display: flex; align-items: center; gap: 11px; padding: 11px 13px;
+  cursor: pointer; text-align: left; transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.sc2-btn.act-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+.sc2-btn.act-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.sc2-chip {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'JetBrains Mono', 'Courier New', monospace; font-weight: 700; font-size: 0.85rem;
+}
+.sc2-chip.fold { background: rgba(192,57,43,0.12); color: #a94438; }
+.sc2-chip.call { background: rgba(46,164,100,0.14); color: #2e7d4f; }
+.sc2-chip.raise { background: rgba(200,168,75,0.22); color: #8a6d1f; }
+.sc2-btn-text { display: flex; flex-direction: column; }
+.sc2-btn-label { font-family: Georgia, serif; font-weight: 700; font-size: 0.9rem; color: #1a1a1a; }
+.sc2-btn-sub {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase;
+  color: rgba(36,31,22,0.45); margin-top: 2px;
+}
+
+/* Feedback slides over the table — the hand is done */
+.sc2-overlay {
+  position: absolute; inset: 0; z-index: 10;
+  background: rgba(11,24,17,0.97);
+  border: 1px solid rgba(200,168,75,0.35); border-radius: 14px;
+  padding: 14px 16px; overflow-y: auto;
+  animation: sc2-rise 0.28s ease;
+}
+.sc2-overlay .feedback { margin: 0 0 12px; }
+.sc2-overlay .next-btn { width: 100%; margin-top: 0; }
+@keyframes sc2-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sc2-overlay { animation: none; }
+  .sc2-btn.act-btn { transition: none; }
+}
+
+/* Mobile: portrait table, strip instead of bubble, stacked thumb-zone actions */
+@media (max-width: 700px) {
+  .sc2 { padding: 16px 12px 18px; }
+  .sc2-table { height: 430px; }
+  .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
+  .sc2-bubble { display: none; }
+  .sc2-strip { display: flex; }
+  .sc2-board .playing-card, .sc2-board .blank-card { width: 40px; height: 56px; }
+  .sc2-actions { grid-template-columns: 1fr; max-width: none; }
+}

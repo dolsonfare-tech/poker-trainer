@@ -3,7 +3,7 @@ import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
 import { loadUser, saveUser, createUser, applySessionResults } from './utils/userStorage';
-import ScenarioCard from './components/ScenarioCard';
+import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
@@ -101,7 +101,8 @@ export default function App() {
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct });
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+    // Canvas layout: feedback overlays the table at the top; legacy: it appears below
+    setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [scenario, decided]);
 
   const handleStartSession = () => {
@@ -158,7 +159,7 @@ export default function App() {
     }
     const feedbackText = scenario.feedback[gr.g];
     setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
-    setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+    setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [decided, scenario]);
 
   const handleNext = () => {
@@ -265,8 +266,12 @@ export default function App() {
                 decided={decided}
                 showTimer={difficulty !== 'beginner'}
                 onTimeout={handleTimeout}
+                feedback={feedback}
+                timedOut={timedOut}
+                onNext={handleNext}
+                nextLabel={currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
               />
-              {feedback && (
+              {!USE_SINGLE_CANVAS && feedback && (
                 <>
                   <FeedbackPanel
                     grade={feedback.grade}

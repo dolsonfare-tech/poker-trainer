@@ -108,8 +108,9 @@ checkraise/
 - `/api/coach-read` hardening: max 10 decisions per request, string fields clamped to 200 chars, `max_tokens: 300`, upstream errors surface as 502
 - XP system removed entirely — streak is the sole engagement metric
 - SkillTracker removed from gameplay screen — results shown on session summary only
-- **Situation ticker** (`src/utils/ticker.js` + `SituationTicker` in ScenarioCard) — street-by-street action summary on the felt, under the street bar. Replaced the "Action to you" line in the decision panel (July 2026). Derives only provable facts from structured fields; never guesses unknowable history; hero actions shown in green. Scenarios may set an authored `actionHistory` field to override derivation — formalize authoring it in Phase 1.6.
+- **Situation ticker** (`src/utils/ticker.js` + `SituationTicker` in ScenarioCard) — street-by-street action summary labeled "How you got here". Derives only provable facts from structured fields; never guesses unknowable history; hero actions shown in green. Scenarios may set an authored `actionHistory` field to override derivation — formalize authoring it in Phase 1.6.
 - `scenario.question` is never displayed — founders consider it redundant. Never repeat info shown elsewhere on the gameplay screen (hand/board/pot appear once each).
+- **Single-canvas gameplay layout** (July 2026, founders-approved) — `USE_SINGLE_CANVAS` flag in ScenarioCard.jsx (`CanvasLayout` vs `LegacyLayout`). One table, one column: pot + board center-felt (POT label gold, unbolded, larger); hero cards at hero seat; villain archetype + position relation in a persistent bubble at his seat (desktop) or a strip below the table (mobile) — no quote/tell text; ticker below table; actions in the thumb zone with semantic chips ✕/=/↑ (colors track aggression, mapped from option `cls`); feedback slides over the table (`sc2-overlay`); timer + hand count top-right, skill tag centered. All `sc2-*` classes in App.css.
 
 **Dashboard:**
 - Dashboard is the entry point (`screen === 'dashboard'`), not DifficultySelector

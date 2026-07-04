@@ -158,6 +158,14 @@ Rules derived from real issues found in production review. Each rule has: a dete
 | sc_077 | ✅ Fixed | R4 | `toCall: null` despite genuine $9 c-bet (call button 'Call $9'). Was the open item that taught R4's exception. | `toCall` → `'$9'` |
 | sc_041 | ✅ Fixed | R7 | Claimed "in position" but hero CO acts before villain BTN; "he checks the turn" impossible; body said flop was bet-called but pot ($15) and "Bet $15 (pot)" option assume no flop action; `personalizeBody` rendered opener as "You raised You". | Seats → BTN (You) vs CO (LR); story → limp, raise, flop checks through; personalizeBody now shows 2nd-person bodies verbatim |
 | sc_060 | ✅ Fixed | R7 | Claimed "You're OOP" with check-raise options, but hero CO acts after villain BB (IP). Options/feedback all written for OOP — seats were the error. Pot $14 didn't match $6+$6+$1. | Seats → BB (You) vs CO (M); pot → $13; body rewritten to match |
+| sc_009 | ✅ Fixed | R8 | Villain's raise stored as `action: 'Active'` — ticker showed "folds to you" while the player faced Call $6. Also hid a pot error: $6 stored, $9 actual ($6 + blinds). | CO action → `'Raises $6'`; pot → $9 |
+| sc_010 | ✅ Fixed | R8 | UTG limp and CO raise-to-$8 both stored as `'Active'` — ticker showed "folds to you". Pot $9 stored, $13 actual ($2 limp + $8 + $1 + $2). | UTG → `'Limps'`, CO → `'Raises $8'`; pot → $13 |
+
+### R8 — Preflop raises must be recorded on a seat, never hidden as 'Active'
+
+**Problem:** If the raiser's `positions.action` is `'Active'`, the UI has no way to know a raise happened — the ticker falls back to "folds to you" while the call button charges real money. Automated in `scripts/audit-scenarios.mjs`: preflop scenario + (`toCall` set OR call button says "Call $X") + no seat action matching a raise/bet pattern → error. Limp/complete/open options in unopened pots are excluded.
+
+**Taught by:** sc_009 and sc_010 (both also carried pot errors that the missing raise had concealed from the pot-math check).
 
 ---
 

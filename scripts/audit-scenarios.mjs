@@ -64,6 +64,19 @@ for (const s of SCENARIOS) {
   if (s.toCall == null && callAmt != null && /^Call\s*\$/.test(callOpt.label))
     flag('ERROR', id, 'R4', `toCall is null but call button is '${callOpt.label}' — missing toCall`);
 
+  // ── Preflop: a live raise must be recorded on a seat, not hidden ─────
+  // (Taught by sc_009/sc_010: villain stored as 'Active' → ticker showed
+  // "folds to you" while the player faced a $6 call.)
+  if (!isPostflop) {
+    // "Facing a bet" = toCall is set, or the call button literally says "Call $X".
+    // (Limp/complete/open options are hero opening an unopened pot — not a bet faced.)
+    const owed = toCallAmt ??
+      (callOpt && /^Call\s*\$/.test(callOpt.label) ? callAmt : null);
+    const anyRaise = s.positions.some(p => /(Raises?d?|3.Bets?|Bets?)\s*\$/i.test(p.action ?? ''));
+    if (owed != null && !anyRaise)
+      flag('ERROR', id, 'pre', `facing $${owed} to call but no seat action records the raise (stored as 'Active'?)`);
+  }
+
   // ── Preflop call math (blinds $1/$2) ─────────────────────────────────
   if (!isPostflop && villain?.action && /Raises/i.test(villain.action)) {
     const raise = amt(villain.action);

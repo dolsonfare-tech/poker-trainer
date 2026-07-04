@@ -19,12 +19,19 @@ test('new user completes first session and sees the summary', async () => {
   fireEvent.click(screen.getByText(/Deal Me In/));
   fireEvent.click(screen.getByText(/Start Session/));
 
-  // Situation ticker must be on the felt for every hand
+  // Single-canvas layout: ticker, hero cards at seat, and villain read all present
   expect(container.querySelector('.st-ticker')).toBeInTheDocument();
   expect(container.querySelector('.st-street')).toBeInTheDocument();
+  expect(container.querySelector('.sc2-hero-cards')).toBeInTheDocument();
+  expect(container.querySelector('.sc2-strip')).toBeInTheDocument();
 
-  // Play all 5 hands — always pick the first action button
-  for (let i = 0; i < 5; i++) {
+  // Deciding brings up the feedback overlay over the table
+  fireEvent.click(container.querySelector('.act-btn'));
+  expect(container.querySelector('.sc2-overlay')).toBeInTheDocument();
+  fireEvent.click(await screen.findByText(/Next Scenario/));
+
+  // Play the remaining 4 hands — always pick the first action button
+  for (let i = 1; i < 5; i++) {
     fireEvent.click(container.querySelector('.act-btn'));
     const next = await screen.findByText(i < 4 ? /Next Scenario/ : /See My Results/);
     fireEvent.click(next);
