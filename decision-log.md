@@ -251,3 +251,22 @@ Impact: Will replace the stats row (streak + sessions) in Phase 2 once real data
 Decision: Phase 2 scope to be locked based on Phase 1.5 user feedback, not pre-defined
 Reason: Developer friend's advice — don't build features users haven't reacted to yet
 Impact: Phase 2 technical spec written after Phase 1.5 testing; developer friend reviews before Phase 2 begins
+**July 2026 — Analytics — Source: Build**
+Decision: PostHog with explicit events only — autocapture off, person profiles for identified users only
+Reason: Clean funnel data beats click noise; identified-only keeps free-tier person quota for real signed-in users
+Impact: analytics.js is the only PostHog file; funnel = sign_in_link_sent → signed_in → profile_created → session_started → decision_made → session_completed; every coach-read failure now fires coach_read_failed so a dead endpoint can never hide behind the graceful fallback again
+
+**July 2026 — Monetization — Source: Strategy**
+Decision: Go Pro button stays visible and fires go_pro_clicked + "Coming soon" instead of being grayed out or hidden
+Reason: A grayed button is dead UI; a tracked one measures willingness-to-pay before the Pro tier is built
+Impact: go_pro_clicked count in PostHog becomes the demand signal for Pro-tier scope/pricing decisions
+
+**July 2026 — Auth — Source: Strategy**
+Decision: Google consent-screen branding via free Google brand verification (logo + Search Console domain verification); Supabase custom auth domain (~$35/mo) deferred post-launch
+Reason: Free fix gets "Sign in to CheckRaise" + logo in the headline; $35/mo for the full domain swap isn't justified pre-revenue for the secondary sign-in method
+Impact: Consent fine print still shows the supabase.co domain until/unless the custom domain ships; revisit at meaningful DAU
+
+**July 2026 — Email — Source: Build**
+Decision: Resend as SMTP for all Supabase auth email, sender signin@checkraise.ai; DMARC published at p=none
+Reason: Supabase built-in sender (~2-4 emails/hour) would have collapsed under the tester wave; DMARC p=none is monitor-only, improves Gmail deliverability, and can't break Cloudflare inbound routing
+Impact: Magic links arrive in seconds from the brand domain; tighten DMARC to p=quarantine post-launch once sending reputation is established

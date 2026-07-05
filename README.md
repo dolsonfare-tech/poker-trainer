@@ -12,6 +12,8 @@ Live at: https://checkraise.ai
 
 - **React** (Create React App) — single-page app
 - **Supabase** — Postgres, auth (email magic link + Google), Row Level Security on every table
+- **Resend** — SMTP for auth emails (Supabase → smtp.resend.com; sender signin@checkraise.ai)
+- **PostHog** — product analytics; explicit funnel events only, wrapped in `src/utils/analytics.js`
 - **Anthropic Claude API** — one call per session (Coach's Read), server-side only via `api/coach-read.js`
 - **Vercel** — hosting, serverless functions, auto-deploy from GitHub `main`
 - Capacitor — planned for iOS App Store (post-launch)
@@ -25,6 +27,8 @@ Live at: https://checkraise.ai
    ```
    REACT_APP_SUPABASE_URL=https://<project-ref>.supabase.co
    REACT_APP_SUPABASE_ANON_KEY=sb_publishable_...
+   REACT_APP_POSTHOG_KEY=phc_...        # optional — analytics no-ops without it
+   REACT_APP_GOOGLE_AUTH=1              # optional — shows the Google sign-in button
    ```
    **No `.env`? The app still runs** in localStorage-only mode (no sign-in) — handy for UI work.
 3. `npm start`
@@ -63,7 +67,8 @@ src/
     ├── db.js          The only Supabase reads/writes
     ├── userStorage.js localStorage cache + pure game logic (sessions, streaks, schema)
     ├── ticker.js      "The hand so far" street-by-street derivation
-    └── claude.js      Client → /api/coach-read
+    ├── analytics.js   The only PostHog file — track/identify/reset, no-op without key
+    └── claude.js      Client → /api/coach-read (tracks coach_read_ok/failed)
 ```
 
 ## Scenario Format
