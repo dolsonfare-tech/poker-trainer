@@ -1,4 +1,5 @@
 import { supabase, hasSupabase } from './supabase';
+import { track } from './analytics';
 
 export async function fetchCoachRead(shuffledScenarios, skillResults, lastIndex) {
   const decisionsPlayed = shuffledScenarios.slice(0, lastIndex + 1).map(s => ({
@@ -18,13 +19,29 @@ export async function fetchCoachRead(shuffledScenarios, skillResults, lastIndex)
     if (token) headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch('/api/coach-read', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ decisionsPlayed }),
-  });
+  // The UI shows a graceful fallback on any failure, which once hid a dead
+  // endpoint for weeks — so every non-success path gets tracked explicitly.
+  let res;
+  try {
+    res = await fetch('/api/coach-read', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ decisionsPlayed }),
+    });
+  } catch (err) {
+    track('coach_read_failed', { reason: 'network' });
+    throw err;
+  }
 
-  if (!res.ok) return '';
+  if (!res.ok) {
+    track('coach_read_failed', { reason: 'http', status: res.status });
+    return '';
+  }
   const data = await res.json();
-  return data.text || '';
+  if (!data.text) {
+    track('coach_read_failed', { reason: 'empty_response' });
+    return '';
+  }
+  track('coach_read_ok');
+  return data.text;
 }

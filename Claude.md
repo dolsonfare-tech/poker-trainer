@@ -23,10 +23,9 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 
 ## Current Phase: 2 — Launch Build (July 2026, targeting early-August go-live)
 
-**▶ NEXT SESSION — start here (written July 5, end of day):**
-1. **Uncommitted work on the founder's machine, ready to push:** Google button hidden behind `REACT_APP_GOOGLE_AUTH=1` flag (was showing raw 400 — provider unconfigured), dashboard label "Coach's Note" → "Last Session's Read" (founder request), artifact links + status updates in this file. All tests/build green. Push first.
-2. **Then whatever errand the founder completed:** PostHog key → build funnel events + coach-read failure tracking · "walk me through Google" → OAuth click-by-click, ending with flipping the flag in .env + Vercel · Resend SMTP before tester wave · AdSense on its own clock.
-3. Week 3 queue after that: pot/bet-size pass (founder blesses sizes) + SME review (scenario-review.csv sent to reviewer).
+**▶ NEXT SESSION — start here (updated after PostHog session):**
+1. **Founder errands, in whatever order they complete:** add `REACT_APP_POSTHOG_KEY` to Vercel env (unblocks prod analytics — key already in local .env) · "walk me through Google" → OAuth click-by-click, ending with flipping the flag in .env + Vercel · Resend SMTP before tester wave · AdSense on its own clock.
+2. Week 3 queue after that: pot/bet-size pass (founder blesses sizes) + SME review (scenario-review.csv sent to reviewer).
 
 Phase 1.5 closed July 2026. Strategic-question status: **monetization answered** (free + ads at launch, ~$500/mo ≈ 200 DAU milestone; Pro tier later — Table Reads mode + Expert difficulty are candidates). **Poker IQ mechanics answered** (true-accuracy rating engine in `constants.js`; the display formula in `derivePokerScore` still bucket-based — refine post-launch). Schemas/skills questions: deferred to founders review, not launch-blocking.
 
@@ -43,7 +42,7 @@ Phase 1.5 closed July 2026. Strategic-question status: **monetization answered**
 
 **In flight / next (30-day playbook is a Claude artifact; owner tags YOU/CLAUDE):**
 - ⏳ AdSense application (user submitting)
-- ⏳ PostHog analytics — blocked on user creating account + providing project key
+- ✅ **PostHog analytics wired (July 2026)** — `src/utils/analytics.js` is the ONLY PostHog file (no-op without `REACT_APP_POSTHOG_KEY`, same pattern as supabase.js; autocapture off, `person_profiles: 'identified_only'`). Funnel events: `sign_in_link_sent` → `signed_in` → `profile_created` → `session_started` → `decision_made` ×5 → `session_completed`; coach-read health: `coach_read_ok` / `coach_read_failed` (reason: network | http+status | empty_response) in claude.js. Key is in local .env. **REMAINING FOUNDER STEP: add `REACT_APP_POSTHOG_KEY` to Vercel env vars — analytics is a no-op in prod until then.** Then build the funnel insight in PostHog from the event list above.
 - ⏳ Google OAuth provider config — user errand, walkthrough on request
 - ⏳ Resend SMTP for magic links (Supabase built-in sender is ~2-4 emails/hour — must fix before tester wave)
 - ✅ **RESOLVED (July 5):** production Coach's Read was silently dead — `/api/coach-read` 404'd because the legacy `builds`/`routes` vercel.json wasn't routing to the function. Fixed by modernizing vercel.json to zero-config; verified live (405 on GET, coach read returns, coach_usage increments). Lesson: the graceful "No pattern identified yet" fallback hid a dead endpoint — PostHog should track coach-read failures when it lands.
@@ -78,7 +77,8 @@ checkraise/
 │   │   ├── constants.js        ← Skill names/descriptions, COLOR_LABELS, accuracy rating engine (deriveRating, applyHandToSkill)
 │   │   └── dummyUser.js        ← Legacy schema reference (no longer imported by app code)
 │   ├── utils/
-│   │   ├── claude.js           ← Client fetch to /api/coach-read (sends Supabase auth token). Never calls Anthropic directly.
+│   │   ├── claude.js           ← Client fetch to /api/coach-read (sends Supabase auth token). Never calls Anthropic directly. Tracks coach_read_ok/failed.
+│   │   ├── analytics.js        ← The ONLY file that talks to PostHog (track/identify/reset). No-op without REACT_APP_POSTHOG_KEY.
 │   │   ├── supabase.js         ← The ONLY file that creates a Supabase client; null → localStorage-only mode
 │   │   ├── db.js               ← The ONLY file with Supabase reads/writes (fetch/create/save user, recordSession)
 │   │   ├── userStorage.js      ← localStorage cache + pure logic: applySessionResults, deriveSchema, streaks

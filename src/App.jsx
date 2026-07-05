@@ -5,6 +5,7 @@ import { fetchCoachRead } from './utils/claude';
 import { loadUser, saveUser, createUser, applySessionResults } from './utils/userStorage';
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession } from './utils/db';
+import { track, identify, resetAnalytics } from './utils/analytics';
 import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
@@ -104,13 +105,15 @@ export default function App() {
   useEffect(() => {
     if (!hasSupabase) return;
     let active = true;
-    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!active) return;
       if (!session) {
         setUser(null);
         setAuthPhase('signedout');
         return;
       }
+      identify(session.user.id);
+      if (event === 'SIGNED_IN') track('signed_in');
       try {
         const remote = await fetchRemoteUser();
         if (!active) return;
@@ -144,6 +147,7 @@ export default function App() {
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
     appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect' });
+    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct });
@@ -165,6 +169,7 @@ export default function App() {
     setCorrectCount(0);
     setSessionDelta(null);
     setScreen('session');
+    track('session_started', { difficulty: selected });
   };
 
   const handleFetchCoachRead = async (results, lastIndex) => {
@@ -207,6 +212,7 @@ export default function App() {
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
     appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g });
+    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -234,6 +240,7 @@ export default function App() {
         skillResults: { ...skillResults },
       });
       setShowSummary(true);
+      track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length });
       handleFetchCoachRead(skillResults, currentIndex);
     } else {
       decidedRef.current = false;
@@ -271,6 +278,7 @@ export default function App() {
       setUser(created);
       saveUser(created);
       setAuthPhase('ready');
+      track('profile_created');
     } else {
       const newUser = createUser(username);
       setUser(newUser);
@@ -281,6 +289,7 @@ export default function App() {
   const handleSignOut = async () => {
     if (hasSupabase && window.confirm('Sign out of CheckRaise?')) {
       await supabase.auth.signOut();
+      resetAnalytics(); // next visitor on this device gets a fresh identity
       handleRestart();
     }
   };

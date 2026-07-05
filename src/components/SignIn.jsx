@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../utils/supabase';
+import { track } from '../utils/analytics';
 
 // Flip on by setting REACT_APP_GOOGLE_AUTH=1 (env + Vercel) once the Google
 // provider is configured in Supabase. signInWithOAuth navigates away BEFORE
@@ -21,12 +22,18 @@ export default function SignIn() {
       options: { emailRedirectTo: window.location.origin },
     });
     setBusy(false);
-    if (err) setError(err.message);
-    else setSent(true);
+    if (err) {
+      setError(err.message);
+      track('sign_in_link_error', { message: err.message });
+    } else {
+      setSent(true);
+      track('sign_in_link_sent');
+    }
   };
 
   const signInWithGoogle = async () => {
     setError('');
+    track('google_sign_in_clicked');
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: window.location.origin },
