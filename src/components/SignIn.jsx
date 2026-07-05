@@ -26,7 +26,11 @@ export default function SignIn() {
       provider: 'google',
       options: { redirectTo: window.location.origin },
     });
-    if (err) setError(err.message);
+    if (err) {
+      setError(/not enabled|unsupported/i.test(err.message)
+        ? 'Google sign-in is coming soon — use the email link below for now.'
+        : err.message);
+    }
   };
 
   return (
