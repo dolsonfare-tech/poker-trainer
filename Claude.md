@@ -271,6 +271,7 @@ Features excluded from current build. May return based on tester feedback or str
 - **Streak warning** — show after 6pm if user hasn't played today
 - **Coach greeting** — personalized dashboard greeting
 - **Streak badges / celebrations** — milestone rewards
+- **Editable usernames** — users can't currently change their display name after `UsernameEntry`. Add an edit path (likely from the dashboard avatar/profile), rate-limited to ~1 change per week to discourage churn/impersonation. Server-side concerns: enforce the rate limit in the DB (store `username_changed_at` on `profiles`, check in `db.js` / RLS, not just client), keep uniqueness if usernames are ever made unique, and re-run the same validation as first-time creation. Derived display fields (initials) must update with it.
 
 ---
 
