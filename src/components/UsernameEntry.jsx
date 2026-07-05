@@ -1,15 +1,26 @@
 import { useState } from 'react';
+import { track } from '../utils/analytics';
 
 export default function UsernameEntry({ onSubmit, defaultName }) {
   const [name, setName]   = useState(defaultName ?? '');
   const [error, setError] = useState('');
+  const [busy, setBusy]   = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const trimmed = name.trim();
     if (trimmed.length < 2) { setError('Must be at least 2 characters'); return; }
     if (trimmed.length > 20) { setError('Must be 20 characters or less'); return; }
-    onSubmit(trimmed);
+    setBusy(true);
+    try {
+      await onSubmit(trimmed);
+      // Success unmounts this screen — don't touch state after it
+    } catch (err) {
+      console.error('Profile creation failed', err);
+      track('profile_create_failed', { message: err?.message });
+      setError("Couldn't save your profile — check your connection and try again.");
+      setBusy(false);
+    }
   };
 
   return (
@@ -35,9 +46,9 @@ export default function UsernameEntry({ onSubmit, defaultName }) {
           <button
             className="ue-submit-btn"
             type="submit"
-            disabled={name.trim().length < 2}
+            disabled={busy || name.trim().length < 2}
           >
-            Let's Play →
+            {busy ? 'Setting up…' : "Let's Play →"}
           </button>
         </form>
       </div>
