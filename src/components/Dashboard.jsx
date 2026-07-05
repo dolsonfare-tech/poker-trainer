@@ -169,7 +169,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             <span className="db-schema-corner db-corner-tr" />
             <span className="db-schema-corner db-corner-bl" />
             <span className="db-schema-corner db-corner-br" />
-            <div className="db-schema-mini-label">Schema · {schema.index} of {schema.total}</div>
+            <div className="db-schema-mini-label">{schema.balanced ? 'No dominant leak' : `Schema · ${schema.index} of ${schema.total}`}</div>
             <div className="db-schema-name">{schema.name}</div>
             <div className="db-schema-quote">{schema.quote}</div>
             {schema.affected.length > 0 && (
@@ -185,11 +185,9 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           </div>
         ) : (
           <div className="db-schema-locked">
-            <div className="db-schema-locked-icon">{sessionsCompleted >= 5 ? '🔍' : '🔒'}</div>
+            <div className="db-schema-locked-icon">🔒</div>
             <div className="db-schema-locked-text">
-              {sessionsCompleted >= 5
-                ? 'No leak detected yet — your archetype surfaces once a weakness shows a pattern'
-                : `Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
+              {`Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
             </div>
           </div>
         )}
