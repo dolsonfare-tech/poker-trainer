@@ -32,12 +32,16 @@ Phase 1.5 closed July 2026. Strategic-question status: **monetization answered**
 - Streak warning banner (dashboard, after 6pm local, unplayed day)
 - Privacy (`/privacy.html`) + Terms (`/terms.html`), linked from sign-in; contact = support@checkraise.ai via Cloudflare Email Routing
 
+**Artifacts (persistent links for future sessions):**
+- 30-day launch playbook (checklist, owner tags, revenue math): https://claude.ai/code/artifact/95b9614a-3b88-4dcc-882f-b6d7da35615a
+- Gameplay layout design-review history (iterations 1–4): https://claude.ai/code/artifact/fb6322e6-ca47-4eee-b1f4-85a6a453962c
+
 **In flight / next (30-day playbook is a Claude artifact; owner tags YOU/CLAUDE):**
 - ⏳ AdSense application (user submitting)
 - ⏳ PostHog analytics — blocked on user creating account + providing project key
 - ⏳ Google OAuth provider config — user errand, walkthrough on request
 - ⏳ Resend SMTP for magic links (Supabase built-in sender is ~2-4 emails/hour — must fix before tester wave)
-- ⏳ **UNRESOLVED BUG:** production Coach's Read returning empty ("No pattern identified yet") for the founder despite valid sign-in; Anthropic spend $40 of $50 cap (not capped). Awaiting network-tab status code for `/api/coach-read` (502 = upstream/billing, 401 = token, 429 = daily cap)
+- ✅ **RESOLVED (July 5):** production Coach's Read was silently dead — `/api/coach-read` 404'd because the legacy `builds`/`routes` vercel.json wasn't routing to the function. Fixed by modernizing vercel.json to zero-config; verified live (405 on GET, coach read returns, coach_usage increments). Lesson: the graceful "No pattern identified yet" fallback hid a dead endpoint — PostHog should track coach-read failures when it lands.
 - Week 3: pot/bet-size consistency pass (~8 scenarios, founder blesses sizes; auditor then recomputes pots) + SME grading review (`npm run export:review` → scenario-review.csv)
 - Week 4: landing/OG/SEO, soft launch (r/poker etc.), ads flag on
 

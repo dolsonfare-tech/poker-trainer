@@ -212,7 +212,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
       {coachNote && (
         <div className="db-section">
           <div className="db-section-label">
-            <span>Coach's Note</span>
+            <span>Last Session's Read</span>
           </div>
           <div className="db-coach-note">
             <p className="db-coach-note-body">{coachNote.body}</p>
