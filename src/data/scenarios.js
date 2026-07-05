@@ -1229,7 +1229,7 @@ const SCENARIOS = [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Reading the Pattern', emoji: '✅',
-        fb: "Folding is correct. A passive player who checks and calls all session and then bets the river for the first time almost always has the goods. The Jack completes straights and gives JX a strong hand — trust the pattern.",
+        fb: "Folding is correct. A passive player who checks and calls all session and then bets the river for the first time almost always has the goods. His range is full of hands that beat you — rivered top pair with a Jack, a slowplayed set, or a turned straight with 4♠6♠. Trust the pattern.",
       },
       {
         val: 'call', label: 'Call $14', icon: '📞', cls: 'call',
