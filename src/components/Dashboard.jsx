@@ -67,7 +67,7 @@ function SkillDot({ skill, data, targetRating, index }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
-export default function Dashboard({ onStartSession, user, sessionDelta }) {
+export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut }) {
   const [pulse, setPulse] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPulse(true), 400);
@@ -95,7 +95,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta }) {
 
       {/* ── Topbar ── */}
       <div className="db-topbar">
-        <button className="db-account-btn" onClick={() => {}}>
+        <button className="db-account-btn" onClick={onSignOut} title="Sign out">
           <div className="db-avatar">{initials}</div>
           <span className="db-username">{displayName}</span>
         </button>

@@ -1,8 +1,10 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
 import { loadUser, saveUser, createUser, applySessionResults } from './utils/userStorage';
+import { supabase, hasSupabase } from './utils/supabase';
+import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession } from './utils/db';
 import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
@@ -10,6 +12,7 @@ import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 import Dashboard from './components/Dashboard';
 import UsernameEntry from './components/UsernameEntry';
+import SignIn from './components/SignIn';
 
 // ─── Constants ────────────────────────────────────────────────────────────
 const SESSION_LENGTH = 5;
@@ -71,7 +74,10 @@ function ProgressDots({ total, current }) {
 // ─── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
   const [showVillainGuide, setShowVillainGuide]   = useState(false);
-  const [user, setUser]                           = useState(() => loadUser());
+  const [user, setUser]                           = useState(() => (hasSupabase ? null : loadUser()));
+  // 'local' (no Supabase keys — pre-Phase-2 behavior) | 'loading' | 'signedout'
+  // | 'noprofile' (signed in, first visit) | 'ready'
+  const [authPhase, setAuthPhase]                 = useState(hasSupabase ? 'loading' : 'local');
   const [screen, setScreen]                       = useState('dashboard');
   const [difficulty, setDifficulty]               = useState('beginner');
   const [shuffledScenarios, setShuffledScenarios] = useState([]);
@@ -93,6 +99,35 @@ export default function App() {
   const decidedRef                                = useRef(false);
 
   const scenario = shuffledScenarios[currentIndex];
+
+  // ── Auth lifecycle (Supabase mode only) ──────────────────────────────────
+  useEffect(() => {
+    if (!hasSupabase) return;
+    let active = true;
+    const { data: sub } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!active) return;
+      if (!session) {
+        setUser(null);
+        setAuthPhase('signedout');
+        return;
+      }
+      try {
+        const remote = await fetchRemoteUser();
+        if (!active) return;
+        if (remote) {
+          setUser(remote);
+          saveUser(remote); // localStorage stays a warm cache
+          setAuthPhase('ready');
+        } else {
+          setAuthPhase('noprofile'); // first visit: pick a name (+ migrate local history)
+        }
+      } catch (err) {
+        console.error('Failed to load profile', err);
+        if (active) setAuthPhase('noprofile');
+      }
+    });
+    return () => { active = false; sub.subscription.unsubscribe(); };
+  }, []);
 
   // History holds exactly one entry per hand slot — a duplicate append for the
   // same hand (e.g. a double-fired timeout) is dropped, protecting the summary
@@ -136,22 +171,30 @@ export default function App() {
     setCoachLoading(true);
     const prevUser = sessionUserRef.current;
     // Every hand played counts toward accuracy — not the per-skill deduped results
-    const hands = sessionHistory.map(h => ({ skill: h.scenario.skill, result: h.result }));
+    const hands = sessionHistory.map(h => ({
+      scenarioId: h.scenario.id, skill: h.scenario.skill,
+      result: h.result, choiceVal: h.choiceVal,
+    }));
+    const persist = (updated, coachText) => {
+      setUser(updated);
+      saveUser(updated); // localStorage cache always
+      if (hasSupabase) {
+        saveRemoteUser(updated).catch(err => console.error('Profile save failed', err));
+        recordSession({
+          difficulty,
+          hands,
+          correctCount: hands.filter(h => h.result === 'correct').length,
+          coachRead: coachText,
+        }).catch(err => console.error('Session log failed', err));
+      }
+    };
     try {
       const text = await fetchCoachRead(shuffledScenarios, results, lastIndex);
       setCoachRead(text);
-      if (prevUser) {
-        const updated = applySessionResults(prevUser, hands, text);
-        setUser(updated);
-        saveUser(updated);
-      }
+      if (prevUser) persist(applySessionResults(prevUser, hands, text), text);
     } catch {
       setCoachRead('');
-      if (prevUser) {
-        const updated = applySessionResults(prevUser, hands, null);
-        setUser(updated);
-        saveUser(updated);
-      }
+      if (prevUser) persist(applySessionResults(prevUser, hands, null), null);
     }
     setCoachLoading(false);
   };
@@ -220,14 +263,43 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleCreateUser = (username) => {
-    const newUser = createUser(username);
-    setUser(newUser);
-    saveUser(newUser);
+  const handleCreateUser = async (username) => {
+    if (hasSupabase) {
+      // First sign-in: create the profile, migrating any pre-Supabase
+      // localStorage history so existing testers keep their progress.
+      const created = await createRemoteProfile(username, loadUser());
+      setUser(created);
+      saveUser(created);
+      setAuthPhase('ready');
+    } else {
+      const newUser = createUser(username);
+      setUser(newUser);
+      saveUser(newUser);
+    }
   };
 
-  if (!user) {
-    return <UsernameEntry onSubmit={handleCreateUser} />;
+  const handleSignOut = async () => {
+    if (hasSupabase && window.confirm('Sign out of CheckRaise?')) {
+      await supabase.auth.signOut();
+      handleRestart();
+    }
+  };
+
+  if (authPhase === 'loading') {
+    return (
+      <div className="ue-screen">
+        <div className="ue-card">
+          <div className="ue-logo">Check<em>Raise</em></div>
+          <div className="ue-subtitle" style={{ textAlign: 'center' }}>Shuffling up…</div>
+        </div>
+      </div>
+    );
+  }
+  if (authPhase === 'signedout') {
+    return <SignIn />;
+  }
+  if (authPhase === 'noprofile' || !user) {
+    return <UsernameEntry onSubmit={handleCreateUser} defaultName={loadUser()?.displayName} />;
   }
 
   return (
@@ -247,7 +319,7 @@ export default function App() {
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} />
+        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} onSignOut={handleSignOut} />
       )}
 
       {screen === 'difficulty' && (

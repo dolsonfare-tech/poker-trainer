@@ -196,7 +196,7 @@ Rules derived from real issues found in production review. Each rule has: a dete
 
 - **`toCall: null` for scenarios with genuine calls:** sc_077 taught us some scenarios have a real call to make but `toCall` is null. An agent should scan for any scenario where `toCall` is null but a call button label contains a dollar amount — those are candidates for missing `toCall` data.
 
-- **Pot display accuracy:** `pot` in several postflop scenarios appears to be the preflop pot, not the pot at the moment of decision. This could make the displayed pot on the oval table misleading. Not yet audited.
+- **Pot display accuracy:** confirmed convention — `pot` shows the money in the middle **excluding the villain's live bet** (e.g. "shoves $40 into $50" → pot $50). Many pots are ~$1–2 approximations: with standard $6 raises, `pot − preflop pot` is often odd, implying non-integer bet sizes (found in sc_016, 042, 050, 057, 058, 064, 075, 080 while authoring histories; sc_064 fixed July 2026 — pot $33 with an explicit $10 c-bet). **Now that the ticker shows the full action, players can notice these.** Systematic fix: assign explicit bet sizes per street (making each pot exactly derivable), then add an auditor check that recomputes pot from actionHistory amounts. Needs a founders/SME pass to bless the sizes.
 
 ---
 

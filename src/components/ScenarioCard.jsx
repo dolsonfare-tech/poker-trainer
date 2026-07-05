@@ -475,7 +475,9 @@ function TableCanvas({ scenario }) {
           ))}
         </div>
         <div className="sc2-hand-name">{getHandName(scenario.hand).toUpperCase()}</div>
-        <span className="sc2-you-chip">{heroPos} · YOU</span>
+        <span className="sc2-you-chip">
+          {heroPos.toUpperCase() === 'YOU' ? 'YOU' : `${heroPos} · YOU`}
+        </span>
       </div>
     </div>
   );
@@ -545,12 +547,15 @@ function CanvasLayout({
       </div>
 
       {v && (
-        <div className="sc2-strip">
-          <span className="sc2-monogram">{v.monogram}</span>
-          <span className="sc2-strip-text">
-            <b>{v.label}</b>
-            <span className="sc2-strip-pos">{relationLine(v)}</span>
-          </span>
+        <div className="sc2-villain-mobile">
+          <div className="sc2-strip-label">⚑ VILLAIN READ</div>
+          <div className="sc2-strip">
+            <span className="sc2-monogram">{v.monogram}</span>
+            <span className="sc2-strip-text">
+              <b>{v.label}</b>
+              <span className="sc2-strip-pos">{relationLine(v)}</span>
+            </span>
+          </div>
         </div>
       )}
 

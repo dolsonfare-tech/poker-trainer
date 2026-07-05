@@ -2,7 +2,7 @@ import { deriveRating, applyHandToSkill } from '../data/constants';
 
 const USER_KEY = 'cr_user';
 
-const DEFAULT_SKILLS = {
+export const DEFAULT_SKILLS = {
   preflop:    { rating: 'gray', attempts: 0, correct: 0 },
   position:   { rating: 'gray', attempts: 0, correct: 0 },
   aggression: { rating: 'gray', attempts: 0, correct: 0 },
@@ -76,7 +76,7 @@ const SKILL_DISPLAY = {
   reads: 'Reads', opponent: 'Opponent',
 };
 
-function deriveSchema(skills, sessionsCompleted) {
+export function deriveSchema(skills, sessionsCompleted) {
   if (sessionsCompleted < 5) return null;
 
   let best = null;

@@ -3,6 +3,11 @@
 // (blank screen) anywhere in the flow.
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
+
+// Pin local (pre-Supabase) mode: this test exercises the game flow, and CRA's
+// jest loads .env, which would otherwise flip the app into auth mode.
+jest.mock('./utils/supabase', () => ({ supabase: null, hasSupabase: false }));
+
 import App from './App';
 
 test('new user completes first session and sees the summary', async () => {

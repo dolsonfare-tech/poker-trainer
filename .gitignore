@@ -11,6 +11,9 @@
 # production
 /build
 
+# generated exports
+scenario-review.csv
+
 # misc
 .DS_Store
 .env

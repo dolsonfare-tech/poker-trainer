@@ -27,6 +27,15 @@ for (const s of SCENARIOS) {
   const isPostflop = Array.isArray(s.board) && s.board.length > 0;
 
   // ── Structural sanity ────────────────────────────────────────────────
+  // Non-folded seats must carry a real position label (the UI derives seat
+  // names, the you-chip, and the villain bubble from the label's prefix)
+  const SEATS = ['UTG', 'HJ', 'CO', 'BTN', 'SB', 'BB'];
+  for (const p of s.positions) {
+    if (p.state === 'folded') continue;
+    const base = String(p.label ?? '').split(' ')[0];
+    if (!SEATS.includes(base))
+      flag('ERROR', id, 'label', `seat label '${p.label}' does not start with a real position (${p.state} seat)`);
+  }
   if (!hero) flag('ERROR', id, 'struct', 'no hero seat');
   if (!villain) flag('WARN', id, 'struct', 'no active villain seat');
   if (s.positions.filter(p => p.state === 'hero').length > 1)

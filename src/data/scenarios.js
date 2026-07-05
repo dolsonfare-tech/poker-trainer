@@ -181,8 +181,8 @@ const SCENARIOS = [
       notes: 'Bets for value only, rarely bluffs, folds to large raises when holding marginal hands',
     },
     positions: mkPositions({
-      0: { label: 'You',     action: 'Checked',  state: 'hero'   },
-      1: { label: 'Villain', action: 'Bets $15', state: 'active' },
+      3: { label: 'BTN (PP)', action: 'Bets $15', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
     }),
     hand: mkHand(['K','♣'], ['Q','♦']),
     board: ['A♠', 'J♥', '3♦'],
@@ -2751,14 +2751,14 @@ const SCENARIOS = [
     }),
     hand: mkHand(['A','♦'], ['K','♦']),
     board: ['A♠', 'K♣', '8♥', 'J♦'],
-    pot: '$32',
+    pot: '$33',
     toCall: '$22',
     actionHistory: [
       { street: 'PRE', segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
-      { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you c-bet', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you c-bet $10', you: true }, { text: 'BB calls' }] },
       { street: 'TURN', segments: [{ text: 'BB leads $22' }] },
     ],
-    body: "CO vs BB loose recreational. You have top two pair. Flop A♠K♣8♥ — you c-bet, he called (unusual passive call). Turn J♦ — he leads $22 (first time he's led the hand).",
+    body: "CO vs BB loose recreational. You have top two pair. Flop A♠K♣8♥ — you c-bet $10, he called (unusual passive call). Turn J♦ — he leads $22 (first time he's led the hand).",
     question: 'Top two pair (AK) on AK8J. Loose rec — who slow-plays — suddenly leads the turn. Fold, call, or raise?',
     correct: 'fold',
     choices: [

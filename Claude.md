@@ -90,6 +90,7 @@ checkraise/
 - No backend in Phase 1.5 — all data hardcoded in `dummyUser.js`
 - `dummyUser.js` data shape informs the Phase 2 database schema
 - Claude API called only from the serverless function `api/coach-read.js` — the key (`CLAUDE_API_KEY`) never reaches the browser. Client code goes through `fetchCoachRead` in `src/utils/claude.js`, which hits `/api/coach-read`.
+- **Supabase (Phase 2, July 2026):** client created ONLY in `src/utils/supabase.js` (env: `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY`); all DB reads/writes ONLY in `src/utils/db.js`. Schema lives in `supabase/schema.sql` — RLS on every table, sessions append-only, archetype never stored (derived from skills). The in-memory user object keeps the `userStorage.js` shape regardless of source; localStorage remains a warm cache. **When env vars are absent the app runs in localStorage-only mode** (keeps jest green and local dev keyless). Auth flow: SignIn (magic link + Google) → UsernameEntry on first visit (migrates any local profile) → app. Sign-out via the dashboard avatar.
 - App component is routing only — screen state: `'dashboard' | 'difficulty' | 'session'`
 
 **Scenarios:**
@@ -125,7 +126,7 @@ checkraise/
 - Both loaded via Google Fonts in `public/index.html`
 - Georgia and Courier New are fallbacks only
 
-**Monetization:** Decision deferred — one of the strategic questions to answer in Phase 1.5. Architecture keeps all doors open.
+**Monetization (decided July 2026):** Free at launch, ad-supported; premium features incorporated over time (Table Reads mode is a Pro-tier candidate). **Go-live target: early August 2026 (~30 days)** — real accounts via Supabase, minimal scope: **email magic-link + Google sign-in** (Apple deferred to iOS phase — requires the $99 dev account anyway; Facebook skipped) + users/sessions tables ported from the userStorage.js shape. Leaderboard and spaced repetition deferred past launch. **Streak warning pulled INTO launch scope** (in-app banner; retention drives ad revenue); streak badges shortly after launch. Ad placements: session summary + dashboard only — never on the decision screen. Revenue framing: $500/mo ≈ ~200 DAU at realistic ad rates — treat as an audience milestone, not a launch-month expectation.
 
 ---
 
@@ -237,6 +238,7 @@ Phase 2 timeline estimate: 6–8 weeks with a developer.
 
 Features excluded from current build. May return based on tester feedback or strategic direction.
 
+- **"Table Reads" mode — villain-identification minigame** (tester suggestion, July 2026; founders endorse concept, timing TBD — candidate Phase 1.6 or paid tier). Player watches a hand's action replay (reuses ticker/actionHistory infrastructure), then picks which of the 8 villain archetypes it is; feedback explains the tells. Trains *forming* reads rather than receiving them — directly serves the Reads/Opponent skills and the opponent-modeling moat. Authoring unit: observation hand + correct archetype + tell explanation (lighter than a decision scenario).
 - **Leaderboard** — friends-only, `isUser` row highlight. Data shape preserved in `dummyUser.js`.
 - **Streak warning** — show after 6pm if user hasn't played today
 - **Coach greeting** — personalized dashboard greeting

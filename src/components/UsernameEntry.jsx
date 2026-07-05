@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-export default function UsernameEntry({ onSubmit }) {
-  const [name, setName]   = useState('');
+export default function UsernameEntry({ onSubmit, defaultName }) {
+  const [name, setName]   = useState(defaultName ?? '');
   const [error, setError] = useState('');
 
   const handleSubmit = (e) => {

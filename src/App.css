@@ -2696,10 +2696,16 @@ body {
 }
 
 /* Villain strip (mobile replacement for the bubble) */
+.sc2-villain-mobile { display: none; margin-top: 18px; }
+.sc2-strip-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.55rem; letter-spacing: 0.2em; color: var(--cream-faint);
+  text-align: center; margin-bottom: 5px;
+}
 .sc2-strip {
-  display: none; align-items: center; gap: 9px;
+  display: flex; align-items: center; gap: 9px;
   background: var(--cream); color: #241f16; border-radius: 9px;
-  padding: 8px 12px; margin: 18px 0 0;
+  padding: 8px 12px;
 }
 .sc2-strip-text { font-family: Georgia, serif; font-weight: 700; font-size: 0.82rem; }
 .sc2-strip-pos {
@@ -2771,7 +2777,39 @@ body {
   .sc2-table { height: 430px; }
   .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
   .sc2-bubble { display: none; }
-  .sc2-strip { display: flex; }
+  .sc2-villain-mobile { display: block; }
   .sc2-board .playing-card, .sc2-board .blank-card { width: 40px; height: 56px; }
   .sc2-actions { grid-template-columns: 1fr; max-width: none; }
+}
+
+/* ── Sign-in screen additions ── */
+.si-google-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: #fff; color: #1a1a1a; border: 1px solid rgba(0,0,0,0.12);
+  border-radius: 10px; padding: 12px; cursor: pointer;
+  font-family: Georgia, serif; font-weight: 700; font-size: 0.95rem;
+}
+.si-google-btn:hover { box-shadow: 0 3px 10px rgba(0,0,0,0.25); }
+.si-g {
+  font-family: Georgia, serif; font-weight: 700; color: #4285f4;
+  border: 1.5px solid rgba(66,133,244,0.4); border-radius: 50%;
+  width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.8rem;
+}
+.si-divider {
+  display: flex; align-items: center; gap: 12px; margin: 16px 0;
+  color: var(--cream-faint);
+  font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.6rem;
+  letter-spacing: 0.2em; text-transform: uppercase;
+}
+.si-divider::before, .si-divider::after {
+  content: ''; flex: 1; border-top: 1px solid rgba(242,237,227,0.15);
+}
+.si-sent {
+  color: var(--cream); font-size: 0.95rem; line-height: 1.5; text-align: center;
+  background: rgba(46,204,113,0.08); border: 1px solid rgba(46,204,113,0.3);
+  border-radius: 10px; padding: 16px;
+}
+.si-sent-sub {
+  margin-top: 8px; color: var(--cream-dim); font-size: 0.8rem;
 }
