@@ -12,12 +12,12 @@ const VILLAINS = [
 ];
 
 const SCHEMAS = [
-  { label: 'The Conflict Avoider', desc: '"I shouldn\'t put money in unless I\'m sure." You fold too often and only bet the nuts, leaking value and getting pushed off winning hands. Loosen up — bet strong-but-not-perfect hands and call down more.' },
-  { label: 'The Gambler', desc: '"Any two cards can win." You play too many hands and chase weak draws, bleeding chips preflop and on bad odds. Tighten your starting hands and fold when the price is wrong.' },
-  { label: 'The Positional Blind Spot', desc: '"I don\'t factor in where I\'m sitting." You play the same whether first or last to act, ignoring the edge position gives you. Play tighter out of position and widen up on the button.' },
-  { label: 'The Results Thinker', desc: '"If it worked, it was right." You judge decisions by whether they won, not whether they were correct, so lucky mistakes stick around. Grade the decision, not the outcome.' },
-  { label: 'The Exploitable Regular', desc: '"I play my hand, not my opponent." Your fundamentals are fine but you don\'t adjust to who you\'re facing, so tougher opponents exploit you. Read villain tendencies and deviate to attack them.' },
-  { label: 'The Overaggressor', desc: '"Pressure wins pots regardless." You bet and raise too often and too big, turning good hands into bluffs and spewing chips. Pick better spots and size for a purpose.' },
+  { label: 'The Conflict Avoider', quote: 'I shouldn\'t put money in unless I\'m sure.', desc: 'You fold too often and only bet the nuts, leaking value and getting pushed off winning hands. Loosen up — bet strong-but-not-perfect hands and call down more.' },
+  { label: 'The Gambler', quote: 'Any two cards can win.', desc: 'You play too many hands and chase weak draws, bleeding chips preflop and on bad odds. Tighten your starting hands and fold when the price is wrong.' },
+  { label: 'The Positional Blind Spot', quote: 'I don\'t factor in where I\'m sitting.', desc: 'You play the same whether first or last to act, ignoring the edge position gives you. Play tighter out of position and widen up on the button.' },
+  { label: 'The Results Thinker', quote: 'If it worked, it was right.', desc: 'You judge decisions by whether they won, not whether they were correct, so lucky mistakes stick around. Grade the decision, not the outcome.' },
+  { label: 'The Exploitable Regular', quote: 'I play my hand, not my opponent.', desc: 'Your fundamentals are fine but you don\'t adjust to who you\'re facing, so tougher opponents exploit you. Read villain tendencies and deviate to attack them.' },
+  { label: 'The Overaggressor', quote: 'Pressure wins pots regardless.', desc: 'You bet and raise too often and too big, turning good hands into bluffs and spewing chips. Pick better spots and size for a purpose.' },
 ];
 
 const GLOSSARY = [
@@ -151,6 +151,7 @@ export default function VillainGuide({ onClose }) {
           {items.map((item, i) => (
             <div key={i} className="vg-item">
               <div className="vg-item-label">{item.label}</div>
+              {item.quote && <div className="vg-item-quote">“{item.quote}”</div>}
               <div className="vg-item-desc">{item.desc}</div>
             </div>
           ))}
