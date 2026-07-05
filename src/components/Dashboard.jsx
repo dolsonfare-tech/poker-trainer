@@ -173,8 +173,12 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           </div>
         ) : (
           <div className="db-schema-locked">
-            <div className="db-schema-locked-icon">🔒</div>
-            <div className="db-schema-locked-text">Play {Math.max(0, 5 - sessionsCompleted)} more session{5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype</div>
+            <div className="db-schema-locked-icon">{sessionsCompleted >= 5 ? '🔍' : '🔒'}</div>
+            <div className="db-schema-locked-text">
+              {sessionsCompleted >= 5
+                ? 'No leak detected yet — your archetype surfaces once a weakness shows a pattern'
+                : `Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
+            </div>
           </div>
         )}
       </div>

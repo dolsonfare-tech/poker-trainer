@@ -2,11 +2,11 @@
 // Locked down (July 2026): requires a signed-in Supabase user and enforces a
 // per-user daily cap, so anonymous token-burning is impossible. Input caps and
 // the small max_tokens bound the cost of any single call.
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require('@supabase/supabase-js');
 
 const DAILY_LIMIT = 20; // coach calls per user per day (1 per session played)
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

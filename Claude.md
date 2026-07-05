@@ -21,26 +21,25 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 
 ---
 
-## Current Phase: 1.5 — UX & Design Validation
+## Current Phase: 2 — Launch Build (July 2026, targeting early-August go-live)
 
-**The philosophy:** Build the full logged-in experience with dummy data before touching a database. Validate the UX, then engineer it.
+Phase 1.5 closed July 2026. Strategic-question status: **monetization answered** (free + ads at launch, ~$500/mo ≈ 200 DAU milestone; Pro tier later — Table Reads mode + Expert difficulty are candidates). **Poker IQ mechanics answered** (true-accuracy rating engine in `constants.js`; the display formula in `derivePokerScore` still bucket-based — refine post-launch). Schemas/skills questions: deferred to founders review, not launch-blocking.
 
-All Phase 1.5 screens read from `src/data/dummyUser.js`. No backend exists yet. In Phase 2, `dummyUser.js` is replaced entirely by Supabase.
+**Live in production now (week 1 done in one day):**
+- Supabase auth (email magic link + Google UI; Google provider NOT yet configured — button shows friendly fallback)
+- profiles/skills/sessions/coach_usage tables, RLS everywhere, localStorage migration on first sign-in
+- Coach endpoint locked: requires signed-in user, 20 calls/user/day (`coach_usage`), $50/mo Anthropic cap set
+- Streak warning banner (dashboard, after 6pm local, unplayed day)
+- Privacy (`/privacy.html`) + Terms (`/terms.html`), linked from sign-in; contact = support@checkraise.ai via Cloudflare Email Routing
 
-**Status:**
-- ✅ Session summary refinements complete
-- ✅ Dashboard covers skill profile — dedicated screen not needed
-- ✅ Developer friend UX/UI review done
-- ✅ Testers reviewing and providing feedback
-- ⏳ Strategic questions below not yet answered
-
-**Phase 1.5 is complete when these strategic questions are answered (founders review):**
-- What is the Poker IQ algorithm? How should it work?
-- Are the 6 player schemas right? Do they cover the real patterns?
-- Do we have the right 8 skills? Any missing or redundant?
-- What does the paid version include? What's free?
-
-Once these are answered and no tester feedback points to structural UX changes that would reshape the data model, Phase 2 scope can be locked and engineering can begin.
+**In flight / next (30-day playbook is a Claude artifact; owner tags YOU/CLAUDE):**
+- ⏳ AdSense application (user submitting)
+- ⏳ PostHog analytics — blocked on user creating account + providing project key
+- ⏳ Google OAuth provider config — user errand, walkthrough on request
+- ⏳ Resend SMTP for magic links (Supabase built-in sender is ~2-4 emails/hour — must fix before tester wave)
+- ⏳ **UNRESOLVED BUG:** production Coach's Read returning empty ("No pattern identified yet") for the founder despite valid sign-in; Anthropic spend $40 of $50 cap (not capped). Awaiting network-tab status code for `/api/coach-read` (502 = upstream/billing, 401 = token, 429 = daily cap)
+- Week 3: pot/bet-size consistency pass (~8 scenarios, founder blesses sizes; auditor then recomputes pots) + SME grading review (`npm run export:review` → scenario-review.csv)
+- Week 4: landing/OG/SEO, soft launch (r/poker etc.), ads flag on
 
 ---
 
@@ -64,20 +63,32 @@ checkraise/
 │   │   ├── VillainGuide.jsx    ← Info modal (villain types, positions, glossary)
 │   │   ├── SkillTracker.jsx    ← Exists but removed from gameplay screen
 │   │   └── PlayingCard.jsx
+│   │   ├── SignIn.jsx          ← Auth screen: magic link + Google (Phase 2)
 │   ├── data/
-│   │   ├── scenarios.js        ← 83 scenarios. DO NOT edit for UI work.
-│   │   ├── constants.js        ← Shared skill names/descriptions, COLOR_LABELS, rating ladder (nextRating)
-│   │   └── dummyUser.js        ← Phase 1.5 fake user data. Shape informs Phase 2 schema.
+│   │   ├── scenarios.js        ← 83 scenarios incl. authored actionHistory. DO NOT edit for UI work.
+│   │   ├── constants.js        ← Skill names/descriptions, COLOR_LABELS, accuracy rating engine (deriveRating, applyHandToSkill)
+│   │   └── dummyUser.js        ← Legacy schema reference (no longer imported by app code)
 │   ├── utils/
-│   │   ├── claude.js           ← Client fetch to /api/coach-read. Never calls Anthropic directly.
-│   │   ├── userStorage.js      ← localStorage user profile: ratings, streak, Poker IQ, schema derivation
-│   │   ├── spacedrep.js        ← Placeholder → Phase 2
-│   │   ├── gamification.js     ← Placeholder → Phase 2
-│   │   └── skillrating.js      ← Placeholder → Phase 2
+│   │   ├── claude.js           ← Client fetch to /api/coach-read (sends Supabase auth token). Never calls Anthropic directly.
+│   │   ├── supabase.js         ← The ONLY file that creates a Supabase client; null → localStorage-only mode
+│   │   ├── db.js               ← The ONLY file with Supabase reads/writes (fetch/create/save user, recordSession)
+│   │   ├── userStorage.js      ← localStorage cache + pure logic: applySessionResults, deriveSchema, streaks
+│   │   ├── ticker.js           ← Situation ticker derivation (street-by-street action) + villainSummary
+│   │   ├── spacedrep.js        ← Placeholder → post-launch
+│   │   ├── gamification.js     ← Placeholder → post-launch
+│   │   └── skillrating.js      ← Placeholder → post-launch
 │   └── index.js
+├── supabase/
+│   └── schema.sql          ← Full DB schema + RLS policies (run in Supabase SQL editor)
+├── scripts/
+│   ├── audit-scenarios.mjs ← npm run audit:scenarios — content consistency gate (R1–R9)
+│   └── export-review.mjs   ← npm run export:review — SME review CSV (one row per scenario)
+├── public/
+│   ├── privacy.html + terms.html  ← Legal pages (AdSense requirement)
+│   └── icons/              ← PWA icons (lowercase paths — Vercel is case-sensitive!)
 ├── vercel.json             ← Static build + api/ serverless functions
-├── .env                    ← CLAUDE_API_KEY (server-side; set in Vercel env vars — never commit)
-└── package.json
+├── .env                    ← REACT_APP_SUPABASE_URL + REACT_APP_SUPABASE_ANON_KEY (browser-safe; never commit)
+└── package.json            ← Vercel server env: CLAUDE_API_KEY, SUPABASE_SECRET_KEY (both Sensitive)
 ```
 
 ---
