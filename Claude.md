@@ -86,7 +86,7 @@ checkraise/
 ├── public/
 │   ├── privacy.html + terms.html  ← Legal pages (AdSense requirement)
 │   └── icons/              ← PWA icons (lowercase paths — Vercel is case-sensitive!)
-├── vercel.json             ← Static build + api/ serverless functions
+├── vercel.json             ← Modern zero-config (framework: create-react-app; api/ auto-mounted). Legacy `builds`/`routes` format removed July 2026 — it silently broke /api routing
 ├── .env                    ← REACT_APP_SUPABASE_URL + REACT_APP_SUPABASE_ANON_KEY (browser-safe; never commit)
 └── package.json            ← Vercel server env: CLAUDE_API_KEY, SUPABASE_SECRET_KEY (both Sensitive)
 ```
