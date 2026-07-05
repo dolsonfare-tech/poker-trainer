@@ -11,6 +11,15 @@ const VILLAINS = [
   { label: 'Unknown', desc: 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.' },
 ];
 
+const SCHEMAS = [
+  { label: 'The Conflict Avoider', quote: 'I shouldn\'t put money in unless I\'m sure.', desc: 'You fold too often and only bet the nuts, leaking value and getting pushed off winning hands. Loosen up — bet strong-but-not-perfect hands and call down more.' },
+  { label: 'The Gambler', quote: 'Any two cards can win.', desc: 'You play too many hands and chase weak draws, bleeding chips preflop and on bad odds. Tighten your starting hands and fold when the price is wrong.' },
+  { label: 'The Positional Blind Spot', quote: 'I don\'t factor in where I\'m sitting.', desc: 'You play the same whether first or last to act, ignoring the edge position gives you. Play tighter out of position and widen up on the button.' },
+  { label: 'The Results Thinker', quote: 'If it worked, it was right.', desc: 'You judge decisions by whether they won, not whether they were correct, so lucky mistakes stick around. Grade the decision, not the outcome.' },
+  { label: 'The Exploitable Regular', quote: 'I play my hand, not my opponent.', desc: 'Your fundamentals are fine but you don\'t adjust to who you\'re facing, so tougher opponents exploit you. Read villain tendencies and deviate to attack them.' },
+  { label: 'The Overaggressor', quote: 'Pressure wins pots regardless.', desc: 'You bet and raise too often and too big, turning good hands into bluffs and spewing chips. Pick better spots and size for a purpose.' },
+];
+
 const GLOSSARY = [
   { label: 'C-bet (Continuation Bet)', desc: 'A bet made by the player who raised before the flop, continuing to show aggression on the flop even if it missed their hand.' },
   { label: '3-bet', desc: 'A re-raise over someone who has already raised — the third bet in the sequence.' },
@@ -99,7 +108,16 @@ function PositionDiagram() {
 export default function VillainGuide({ onClose }) {
   const [activeTab, setActiveTab] = useState('players');
 
-  const items = activeTab === 'players' ? VILLAINS : activeTab === 'positions' ? POSITIONS : GLOSSARY;
+  const items = activeTab === 'players' ? VILLAINS
+    : activeTab === 'schemas' ? SCHEMAS
+    : activeTab === 'positions' ? POSITIONS
+    : GLOSSARY;
+
+  const intro = activeTab === 'players'
+    ? 'The opponents you face. Read how each one bets so you can adjust your play against them.'
+    : activeTab === 'schemas'
+    ? 'How the trainer diagnoses you. Each schema is the root belief behind your most common mistakes — your own leak, not an opponent.'
+    : null;
 
   return (
     <div className="vg-overlay" onClick={onClose}>
@@ -113,9 +131,12 @@ export default function VillainGuide({ onClose }) {
 
         <div className="vg-tabs">
           <button className={`vg-tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>Player Types</button>
+          <button className={`vg-tab ${activeTab === 'schemas' ? 'active' : ''}`} onClick={() => setActiveTab('schemas')}>Schemas</button>
           <button className={`vg-tab ${activeTab === 'positions' ? 'active' : ''}`} onClick={() => setActiveTab('positions')}>Positions</button>
           <button className={`vg-tab ${activeTab === 'glossary' ? 'active' : ''}`} onClick={() => setActiveTab('glossary')}>Glossary</button>
         </div>
+
+        {intro && <p className="vg-intro">{intro}</p>}
 
         {activeTab === 'positions' && (
           <>
@@ -130,10 +151,17 @@ export default function VillainGuide({ onClose }) {
           {items.map((item, i) => (
             <div key={i} className="vg-item">
               <div className="vg-item-label">{item.label}</div>
+              {item.quote && <div className="vg-item-quote">“{item.quote}”</div>}
               <div className="vg-item-desc">{item.desc}</div>
             </div>
           ))}
         </div>
+
+        {activeTab === 'schemas' && (
+          <p className="vg-positions-note">
+            No single leak dominant? You'll show as <strong>The Balanced Player</strong> until a clear pattern emerges.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -76,24 +76,51 @@ const SKILL_DISPLAY = {
   reads: 'Reads', opponent: 'Opponent',
 };
 
+// Returned when there's enough data but no single leak dominates. Positive
+// framing, not a "we couldn't tell" — a genuinely balanced player and a
+// random-testing player both correctly land here rather than being forced
+// into whichever schema the formula happens to favor.
+export const BALANCED_SCHEMA = {
+  name: 'The Balanced Player',
+  quote: 'No single leak dominates your game',
+  index: '—',
+  total: '06',
+  affected: [],
+  balanced: true,
+};
+
+// Minimum normalized severity for a schema to count as your leak: its measured
+// primary skills must average at least yellow-level (1.0). Below that you're Balanced.
+const SCHEMA_MIN_SEVERITY = 1;
+
 export function deriveSchema(skills, sessionsCompleted) {
-  if (sessionsCompleted < 5) return null;
+  if (sessionsCompleted < 5) return null;  // locked: not enough data to diagnose
 
   let best = null;
   let bestScore = 0;
+  let tied = false;
 
   for (const s of SCHEMAS) {
-    let score = 0;
+    let raw = 0;
+    let measured = 0;
     for (const sk of s.primary) {
       const d = skills[sk];
       if (!d || d.attempts < 3) continue;
-      if (d.rating === 'red')    score += 2;
-      if (d.rating === 'yellow') score += 1;
+      measured++;
+      if (d.rating === 'red')    raw += 2;
+      if (d.rating === 'yellow') raw += 1;
     }
-    if (score > bestScore) { bestScore = score; best = s; }
+    if (measured === 0) continue;
+    // #1 Normalize by skills actually measured so multi-skill schemas (Conflict
+    // Avoider, The Gambler) aren't mechanically favored over single-skill ones.
+    const score = raw / measured;
+    if (score > bestScore + 1e-9) { bestScore = score; best = s; tied = false; }
+    else if (best && Math.abs(score - bestScore) < 1e-9) { tied = true; }
   }
 
-  if (!best) return null;
+  // #2 No dominant, unambiguous leak → Balanced (kills the array-order tiebreak
+  // that always crowned index 01). Requires a clear winner above the severity bar.
+  if (!best || bestScore < SCHEMA_MIN_SEVERITY || tied) return BALANCED_SCHEMA;
 
   const affected = best.primary
     .filter(sk => skills[sk] && (skills[sk].rating === 'red' || skills[sk].rating === 'yellow'))

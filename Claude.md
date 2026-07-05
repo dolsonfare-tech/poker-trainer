@@ -258,6 +258,7 @@ Phase 2 timeline estimate: 6–8 weeks with a developer.
 
 - Replace placeholder utils (`spacedrep.js`, `gamification.js`, `skillrating.js`) with full logic
 - New user experience — gray dots, locked schema, onboarding flow
+- **Schema diagnosis engine v2 (relative-weakness model)** — current `deriveSchema` (`userStorage.js`) scores against fixed red/yellow buckets (absolute weakness). July 2026 fix removed a structural bias (multi-skill schemas + array-order tiebreak made Conflict Avoider fire ~90% of the time under uniform play; now normalized per measured skill + requires a clear winner above a severity bar, else `BALANCED_SCHEMA` = "The Balanced Player"). Post-launch, once real per-skill accuracy distributions exist (PostHog/Supabase sessions), move to *relative* scoring: diagnose skills that lag a player's *own* mean, so an improving player's real leak is distinguished from a beginner's uniform weakness. Calibrate thresholds against real data. Founders to revisit schema→skill mappings here too. Derived-only (no DB migration). **Founders: this is the diagnostic moat — worth a deeper exploration once data lands.**
 
 ---
 
