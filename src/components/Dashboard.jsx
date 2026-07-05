@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, COLOR_LABELS } from '../data/constants';
 import { toLocalDateString } from '../utils/userStorage';
+import { track } from '../utils/analytics';
 
 // ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
 // After 6pm local, if today's session hasn't been played, nudge — protecting
@@ -107,6 +108,15 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   const displayStreak   = useCountUp(streak,        streakFrom,   700, 150);
   const displaySessions = useCountUp(sessionsTo,    sessionsFrom, 700, 500);
 
+  // Pro tier doesn't exist yet — the button measures demand (PostHog) and is
+  // honest about it. Wire real upgrade flow here when the tier ships.
+  const [proTeased, setProTeased] = useState(false);
+  const teasePro = () => {
+    track('go_pro_clicked');
+    setProTeased(true);
+    setTimeout(() => setProTeased(false), 2500);
+  };
+
   return (
     <div className="dashboard">
 
@@ -118,7 +128,9 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         </button>
         <div className="db-plan-pill">
           <span className="db-plan-label">Free Plan</span>
-          <button className="db-gopro-btn" onClick={() => {}}>Go Pro</button>
+          <button className="db-gopro-btn" onClick={teasePro} disabled={proTeased}>
+            {proTeased ? 'Coming soon ✨' : 'Go Pro'}
+          </button>
         </div>
       </div>
 
