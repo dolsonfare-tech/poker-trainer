@@ -23,10 +23,15 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 
 ## Current Phase: 2 — Launch Build (July 2026, targeting early-August go-live)
 
+**▶ NEXT SESSION — start here (written July 5, end of day):**
+1. **Uncommitted work on the founder's machine, ready to push:** Google button hidden behind `REACT_APP_GOOGLE_AUTH=1` flag (was showing raw 400 — provider unconfigured), dashboard label "Coach's Note" → "Last Session's Read" (founder request), artifact links + status updates in this file. All tests/build green. Push first.
+2. **Then whatever errand the founder completed:** PostHog key → build funnel events + coach-read failure tracking · "walk me through Google" → OAuth click-by-click, ending with flipping the flag in .env + Vercel · Resend SMTP before tester wave · AdSense on its own clock.
+3. Week 3 queue after that: pot/bet-size pass (founder blesses sizes) + SME review (scenario-review.csv sent to reviewer).
+
 Phase 1.5 closed July 2026. Strategic-question status: **monetization answered** (free + ads at launch, ~$500/mo ≈ 200 DAU milestone; Pro tier later — Table Reads mode + Expert difficulty are candidates). **Poker IQ mechanics answered** (true-accuracy rating engine in `constants.js`; the display formula in `derivePokerScore` still bucket-based — refine post-launch). Schemas/skills questions: deferred to founders review, not launch-blocking.
 
 **Live in production now (week 1 done in one day):**
-- Supabase auth (email magic link + Google UI; Google provider NOT yet configured — button shows friendly fallback)
+- Supabase auth (email magic link live; Google button HIDDEN behind `REACT_APP_GOOGLE_AUTH=1` env flag — `signInWithOAuth` navigates before erroring, so an unconfigured provider shows a raw 400 page. Flip the flag in .env + Vercel as the LAST step of the Google OAuth walkthrough)
 - profiles/skills/sessions/coach_usage tables, RLS everywhere, localStorage migration on first sign-in
 - Coach endpoint locked: requires signed-in user, 20 calls/user/day (`coach_usage`), $50/mo Anthropic cap set
 - Streak warning banner (dashboard, after 6pm local, unplayed day)

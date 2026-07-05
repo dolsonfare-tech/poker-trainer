@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import { supabase } from '../utils/supabase';
 
+// Flip on by setting REACT_APP_GOOGLE_AUTH=1 (env + Vercel) once the Google
+// provider is configured in Supabase. signInWithOAuth navigates away BEFORE
+// any error can surface in-app, so an unconfigured provider = raw 400 page.
+const GOOGLE_ENABLED = process.env.REACT_APP_GOOGLE_AUTH === '1';
+
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
@@ -47,10 +52,14 @@ export default function SignIn() {
           </div>
         ) : (
           <>
-            <button className="si-google-btn" type="button" onClick={signInWithGoogle}>
-              <span className="si-g">G</span> Continue with Google
-            </button>
-            <div className="si-divider"><span>or</span></div>
+            {GOOGLE_ENABLED && (
+              <>
+                <button className="si-google-btn" type="button" onClick={signInWithGoogle}>
+                  <span className="si-g">G</span> Continue with Google
+                </button>
+                <div className="si-divider"><span>or</span></div>
+              </>
+            )}
             <form className="ue-form" onSubmit={sendLink}>
               <input
                 className={`ue-input${error ? ' ue-input-error' : ''}`}
