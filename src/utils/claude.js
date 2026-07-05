@@ -1,3 +1,5 @@
+import { supabase, hasSupabase } from './supabase';
+
 export async function fetchCoachRead(shuffledScenarios, skillResults, lastIndex) {
   const decisionsPlayed = shuffledScenarios.slice(0, lastIndex + 1).map(s => ({
     scenario: s.tag,
@@ -8,9 +10,17 @@ export async function fetchCoachRead(shuffledScenarios, skillResults, lastIndex)
     result: skillResults[s.skill] || 'unknown',
   }));
 
+  // The endpoint requires a signed-in user (per-user daily cap server-side)
+  const headers = { 'Content-Type': 'application/json' };
+  if (hasSupabase) {
+    const { data } = await supabase.auth.getSession();
+    const token = data?.session?.access_token;
+    if (token) headers.Authorization = `Bearer ${token}`;
+  }
+
   const res = await fetch('/api/coach-read', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ decisionsPlayed }),
   });
 

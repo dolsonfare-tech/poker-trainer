@@ -111,7 +111,7 @@ function derivePokerScore(skills) {
 
 // ── Streak ────────────────────────────────────────────────────────────────────
 // Local time, not UTC — a day rolls over at the player's midnight.
-function toLocalDateString(d) {
+export function toLocalDateString(d) {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');

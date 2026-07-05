@@ -68,6 +68,9 @@ export default function SignIn() {
             </form>
           </>
         )}
+        <div className="si-legal">
+          <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a>
+        </div>
       </div>
     </div>
   );

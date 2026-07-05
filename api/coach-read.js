@@ -1,3 +1,11 @@
+// Coach's Read — the only code that calls the Claude API.
+// Locked down (July 2026): requires a signed-in Supabase user and enforces a
+// per-user daily cap, so anonymous token-burning is impossible. Input caps and
+// the small max_tokens bound the cost of any single call.
+import { createClient } from '@supabase/supabase-js';
+
+const DAILY_LIMIT = 20; // coach calls per user per day (1 per session played)
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -9,12 +17,41 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Invalid request body' });
   }
 
-  const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
-
   const apiKey = process.env.CLAUDE_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured' });
   }
+
+  // ── Auth + per-user daily cap ─────────────────────────────────────────
+  // Enforced whenever the server has Supabase credentials (always in prod).
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  if (supabaseUrl && secretKey) {
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+    if (!token) return res.status(401).json({ error: 'Sign in required' });
+
+    const admin = createClient(supabaseUrl, secretKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: userData, error: authErr } = await admin.auth.getUser(token);
+    const uid = userData?.user?.id;
+    if (authErr || !uid) return res.status(401).json({ error: 'Sign in required' });
+
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: usage } = await admin
+      .from('coach_usage').select('calls')
+      .eq('user_id', uid).eq('day', today).maybeSingle();
+    const calls = usage?.calls ?? 0;
+    if (calls >= DAILY_LIMIT) {
+      return res.status(429).json({ error: 'Daily coach limit reached' });
+    }
+    await admin.from('coach_usage').upsert(
+      { user_id: uid, day: today, calls: calls + 1 },
+      { onConflict: 'user_id,day' }
+    );
+  }
+
+  const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
 
   const prompt = `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
 

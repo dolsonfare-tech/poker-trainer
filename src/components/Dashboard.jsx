@@ -1,5 +1,22 @@
 import { useState, useEffect } from 'react';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, COLOR_LABELS } from '../data/constants';
+import { toLocalDateString } from '../utils/userStorage';
+
+// ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
+// After 6pm local, if today's session hasn't been played, nudge — protecting
+// the streak is the whole retention loop.
+function StreakWarning({ user }) {
+  const now = new Date();
+  const playedToday = user.lastSessionDate === toLocalDateString(now);
+  if (playedToday || now.getHours() < 18) return null;
+  return (
+    <div className="db-streak-warning">
+      {user.streak > 0
+        ? <>🔥 Your <b>{user.streak}-day streak</b> is on the line — play one session before midnight.</>
+        : <>🃏 You haven't played today — one session keeps the reads sharp.</>}
+    </div>
+  );
+}
 
 // ─── Count-up animation ───────────────────────────────────────────────────
 function useCountUp(to, from, duration = 900, delay = 0) {
@@ -104,6 +121,8 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           <button className="db-gopro-btn" onClick={() => {}}>Go Pro</button>
         </div>
       </div>
+
+      <StreakWarning user={user} />
 
       {/* ── Stats row ── */}
       <div className="db-stats-row">

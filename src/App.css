@@ -2813,3 +2813,25 @@ body {
 .si-sent-sub {
   margin-top: 8px; color: var(--cream-dim); font-size: 0.8rem;
 }
+
+/* ── Streak warning banner (dashboard, after 6pm unplayed) ── */
+.db-streak-warning {
+  background: linear-gradient(90deg, rgba(232,144,40,0.14), rgba(226,85,85,0.07));
+  border: 1px solid rgba(232,144,40,0.45);
+  border-radius: 10px;
+  padding: 11px 14px;
+  margin-bottom: 16px;
+  font-family: Georgia, serif;
+  font-size: 0.92rem;
+  color: var(--cream);
+  text-align: center;
+}
+.db-streak-warning b { color: var(--gold-light); }
+
+.si-legal {
+  margin-top: 18px; text-align: center;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.14em;
+}
+.si-legal a { color: var(--cream-faint); text-decoration: none; }
+.si-legal a:hover { color: var(--cream-dim); }
