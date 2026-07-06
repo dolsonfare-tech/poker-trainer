@@ -24,21 +24,21 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 ## Current Phase: 2 — Launch Build (July 2026, targeting early-August go-live)
 
 **▶ NEXT SESSION — start here (written July 5, end of the infra sprint — PostHog/Google/Resend all landed in one session):**
-1. **Waiting on external clocks, check status first:** Google brand verification (submitted July 5, 2–5 business days; approval makes the consent screen say "CheckRaise" + logo instead of the raw supabase.co domain) · AdSense review · **founder's call: flip `REACT_APP_GOOGLE_AUTH=1` in Vercel** (provider fully works — tested end-to-end locally July 5; the only reason to wait is consent-screen cosmetics until brand verification lands).
+1. **Waiting on external clocks, check status first:** AdSense review · Google brand verification (submitted July 5, 2–5 business days; approval makes the consent screen say "CheckRaise" + logo instead of the raw supabase.co domain — **cosmetic only; Google sign-in is already LIVE in prod**, `REACT_APP_GOOGLE_AUTH=1` flipped in Vercel July 5).
 2. Week 3 queue: pot/bet-size pass (founder blesses sizes) + SME review (`npm run export:review` → scenario-review.csv to reviewer). sc_028's wrong feedback (found by founder playthrough July 5) is the proof this review matters.
 3. Check PostHog now that data flows: funnel events, `coach_read_failed` (should be zero), `go_pro_clicked` (Pro-tier demand signal).
 
 Phase 1.5 closed July 2026. Strategic-question status: **monetization answered** (free + ads at launch, ~$500/mo ≈ 200 DAU milestone; Pro tier later — Table Reads mode + Expert difficulty are candidates). **Poker IQ mechanics answered** (true-accuracy rating engine in `constants.js`; the display formula in `derivePokerScore` still bucket-based — refine post-launch). Schemas/skills questions: deferred to founders review, not launch-blocking.
 
 **Live in production now (week 1 done in one day):**
-- Supabase auth (email magic link live; Google button HIDDEN behind `REACT_APP_GOOGLE_AUTH=1` env flag — `signInWithOAuth` navigates before erroring, so an unconfigured provider shows a raw 400 page. Flip the flag in .env + Vercel as the LAST step of the Google OAuth walkthrough)
+- Supabase auth (email magic link live; **Google sign-in LIVE in prod** — `REACT_APP_GOOGLE_AUTH=1` flipped in Vercel July 5. The flag still gates the button because `signInWithOAuth` navigates before erroring, so an unconfigured provider would show a raw 400 page — keep it set wherever the provider is configured)
 - profiles/skills/sessions/coach_usage tables, RLS everywhere, localStorage migration on first sign-in
 - Coach endpoint locked: requires signed-in user, 20 calls/user/day (`coach_usage`), $50/mo Anthropic cap set
 - Streak warning banner (dashboard, after 6pm local, unplayed day)
 - Privacy (`/privacy.html`) + Terms (`/terms.html`), linked from sign-in; contact = support@checkraise.ai via Cloudflare Email Routing (NOTE: routing was silently DISABLED until July 5 — support@ bounced everything before then; re-enabled + verified)
 - **PostHog live in prod** (key in Vercel env, plain not Sensitive — all `REACT_APP_*` vars are public by definition; only `CLAUDE_API_KEY` + `SUPABASE_SECRET_KEY` are Sensitive)
 - **Resend SMTP live** (July 5): DNS on `send.` subdomain + DKIM + DMARC `p=none`, domain Verified in Resend; Supabase SMTP = smtp.resend.com:465, user literal `resend`, password = Resend API key, sender signin@checkraise.ai. Magic links verified end-to-end. Gotcha hit: Resend domain stays "Not started" until you click **Verify DNS Records** — Supabase 500s ("Error sending magic link email") until then.
-- **Google OAuth provider configured + tested locally** (July 5): Google Cloud project "CheckRaise", web client with redirect to Supabase callback, creds in Supabase. Prod flag still OFF. Brand verification submitted (Search Console TXT on root + logo). Full consent-screen fix (custom auth domain, ~$35/mo Supabase Pro+addon) deferred post-launch.
+- **Google OAuth LIVE in prod** (July 5): Google Cloud project "CheckRaise", web client with redirect to Supabase callback, creds in Supabase; tested end-to-end then `REACT_APP_GOOGLE_AUTH=1` flipped in Vercel — button is live for real users. Brand verification submitted (Search Console TXT on root + logo) — cosmetic only (consent screen still shows raw supabase.co domain until it lands). Full consent-screen fix (custom auth domain, ~$35/mo Supabase Pro+addon) deferred post-launch.
 - **Real favicon + PWA icons** (July 5): generated from square logo; old files were mislabeled JPEGs AND git tracked them as `Icons/Icon-*.png` (capitals) so prod 404'd them since day one — macOS swallows case-only renames; verify with `git ls-files` after any rename.
 - **Go Pro button = demand instrument**: fires `go_pro_clicked` + shows "Coming soon ✨" (no dead/grayed UI). Wire real upgrade flow here when Pro ships.
 - **UsernameEntry surfaces failures** (July 5): profile-create errors were silently swallowed → dead-looking button (founder hit this live). Now busy state + inline error + `profile_create_failed` event.
@@ -49,8 +49,9 @@ Phase 1.5 closed July 2026. Strategic-question status: **monetization answered**
 
 **In flight / next (30-day playbook is a Claude artifact; owner tags YOU/CLAUDE):**
 - ⏳ AdSense application (user submitting)
+- ✅ **Beta feedback table live in Supabase (July 5)** — `feedback` block run in the SQL editor, test submission verified end-to-end (row landed). Form ships with the next deploy.
 - ✅ **PostHog analytics live in prod (July 5)** — `src/utils/analytics.js` is the ONLY PostHog file (no-op without `REACT_APP_POSTHOG_KEY`; autocapture off, `person_profiles: 'identified_only'`, US cloud). Funnel: `sign_in_link_sent` → `signed_in` → `profile_created` → `session_started` → `decision_made` ×5 → `session_completed`; health: `coach_read_ok`/`coach_read_failed` (reason: network | http+status | empty_response), `profile_create_failed`, `go_pro_clicked`, `google_sign_in_clicked`. TODO: build the funnel insight in PostHog UI from that list.
-- ⏳ Google brand verification (submitted July 5, 2–5 business days) → then founder flips `REACT_APP_GOOGLE_AUTH=1` in Vercel (or earlier — his call; auth itself verified working)
+- ✅ **Google sign-in live in prod (July 5)** — `REACT_APP_GOOGLE_AUTH=1` flipped in Vercel, button live for real users. ⏳ Google brand verification still pending (submitted July 5, 2–5 business days) but cosmetic only — until it lands the consent screen shows the raw supabase.co domain instead of "CheckRaise" + logo.
 - ✅ Resend SMTP live — see production list above
 - ✅ **RESOLVED (July 5):** production Coach's Read was silently dead — `/api/coach-read` 404'd because the legacy `builds`/`routes` vercel.json wasn't routing to the function. Fixed by modernizing vercel.json to zero-config; verified live (405 on GET, coach read returns, coach_usage increments). Lesson: the graceful "No pattern identified yet" fallback hid a dead endpoint — PostHog should track coach-read failures when it lands.
 - Week 3: pot/bet-size consistency pass (~8 scenarios, founder blesses sizes; auditor then recomputes pots) + SME grading review (`npm run export:review` → scenario-review.csv)
@@ -81,7 +82,7 @@ checkraise/
 │   │   ├── SignIn.jsx          ← Auth screen: magic link + Google (Phase 2)
 │   ├── data/
 │   │   ├── scenarios.js        ← 83 scenarios incl. authored actionHistory. DO NOT edit for UI work.
-│   │   ├── constants.js        ← Skill names/descriptions, COLOR_LABELS, accuracy rating engine (deriveRating, applyHandToSkill)
+│   │   ├── constants.js        ← Skill names/descriptions, COLOR_LABELS, PLAYER_SCHEMAS (single source: engine + guide), accuracy rating engine (deriveRating, applyHandToSkill)
 │   │   └── dummyUser.js        ← Legacy schema reference (no longer imported by app code)
 │   ├── utils/
 │   │   ├── claude.js           ← Client fetch to /api/coach-read (sends Supabase auth token). Never calls Anthropic directly. Tracks coach_read_ok/failed.
@@ -142,8 +143,10 @@ checkraise/
 
 **Dashboard:**
 - Dashboard is the entry point (`screen === 'dashboard'`), not DifficultySelector
-- Section order: Stats row → Archetype → Skill Profile → CTA
-- Skill dots are tappable — expand to show description + color meaning
+- Section order: Stats row → Player Profile → CTA → Beta feedback
+- **Beta feedback form (July 2026)** — quiet collapsed line under the CTA ("Something broken, boring, or brilliant?") expanding to category chips (gameplay/scenarios/technical/idea) + textarea. Inserts into Supabase `feedback` table (insert-only RLS — users can't read back; founders read via SQL editor/service role). `submitFeedback` in db.js. PostHog: `feedback_opened` / `feedback_submitted` / `feedback_submit_failed`. ⚠️ Requires the feedback block at the bottom of `supabase/schema.sql` to be run in the Supabase SQL editor before deploy.
+- **Player Profile card (July 2026, founders-approved)** — the old Poker Archetype and Skill Profile sections merged into ONE card: schema (name + quote only — "Schema · N of 6" mini-label and "Affecting" chips removed; founders want the analysis to feel holistic) on the left, skill status ledger on the right, vertical gold divider between; stacked with a horizontal rule on mobile (<700px). Locked-schema state (new user) shows the lock on the left with live skills on the right.
+- **Skill ledger** — skills grouped by rating, weakest first (Weak → Work On → Strong → Unrated), one row per status at every width. Group headers double as the legend. After a session, changed skills fly to their new group via a vanilla FLIP hook in `SkillLedger` (Dashboard.jsx), staggered 750ms, landing glow in the new status color; mounts in `sessionDelta.prevSkills` state so the player sees the before→after. `prefers-reduced-motion` → instant regroup. Pills are NOT tappable — skill definitions live in the VillainGuide **Skills tab** (status names only; accuracy thresholds are engine internals, never shown to users).
 - New-user state (gray dots, locked schema) deferred — see post-1.5 work
 - Coach greeting, streak warning, and leaderboard excluded from dashboard — moved to backlog
 
@@ -285,3 +288,4 @@ Features excluded from current build. May return based on tester feedback or str
 - Never add Tailwind to existing Phase 1 CSS — only on new screens if adopted
 - Never modify `scenarios.js` for UI work — it's content, not layout
 - Never commit `.env` to GitHub
+- Never `await` Supabase (or any async) calls inside the `onAuthStateChange` callback — supabase-js holds its auth lock during the callback and authed calls need that lock, so it deadlocks intermittently (the "stuck on Shuffling up…" bug, July 2026). Defer with `setTimeout(async () => {...}, 0)`.
