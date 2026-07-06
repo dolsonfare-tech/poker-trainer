@@ -4,6 +4,7 @@ import { toLocalDateString } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
+import AdSlot from './AdSlot';
 
 // ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
 // After 6pm local, if today's session hasn't been played, nudge — protecting
@@ -381,6 +382,8 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
       </div>
 
       <BetaFeedback />
+
+      <AdSlot placement="dashboard" />
 
     </div>
   );

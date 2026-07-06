@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
+import AdSlot from './AdSlot';
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -184,6 +185,8 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
       )}
 
       <button className="restart-btn" onClick={onRestart}>Train Again</button>
+
+      <AdSlot placement="summary" />
 
       {/* Slide-over */}
       {activeSkill && (

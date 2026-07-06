@@ -1,7 +1,7 @@
 {
   "short_name": "CheckRaise",
   "name": "CheckRaise",
-  "description": "AI-powered Texas Hold'em skill trainer",
+  "description": "The Texas Hold'em trainer that finds the leak in your game",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" }

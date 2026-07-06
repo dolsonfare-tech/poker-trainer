@@ -49,8 +49,13 @@ export default function SignIn() {
     <div className="ue-screen">
       <div className="ue-card">
         <div className="ue-logo">Check<em>Raise</em></div>
-        <div className="ue-title">Sign in to play</div>
-        <div className="ue-subtitle">Your stats and streak follow you on every device.</div>
+        {/* First-five-seconds pitch: a cold visitor (r/poker, a shared link)
+            lands here — lead with what it does, not with the sign-in demand. */}
+        <div className="ue-title">Find the leak in your game</div>
+        <div className="ue-subtitle">
+          Five real Hold'em spots a day, every decision graded.
+          Sign in free — your stats and streak follow you on every device.
+        </div>
 
         {sent ? (
           <div className="si-sent">
