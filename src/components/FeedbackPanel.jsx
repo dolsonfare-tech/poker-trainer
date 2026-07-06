@@ -75,14 +75,14 @@ function DisagreeBox({ scenarioId, choice, result }) {
 
 export default function FeedbackPanel({ grade, loading, feedbackText, correctAnswer, timedOut, scenarioId, choice }) {
   const subLabel = {
-    correct:   'Correct Play',
+    correct:   'Recommended Play',
     partial:   'Acceptable — Not Optimal',
     incorrect: 'Mistake',
   };
 
   return (
     <div className="feedback">
-      <div className="ai-label">⚡ AI Analysis</div>
+      <div className="ai-label">⚡ Hand Analysis</div>
       <div className="fb-header">
         <div className={`grade-circle ${timedOut ? 'incorrect' : grade.g}`}>
           {timedOut ? '⏱️' : grade.emoji}
@@ -108,8 +108,8 @@ export default function FeedbackPanel({ grade, loading, feedbackText, correctAns
           letterSpacing: '0.08em',
         }}>
           <span style={{ color: 'var(--green)' }}>✅</span>
-          <span style={{ color: 'rgba(242,237,227,0.5)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' }}>Correct play:</span>
-          <span style={{ color: 'var(--green)', fontWeight: '600', textTransform: 'capitalize' }}>{correctAnswer}</span>
+          <span style={{ color: 'rgba(242,237,227,0.5)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' }}>Recommended play:</span>
+          <span style={{ color: 'var(--green)', fontWeight: '600' }}>{correctAnswer}</span>
         </div>
       )}
       <div className="fb-text">

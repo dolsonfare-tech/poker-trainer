@@ -402,7 +402,7 @@ export default function App() {
         >
           Check<em>Raise</em>
         </div>
-        <div className="tagline">AI-Powered Skill Training</div>
+        <div className="tagline">Find the leak in your game</div>
         <button className="info-btn" onClick={() => setShowVillainGuide(true)}>i</button>
       </div>
 
@@ -454,7 +454,7 @@ export default function App() {
                     grade={feedback.grade}
                     loading={feedback.loading}
                     feedbackText={feedback.text}
-                    correctAnswer={scenario.correct}
+                    correctAnswer={scenario.options.find(o => o.val === scenario.correct)?.label ?? scenario.correct}
                     timedOut={timedOut}
                     scenarioId={scenario.id}
                     choice={feedback.choice}

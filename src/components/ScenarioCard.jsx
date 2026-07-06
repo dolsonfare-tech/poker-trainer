@@ -549,7 +549,7 @@ function CanvasLayout({
                 grade={feedback.grade}
                 loading={feedback.loading}
                 feedbackText={feedback.text}
-                correctAnswer={scenario.correct}
+                correctAnswer={scenario.options.find(o => o.val === scenario.correct)?.label ?? scenario.correct}
                 timedOut={timedOut}
                 scenarioId={scenario.id}
                 choice={feedback.choice}
