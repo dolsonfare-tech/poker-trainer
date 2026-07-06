@@ -330,6 +330,9 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                 <>
                   <div className="db-schema-name">{schema.name}</div>
                   <div className="db-schema-quote">{schema.quote}</div>
+                  {sessionsCompleted < 10 && (
+                    <div className="db-schema-early">Early read · sharpens as you play</div>
+                  )}
                 </>
               ) : (
                 <div className="db-schema-locked">

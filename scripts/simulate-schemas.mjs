@@ -39,7 +39,10 @@ const PROFILES = [
   { label: 'Results Thinker (reads 40%)',           base: 0.80, acc: { reads: 0.4 },                           expect: 'The Results Thinker' },
   { label: 'Exploitable Regular (opponent 40%)',    base: 0.80, acc: { opponent: 0.4 },                        expect: 'The Exploitable Regular' },
   { label: 'Overaggressor (betsize 40%)',           base: 0.80, acc: { betsize: 0.4 },                         expect: 'The Overaggressor' },
-  { label: 'Mild single leak (position 60%)',       base: 0.85, acc: { position: 0.6 },                        expect: 'The Positional Blind Spot' },
+  // Yellow-only leak reads as Balanced BY DESIGN since the July 2026 bar raise
+  // (SCHEMA_MIN_SEVERITY 1.25): the schema card only names a leak when a skill
+  // is genuinely red; yellow shows in the skill ledger instead.
+  { label: 'Mild single leak (position 60%)',       base: 0.85, acc: { position: 0.6 },                        expect: 'The Balanced Player' },
   { label: 'Two leaks (aggression 40%, position 40%)', base: 0.80, acc: { aggression: 0.4, position: 0.4 },    expect: 'The Positional Blind Spot' }, // position scores 2.0 alone; CA averages in healthy bluffing
 ];
 

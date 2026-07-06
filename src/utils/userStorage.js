@@ -79,8 +79,14 @@ export const BALANCED_SCHEMA = {
 };
 
 // Minimum normalized severity for a schema to count as your leak: its measured
-// primary skills must average at least yellow-level (1.0). Below that you're Balanced.
-const SCHEMA_MIN_SEVERITY = 1;
+// primary skills must average ABOVE yellow-level — i.e., at least one
+// contributing skill genuinely red. Raised 1.0 → 1.25 July 2026 after
+// simulation (npm run simulate:schemas) showed the yellow-level bar handed
+// leaky players the WRONG schema 15% of the time and balanced players a false
+// one 39% of the time at 10 sessions; the red requirement cuts those to 5%/27%.
+// Cost: yellow-only mild leaks read as Balanced (still visible in the skill
+// ledger as "Work On"). Revisit against real distributions at v2 calibration.
+const SCHEMA_MIN_SEVERITY = 1.25;
 
 export function deriveSchema(skills, sessionsCompleted) {
   if (sessionsCompleted < 5) return null;  // locked: not enough data to diagnose

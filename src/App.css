@@ -1724,6 +1724,18 @@ body {
 .db-schema-quote::before { content: '❝ '; color: var(--gold); font-style: normal; }
 .db-schema-quote::after  { content: ' ❞'; color: var(--gold); font-style: normal; }
 
+/* Provisional tag under the schema while the diagnosis is still low-confidence
+   (< 10 sessions). Label styling per font rules: JetBrains Mono, quiet. */
+.db-schema-early {
+  margin-top: 10px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  color: rgba(242,237,227,0.45);
+}
+
 /* ── Skill ledger: status groups, weakest first ──
    One row per status (label left, pills right) at every width — it lives
    in the right half of the Player Profile card on desktop. */
