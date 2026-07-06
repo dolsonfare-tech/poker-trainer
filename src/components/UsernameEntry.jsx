@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { track } from '../utils/analytics';
 
-export default function UsernameEntry({ onSubmit, defaultName }) {
+export default function UsernameEntry({ onSubmit, defaultName, onSwitchAccount }) {
   const [name, setName]   = useState(defaultName ?? '');
   const [error, setError] = useState('');
   const [busy, setBusy]   = useState(false);
@@ -51,6 +51,11 @@ export default function UsernameEntry({ onSubmit, defaultName }) {
             {busy ? 'Setting up…' : "Let's Play →"}
           </button>
         </form>
+        {onSwitchAccount && (
+          <button type="button" className="ue-switch" onClick={onSwitchAccount}>
+            Not you? Sign in with a different account
+          </button>
+        )}
       </div>
     </div>
   );

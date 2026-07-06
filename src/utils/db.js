@@ -33,7 +33,15 @@ function assembleUser(profile, skillRows) {
 
 /** Signed-in user's profile + skills, or null when no profile row exists yet. */
 export async function fetchRemoteUser() {
-  const { data: auth } = await supabase.auth.getUser();
+  const { data: auth, error: authErr } = await supabase.auth.getUser();
+  // A locally stored session the server rejects (revoked, or the auth user
+  // was deleted) is NOT "no profile yet" — returning null here dead-ends the
+  // player on UsernameEntry with a session that can't insert anything.
+  if (authErr && (authErr.status === 401 || authErr.status === 403)) {
+    const err = new Error('Stored session rejected by the server');
+    err.code = 'invalid_session';
+    throw err;
+  }
   const uid = auth?.user?.id;
   if (!uid) return null;
   const { data: profile, error } = await supabase

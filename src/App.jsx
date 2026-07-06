@@ -144,6 +144,16 @@ export default function App() {
           }
         } catch (err) {
           console.error('Failed to load profile', err);
+          if (err?.code === 'invalid_session') {
+            // Stale/revoked session: clear it and land on SignIn — otherwise
+            // the player is walled into UsernameEntry with a dead session
+            // (founder hit this live, July 6). Local scope: the server
+            // already rejects the session, nothing to revoke there.
+            track('stale_session_cleared');
+            await supabase.auth.signOut({ scope: 'local' });
+            if (active) setAuthPhase('signedout');
+            return;
+          }
           if (active) setAuthPhase('noprofile');
         }
       }, 0);
@@ -313,6 +323,13 @@ export default function App() {
     }
   };
 
+  // Escape hatch on UsernameEntry — without it a wrong or broken auth state
+  // walls the player in (no back to SignIn, no forward past profile create)
+  const handleSwitchAccount = async () => {
+    await supabase.auth.signOut({ scope: 'local' });
+    resetAnalytics();
+  };
+
   if (authPhase === 'loading') {
     return (
       <div className="ue-screen">
@@ -327,7 +344,13 @@ export default function App() {
     return <SignIn />;
   }
   if (authPhase === 'noprofile' || !user) {
-    return <UsernameEntry onSubmit={handleCreateUser} defaultName={loadUser()?.displayName} />;
+    return (
+      <UsernameEntry
+        onSubmit={handleCreateUser}
+        defaultName={loadUser()?.displayName}
+        onSwitchAccount={hasSupabase ? handleSwitchAccount : undefined}
+      />
+    );
   }
 
   return (
