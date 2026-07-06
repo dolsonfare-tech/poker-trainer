@@ -95,6 +95,29 @@ for (const s of SCENARIOS) {
       flag('ERROR', id, 'math', `preflop: raise to $${raise}, hero invested $${invested}, expected toCall $${raise - invested}, got ${s.toCall}`);
   }
 
+  // ── Preflop pot recompute (blinds $1/$2) ─────────────────────────────
+  // Sum what every seat has committed and compare against the pot field.
+  // Seat commitment = its recorded action amount ("Raises $6" = raise TO $6,
+  // includes any blind already posted), else its blind post, else $0.
+  // WARN not ERROR: scenarios flagged by R2 carry stale action strings, so a
+  // mismatch here needs a human read, not a CI failure.
+  if (!isPostflop && potAmt != null) {
+    let committed = 0;
+    let confident = true;
+    for (const p of s.positions) {
+      const a = String(p.action ?? '');
+      const blind = /^SB\b/.test(p.label) ? 1 : /^BB\b/.test(p.label) ? 2 : 0;
+      let amount = null;
+      if (/^(Raises?d?|3.Bets?|4.Bets?|Bets?|Calls?)\s*\$/i.test(a)) amount = amt(a);
+      else if (/^Limps?/i.test(a)) amount = 2;
+      else if (/^(Folds?|Active|\?\?\?)$/i.test(a)) amount = 0;
+      else confident = false; // unrecognized action string — skip this scenario
+      committed += Math.max(amount ?? 0, blind);
+    }
+    if (confident && committed !== potAmt)
+      flag('WARN', id, 'potpre', `pot field ${s.pot} but seat actions + blinds commit $${committed}`);
+  }
+
   // ── Pot claims in body vs pot field ──────────────────────────────────
   const bodyPot = String(s.body ?? '').match(/[Pp]ot(?:\s+\w+){0,2}\s+(?:is\s+|of\s+|at\s+)?\$([\d,]+)/);
   if (bodyPot && potAmt != null && parseFloat(bodyPot[1].replace(/,/g, '')) !== potAmt)
