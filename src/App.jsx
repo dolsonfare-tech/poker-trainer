@@ -102,32 +102,51 @@ export default function App() {
   const scenario = shuffledScenarios[currentIndex];
 
   // ── Auth lifecycle (Supabase mode only) ──────────────────────────────────
+  // Tracks which user's profile is already loaded so later auth events
+  // (hourly TOKEN_REFRESHED, tab-focus re-emits) don't refetch — or worse,
+  // knock a ready user back to 'noprofile' on one flaky request.
+  const loadedUidRef = useRef(null);
+
   useEffect(() => {
     if (!hasSupabase) return;
     let active = true;
-    const { data: sub } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (!session) {
+        loadedUidRef.current = null;
         setUser(null);
         setAuthPhase('signedout');
         return;
       }
       identify(session.user.id);
       if (event === 'SIGNED_IN') track('signed_in');
-      try {
-        const remote = await fetchRemoteUser();
+      const uid = session.user.id;
+      if (loadedUidRef.current === uid) return;
+      // Deferred past the callback: supabase-js holds its internal auth lock
+      // while onAuthStateChange callbacks run, and fetchRemoteUser() needs
+      // that same lock to attach its access token. Awaiting it inline can
+      // deadlock when the event fires mid-token-refresh (returning to the
+      // site with an expired token), leaving the app stuck on "Shuffling
+      // up…" until a reload. Supabase docs: never await auth/db calls
+      // inside this callback.
+      setTimeout(async () => {
         if (!active) return;
-        if (remote) {
-          setUser(remote);
-          saveUser(remote); // localStorage stays a warm cache
-          setAuthPhase('ready');
-        } else {
-          setAuthPhase('noprofile'); // first visit: pick a name (+ migrate local history)
+        try {
+          const remote = await fetchRemoteUser();
+          if (!active) return;
+          loadedUidRef.current = uid;
+          if (remote) {
+            setUser(remote);
+            saveUser(remote); // localStorage stays a warm cache
+            setAuthPhase('ready');
+          } else {
+            setAuthPhase('noprofile'); // first visit: pick a name (+ migrate local history)
+          }
+        } catch (err) {
+          console.error('Failed to load profile', err);
+          if (active) setAuthPhase('noprofile');
         }
-      } catch (err) {
-        console.error('Failed to load profile', err);
-        if (active) setAuthPhase('noprofile');
-      }
+      }, 0);
     });
     return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
