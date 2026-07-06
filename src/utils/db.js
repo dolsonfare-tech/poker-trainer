@@ -27,6 +27,7 @@ function assembleUser(profile, skillRows) {
     coachNote: profile.coach_note_body
       ? { body: profile.coach_note_body, focus: profile.coach_note_focus }
       : null,
+    usernameChangedAt: profile.username_changed_at ?? null,
     leaderboard: null,
   };
 }
@@ -107,6 +108,31 @@ export async function saveRemoteUser(user) {
   const { error: skillsErr } = await supabase
     .from('skills').upsert(skillRows, { onConflict: 'user_id,skill' });
   if (skillsErr) throw skillsErr;
+}
+
+/**
+ * Rename the signed-in user (once per week). The DB trigger
+ * `username_change_limit` enforces the cooldown and owns username_changed_at;
+ * a rejected rename surfaces here as err.code = 'rate_limited'.
+ */
+export async function updateDisplayName(username) {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth?.user?.id;
+  if (!uid) throw new Error('Not signed in');
+  const { data, error } = await supabase.from('profiles').update({
+    display_name: username,
+    initials: username.slice(0, 2).toUpperCase(),
+    updated_at: new Date().toISOString(),
+  }).eq('id', uid).select('username_changed_at').single();
+  if (error) {
+    if (error.message?.includes('username_rate_limited')) {
+      const err = new Error('Username was changed within the last week');
+      err.code = 'rate_limited';
+      throw err;
+    }
+    throw error;
+  }
+  return data;
 }
 
 /** Append one completed session to the history log. */

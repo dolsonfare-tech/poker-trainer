@@ -56,3 +56,29 @@ test('new user completes first session and sees the summary', async () => {
   fireEvent.click(screen.getByText('Train Again'));
   expect(await screen.findByText(/Deal Me In/)).toBeInTheDocument();
 });
+
+test('username is editable from the dashboard, then locked for a week', async () => {
+  localStorage.clear();
+  render(<App />);
+
+  fireEvent.change(screen.getByPlaceholderText('Choose a username'), {
+    target: { value: 'Tester' },
+  });
+  fireEvent.click(screen.getByText(/Let's Play/));
+  expect(await screen.findByText(/Deal Me In/)).toBeInTheDocument();
+
+  // Rename via the topbar ✎
+  fireEvent.click(screen.getByLabelText('Edit username'));
+  fireEvent.change(screen.getByLabelText('New username'), {
+    target: { value: 'RiverRat' },
+  });
+  fireEvent.click(screen.getByText('Save'));
+  expect(await screen.findByText('RiverRat')).toBeInTheDocument();
+  expect(screen.getByText('RI')).toBeInTheDocument(); // initials follow the rename
+
+  // Second attempt inside the 7-day window hits the cooldown notice
+  fireEvent.click(screen.getByLabelText('Edit username'));
+  expect(screen.getByText(/limited to once a week/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText('OK'));
+  expect(screen.getByText('RiverRat')).toBeInTheDocument();
+});

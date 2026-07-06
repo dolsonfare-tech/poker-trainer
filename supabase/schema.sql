@@ -115,3 +115,36 @@ alter table public.scenario_feedback enable row level security;
 create policy "own scenario feedback insert" on public.scenario_feedback
   for insert with check (auth.uid() = user_id);
 -- No select/update/delete policies — same one-way box as feedback.
+
+-- ── editable usernames: once per week, enforced in the DB ───────────────────
+-- (Added July 2026. If the base schema is already deployed, run just this
+-- block in the Supabase SQL editor.) The client disables the edit form during
+-- the cooldown, but this trigger is the enforcement — RLS lets users update
+-- their own profile row, so without it any client could rename at will.
+-- username_changed_at is server-owned: the trigger overwrites whatever the
+-- client sends, so it can't be nulled to reset the clock. First-time profile
+-- creation (INSERT) doesn't start the clock. Founders needing to force a
+-- rename: alter table public.profiles disable trigger username_change_limit;
+alter table public.profiles add column username_changed_at timestamptz;
+
+create or replace function public.enforce_username_change_limit()
+returns trigger
+language plpgsql
+as $$
+begin
+  if new.display_name is distinct from old.display_name then
+    if old.username_changed_at is not null
+       and old.username_changed_at > now() - interval '7 days' then
+      raise exception 'username_rate_limited';
+    end if;
+    new.username_changed_at := now();
+  else
+    new.username_changed_at := old.username_changed_at;
+  end if;
+  return new;
+end;
+$$;
+
+create trigger username_change_limit
+  before update on public.profiles
+  for each row execute function public.enforce_username_change_limit();

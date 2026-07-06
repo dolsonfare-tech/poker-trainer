@@ -2,9 +2,9 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
-import { loadUser, saveUser, createUser, applySessionResults } from './utils/userStorage';
+import { loadUser, saveUser, createUser, applySessionResults, RENAME_COOLDOWN_MS } from './utils/userStorage';
 import { supabase, hasSupabase } from './utils/supabase';
-import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession } from './utils/db';
+import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
 import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
@@ -315,6 +315,33 @@ export default function App() {
     }
   };
 
+  // Editable usernames (once per week). Supabase mode: the DB trigger is the
+  // enforcement; local mode mirrors the same cooldown client-side. Initials
+  // derive from the new name, matching first-time creation.
+  const handleRename = async (username) => {
+    let changedAt;
+    if (hasSupabase) {
+      const row = await updateDisplayName(username);
+      changedAt = row?.username_changed_at ?? new Date().toISOString();
+    } else {
+      const last = user.usernameChangedAt;
+      if (last && Date.now() - new Date(last).getTime() < RENAME_COOLDOWN_MS) {
+        const err = new Error('Username was changed within the last week');
+        err.code = 'rate_limited';
+        throw err;
+      }
+      changedAt = new Date().toISOString();
+    }
+    const updated = {
+      ...user,
+      displayName: username,
+      initials: username.slice(0, 2).toUpperCase(),
+      usernameChangedAt: changedAt,
+    };
+    setUser(updated);
+    saveUser(updated);
+  };
+
   const handleSignOut = async () => {
     if (hasSupabase && window.confirm('Sign out of CheckRaise?')) {
       await supabase.auth.signOut();
@@ -370,7 +397,7 @@ export default function App() {
       {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} onSignOut={handleSignOut} />
+        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} onSignOut={handleSignOut} onRename={handleRename} />
       )}
 
       {screen === 'difficulty' && (

@@ -1388,6 +1388,92 @@ body {
   color: rgba(242,237,227,0.7);
 }
 
+.db-account {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.db-name-edit {
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  font-size: 0.8rem;
+  line-height: 1;
+  color: rgba(242,237,227,0.35);
+  cursor: pointer;
+  transition: color 0.18s;
+}
+.db-name-edit:hover { color: var(--gold-light); }
+
+.db-rename {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+  margin-right: 10px;
+}
+
+.db-rename-input {
+  width: 150px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(200,168,75,0.35);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  color: rgba(242,237,227,0.9);
+  outline: none;
+}
+.db-rename-input:focus { border-color: var(--gold); }
+
+.db-rename-save {
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  border: none;
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #1a1208;
+  cursor: pointer;
+}
+.db-rename-save:disabled { opacity: 0.45; cursor: default; }
+
+.db-rename-cancel {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 99px;
+  padding: 6px 13px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(242,237,227,0.55);
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+.db-rename-cancel:hover { color: rgba(242,237,227,0.85); border-color: rgba(255,255,255,0.28); }
+
+.db-rename-note {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.55);
+  max-width: 340px;
+}
+
+.db-rename-error {
+  flex-basis: 100%;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--red);
+}
+
 .db-plan-pill {
   display: flex;
   align-items: center;

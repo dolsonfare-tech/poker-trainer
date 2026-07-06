@@ -12,6 +12,19 @@ The core moat: personalization + spaced repetition + opponent modeling + schema 
 
 ---
 
+## Definition of Done — pass these gates before declaring ANY change complete
+
+These apply to every model working in this repo, every session. If a change can't satisfy a gate, say so explicitly — never weaken or skip a check to get green.
+
+1. **`npm run check:invariants`** — after EVERY code change. Mechanically enforces the "Key Decisions" and "What to Never Do" rules: single-file ownership (Supabase client/reads/writes, PostHog, AdSense, Anthropic), no server secrets in client code, RLS + policies on every table in `schema.sql`, no tracked `.env`, no uppercase paths in `public/`, no async `onAuthStateChange` callback.
+2. **`CI=true npm test`** — jest suite, after every code change.
+3. **`npm run audit:scenarios`** — if `scenarios.js` or `constants.js` was touched (content consistency: pots, cards, gradings).
+4. **`npm run simulate:schemas`** — if `deriveSchema` or the rating engine was touched (exits 1 on structural diagnosis bias).
+5. **New Supabase table?** It goes in `supabase/schema.sql` with RLS enabled + explicit policies (gate 1 fails otherwise), and flag to the user that the block must be run in the Supabase SQL editor BEFORE the deploy that uses it.
+6. **New load-bearing decision?** If it's an invariant (a "never do X" or "only file Y does Z"), encode it as a rule in `scripts/check-invariants.mjs` in the same session you document it — prose rules drift, exit codes don't.
+
+---
+
 ## Phase 1.0 — COMPLETE
 
 - 83 scenarios built and structured
@@ -50,6 +63,7 @@ Phase 1.5 closed July 2026. Strategic-question status: **monetization answered**
 **In flight / next (30-day playbook is a Claude artifact; owner tags YOU/CLAUDE):**
 - ✅ **Stale-session dead-end FIXED July 6, LIVE in prod (user pushed same day; fix verified present in prod bundle)** — founder hit it live in prod: a locally stored Supabase session the server rejects (403 on `/auth/v1/user` — revoked session or deleted auth user) read as "signed in, no profile," walling him into UsernameEntry with a prepopulated name and a "couldn't save" error, no way back. Root cause: `fetchRemoteUser` ignored the `getUser()` error. Now: 401/403 from getUser → `invalid_session` error → App signs out (`scope: 'local'`) → SignIn screen; tracks `stale_session_cleared` (PostHog — watch it; spikes mean sessions are being revoked somewhere). Plus escape hatch on UsernameEntry: "Not you? Sign in with a different account" (Supabase mode only). Verified July 6 by forging an unexpired-but-invalid JWT against real Supabase — app recovers to SignIn, token cleared. Manual unblock for a stuck device: delete `sb-*` localStorage keys in DevTools and reload.
 - ⏳ AdSense application (user submitting)
+- ✅ **Editable usernames BUILT July 6** (details in the Backlog entry) — ⚠️ **run the editable-usernames block (bottom of `supabase/schema.sql`) in the Supabase SQL editor BEFORE the next deploy**; until then renames fail gracefully with an inline error.
 - ✅ **Beta feedback table live in Supabase (July 5)** — `feedback` block run in the SQL editor, test submission verified end-to-end (row landed). Form ships with the next deploy.
 - ✅ **PostHog analytics live in prod (July 5)** — `src/utils/analytics.js` is the ONLY PostHog file (no-op without `REACT_APP_POSTHOG_KEY`; autocapture off, `person_profiles: 'identified_only'`, US cloud). Funnel: `sign_in_link_sent` → `signed_in` → `profile_created` → `session_started` → `decision_made` ×5 → `session_completed`; health: `coach_read_ok`/`coach_read_failed` (reason: network | http+status | empty_response), `profile_create_failed`, `go_pro_clicked`, `google_sign_in_clicked`. TODO: build the funnel insight in PostHog UI from that list.
 - ✅ **Google sign-in live in prod (July 5)** — `REACT_APP_GOOGLE_AUTH=1` flipped in Vercel, button live for real users. ⏳ Google brand verification still pending (submitted July 5, 2–5 business days) but cosmetic only — until it lands the consent screen shows the raw supabase.co domain instead of "CheckRaise" + logo.
@@ -281,7 +295,7 @@ Features excluded from current build. May return based on tester feedback or str
 - **Streak warning** — show after 6pm if user hasn't played today
 - **Coach greeting** — personalized dashboard greeting
 - **Streak badges / celebrations** — milestone rewards
-- **Editable usernames** — users can't currently change their display name after `UsernameEntry`. Add an edit path (likely from the dashboard avatar/profile), rate-limited to ~1 change per week to discourage churn/impersonation. Server-side concerns: enforce the rate limit in the DB (store `username_changed_at` on `profiles`, check in `db.js` / RLS, not just client), keep uniqueness if usernames are ever made unique, and re-run the same validation as first-time creation. Derived display fields (initials) must update with it.
+- ✅ **Editable usernames — BUILT July 6** (was backlog; pulled forward on founder request). ✎ button next to the dashboard account pill → inline topbar form (same 2–20 char validation as UsernameEntry); initials re-derive from the new name. Rate limit = 1 change per 7 days: enforced **in the DB** by the `username_change_limit` BEFORE UPDATE trigger on `profiles` (new `username_changed_at` column, server-owned — the trigger overwrites client-sent values so the clock can't be reset; raises `username_rate_limited`, surfaced as `err.code = 'rate_limited'` by `updateDisplayName` in db.js). Client mirrors the cooldown as UX (form replaced by a "change again on {date}" note); localStorage-only mode enforces client-side only. `RENAME_COOLDOWN_MS` lives in userStorage.js. PostHog: `username_edit_opened` / `username_changed` / `username_change_failed` (reason: rate_limited | error). Founders forcing a rename: `alter table public.profiles disable trigger username_change_limit`. ⚠️ **Run the editable-usernames block (bottom of `supabase/schema.sql`) in the Supabase SQL editor BEFORE the next deploy** — until then renames fail gracefully (inline "couldn't save"). Uniqueness still not enforced (usernames were never unique — unchanged).
 
 ---
 

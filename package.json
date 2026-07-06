@@ -21,6 +21,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "audit:scenarios": "node scripts/audit-scenarios.mjs",
+    "check:invariants": "node scripts/check-invariants.mjs",
     "export:review": "node scripts/export-review.mjs",
     "simulate:schemas": "node scripts/simulate-schemas.mjs",
     "eject": "react-scripts eject"

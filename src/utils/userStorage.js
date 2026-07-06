@@ -2,6 +2,11 @@ import { deriveRating, applyHandToSkill, PLAYER_SCHEMAS, SKILL_NAMES } from '../
 
 const USER_KEY = 'cr_user';
 
+// Editable usernames: one change per week. In Supabase mode the DB trigger
+// (username_change_limit) is the enforcement; this constant drives the client
+// UI and the localStorage-only fallback.
+export const RENAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
 export const DEFAULT_SKILLS = {
   preflop:    { rating: 'gray', attempts: 0, correct: 0 },
   position:   { rating: 'gray', attempts: 0, correct: 0 },
