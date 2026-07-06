@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
-import { loadUser, saveUser, createUser, applySessionResults, RENAME_COOLDOWN_MS } from './utils/userStorage';
+import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, applySessionResults, RENAME_COOLDOWN_MS } from './utils/userStorage';
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
@@ -114,6 +114,12 @@ export default function App() {
       if (!active) return;
       if (!session) {
         loadedUidRef.current = null;
+        // Explicit sign-out: the cached profile belongs to the account that
+        // just left — drop it so it can't seed the NEXT account's profile
+        // (two-accounts-one-phone stats leak, July 2026). INITIAL_SESSION
+        // with no session must NOT clear: that's a pre-Supabase tester who
+        // hasn't signed in yet, and their cache is the migration payload.
+        if (event === 'SIGNED_OUT') clearUser();
         setUser(null);
         setAuthPhase('signedout');
         return;
@@ -137,7 +143,8 @@ export default function App() {
           loadedUidRef.current = uid;
           if (remote) {
             setUser(remote);
-            saveUser(remote); // localStorage stays a warm cache
+            saveUser(remote);   // localStorage stays a warm cache…
+            setCacheOwner(uid); // …owned by this account, never migration data
             setAuthPhase('ready');
           } else {
             setAuthPhase('noprofile'); // first visit: pick a name (+ migrate local history)
@@ -303,9 +310,14 @@ export default function App() {
     if (hasSupabase) {
       // First sign-in: create the profile, migrating any pre-Supabase
       // localStorage history so existing testers keep their progress.
-      const created = await createRemoteProfile(username, loadUser());
+      // An owner-tagged cache is another signed-in account's warm copy,
+      // NOT migration data — a fresh account starts fresh.
+      const local = cacheOwner() ? null : loadUser();
+      const created = await createRemoteProfile(username, local);
       setUser(created);
       saveUser(created);
+      const { data: auth } = await supabase.auth.getUser();
+      if (auth?.user?.id) setCacheOwner(auth.user.id);
       setAuthPhase('ready');
       track('profile_created');
     } else {
@@ -374,7 +386,7 @@ export default function App() {
     return (
       <UsernameEntry
         onSubmit={handleCreateUser}
-        defaultName={loadUser()?.displayName}
+        defaultName={cacheOwner() ? undefined : loadUser()?.displayName}
         onSwitchAccount={hasSupabase ? handleSwitchAccount : undefined}
       />
     );

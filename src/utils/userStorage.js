@@ -48,6 +48,32 @@ export function saveUser(user) {
   try { localStorage.setItem(USER_KEY, JSON.stringify(user)); } catch {}
 }
 
+// ── Cache ownership (Supabase mode) ──────────────────────────────────────────
+// The localStorage user doubles as (a) a pre-Supabase tester's real history,
+// eligible for migration on first sign-in, and (b) a warm cache of a signed-in
+// account's profile. Only (a) may ever seed a new profile: migrating (b) copies
+// one account's stats into another (two-accounts-one-phone bug, July 2026).
+// The owner tag marks the cache as (b); sign-out clears both keys.
+const OWNER_KEY = 'cr_user_owner';
+
+/** Mark the cached profile as belonging to a signed-in auth user. */
+export function setCacheOwner(uid) {
+  try { localStorage.setItem(OWNER_KEY, uid); } catch {}
+}
+
+/** The auth uid the cache belongs to, or null for pre-Supabase local data. */
+export function cacheOwner() {
+  try { return localStorage.getItem(OWNER_KEY); } catch { return null; }
+}
+
+/** Drop the cached profile + owner tag (sign-out: cache follows the account). */
+export function clearUser() {
+  try {
+    localStorage.removeItem(USER_KEY);
+    localStorage.removeItem(OWNER_KEY);
+  } catch {}
+}
+
 export function createUser(username) {
   return {
     displayName: username,
