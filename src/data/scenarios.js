@@ -4735,7 +4735,7 @@ const SCENARIOS = [
     pot: '$9',
     toCall: '$5 more',
     body: "The loose rec opens to $6 from the Cutoff. You look down at J♠8♠ in the Small Blind — suited, kind of connected, kind of tempting. If you call, you'll act first on every street with the Big Blind still lurking behind you.",
-    question: 'J♠8♠ in the Small Blind facing a loose open. Does \"suited\" rescue the worst seat at the table?',
+    question: 'J♠8♠ in the Small Blind facing a loose open. Does "suited" rescue the worst seat at the table?',
     correct: 'fold',
     choices: [
       {
