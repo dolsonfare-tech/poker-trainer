@@ -75,3 +75,20 @@ create policy "own sessions insert" on public.sessions for insert with check (au
 -- coach_usage is written only by the server (service role bypasses RLS);
 -- users may read their own count.
 create policy "own usage read" on public.coach_usage for select using (auth.uid() = user_id);
+
+-- ── beta feedback: insert-only from the app; founders read via SQL editor ──
+-- (Added July 2026 for the dashboard beta-feedback form. If the base schema
+-- is already deployed, run just this block in the Supabase SQL editor.)
+create table public.feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  category text not null check (category in ('gameplay', 'scenarios', 'technical', 'idea')),
+  body text not null check (char_length(body) between 1 and 2000),
+  created_at timestamptz not null default now()
+);
+create index feedback_created on public.feedback (created_at desc);
+
+alter table public.feedback enable row level security;
+create policy "own feedback insert" on public.feedback for insert with check (auth.uid() = user_id);
+-- No select/update/delete policies: users can't read feedback back — it's a
+-- one-way suggestion box the founders read with the service role.

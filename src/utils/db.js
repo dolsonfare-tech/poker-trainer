@@ -115,3 +115,16 @@ export async function recordSession({ difficulty, hands, correctCount, coachRead
   });
   if (error) throw error;
 }
+
+/** Beta feedback — insert-only; founders read it with the service role. */
+export async function submitFeedback(category, body) {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth?.user?.id;
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('feedback').insert({
+    user_id: uid,
+    category,
+    body,
+  });
+  if (error) throw error;
+}
