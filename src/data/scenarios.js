@@ -116,7 +116,7 @@ const SCENARIOS = [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Too Tight Here', emoji: '❌',
-        fb: "Folding J8 suited in the BB against a wide opener is leaving money on the table. You're getting nearly 3:1 and the hand has real playability — suited connectors thrive in exactly these spots.",
+        fb: "Folding J8 suited in the BB against a wide opener is leaving money on the table. You're getting better than 2:1 to close the action and the hand has real playability — suited connectors thrive in exactly these spots.",
       },
       {
         val: 'call', label: 'Call $4 more', icon: '📞', cls: 'call',
@@ -189,18 +189,18 @@ const SCENARIOS = [
     pot: '$40',
     toCall: '$15',
     body: "Heads-up on the flop: A♠ J♥ 3♦. Pot is $40. You hold K♣Q♦ — a gutshot straight draw with two overcards. You checked. The villain is a passive regular who bets when he has it — this bet likely means a strong hand.",
-    question: "You're getting 3.6:1 pot odds with 10 outs. What's your play?",
+    question: "You're getting 3.6:1 pot odds with 4 clean outs to the nut straight. What's your play?",
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Folding Equity Left Behind', emoji: '❌',
-        fb: "You have 10 outs (4 to the nut straight, 6 overcard outs) and you're getting 3.6:1 — this is a mandatory call. Folding KQ on this board gives up too much equity against a passive player who isn't even likely to barrel future streets.",
+        fb: "You have 4 clean outs to the nut straight and you're getting 3.6:1 with real implied odds — folding gives up too much. Against a passive player who isn't likely to barrel future streets, this is a cheap look at a card that wins you his stack.",
       },
       {
         val: 'call', label: 'Call $15', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Solid Pot Odds Decision', emoji: '✅',
-        fb: "With 10 outs and 3.6:1 odds, calling is the clear play. A passive regular who only bets for value is unlikely to fold to a raise, so you take the good price and look to hit your draw.",
+        fb: "Calling is right — 4 clean outs to the nut straight at 3.6:1, with implied odds when the ten hits. Be careful counting your K and Q as outs: against the strong hand his bet represents, pairing them often makes the second-best hand. A passive regular won't fold to a raise, so take the good price.",
       },
       {
         val: 'raise', label: 'Check-Raise to $45', icon: '⚡', cls: 'raise',
@@ -1052,15 +1052,15 @@ const SCENARIOS = [
       5: { label: 'BB',        action: 'Active', state: 'active' },
     }),
     hand: mkHand(['A','♦'], ['5','♦']),
-    board: ['K♠', '9♥', '3♦'],
+    board: ['K♠', '9♦', '3♦'],
     pot: '$40',
     toCall: null,
     actionHistory: [
       { street: 'PRE', segments: [{ text: "BB raises" }, { text: "you 3-bet", you: true }, { text: "BB calls" }] },
       { street: 'FLOP', segments: [{ text: "BB checks" }] },
     ],
-    body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♥3♦. BB checks.',
-    question: 'A♦5♦ — overcard on K93. As the 3-bettor, aggressive BB checks. C-bet or check?',
+    body: 'BTN 3-bet preflop. BB aggressive regular called. Flop K♠9♦3♦. BB checks.',
+    question: 'A♦5♦ — nut flush draw + overcard on K93 two-diamond. As the 3-bettor, aggressive BB checks. C-bet or check?',
     correct: 'semi_bluff',
     choices: [
       {
@@ -1352,7 +1352,7 @@ const SCENARIOS = [
       { street: 'FLOP', segments: [{ text: "BB leads $14" }] },
     ],
     body: 'BTN raised preflop. BB tight nit called. Flop K♠8♦3♥ — the nit leads $14 into you.',
-    question: '99 on K83 rainbow. Tight nit bets after your check. What do you do?',
+    question: '99 on K83 rainbow. Tight nit leads into you. What do you do?',
     correct: 'fold',
     choices: [
       {
@@ -1363,7 +1363,7 @@ const SCENARIOS = [
       {
         val: 'call', label: 'Call $14', icon: '📞', cls: 'call',
         grade: 'partial', title: 'Calling with 2 Outs', emoji: '⚠️',
-        fb: "Calling with 99 on K83 against a nit who only bets with top pair is drawing to 2 outs. You need roughly 16:1 pot odds to call profitably — you're getting less than 3:1. Fold and move on.",
+        fb: "Calling with 99 on K83 against a nit who only bets with top pair is drawing to 2 outs. You need better than 20:1 pot odds to call profitably — you're getting less than 3:1. Fold and move on.",
       },
       {
         val: 'raise', label: 'Raise to $45', icon: '⚡', cls: 'raise',
@@ -1959,7 +1959,7 @@ const SCENARIOS = [
       {
         val: 'raise', label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise',
         grade: 'correct', title: 'Protect and Charge on Wet Boards', emoji: '✅',
-        fb: "Pot-sized bet with AA on J98 two-tone. This board is too dangerous to play coy — every turn card threatens your overpair. Charge him full price to draw, and if he check-raises, you 3-bet and get it in with the best hand.",
+        fb: "Pot-sized bet with AA on J98 two-tone. This board is too dangerous to play coy — every turn card threatens your overpair. Charge him full price to draw, and if he raises, you re-raise and get it in with the best hand.",
       },
     ],
   }),
@@ -2108,8 +2108,8 @@ const SCENARIOS = [
     board: ['J♣', '8♦', '2♠', 'Q♠', '7♦'],
     pot: '$60',
     toCall: null,
-    body: "BTN vs BB aggressive regular. You have T♦9♦ — you riveted a straight. River 7♦. He checks.",
-    question: 'Rivered nut straight on J8Q27 vs aggressive regular who re-raises polarized. What size?',
+    body: "BTN vs BB aggressive regular. You have T♦9♦ — the turn Q completed your straight (8-9-T-J-Q). River 7♦ changes nothing. He checks.",
+    question: 'Turned straight (second nuts — only KT beats you) on J8Q27 vs aggressive regular who re-raises polarized. What size?',
     correct: 'small',
     choices: [
       {
@@ -2153,7 +2153,7 @@ const SCENARIOS = [
       { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you c-bet', you: true }, { text: 'BB calls' }] },
       { street: 'TURN', segments: [{ text: 'BB checks' }] },
     ],
-    body: "You c-bet the flop with J♦T♦ (gutshot + two overs) and the nit called. Turn is 2♥ — a blank. He checks to you.",
+    body: "You c-bet the flop with J♦T♦ (gutshot to the nut straight) and the nit called. Turn is 2♥ — a blank. He checks to you.",
     question: 'J♦T♦ on AK62 vs nit who called the flop. Blank turn. Barrel or give up?',
     correct: 'call',
     choices: [
@@ -2199,7 +2199,7 @@ const SCENARIOS = [
       { street: 'TURN', segments: [{ text: 'BB check-calls your bet' }] },
       { street: 'RIVER', segments: [{ text: 'BB checks' }] },
     ],
-    body: "BTN vs BB passive player. You bet flop and turn with K♣Q♣ (gutshot + two overs). River T♠ — you backdoored the nut straight. He checks to you.",
+    body: "BTN vs BB passive player. You bet flop and turn with K♣Q♣ (gutshot + two overs). River T♠ — your gutshot got there: the nut straight. He checks to you.",
     question: 'You rivered the nut straight on J942T. Passive player checks. What do you do?',
     correct: 'call',
     choices: [
@@ -2245,7 +2245,7 @@ const SCENARIOS = [
       { street: 'TURN', segments: [{ text: 'BB check-calls your bet' }] },
       { street: 'RIVER', segments: [{ text: 'BB checks' }] },
     ],
-    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (backdoor nut flush draw — needs running diamonds). River bricks 5♣ — the flush never materialized and you're left with ace-high and a pair of 4s with no real showdown value. He checks.",
+    body: "BTN vs BB tight recreational. You barreled flop and turn representing a strong range with A♦4♦ (backdoor nut flush draw — needs running diamonds). River bricks 5♣ — the flush never materialized and you're left with just ace-high. He checks.",
     question: 'A♦4♦ — backdoor flush draw never got there on K♠Q♣7♦2♥5♣. Left with ace-high. Tight rec checks. What do you do?',
     correct: 'raise',
     choices: [
@@ -2283,16 +2283,16 @@ const SCENARIOS = [
     }),
     hand: mkHand(['A','♠'], ['5','♣']),
     board: ['A♦', '7♥', '3♣'],
-    pot: '$15',
+    pot: '$13',
     toCall: '$10',
-    body: "Passive BTN bets $10 into a $15 pot on A♦7♥3♣. You're in BB with A♠5♣ — top pair, weak kicker.",
-    question: 'Top pair weak kicker on A73 rainbow. Passive villain bets $10. Getting 2.5:1. What do you do?',
+    body: "Passive BTN bets $10 into a $13 pot on A♦7♥3♣. You're in BB with A♠5♣ — top pair, weak kicker.",
+    question: 'Top pair weak kicker on A73 rainbow. Passive villain bets $10. Getting 2.3:1. What do you do?',
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Top Pair is Not a Fold', emoji: '❌',
-        fb: "Folding top pair getting 2.5:1 on the flop is massively over-folding. You're well within profitable calling territory — A5 beats his draws and many worse aces that a passive player might bet with.",
+        fb: "Folding top pair getting 2.3:1 on the flop is massively over-folding. You're well within profitable calling territory — A5 beats his draws and many worse aces that a passive player might bet with.",
       },
       {
         val: 'call', label: 'Call $10', icon: '📞', cls: 'call',
@@ -2321,7 +2321,7 @@ const SCENARIOS = [
       3: { label: 'BTN (M)',  action: 'Raises $6', state: 'active' },
       5: { label: 'BB (You)', action: 'Called $4', state: 'hero'   },
     }),
-    hand: mkHand(['T','♥'], ['9','♥']),
+    hand: mkHand(['8','♦'], ['7','♦']),
     board: ['K♦', '8♣', '2♠', '3♥', 'Q♣'],
     pot: '$50',
     toCall: '$40',
@@ -2331,19 +2331,19 @@ const SCENARIOS = [
       { street: 'TURN', segments: [{ text: 'you check-call his bet', you: true }] },
       { street: 'RIVER', segments: [{ text: 'you check', you: true }, { text: 'BTN shoves $40' }] },
     ],
-    body: "Maniac BTN fires three streets on K823Q. River Q♣. He shoves $40 into $50. You have T♥9♥ — total air, no pair, no draw.",
-    question: 'T♥9♥ (nothing) on K823Q. Maniac shoves river, 60% bluff frequency. Getting 2.25:1. What do you do?',
+    body: "Maniac BTN fires three streets on K823Q. River Q♣. He shoves $40 into $50. You have 8♦7♦ — a pair of eights, a pure bluff-catcher that beats every busted draw.",
+    question: '8♦7♦ (pair of eights, bluff-catcher) on K823Q. Maniac shoves river, 60% bluff frequency. Getting 2.25:1. What do you do?',
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: 'Math Says Call', emoji: '❌',
-        fb: "Folding here is a math error. You need 31% equity to call at 2.25:1, and the maniac's bluff frequency is 60%. T9 beats his bluffs and you have a profitable call. Trust the math.",
+        fb: "Folding here is a math error. You need 31% equity to call at 2.25:1, and the maniac's bluff frequency is 60%. Your pair of eights beats every busted draw and air-ball he shoves — a profitable call. Trust the math.",
       },
       {
         val: 'call', label: 'Call $40', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Bluff-Catch at the Right Frequency', emoji: '✅',
-        fb: "Call. At 2.25:1 you need to be right 31% of the time — and the maniac bluffs 60% of rivers. Even with no pair, calling a polarized river bet from a known bluffer is mathematically mandatory.",
+        fb: "Call. At 2.25:1 you need to be right 31% of the time — and the maniac bluffs 60% of rivers. A pair of eights is a true bluff-catcher here: it loses to his value hands but beats all his bluffs, which is exactly the math that makes this call mandatory.",
       },
       {
         val: 'raise', label: 'Raise', icon: '⚡', cls: 'raise',
@@ -2418,18 +2418,18 @@ const SCENARIOS = [
       { street: 'RIVER', segments: [{ text: 'BB checks' }, { text: 'you bet $35', you: true }, { text: 'BB raises to $85' }] },
     ],
     body: "BTN vs BB passive player. You bet flop and turn for value with QQ (top set). River J♣. You bet $35. Passive player — who called both previous streets without raising — now RAISES to $85.",
-    question: 'QQ (top set) on QT43J. You bet river $35. Passive player raises to $100 for the first time all hand. What do you do?',
+    question: 'QQ (top set) on QT43J. You bet river $35. Passive player raises to $85 for the first time all hand. What do you do?',
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'partial', title: 'Folding is Defensible', emoji: '⚠️',
-        fb: "Folding is tempting but a passive player's raise range isn't exclusively the nuts — he can raise with KJ, JJ (full house) that you beat with the higher full house. The fold is close but calling has merit given your hand strength.",
+        fb: "Folding is tempting but too tight at this price. You're getting about 3.7:1 — you only need to win one time in five. His raising range is headed by AK and K9 straights, but it still contains slow-played lower sets (JJ, TT), two pair like QJ or JT, and the occasional overplayed top pair — all of which top set beats.",
       },
       {
         val: 'call', label: 'Call $50 more', icon: '📞', cls: 'call',
-        grade: 'correct', title: 'Call — You Still Beat Some of His Range', emoji: '✅',
-        fb: "Call. A passive player raising the river on QT43J has AK (the straight) or K9 most of the time — but you still beat 9-high draws that turned into straights he was slow-playing and set-over-set is unlikely. Call and accept being behind occasionally.",
+        grade: 'correct', title: 'Call — The Price Makes It Right', emoji: '✅',
+        fb: "Call. A passive player raising the river on QT43J often has the straight — AK or K9 — but at 3.7:1 you only need to be good 21% of the time, and his range still includes slow-played lower sets, two pair, and overplayed one-pair hands that top set crushes. Call and accept being shown a straight sometimes.",
       },
       {
         val: 'raise', label: 'Re-raise all-in', icon: '⚡', cls: 'raise',
@@ -2628,13 +2628,13 @@ const SCENARIOS = [
     pot: '$14',
     toCall: '$16 more',
     body: "BTN vs BB passive player. Flop A♣7♥4♣. You c-bet $9. Passive player — who almost never raises — check-raises to $25.",
-    question: 'AT (TPTK) on A74 two-tone. Passive player check-raises your c-bet. Fold, call, or re-raise?',
+    question: 'AT (top pair, good kicker) on A74 two-tone. Passive player check-raises your c-bet. Fold, call, or re-raise?',
     correct: 'fold',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Passive Check-Raise = Strong', emoji: '✅',
-        fb: "Fold TPTK. A passive player who almost never raises check-raises you with two pair or better — AK/A7/A4/77/44 are all in his range and all have you crushed. Disciplined fold.",
+        fb: "Fold top pair. A passive player who almost never raises check-raises you with two pair or better — A7/A4/77/44 are all in his range and all have you crushed. Disciplined fold.",
       },
       {
         val: 'call', label: 'Call $16 more', icon: '📞', cls: 'call',
@@ -2759,23 +2759,23 @@ const SCENARIOS = [
       { street: 'TURN', segments: [{ text: 'BB leads $22' }] },
     ],
     body: "CO vs BB loose recreational. You have top two pair. Flop A♠K♣8♥ — you c-bet $10, he called (unusual passive call). Turn J♦ — he leads $22 (first time he's led the hand).",
-    question: 'Top two pair (AK) on AK8J. Loose rec — who slow-plays — suddenly leads the turn. Fold, call, or raise?',
-    correct: 'fold',
+    question: 'Top two pair (AK) on AK8J. Loose rec — who slow-plays his monsters — suddenly leads the turn. Fold, call, or raise?',
+    correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
-        grade: 'correct', title: 'Read the Slow-Play Pattern', emoji: '✅',
-        fb: "Fold. A loose recreational who slow-plays strong hands and suddenly leads the turn on AK8J has exactly QT (the straight), AJ (better two pair), or a set. His lead after passive calls screams monster.",
+        grade: 'partial', title: 'Too Tight vs a Wide Lead', emoji: '⚠️',
+        fb: "Folding top two pair to a single turn bet at 2.5:1 from a loose recreational is too tight. Remember his profile: he slow-plays his monsters — so a sudden lead skews toward worse two pair, top-pair hands he likes, and pair-plus-draw. QT and sets are only a slice of his wide leading range.",
       },
       {
         val: 'call', label: 'Call $22', icon: '📞', cls: 'call',
-        grade: 'partial', title: 'Calling Leaks Chips on This Board', emoji: '⚠️',
-        fb: "Calling top two pair on AK8J when a slow-playing loose rec leads for the first time is expensive. This board completed a straight and his exact pattern — passive then leads — is the classic slow-play tell.",
+        grade: 'correct', title: 'Call — Way Ahead of His Leading Range', emoji: '✅',
+        fb: "Call. A loose recreational who slow-plays his monsters isn't leading the turn with them — his lead is worse two pair (AJ, A8, KJ), top pair he's fallen in love with, and draws. Top two pair beats all of it. Call, keep his worse hands in, and re-evaluate the river if a scare card lands.",
       },
       {
         val: 'raise', label: 'Raise to $70', icon: '⚡', cls: 'raise',
-        grade: 'incorrect', title: 'Raising Into Slow-Played Monster', emoji: '❌',
-        fb: "Raising into a loose recreational's first lead after two passive calls on AK8J is committing maximum chips against his narrowest possible range. The pattern is a strong tell — fold.",
+        grade: 'incorrect', title: 'Raising Folds Out Everything You Beat', emoji: '❌',
+        fb: "Raising top two pair here folds out all the worse hands a loose recreational leads with and gets action only from QT and sets — the exact slice that beats you. Calling keeps his wide, weaker range in the pot; raising turns your monster into a bluff-catcher for stacks.",
       },
     ],
   }),
@@ -2931,13 +2931,13 @@ const SCENARIOS = [
     choices: [
       {
         val: 'fold', label: 'Check back', icon: '🃏', cls: 'fold',
-        grade: 'partial', title: 'Checking Has Showdown Value', emoji: '⚠️',
+        grade: 'partial', title: 'No Showdown Value — Missed Bluff', emoji: '⚠️',
         fb: "Checking back misses a clear bluffing opportunity. You have 10-high, no showdown value, and a line that looks strong. The aggressive regular's check is a signal — fire.",
       },
       {
         val: 'call', label: 'Bet $25 (half-pot bluff)', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Represent the Range You Have', emoji: '✅',
-        fb: "Half-pot bluff is correct. You called three streets so your range looks strong — a river bluff after the aggressive regular checks is credible and he gives up with missed draws 70% of the time. Half-pot is the efficient size.",
+        fb: "Half-pot bluff is correct. You called flop and turn so your range looks strong — a river bluff after the aggressive regular checks is credible and he gives up with missed draws 70% of the time. Half-pot is the efficient size.",
       },
       {
         val: 'raise', label: 'Bet $55 (pot, polarized bluff)', icon: '⚡', cls: 'raise',
@@ -2965,19 +2965,19 @@ const SCENARIOS = [
     board: ['T♣', '8♣', '2♦'],
     pot: '$14',
     toCall: '$9',
-    body: "BTN aggressive regular bets $9 on T♣8♣2♦. You have J♣5♣ — a flush draw plus gutshot (potentially 12 outs).",
-    question: 'J♣5♣ (flush draw + gutshot, ~12 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. What do you do?',
+    body: "BTN aggressive regular bets $9 on T♣8♣2♦. You have J♣5♣ — a flush draw (9 outs).",
+    question: 'J♣5♣ (flush draw, 9 outs) on T82 two-tone. Aggressive regular bets $9. Getting 2.56:1. What do you do?',
     correct: 'call',
     choices: [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'incorrect', title: '12 Outs is Not a Fold', emoji: '❌',
-        fb: "Folding 12 outs getting 2.56:1 is a significant mathematical error. Even without implied odds you're close to break-even — with position and implied odds, this is a straightforward call.",
+        fb: "Folding a 9-out flush draw getting 2.56:1 is a significant error. The direct price is close, and the implied odds when the flush comes in make this a straightforward call.",
       },
       {
         val: 'call', label: 'Call $9', icon: '📞', cls: 'call',
         grade: 'correct', title: 'Call and Realize Draw Equity', emoji: '✅',
-        fb: "Call with 12 outs at 2.56:1. You're getting enough direct odds plus implied odds against an aggressive regular — hitting the flush or straight on the turn sets up a big pot. Calling preserves maximum implied odds.",
+        fb: "Call with 9 flush outs at 2.56:1. The direct price is close and the implied odds against an aggressive regular close the gap — hitting the flush on the turn sets up a big pot. Calling preserves maximum implied odds.",
       },
       {
         val: 'raise', label: 'Check-raise to $28', icon: '⚡', cls: 'raise',
@@ -3097,7 +3097,7 @@ const SCENARIOS = [
       {
         val: 'bet_medium', label: 'Bet $35 (medium)', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'Medium Value Extracts Most from Passive Player', emoji: '✅',
-        fb: "Medium bet is correct. A passive player calls top pair and two pair with medium bets and folds to overbets. Three streets of $35 extracts more than one street of $130 — keep him in the hand.",
+        fb: "Medium bet is correct. A passive player calls medium bets with top pair and two pair but folds those same hands to an overbet. A $35 bet gets paid by the wide part of his range — the sure $35 beats a $130 that only the nuts calls.",
       },
       {
         val: 'bet_large', label: 'Bet $80 (pot)', icon: '📞', cls: 'call',
@@ -3221,8 +3221,8 @@ const SCENARIOS = [
       { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you c-bet', you: true }, { text: 'BB calls' }] },
       { street: 'TURN', segments: [{ text: 'BB checks' }] },
     ],
-    body: "BTN vs BB passive player. Flop A♥T♦4♣ — you c-bet, he called. Turn 2♠ — he checks. You have Q♣9♣ (gutshot + backdoor flush draw).",
-    question: 'Q♣9♣ (gutshot, some backdoor equity) on AT42. Passive player checks turn. Second barrel or give up?',
+    body: "BTN vs BB passive player. Flop A♥T♦4♣ — you c-bet, he called. Turn 2♠ — he checks. You have Q♣9♣ — queen-high, no draw, but his range is capped.",
+    question: 'Q♣9♣ (queen-high, no made hand) on AT42. Passive player checks turn. Second barrel or give up?',
     correct: 'barrel',
     choices: [
       {
@@ -3238,7 +3238,7 @@ const SCENARIOS = [
       {
         val: 'pot', label: 'Bet $20 (pot, max pressure)', icon: '⚡', cls: 'raise',
         grade: 'partial', title: 'Pot-Bet Overcommits on a Draw', emoji: '⚠️',
-        fb: "Pot-betting as a second barrel with a gutshot and no pair overcommits your chips on a draw. $12 is enough to fold out his medium hands — size down and keep risk manageable.",
+        fb: "Pot-betting as a second barrel with no pair and no draw overcommits your chips on a pure bluff. $12 is enough to fold out his medium hands — size down and keep risk manageable.",
       },
     ],
   }),
@@ -3435,7 +3435,7 @@ const SCENARIOS = [
       { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you c-bet', you: true }, { text: 'BB calls' }] },
       { street: 'TURN', segments: [{ text: 'BB checks' }] },
     ],
-    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J♦9♦ — an open-ended straight draw (needs Q or 8). He checks.",
+    body: "BTN vs BB passive player. You c-bet flop, he called. Turn A♣. You have J♦9♦ — an open-ended straight draw (needs Q or 7). He checks.",
     question: 'J♦9♦ (OESD, 8 outs) on T83A. Passive player checks the turn after calling the flop. Double barrel or give up?',
     correct: 'bet_medium',
     choices: [
@@ -3561,8 +3561,8 @@ const SCENARIOS = [
       { street: 'TURN', segments: [{ text: 'you check-call his bet', you: true }] },
       { street: 'RIVER', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $55' }] },
     ],
-    body: "BB vs BTN aggressive regular. Three streets of betting on Q♦9♠4♥2♦K♠. He fires river $55 into $70. You have QT — middle top pair, decent kicker. He bluffs rivers 40% of the time.",
-    question: 'QT (top pair) on Q942K river. Aggressive regular who bluffs rivers 40% fires $55. Getting 2.27:1. What do you do?',
+    body: "BB vs BTN aggressive regular. Three streets of betting on Q♦9♠4♥2♦K♠. He fires river $55 into $70. You have QT — second pair after the river King, decent kicker. He bluffs rivers 40% of the time.",
+    question: 'QT (second pair after the river K) on Q942K river. Aggressive regular who bluffs rivers 40% fires $55. Getting 2.27:1. What do you do?',
     correct: 'call',
     choices: [
       {
