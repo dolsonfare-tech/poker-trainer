@@ -191,7 +191,7 @@ export default function App() {
     track('session_started', { difficulty: selected });
   };
 
-  const handleFetchCoachRead = async (results, lastIndex) => {
+  const handleFetchCoachRead = async () => {
     setCoachLoading(true);
     const prevUser = sessionUserRef.current;
     // Every hand played counts toward accuracy — not the per-skill deduped results
@@ -213,7 +213,7 @@ export default function App() {
       }
     };
     try {
-      const text = await fetchCoachRead(shuffledScenarios, results, lastIndex);
+      const text = await fetchCoachRead(sessionHistory);
       setCoachRead(text);
       if (prevUser) persist(applySessionResults(prevUser, hands, text), text);
     } catch {
@@ -260,7 +260,7 @@ export default function App() {
       });
       setShowSummary(true);
       track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length });
-      handleFetchCoachRead(skillResults, currentIndex);
+      handleFetchCoachRead();
     } else {
       decidedRef.current = false;
       setCurrentIndex(next);

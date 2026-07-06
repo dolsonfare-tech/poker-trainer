@@ -55,13 +55,21 @@ module.exports = async function handler(req, res) {
 
   const prompt = `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
 
-Session decisions:
+Session decisions (what they chose vs the best play):
 ${decisionsPlayed.map(d => {
   const table = clamp(d.tableContext);
-  return `- ${clamp(d.scenario)} vs ${clamp(d.villain)} (${clamp(d.villainNotes)})${table ? ` | Table: ${table}` : ''}: ${clamp(d.result, 20)}`;
+  const spot = [clamp(d.position, 30), clamp(d.hand, 20)].filter(Boolean).join(' with ');
+  const line = [
+    `${clamp(d.scenario)}${spot ? ` | ${spot}` : ''} vs ${clamp(d.villain)} (${clamp(d.villainNotes)})`,
+    table ? `Table: ${table}` : '',
+    `chose ${clamp(d.chose, 40) || 'unknown'}, best was ${clamp(d.correctAction, 40) || 'unknown'}`,
+    clamp(d.result, 20),
+  ].filter(Boolean).join(' | ');
+  return `- ${line}`;
 }).join('\n')}
 
 Write 2-3 sentences identifying the pattern. Rules:
+- The direction of the mistakes is the diagnosis: folding or flat-calling when raising was best is a different leak than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
 - No generic praise or filler
@@ -81,6 +89,10 @@ Write 2-3 sentences identifying the pattern. Rules:
       body: JSON.stringify({
         model: 'claude-sonnet-5',
         max_tokens: 300,
+        // Sonnet 5 runs adaptive thinking by default when `thinking` is
+        // omitted, and thinking tokens count against max_tokens — which can
+        // eat the whole 300 budget and return truncated or empty text.
+        thinking: { type: 'disabled' },
         messages: [{ role: 'user', content: prompt }],
       }),
     });

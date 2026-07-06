@@ -1,15 +1,28 @@
 import { supabase, hasSupabase } from './supabase';
 import { track } from './analytics';
 
-export async function fetchCoachRead(shuffledScenarios, skillResults, lastIndex) {
-  const decisionsPlayed = shuffledScenarios.slice(0, lastIndex + 1).map(s => ({
-    scenario: s.tag,
-    villain: s.villain.label,
-    villainNotes: s.villain.notes,
-    tableContext: s.tableContext || null,
-    skill: s.skill,
-    result: skillResults[s.skill] || 'unknown',
-  }));
+export async function fetchCoachRead(sessionHistory) {
+  // One entry per hand actually played, with the per-hand result — NOT the
+  // per-skill deduped skillResults (two hands sharing a skill would misreport
+  // the earlier one). chose vs correctAction lets the coach see the direction
+  // of each mistake (too passive vs too aggressive), not just right/wrong.
+  const decisionsPlayed = sessionHistory.map(h => {
+    const s = h.scenario;
+    const hero = s.positions.find(p => p.state === 'hero');
+    const choseOpt = s.options.find(o => o.val === h.choiceVal);
+    const correctOpt = s.options.find(o => o.val === s.correct);
+    return {
+      scenario: s.tag,
+      villain: s.villain.label,
+      villainNotes: s.villain.notes,
+      tableContext: s.tableContext || null,
+      hand: s.hand.map(c => c.r + c.s).join(''),
+      position: hero ? hero.label : '',
+      chose: choseOpt ? choseOpt.label : 'Timed out (no action)',
+      correctAction: correctOpt ? correctOpt.label : '',
+      result: h.result,
+    };
+  });
 
   // The endpoint requires a signed-in user (per-user daily cap server-side)
   const headers = { 'Content-Type': 'application/json' };
