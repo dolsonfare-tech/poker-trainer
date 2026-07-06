@@ -1,4 +1,4 @@
-import { deriveRating, applyHandToSkill } from '../data/constants';
+import { deriveRating, applyHandToSkill, PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
 
 const USER_KEY = 'cr_user';
 
@@ -61,20 +61,9 @@ export function createUser(username) {
 }
 
 // ── Schema derivation ──────────────────────────────────────────────────────────
-const SCHEMAS = [
-  { name: 'The Conflict Avoider',      quote: "I shouldn't put money in unless I'm sure", index: '01', primary: ['aggression', 'bluffing'] },
-  { name: 'The Gambler',               quote: 'Any two cards can win',                     index: '02', primary: ['preflop', 'potodds']    },
-  { name: 'The Positional Blind Spot', quote: "I don't factor in where I'm sitting",       index: '03', primary: ['position']              },
-  { name: 'The Results Thinker',       quote: 'If it worked, it was right',                index: '04', primary: ['reads']                 },
-  { name: 'The Exploitable Regular',   quote: "I play my hand, not my opponent",           index: '05', primary: ['opponent']              },
-  { name: 'The Overaggressor',         quote: 'Pressure wins pots regardless',             index: '06', primary: ['betsize']               },
-];
-
-const SKILL_DISPLAY = {
-  preflop: 'Preflop', position: 'Position', aggression: 'Aggression',
-  betsize: 'Bet Sizing', bluffing: 'Bluffing', potodds: 'Pot Odds',
-  reads: 'Reads', opponent: 'Opponent',
-};
+// Definitions live in constants.js (PLAYER_SCHEMAS) — shared with the
+// reference guide so the two can't drift. Index is display-only, from order.
+const SCHEMAS = PLAYER_SCHEMAS.map((s, i) => ({ ...s, index: String(i + 1).padStart(2, '0') }));
 
 // Returned when there's enough data but no single leak dominates. Positive
 // framing, not a "we couldn't tell" — a genuinely balanced player and a
@@ -124,7 +113,7 @@ export function deriveSchema(skills, sessionsCompleted) {
 
   const affected = best.primary
     .filter(sk => skills[sk] && (skills[sk].rating === 'red' || skills[sk].rating === 'yellow'))
-    .map(sk => ({ skill: SKILL_DISPLAY[sk], level: skills[sk].rating }));
+    .map(sk => ({ skill: SKILL_NAMES[sk], level: skills[sk].rating }));
 
   return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
 }
@@ -173,7 +162,7 @@ export function applySessionResults(user, hands, coachRead) {
 
   const weakest = Object.entries(skills)
     .filter(([, d]) => d.rating === 'red' && d.attempts > 0)
-    .map(([k]) => SKILL_DISPLAY[k])[0] ?? null;
+    .map(([k]) => SKILL_NAMES[k])[0] ?? null;
 
   const coachNote = coachRead
     ? { body: coachRead, focus: weakest }

@@ -1,4 +1,22 @@
 import { useState } from 'react';
+import { SKILL_NAMES, SKILL_DESCRIPTIONS, PLAYER_SCHEMAS } from '../data/constants';
+import { BALANCED_SCHEMA } from '../utils/userStorage';
+
+// The 8 measured skills, sourced from the shared constants so the guide can
+// never drift from what the dashboard and rating engine use.
+const SKILLS = Object.keys(SKILL_NAMES).map(key => ({
+  label: SKILL_NAMES[key],
+  desc: SKILL_DESCRIPTIONS[key],
+}));
+
+// Status names only — the accuracy thresholds behind them are engine
+// internals, not something players need to be told.
+const SKILL_RATINGS = [
+  { key: 'red',    sym: '▼', label: 'Weak' },
+  { key: 'yellow', sym: '◆', label: 'Work On' },
+  { key: 'green',  sym: '●', label: 'Strong' },
+  { key: 'gray',   sym: '○', label: 'Unrated' },
+];
 
 const VILLAINS = [
   { label: 'Tight Nit', desc: 'Only plays premium hands from any position. If they bet or raise, they almost always have it — never bluff them off a hand.' },
@@ -11,14 +29,9 @@ const VILLAINS = [
   { label: 'Unknown', desc: 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.' },
 ];
 
-const SCHEMAS = [
-  { label: 'The Conflict Avoider', quote: 'I shouldn\'t put money in unless I\'m sure.', desc: 'You fold too often and only bet the nuts, leaking value and getting pushed off winning hands. Loosen up — bet strong-but-not-perfect hands and call down more.' },
-  { label: 'The Gambler', quote: 'Any two cards can win.', desc: 'You play too many hands and chase weak draws, bleeding chips preflop and on bad odds. Tighten your starting hands and fold when the price is wrong.' },
-  { label: 'The Positional Blind Spot', quote: 'I don\'t factor in where I\'m sitting.', desc: 'You play the same whether first or last to act, ignoring the edge position gives you. Play tighter out of position and widen up on the button.' },
-  { label: 'The Results Thinker', quote: 'If it worked, it was right.', desc: 'You judge decisions by whether they won, not whether they were correct, so lucky mistakes stick around. Grade the decision, not the outcome.' },
-  { label: 'The Exploitable Regular', quote: 'I play my hand, not my opponent.', desc: 'Your fundamentals are fine but you don\'t adjust to who you\'re facing, so tougher opponents exploit you. Read villain tendencies and deviate to attack them.' },
-  { label: 'The Overaggressor', quote: 'Pressure wins pots regardless.', desc: 'You bet and raise too often and too big, turning good hands into bluffs and spewing chips. Pick better spots and size for a purpose.' },
-];
+// Schema content comes from the shared definitions the diagnosis engine
+// uses — the guide can never drift from what the dashboard diagnoses.
+const SCHEMAS = PLAYER_SCHEMAS.map(({ name, quote, desc }) => ({ label: name, quote, desc }));
 
 const GLOSSARY = [
   { label: 'C-bet (Continuation Bet)', desc: 'A bet made by the player who raised before the flop, continuing to show aggression on the flop even if it missed their hand.' },
@@ -110,6 +123,7 @@ export default function VillainGuide({ onClose }) {
 
   const items = activeTab === 'players' ? VILLAINS
     : activeTab === 'schemas' ? SCHEMAS
+    : activeTab === 'skills' ? SKILLS
     : activeTab === 'positions' ? POSITIONS
     : GLOSSARY;
 
@@ -117,6 +131,8 @@ export default function VillainGuide({ onClose }) {
     ? 'The opponents you face. Read how each one bets so you can adjust your play against them.'
     : activeTab === 'schemas'
     ? 'How the trainer diagnoses you. Each schema is the root belief behind your most common mistakes — your own leak, not an opponent.'
+    : activeTab === 'skills'
+    ? 'The eight skills the trainer measures. Each rating tracks your true accuracy across every hand that tests that skill.'
     : null;
 
   return (
@@ -132,11 +148,23 @@ export default function VillainGuide({ onClose }) {
         <div className="vg-tabs">
           <button className={`vg-tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>Player Types</button>
           <button className={`vg-tab ${activeTab === 'schemas' ? 'active' : ''}`} onClick={() => setActiveTab('schemas')}>Schemas</button>
+          <button className={`vg-tab ${activeTab === 'skills' ? 'active' : ''}`} onClick={() => setActiveTab('skills')}>Skills</button>
           <button className={`vg-tab ${activeTab === 'positions' ? 'active' : ''}`} onClick={() => setActiveTab('positions')}>Positions</button>
           <button className={`vg-tab ${activeTab === 'glossary' ? 'active' : ''}`} onClick={() => setActiveTab('glossary')}>Glossary</button>
         </div>
 
         {intro && <p className="vg-intro">{intro}</p>}
+
+        {activeTab === 'skills' && (
+          <div className="vg-skill-legend">
+            {SKILL_RATINGS.map(({ key, sym, label }) => (
+              <div key={key} className="vg-skill-legend-row">
+                <span className={`vg-skill-legend-sym vg-sym-${key}`}>{sym}</span>
+                <span className="vg-skill-legend-text">{label}</span>
+              </div>
+            ))}
+          </div>
+        )}
 
         {activeTab === 'positions' && (
           <>
@@ -159,7 +187,7 @@ export default function VillainGuide({ onClose }) {
 
         {activeTab === 'schemas' && (
           <p className="vg-positions-note">
-            No single leak dominant? You'll show as <strong>The Balanced Player</strong> until a clear pattern emerges.
+            No single leak dominant? You'll show as <strong>{BALANCED_SCHEMA.name}</strong> — no one weakness is driving your mistakes.
           </p>
         )}
       </div>
