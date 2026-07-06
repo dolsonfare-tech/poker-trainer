@@ -792,6 +792,46 @@ body {
   min-height: 52px;
 }
 
+/* ── Disagree box (grading feedback, one tap per hand) ── */
+.fb-disagree {
+  border-top: 1px solid rgba(200,168,75,0.12);
+  padding-top: 12px;
+  margin-bottom: 4px;
+}
+.fb-disagree-toggle {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(242,237,227,0.35);
+  transition: color 0.15s ease;
+}
+.fb-disagree-toggle:hover { color: rgba(242,237,227,0.65); }
+.fb-disagree-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--cream-faint); margin-bottom: 9px;
+}
+.fb-disagree-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+.fb-disagree-chip {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.04em;
+  background: rgba(255,255,255,0.04); color: var(--cream-dim);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 999px;
+  padding: 6px 12px; cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.fb-disagree-chip:hover:not(:disabled) { border-color: rgba(200,168,75,0.5); color: var(--cream); }
+.fb-disagree-chip:disabled { opacity: 0.5; cursor: default; }
+.fb-disagree-thanks {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.08em;
+  color: var(--gold-light);
+}
+.fb-disagree-error {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem; color: var(--red); margin-top: 8px;
+}
+
 .thinking {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.72rem;
@@ -2937,9 +2977,24 @@ body {
   border: 1px solid rgba(200,168,75,0.35); border-radius: 14px;
   padding: 14px 16px; overflow-y: auto;
   animation: sc2-rise 0.28s ease;
+  transition: opacity 0.22s ease;
 }
 .sc2-overlay .feedback { margin: 0 0 12px; }
 .sc2-overlay .next-btn { width: 100%; margin-top: 0; }
+
+/* Peek: lift the overlay to re-study the table; the return chip sits in the
+   same corner as the peek button so the toggle reads as one control */
+.sc2-overlay-peek { opacity: 0; pointer-events: none; }
+.sc2-peek-btn, .sc2-peek-return {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase;
+  background: rgba(11,24,17,0.92); color: var(--gold-light);
+  border: 1px solid rgba(200,168,75,0.4); border-radius: 999px;
+  padding: 5px 11px; cursor: pointer;
+}
+.sc2-peek-btn:hover, .sc2-peek-return:hover { border-color: rgba(200,168,75,0.75); }
+.sc2-peek-btn { position: absolute; top: 12px; right: 14px; z-index: 2; }
+.sc2-peek-return { position: absolute; top: 12px; right: 14px; z-index: 11; }
 @keyframes sc2-rise {
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: none; }

@@ -92,3 +92,26 @@ alter table public.feedback enable row level security;
 create policy "own feedback insert" on public.feedback for insert with check (auth.uid() = user_id);
 -- No select/update/delete policies: users can't read feedback back — it's a
 -- one-way suggestion box the founders read with the service role.
+
+-- ── scenario disagreements: "Disagree?" chips on the feedback panel ─────────
+-- (Added July 2026. If the base schema is already deployed, run just this
+-- block in the Supabase SQL editor.) One row per flag; founders surface the
+-- most-disputed hands with:
+--   select scenario_id, reason, count(*) from public.scenario_feedback
+--   group by 1, 2 order by count(*) desc;
+create table public.scenario_feedback (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  scenario_id text not null,           -- sc_001… (no FK: scenarios live in code)
+  choice text,                         -- what the player picked; null = timed out
+  result text not null check (result in ('correct', 'partial', 'incorrect')),
+  reason text not null check (reason in
+    ('grading_wrong', 'deserves_credit', 'explanation_off', 'other')),
+  created_at timestamptz not null default now()
+);
+create index scenario_feedback_scenario on public.scenario_feedback (scenario_id);
+
+alter table public.scenario_feedback enable row level security;
+create policy "own scenario feedback insert" on public.scenario_feedback
+  for insert with check (auth.uid() = user_id);
+-- No select/update/delete policies — same one-way box as feedback.

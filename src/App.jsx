@@ -169,7 +169,7 @@ export default function App() {
     track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
-    setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct });
+    setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct, choice: null });
     // Canvas layout: feedback overlays the table at the top; legacy: it appears below
     setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [scenario, decided, currentIndex, appendHistory]);
@@ -239,7 +239,7 @@ export default function App() {
       setCombo(0);
     }
     const feedbackText = scenario.feedback[gr.g];
-    setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText });
+    setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText, choice });
     setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
   }, [decided, scenario, currentIndex, appendHistory]);
 
@@ -394,6 +394,8 @@ export default function App() {
                     feedbackText={feedback.text}
                     correctAnswer={scenario.correct}
                     timedOut={timedOut}
+                    scenarioId={scenario.id}
+                    choice={feedback.choice}
                   />
                   {!feedback.loading && (
                     <button className="next-btn" onClick={handleNext}>

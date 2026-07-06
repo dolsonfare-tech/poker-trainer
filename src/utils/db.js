@@ -116,6 +116,21 @@ export async function recordSession({ difficulty, hands, correctCount, coachRead
   if (error) throw error;
 }
 
+/** Scenario grading disagreement ("Disagree?" chips) — insert-only, like feedback. */
+export async function submitScenarioFeedback({ scenarioId, choice, result, reason }) {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth?.user?.id;
+  if (!uid) throw new Error('Not signed in');
+  const { error } = await supabase.from('scenario_feedback').insert({
+    user_id: uid,
+    scenario_id: scenarioId,
+    choice: choice ?? null,
+    result,
+    reason,
+  });
+  if (error) throw error;
+}
+
 /** Beta feedback — insert-only; founders read it with the service role. */
 export async function submitFeedback(category, body) {
   const { data: auth } = await supabase.auth.getUser();

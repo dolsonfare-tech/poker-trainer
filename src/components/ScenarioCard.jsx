@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import PlayingCard from './PlayingCard';
 import FeedbackPanel from './FeedbackPanel';
 import { buildTicker, villainSummary } from '../utils/ticker';
+import { track } from '../utils/analytics';
 
 // ─── Feature flags ─────────────────────────────────────────────────────────
 // USE_SINGLE_CANVAS: one-table layout (July 2026 design review) — everything
@@ -513,6 +514,11 @@ function CanvasLayout({
   feedback, timedOut, onNext, nextLabel,
 }) {
   const v = villainSummary(scenario);
+  // Peek: temporarily lift the feedback overlay so the player can re-study
+  // the table (board, pot, seats) — e.g. before flagging a grading they
+  // disagree with. Resets on every new hand.
+  const [peek, setPeek] = useState(false);
+  useEffect(() => { setPeek(false); }, [currentIndex]);
   return (
     <div className="scenario-card sc2">
       <div className="sc2-chrome">
@@ -531,18 +537,33 @@ function CanvasLayout({
       <div className="sc2-stage">
         <TableCanvas scenario={scenario} key={currentIndex} />
         {feedback && (
-          <div className="sc2-overlay">
-            <FeedbackPanel
-              grade={feedback.grade}
-              loading={feedback.loading}
-              feedbackText={feedback.text}
-              correctAnswer={scenario.correct}
-              timedOut={timedOut}
-            />
-            {!feedback.loading && (
-              <button className="next-btn" onClick={onNext}>{nextLabel}</button>
+          <>
+            <div className={`sc2-overlay${peek ? ' sc2-overlay-peek' : ''}`} aria-hidden={peek}>
+              <button
+                className="sc2-peek-btn"
+                onClick={() => { setPeek(true); track('table_peeked', { scenario_id: scenario.id }); }}
+              >
+                👁 Show table
+              </button>
+              <FeedbackPanel
+                grade={feedback.grade}
+                loading={feedback.loading}
+                feedbackText={feedback.text}
+                correctAnswer={scenario.correct}
+                timedOut={timedOut}
+                scenarioId={scenario.id}
+                choice={feedback.choice}
+              />
+              {!feedback.loading && (
+                <button className="next-btn" onClick={onNext}>{nextLabel}</button>
+              )}
+            </div>
+            {peek && (
+              <button className="sc2-peek-return" onClick={() => setPeek(false)}>
+                ← Back to analysis
+              </button>
             )}
-          </div>
+          </>
         )}
       </div>
 

@@ -1,4 +1,79 @@
-export default function FeedbackPanel({ grade, loading, feedbackText, correctAnswer, timedOut }) {
+import { useState } from 'react';
+import { hasSupabase } from '../utils/supabase';
+import { submitScenarioFeedback } from '../utils/db';
+import { track } from '../utils/analytics';
+
+// ─── Disagree box ───────────────────────────────────────────────────────────
+// Quiet line under the analysis that expands into fixed-response chips —
+// testers flag a grading in one tap instead of screenshotting it for later.
+// Keys must match the check constraint on scenario_feedback in schema.sql.
+const DISAGREE_REASONS = [
+  ['grading_wrong',   'The graded answer is wrong'],
+  ['deserves_credit', 'My answer deserves credit'],
+  ['explanation_off', "Explanation doesn't match"],
+  ['other',           'Something else is off'],
+];
+
+function DisagreeBox({ scenarioId, choice, result }) {
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+
+  const send = async (reason) => {
+    if (status === 'sending' || status === 'sent') return;
+    setStatus('sending');
+    try {
+      if (hasSupabase) await submitScenarioFeedback({ scenarioId, choice, result, reason });
+      track('scenario_disagree_submitted', { scenario_id: scenarioId, reason, result });
+      setStatus('sent');
+    } catch (err) {
+      console.error('Scenario feedback failed', err);
+      track('scenario_disagree_failed', { scenario_id: scenarioId });
+      setStatus('error');
+    }
+  };
+
+  if (status === 'sent') {
+    return (
+      <div className="fb-disagree">
+        <div className="fb-disagree-thanks">Logged — thanks. We review the most-flagged hands.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fb-disagree">
+      {!open ? (
+        <button
+          className="fb-disagree-toggle"
+          onClick={() => { setOpen(true); track('scenario_disagree_opened', { scenario_id: scenarioId, result }); }}
+        >
+          Disagree? Let us know if we have this wrong →
+        </button>
+      ) : (
+        <>
+          <div className="fb-disagree-label">What's off here?</div>
+          <div className="fb-disagree-chips">
+            {DISAGREE_REASONS.map(([key, label]) => (
+              <button
+                key={key}
+                className="fb-disagree-chip"
+                disabled={status === 'sending'}
+                onClick={() => send(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {status === 'error' && (
+            <div className="fb-disagree-error">Couldn't send — check your connection and try again.</div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function FeedbackPanel({ grade, loading, feedbackText, correctAnswer, timedOut, scenarioId, choice }) {
   const subLabel = {
     correct:   'Correct Play',
     partial:   'Acceptable — Not Optimal',
@@ -47,6 +122,13 @@ export default function FeedbackPanel({ grade, loading, feedbackText, correctAns
           : feedbackText
         }
       </div>
+      {!loading && scenarioId && (
+        <DisagreeBox
+          scenarioId={scenarioId}
+          choice={choice}
+          result={timedOut ? 'incorrect' : grade.g}
+        />
+      )}
     </div>
   );
 }
