@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { SKILL_NAMES, SKILL_DESCRIPTIONS, COLOR_LABELS } from '../data/constants';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { SKILL_NAMES } from '../data/constants';
 import { toLocalDateString } from '../utils/userStorage';
 import { track } from '../utils/analytics';
+import { hasSupabase } from '../utils/supabase';
+import { submitFeedback } from '../utils/db';
 
 // ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
 // After 6pm local, if today's session hasn't been played, nudge — protecting
@@ -42,42 +44,197 @@ function useCountUp(to, from, duration = 900, delay = 0) {
   return value;
 }
 
-// ─── Skill dot ────────────────────────────────────────────────────────────
-function SkillDot({ skill, data, targetRating, index }) {
-  const [expanded, setExpanded] = useState(false);
-  const [displayRating, setDisplayRating] = useState(data.rating);
+// ─── Skill ledger ─────────────────────────────────────────────────────────
+// Skills grouped by status, weakest first — the dashboard's job is to surface
+// leaks. Rows on mobile, four columns ≥700px (CSS switches the layout; the
+// markup is identical). After a session, each changed skill flies from its
+// old group to its new one via FLIP: measure pill positions, re-render with
+// the new rating, then transform-animate the delta. Ratings come straight
+// from the stored engine output — no re-derivation, so the ledger can never
+// disagree with the engine.
 
-  // Animate from the pre-session rating to the actual stored post-session
-  // rating — no re-derivation, so it can never disagree with the engine.
+const RATING_GROUPS = [
+  { key: 'red',    label: 'Weak',    sym: '▼' },
+  { key: 'yellow', label: 'Work On', sym: '◆' },
+  { key: 'green',  label: 'Strong',  sym: '●' },
+  { key: 'gray',   label: 'Unrated', sym: '○' },
+];
+
+const ratingsOf = (skills) =>
+  Object.fromEntries(Object.keys(SKILL_NAMES).map(k => [k, skills[k]?.rating ?? 'gray']));
+
+function SkillLedger({ skills, prevSkills }) {
+  const [ratings, setRatings] = useState(() => ratingsOf(prevSkills ?? skills));
+  const [landing, setLanding] = useState({});   // skill → new rating, drives the touchdown glow
+  const pillRefs = useRef({});
+  const flip = useRef(null);                    // { rects, mover } captured just before a move
+
   useEffect(() => {
-    if (!targetRating || targetRating === data.rating) return;
-    const t = setTimeout(() => setDisplayRating(targetRating), 1000 + index * 80);
-    return () => clearTimeout(t);
-  }, [targetRating]); // eslint-disable-line
+    if (!prevSkills) return;
+    const start = ratingsOf(prevSkills);
+    const final = ratingsOf(skills);
+    const moves = Object.keys(start).filter(k => start[k] !== final[k]);
+    if (moves.length === 0) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const timers = moves.map((k, i) => setTimeout(() => {
+      if (!reduced) {
+        flip.current = {
+          mover: k,
+          rects: Object.fromEntries(
+            Object.entries(pillRefs.current).map(([s, el]) => [s, el.getBoundingClientRect()])
+          ),
+        };
+      }
+      setLanding(l => ({ ...l, [k]: final[k] }));
+      setRatings(r => ({ ...r, [k]: final[k] }));
+    }, reduced ? 1000 : 1000 + i * 750));
+    const clear = setTimeout(
+      () => setLanding({}),
+      1000 + (reduced ? 0 : (moves.length - 1) * 750) + 1600
+    );
+    return () => { timers.forEach(clearTimeout); clearTimeout(clear); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- animates the mount-time session delta once
 
-  const colorMap = {
-    green:  { color: '#56c878', glow: 'rgba(86,200,120,0.6)',  symbol: '●' },
-    yellow: { color: '#e89028', glow: 'rgba(232,144,40,0.6)',  symbol: '◆' },
-    red:    { color: '#e25555', glow: 'rgba(226,85,85,0.6)',   symbol: '▼' },
-    gray:   { color: 'rgba(255,255,255,0.25)', glow: 'none',   symbol: '○' },
-  };
-  const { color, glow, symbol } = colorMap[displayRating] || colorMap.gray;
+  useLayoutEffect(() => {
+    if (!flip.current) return;
+    const { rects, mover } = flip.current;
+    flip.current = null;
+    Object.entries(pillRefs.current).forEach(([k, el]) => {
+      const before = rects[k];
+      if (!before) return;
+      const after = el.getBoundingClientRect();
+      const dx = before.left - after.left;
+      const dy = before.top - after.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      const isMover = k === mover;
+      el.style.transition = 'none';
+      el.style.transform = `translate(${dx}px, ${dy}px)`;
+      if (isMover) el.style.zIndex = '5';
+      el.getBoundingClientRect(); // flush, so the transition starts from the offset
+      el.style.transition = isMover
+        ? 'transform 0.55s cubic-bezier(0.22, 0.9, 0.3, 1)'
+        : 'transform 0.3s ease';
+      el.style.transform = '';
+      setTimeout(() => { el.style.transition = ''; el.style.zIndex = ''; }, isMover ? 600 : 350);
+    });
+  }, [ratings]);
 
   return (
-    <div
-      className={`db-skill-item ${expanded ? 'db-skill-expanded' : ''}`}
-      onClick={() => setExpanded(e => !e)}
-      style={{ cursor: 'pointer' }}
-    >
-      <span className="db-skill-dot" style={{
-        color,
-        textShadow: glow !== 'none' ? `0 0 8px ${glow}` : 'none',
-      }}>{symbol}</span>
-      <span className="db-skill-label">{SKILL_NAMES[skill]}</span>
-      {expanded && (
-        <div className="db-skill-desc">
-          <div className="db-skill-desc-text">{SKILL_DESCRIPTIONS[skill]}</div>
-          <div className="db-skill-desc-rating">{COLOR_LABELS[displayRating]}</div>
+    <div className="db-skill-ledger">
+      {RATING_GROUPS.map(({ key, label, sym }) => {
+        const members = Object.keys(SKILL_NAMES).filter(k => ratings[k] === key);
+        return (
+          <div key={key} className="db-ledger-group">
+            <div className={`db-ledger-head db-ledger-${key}`}>
+              <span className="db-ledger-sym">{sym}</span>
+              <span className="db-ledger-name">{label}</span>
+              {members.length > 0 && <span className="db-ledger-count">{members.length}</span>}
+            </div>
+            <div className="db-ledger-pills">
+              {members.length === 0 && <span className="db-ledger-empty">—</span>}
+              {members.map(k => (
+                <span
+                  key={k}
+                  ref={el => { if (el) pillRefs.current[k] = el; }}
+                  className={`db-skill-pill${landing[k] ? ` db-pill-land-${landing[k]}` : ''}`}
+                >
+                  {SKILL_NAMES[k]}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─── Beta feedback ─────────────────────────────────────────────────────────
+// Quiet one-liner at the dashboard bottom that expands into a category +
+// text form. Inserts into the Supabase `feedback` table (insert-only RLS);
+// in localStorage-only mode (dev/jest, no backend) it still renders and
+// "sends" so the UI stays testable — nothing persists there by design.
+const FEEDBACK_CATEGORIES = [
+  ['gameplay', 'Gameplay'],
+  ['scenarios', 'Scenarios'],
+  ['technical', 'Technical'],
+  ['idea', 'Idea'],
+];
+
+function BetaFeedback() {
+  const [open, setOpen] = useState(false);
+  const [category, setCategory] = useState(null);
+  const [text, setText] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | sending | sent | error
+  const [error, setError] = useState('');
+
+  const submit = async () => {
+    if (!category || !text.trim() || status === 'sending') return;
+    setStatus('sending');
+    setError('');
+    try {
+      if (hasSupabase) await submitFeedback(category, text.trim());
+      track('feedback_submitted', { category, length: text.trim().length });
+      setStatus('sent');
+    } catch (err) {
+      console.error('Feedback failed', err);
+      track('feedback_submit_failed');
+      setError("Couldn't send — check your connection and try again.");
+      setStatus('error');
+    }
+  };
+
+  if (status === 'sent') {
+    return (
+      <div className="db-beta">
+        <div className="db-beta-thanks">🃏 Dealt to the founders — thank you.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="db-beta">
+      {!open ? (
+        <button className="db-beta-toggle" onClick={() => { setOpen(true); track('feedback_opened'); }}>
+          <span className="db-beta-chip">Beta</span>
+          Something broken, boring, or brilliant? Tell us →
+        </button>
+      ) : (
+        <div className="db-beta-form">
+          <div className="db-beta-head">
+            <span className="db-beta-chip">Beta</span>
+            Feedback on gameplay, scenarios, technical issues, or ideas
+          </div>
+          <div className="db-beta-cats">
+            {FEEDBACK_CATEGORIES.map(([key, label]) => (
+              <button
+                key={key}
+                className={`db-beta-cat ${category === key ? 'db-beta-cat-active' : ''}`}
+                onClick={() => setCategory(key)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <textarea
+            className="db-beta-text"
+            rows={3}
+            maxLength={2000}
+            placeholder="What happened — or what should exist?"
+            value={text}
+            onChange={e => setText(e.target.value)}
+          />
+          {error && <div className="db-beta-error">{error}</div>}
+          <div className="db-beta-actions">
+            <button className="db-beta-cancel" onClick={() => setOpen(false)}>Cancel</button>
+            <button
+              className="db-beta-send"
+              disabled={!category || !text.trim() || status === 'sending'}
+              onClick={submit}
+            >
+              {status === 'sending' ? 'Sending…' : 'Send feedback'}
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -93,9 +250,6 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   }, []);
 
   const { schema, skills, sessionsCompleted, coachNote, pokerScore, streak, displayName, initials } = user;
-
-  // Skill dots use pre-session snapshot so animations show correct before→after transition
-  const skillsForDots = sessionDelta?.prevSkills ?? skills;
 
   // Animation targets — when no sessionDelta, from === to so no animation runs
   const iqFrom       = sessionDelta?.prevPokerScore ?? pokerScore ?? 0;
@@ -140,7 +294,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
       <div className="db-stats-row">
         <div className="db-stat-chip">
           <span className="db-stat-num db-stat-cream">
-            {displayIQ ?? '—'}
+            {pokerScore != null ? displayIQ : '—'}
             {pokerScore != null && <span className="db-stat-denom">/100</span>}
           </span>
           <span className="db-stat-label">poker iq</span>
@@ -158,63 +312,39 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         </div>
       </div>
 
-      {/* ── Poker Archetype ── */}
+      {/* ── Player Profile: schema + skill ledger, one card ──
+          One diagnosis: the skills are the evidence, the schema is the read.
+          Schema left / skills right on desktop, stacked on mobile. */}
       <div className="db-section">
         <div className="db-section-label">
-          <span>Poker Archetype</span>
+          <span>Player Profile</span>
         </div>
-        {schema ? (
-          <div className="db-schema-card">
-            <span className="db-schema-corner db-corner-tl" />
-            <span className="db-schema-corner db-corner-tr" />
-            <span className="db-schema-corner db-corner-bl" />
-            <span className="db-schema-corner db-corner-br" />
-            <div className="db-schema-mini-label">{schema.balanced ? 'No dominant leak' : `Schema · ${schema.index} of ${schema.total}`}</div>
-            <div className="db-schema-name">{schema.name}</div>
-            <div className="db-schema-quote">{schema.quote}</div>
-            {schema.affected.length > 0 && (
-              <div className="db-schema-affected">
-                <div className="db-affected-label">Affecting</div>
-                <div className="db-affected-row">
-                  {schema.affected.map(({ skill, level }) => (
-                    <div key={skill} className={`db-affected-chip db-chip-${level}`}>{skill}</div>
-                  ))}
+        <div className="db-schema-card">
+          <span className="db-schema-corner db-corner-tl" />
+          <span className="db-schema-corner db-corner-tr" />
+          <span className="db-schema-corner db-corner-bl" />
+          <span className="db-schema-corner db-corner-br" />
+          <div className="db-profile-split">
+            <div className="db-profile-schema">
+              {schema ? (
+                <>
+                  <div className="db-schema-name">{schema.name}</div>
+                  <div className="db-schema-quote">{schema.quote}</div>
+                </>
+              ) : (
+                <div className="db-schema-locked">
+                  <div className="db-schema-locked-icon">🔒</div>
+                  <div className="db-schema-locked-text">
+                    {`Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="db-schema-locked">
-            <div className="db-schema-locked-icon">🔒</div>
-            <div className="db-schema-locked-text">
-              {`Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
+              )}
+            </div>
+            <div className="db-profile-divider" />
+            <div className="db-profile-skills">
+              <SkillLedger skills={skills} prevSkills={sessionDelta?.prevSkills ?? null} />
             </div>
           </div>
-        )}
-      </div>
-
-      {/* ── Skill Profile ── */}
-      <div className="db-section">
-        <div className="db-section-label">
-          <span>Skill Profile</span>
-          <span className="db-section-meta">tap a skill to learn more</span>
-        </div>
-        <div className="db-skills-grid">
-          {Object.entries(skillsForDots).map(([skill, data], idx) => (
-            <SkillDot
-              key={skill}
-              skill={skill}
-              data={data}
-              targetRating={sessionDelta ? skills[skill]?.rating : null}
-              index={idx}
-            />
-          ))}
-        </div>
-        <div className="db-skill-legend">
-          <span className="db-legend-item"><span className="db-legend-sym db-legend-green">●</span>Strong</span>
-          <span className="db-legend-item"><span className="db-legend-sym db-legend-yellow">◆</span>Work On</span>
-          <span className="db-legend-item"><span className="db-legend-sym db-legend-red">▼</span>Weak</span>
-          <span className="db-legend-item"><span className="db-legend-sym db-legend-gray">○</span>Unrated</span>
         </div>
       </div>
 
@@ -246,6 +376,8 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           <span className="db-cta-arrow">→</span>
         </button>
       </div>
+
+      <BetaFeedback />
 
     </div>
   );
