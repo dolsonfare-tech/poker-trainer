@@ -58,6 +58,13 @@ export async function fetchRemoteUser() {
 /**
  * First sign-in: create the profile + skill rows. When a pre-Supabase
  * localStorage profile exists, its history migrates so testers keep progress.
+ *
+ * ignoreDuplicates on both writes: this path must NEVER overwrite rows that
+ * already exist. Reaching it with a live profile (e.g. a transient fetch
+ * failure sent the player to UsernameEntry) would otherwise zero their stats
+ * in the DB. On conflict nothing is written and the trailing fetchRemoteUser
+ * returns the real profile; retrying a partially failed create still fills
+ * in whatever's missing.
  */
 export async function createRemoteProfile(username, localUser) {
   const { data: auth } = await supabase.auth.getUser();
@@ -76,7 +83,8 @@ export async function createRemoteProfile(username, localUser) {
     coach_note_body: base.coachNote?.body ?? null,
     coach_note_focus: base.coachNote?.focus ?? null,
   };
-  const { error } = await supabase.from('profiles').upsert(profile);
+  const { error } = await supabase
+    .from('profiles').upsert(profile, { onConflict: 'id', ignoreDuplicates: true });
   if (error) throw error;
   const skillRows = SKILL_KEYS.map((k) => ({
     user_id: uid,
@@ -84,7 +92,7 @@ export async function createRemoteProfile(username, localUser) {
     ...(base.skills?.[k] ?? DEFAULT_SKILLS[k]),
   }));
   const { error: skillsErr } = await supabase
-    .from('skills').upsert(skillRows, { onConflict: 'user_id,skill' });
+    .from('skills').upsert(skillRows, { onConflict: 'user_id,skill', ignoreDuplicates: true });
   if (skillsErr) throw skillsErr;
   return fetchRemoteUser();
 }

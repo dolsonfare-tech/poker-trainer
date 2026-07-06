@@ -77,7 +77,8 @@ export default function App() {
   const [showVillainGuide, setShowVillainGuide]   = useState(false);
   const [user, setUser]                           = useState(() => (hasSupabase ? null : loadUser()));
   // 'local' (no Supabase keys — pre-Phase-2 behavior) | 'loading' | 'signedout'
-  // | 'noprofile' (signed in, first visit) | 'ready'
+  // | 'noprofile' (signed in, first visit) | 'error' (profile fetch failed —
+  // NOT the same as noprofile; see the auth listener's catch) | 'ready'
   const [authPhase, setAuthPhase]                 = useState(hasSupabase ? 'loading' : 'local');
   const [screen, setScreen]                       = useState('dashboard');
   const [difficulty, setDifficulty]               = useState('beginner');
@@ -116,10 +117,12 @@ export default function App() {
         loadedUidRef.current = null;
         // Explicit sign-out: the cached profile belongs to the account that
         // just left — drop it so it can't seed the NEXT account's profile
-        // (two-accounts-one-phone stats leak, July 2026). INITIAL_SESSION
-        // with no session must NOT clear: that's a pre-Supabase tester who
-        // hasn't signed in yet, and their cache is the migration payload.
-        if (event === 'SIGNED_OUT') clearUser();
+        // (two-accounts-one-phone stats leak, July 2026). Only OWNER-TAGGED
+        // caches clear: an untagged cache is a pre-Supabase tester's real
+        // history awaiting migration, and it must survive both a no-session
+        // INITIAL_SESSION and a "Not you?" sign-out from UsernameEntry
+        // (wrong-account escape hatch — the right account migrates it next).
+        if (event === 'SIGNED_OUT' && cacheOwner()) clearUser();
         setUser(null);
         setAuthPhase('signedout');
         return;
@@ -161,7 +164,12 @@ export default function App() {
             if (active) setAuthPhase('signedout');
             return;
           }
-          if (active) setAuthPhase('noprofile');
+          // Generic failure (network blip, Supabase 5xx) must NOT read as
+          // "no profile yet": that lands an existing player on the create-
+          // profile screen, and submitting it would start their account
+          // over. Surface the failure and let them retry instead.
+          track('profile_load_failed', { message: err?.message });
+          if (active) setAuthPhase('error');
         }
       }, 0);
     });
@@ -316,8 +324,11 @@ export default function App() {
       const created = await createRemoteProfile(username, local);
       setUser(created);
       saveUser(created);
-      const { data: auth } = await supabase.auth.getUser();
-      if (auth?.user?.id) setCacheOwner(auth.user.id);
+      // Owner-tag from the uid already in hand (set when the auth listener
+      // routed here) — an extra getUser() round-trip can fail after the
+      // profile was created, leaving the cache untagged and the player
+      // looking at a spurious "couldn't save" error.
+      if (loadedUidRef.current) setCacheOwner(loadedUidRef.current);
       setAuthPhase('ready');
       track('profile_created');
     } else {
@@ -375,6 +386,22 @@ export default function App() {
         <div className="ue-card">
           <div className="ue-logo">Check<em>Raise</em></div>
           <div className="ue-subtitle" style={{ textAlign: 'center' }}>Shuffling up…</div>
+        </div>
+      </div>
+    );
+  }
+  if (authPhase === 'error') {
+    return (
+      <div className="ue-screen">
+        <div className="ue-card">
+          <div className="ue-logo">Check<em>Raise</em></div>
+          <div className="ue-title">Couldn't reach your profile</div>
+          <div className="ue-subtitle" style={{ textAlign: 'center' }}>
+            Your progress is safe — this is a connection hiccup, not a lost account.
+          </div>
+          <button className="ue-submit-btn" onClick={() => window.location.reload()}>
+            Try again
+          </button>
         </div>
       </div>
     );

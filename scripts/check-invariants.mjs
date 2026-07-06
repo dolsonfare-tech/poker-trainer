@@ -97,6 +97,24 @@ for (const t of tables) {
     flag('WARN', 'rls', `table '${t}' has RLS but no policy in schema.sql — locked to service-role only; confirm that's intended`);
 }
 
+// ── 9. Profile creation never overwrites existing rows (July 2026) ──────
+// createRemoteProfile is reachable by players who already HAVE a profile
+// (any state that lands on UsernameEntry); a plain upsert there zeroes their
+// stats in the DB. Every upsert in that function must ignoreDuplicates.
+{
+  const db = read(join(ROOT, 'src/utils/db.js'));
+  const fn = db.split(/export (?:async )?function /).find(s => s.startsWith('createRemoteProfile'));
+  if (!fn) {
+    flag('WARN', 'create-no-clobber', 'createRemoteProfile not found in src/utils/db.js — rule 9 needs updating');
+  } else {
+    const upserts = fn.match(/\.upsert\([^;]*?\)/gs) ?? [];
+    for (const u of upserts) {
+      if (!/ignoreDuplicates:\s*true/.test(u))
+        flag('ERROR', 'create-no-clobber', `src/utils/db.js: an upsert in createRemoteProfile lacks ignoreDuplicates: true ('${u.trim().slice(0, 60)}…') — the create path must never overwrite an existing profile/skills row`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
