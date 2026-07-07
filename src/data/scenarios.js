@@ -5334,6 +5334,2117 @@ const SCENARIOS = [
     ],
   }),
 
+  // ── July 2026 batch 3 (sc_124–sc_139): beginner depth on the thin skills ───
+
+  mkScenario({
+    id: 'sc_124',
+    skill: 'preflop',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'passive',
+      notes: 'Limps behind and overcalls with half the deck; never raises — cheap flops are his favorite food',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '???',    state: 'hero'   },
+      3: { label: 'BTN (P)',  action: 'Active', state: 'active' },
+      4: { label: 'SB',       action: 'Active', state: 'active' },
+      5: { label: 'BB',       action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['A','♥'], ['T','♥']),
+    board: null,
+    pot: '$3',
+    toCall: null,
+    body: "Folded to you in the Cutoff with A♥T♥ — a suited ace with two high cards. The passive rec on the Button tags along behind any cheap entry, and both blinds love a discount flop. The first real decision of the hand is yours.",
+    question: 'A♥T♥ first to act from the Cutoff. Raise, limp, or pass — and why does the middle option not exist?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding a Cutoff Staple', emoji: '❌',
+        fb: "Both passive routes give this hand away. A♥T♥ from the Cutoff is comfortably a raise — fold it and the blinds tax you all night for nothing. And the limp is worse than it looks: it wins nothing now, announces weakness, and invites the Button and both blinds to a four-way flop where one pair of aces with a ten kicker is a trouble hand instead of a favorite. Open-limping has no upside at any table: enter the pot raising or don't enter at all.",
+      },
+      {
+        val: 'limp', label: 'Limp in ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The Limp Buys You Nothing', emoji: '❌',
+        fb: "Both passive routes give this hand away. A♥T♥ from the Cutoff is comfortably a raise — fold it and the blinds tax you all night for nothing. And the limp is worse than it looks: it wins nothing now, announces weakness, and invites the Button and both blinds to a four-way flop where one pair of aces with a ten kicker is a trouble hand instead of a favorite. Open-limping has no upside at any table: enter the pot raising or don't enter at all.",
+      },
+      {
+        val: 'raise', label: 'Raise to $6', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Enter Raising or Not at All', emoji: '✅',
+        fb: "Raise to $6. A raise gives ATs everything it wants: the blinds can fold right now, callers come in with worse aces and weaker hands, and you take initiative into a pot you'll usually play with position. A limp offers none of that — it just rents the passive player a cheap seat to outflop you. First into the pot, there are exactly two plays: raise or fold. Limping isn't a smaller raise; it's a different, worse game.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_125',
+    skill: 'preflop',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: '3-bets from the blinds relentlessly against steals; folds to 4-bets far more often than he continues',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: 'Raises $6',  state: 'hero'   },
+      4: { label: 'SB (AR)',   action: '3-Bets $22', state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['5','♠']),
+    board: null,
+    pot: '$30',
+    toCall: '$16 more',
+    body: "You opened A♠5♠ on the Button and the aggressive regular in the Small Blind 3-bet to $22 — the fourth time tonight he's done this to a steal. His 3-bets are wide, and his folds to 4-bets are wider. It's $16 more to you.",
+    question: 'A5 suited facing a relentless blind 3-bettor. Which of this hand\'s properties is its real strength here?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Paying the 3-Bet Tax Forever', emoji: '⚠️',
+        fb: "Folding is fine once — but he's done this four times, and if every steal you make surrenders to his 3-bet, your button becomes his profit center. Against a relentless 3-bettor you must fight back with SOME hands, and A5 suited is precisely the one built for it. Fold the junk; counterpunch with this.",
+      },
+      {
+        val: 'call', label: 'Call $16 more', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The Weapon Used as a Shield', emoji: '❌',
+        fb: "Calling keeps his junk in and turns your hand into a liability: a weak ace that's dominated whenever an ace flops and drawing thin when it doesn't. A5s's value against this player isn't its showdown strength — it's its blocker and his fold button. Calling uses neither. Pick a direction: this hand 4-bets or folds, and against a serial 3-bettor it 4-bets.",
+      },
+      {
+        val: 'raise', label: '4-Bet to $54', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'The Blocker Does the Talking', emoji: '✅',
+        fb: "4-bet to $54. A5 suited is the textbook 4-bet bluff: your ace blocks a chunk of the AA and AK he'd continue with, the suited five gives real playability the times he calls, and his relentless 3-betting means the fold half of the plan cashes constantly. That's the whole anatomy — blocker, backup equity, fold equity. Wide 3-bettors create this spot; A5s is the hand designed to collect on it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_126',
+    skill: 'position',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'maniac',
+      notes: 'C-bets every flop after raising and treats any lead into him as a personal insult — raises it with everything',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (M)',  action: 'Raised $6', state: 'active' },
+      5: { label: 'BB (You)', action: '???',       state: 'hero'   },
+    }),
+    hand: mkHand(['8','♠'], ['7','♠']),
+    board: ['J♣', '8♦', '3♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: "you're first to act", you: true }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You defended the Big Blind with 8♠7♠ against the maniac's button raise and flopped middle pair on J♣8♦3♥. You're first to act, out of position for the rest of the hand — and he c-bets every flop and raises anyone who dares lead into him.",
+    question: 'Middle pair, out of position, against an auto-c-bettor who attacks leads. Who should be doing the betting here?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Check to the Player Who Can\'t Help Himself', emoji: '✅',
+        fb: "Check. Out of position with a medium hand, the check isn't passive — it's the play that uses his weakness. He c-bets everything, so checking keeps every bluff in his range firing chips at your pair; leading would fold out exactly those hands and invite a raise you can't stand. Acting first means you have the least information at the table: let his bet arrive, then decide with more of the story. When you're out of position against an aggressive player, his aggression is your bet.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $7', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'The "Where Am I At?" Bet', emoji: '⚠️',
+        fb: "The small lead is an information bet — and the information flows the wrong way. His junk folds (you win what you'd have won anyway), his raises put you in a guessing game for real money, and either way you've told HIM plenty about your hand. Middle pair out of position doesn't need to buy information; a check gets his whole range to keep talking for free.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $14', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Donking Into the Raiser', emoji: '❌',
+        fb: "Betting pot into the preflop raiser — a maniac who attacks leads on principle — accomplishes the worst of everything: hands that miss fold instead of bluffing chips to you, hands that beat you raise, and you burn a big bet finding out which. Middle pair out of position wants a small pot and his bluffs in it; this bet builds a big pot and chases them out.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_127',
+    skill: 'position',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Flats opens in position, then floats c-bets and raises wet boards relentlessly — makes out-of-position pots miserable',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '???',    state: 'hero'   },
+      3: { label: 'BTN (AR)', action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['A','♥'], ['Q','♣']),
+    board: ['8♠', '7♠', '6♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BTN calls' }] },
+      { street: 'FLOP', segments: [{ text: "you're first to act", you: true }] },
+    ],
+    pot: '$15',
+    toCall: null,
+    body: "You opened A♥Q♣ from the Cutoff and the aggressive regular flatted on the Button — his favorite move. The flop is 8♠7♠6♥: nothing for you, everything for the suited connectors and middle pairs he calls with, and you're out of position against the table's most relentless floater.",
+    question: 'You have the best unpaired hand you can have — and the worst board and seat to bet it from. C-bet anyway?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'When the Board and the Seat Both Vote No', emoji: '✅',
+        fb: "Check. A c-bet needs at least one thing going for it — a board that favors your range, or position to follow up. Here you have neither: 8♠7♠6♥ smashes his flatting range (pairs, connectors, suited stuff) and misses your big-card opening range, and every raise he makes puts you in a guessing game with ace-high. Checking with the intention of letting this one go isn't weak — it's recognizing that the c-bet is a tool, not a reflex, and this board is where the tool breaks.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $8', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'The Automatic C-Bet Meets the Wrong Board', emoji: '⚠️',
+        fb: "C-betting ace-high is standard on the boards that missed him — K♥7♦2♣ and its cousins. This isn't one. His range is full of pairs and draws that continue, he floats everything else because he has position, and your $8 mostly buys a raise or a turn you have to give up on anyway. The board and the floater each argue against betting; together they end the argument.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $15 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Maximum Bet, Maximum Regret', emoji: '❌',
+        fb: "Potting ace-high out of position into the range that just hit the board is the expensive version of the mistake. Nothing worse calls, everything that continues has you beat or flipping, and the wet board hands him a raise that ends your hand on the spot. Big c-bets belong on boards you dominate with position to back them — not here, holding neither.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_128',
+    skill: 'aggression',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Limps half his hands, calls raises with most of them, then plays fit-or-fold once the flop arrives',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (LR)',   action: 'Limps $2', state: 'active' },
+      3: { label: 'BTN (You)', action: '???',      state: 'hero'   },
+      4: { label: 'SB',        action: 'Active',   state: 'active' },
+      5: { label: 'BB',        action: 'Active',   state: 'active' },
+    }),
+    hand: mkHand(['K','♦'], ['Q','♦']),
+    board: null,
+    pot: '$5',
+    toCall: null,
+    body: "The loose rec limps in from the Cutoff — as he does with half the deck — and you're next on the Button with K♦Q♦. The blinds haven't acted yet. A limp is an invitation; the question is what kind.",
+    question: 'K♦Q♦ on the Button behind a limper. What does a strong hand do to a weak entry?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding a Button Premium', emoji: '❌',
+        fb: "Neither quiet option is playing the hand — they're both declining it. KQ suited on the Button is near the top of your range; folding it to a $2 limp is unthinkable, and limping behind isn't much better: it caps the pot with your best position and strongest holdings, lets both blinds in for free, and hands the loose limper the cheap multiway flop his whole style feeds on. Limpers WANT you passive. Strong hands punish weak entries — raise.",
+      },
+      {
+        val: 'limp', label: 'Limp behind ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Joining the Puddle', emoji: '❌',
+        fb: "Neither quiet option is playing the hand — they're both declining it. KQ suited on the Button is near the top of your range; folding it to a $2 limp is unthinkable, and limping behind isn't much better: it caps the pot with your best position and strongest holdings, lets both blinds in for free, and hands the loose limper the cheap multiway flop his whole style feeds on. Limpers WANT you passive. Strong hands punish weak entries — raise.",
+      },
+      {
+        val: 'raise', label: 'Raise to $10', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Punish the Limp', emoji: '✅',
+        fb: "Raise to $10 — bigger than a standard open, because there's a limper to charge. The isolation raise does three jobs at once: it shoves the blinds out, it gets the loose limper's dead money in while you hold position and the better hand, and it buys you the initiative against a fit-or-fold player who will miss two flops out of three. Aggression isn't about bluffing — it's about never letting weak plays go unbilled.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_129',
+    skill: 'aggression',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'C-bets faithfully when his preflop raise connects; his checks after raising are honest surrender',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      4: { label: 'SB (TR)',  action: 'Checked', state: 'active' },
+      5: { label: 'BB (You)', action: '???',     state: 'hero'   },
+    }),
+    hand: mkHand(['9','♣'], ['8','♣']),
+    board: ['Q♦', '8♥', '4♠'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'SB raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'SB checks' }] },
+    ],
+    pot: '$12',
+    toCall: null,
+    body: "The tight rec raised from the Small Blind and you defended with 9♣8♣. The flop comes Q♦8♥4♠ — middle pair for you — and instead of his usual faithful c-bet, he checks. From this player, that check is a confession.",
+    question: 'The reliable c-bettor didn\'t c-bet. What did he just tell you, and what does your pair of eights want to do about it?',
+    correct: 'bet_medium',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Letting the Confession Go to Waste', emoji: '⚠️',
+        fb: "Checking back isn't a disaster — your pair has showdown value. But his skipped c-bet told you his range is mostly big cards that missed, and every one of them holds six outs against your eights. A free turn card is a gift to AK and AJ, paid for by you. When an honest player announces weakness, the pot is sitting there asking to be taken; checking leaves it on the table and invites the overcard that turns your win into his.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $8', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'The C-Bet That Didn\'t Come', emoji: '✅',
+        fb: "Bet $8. This player c-bets when he's connected — so the check IS the read: a range of AK, AJ, KJ-type hands that whiffed Q♦8♥4♠. Your middle pair is almost certainly best right now, and betting does both jobs at once: it takes the pot from hands that were about to give up, and it makes the ones that peel pay for their six overcard outs. Aggression isn't just for bluffs and monsters — it's for the moment an honest opponent tells you the pot is unguarded.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $16', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Overcharging a Range That Already Quit', emoji: '❌',
+        fb: "His missed hands fold to $8 exactly as fast as to $16 — you can't collect extra from a range that's done with the hand. What an oversized bet does change is what happens when he continues: a tight player calling or raising your overbet on this flop has your eights beat, and now the pot is twice as bloated. Size the bet to the job; the job here is small.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_130',
+    skill: 'opponent',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'Treats blind defense as optional — folds his blind to almost any raise and plays fit-or-fold when he does peel',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',    state: 'hero'   },
+      4: { label: 'SB (TR)',   action: 'Active', state: 'active' },
+      5: { label: 'BB',        action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['T','♥'], ['7','♥']),
+    board: null,
+    pot: '$3',
+    toCall: null,
+    body: "Folded to you on the Button with T♥7♥ — a hand no chart loves. But the chart didn't watch the last two hours: the tight rec in the Small Blind folds his blind to almost anything, and the Big Blind is no fighter either. There's $3 out there that keeps going unclaimed.",
+    question: 'T♥7♥ is a fold against blinds who defend. These blinds don\'t. Which fact wins?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Right Against Defenders, Wrong Against These Two', emoji: '⚠️',
+        fb: "Against blinds who fight back, folding T7 suited is exactly correct — that's why it feels safe. But the entire point of reading opponents is that reads change your defaults: when both blinds surrender to any raise, the $3 in the middle is nearly free money, hand almost irrelevant. Folding here isn't discipline; it's ignoring two hours of evidence because a chart said so.",
+      },
+      {
+        val: 'limp', label: 'Limp in ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The One Play With No Argument', emoji: '❌',
+        fb: "Limping gets the worst of every world: it puts money in with a weak hand, collects zero fold equity from two players whose defining flaw is folding, and invites a multiway flop where T7 needs to actually make a hand. The whole reason this spot is profitable is their fold button — the limp is the one play that never presses it.",
+      },
+      {
+        val: 'raise', label: 'Raise to $6', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Steal What They Keep Giving Away', emoji: '✅',
+        fb: "Raise to $6. In a vacuum T7 suited isn't a Button open — but poker isn't played in a vacuum, it's played against these two, and they fold. When the blinds surrender to almost any raise, stealing wide isn't a bluff, it's rent collection: risk $6 to win $3 from players who rarely contest, and even the times they peel, they play fit-or-fold with you holding position. The read, not the cards, makes this raise. That's opponent modeling in one hand.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_131',
+    skill: 'opponent',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'nit',
+      notes: 'Has not 3-bet in two hours; when he finally re-raises, it is queens or better and ace-king, nothing else',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: 'Raises $6',  state: 'hero'   },
+      3: { label: 'BTN (Nit)', action: '3-Bets $20', state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['Q','♥']),
+    board: null,
+    pot: '$29',
+    toCall: '$14 more',
+    body: "You opened A♠Q♥ from the Cutoff — a clearly profitable open — and then the unthinkable: the nit 3-bet to $20. His first re-raise in two hours, from a player whose 3-betting range is queens-plus and ace-king, full stop. It's $14 more.",
+    question: 'AQ is a strong hand. Against THIS range, is it? Do the matchup math before touching a chip.',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Strong Hand, Wrong Opponent', emoji: '✅',
+        fb: "Fold, and don't look back. Run AQ against his actual range — QQ+, AK — and there isn't a single hand you're happy against: AK dominates your ace, the pairs dominate everything. This is the same $14 you'd happily put in against the maniac's junk-filled 3-bets, and that's the entire lesson: a hand has no fixed strength, only strength against a range. The nit spent two hours defining his; believe him.",
+      },
+      {
+        val: 'call', label: 'Call $14 more', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Calling Into the Definition of Dominated', emoji: '❌',
+        fb: "Continuing at all is the mistake — pick your poison. Call, and every flop you like is a disaster: an ace makes AK a bigger pot-winner and AA a stack-taker, a queen walks into QQ and KK barrels. 4-bet, and you're bluffing the one player at the table who cannot fold what he finally 3-bet — his range doesn't contain a folding hand. Position and prettiness don't rescue AQ from a range that's precisely QQ+/AK; only the fold button does.",
+      },
+      {
+        val: 'raise', label: '4-Bet to $48', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Bluffing the Unbluffable', emoji: '❌',
+        fb: "Continuing at all is the mistake — pick your poison. Call, and every flop you like is a disaster: an ace makes AK a bigger pot-winner and AA a stack-taker, a queen walks into QQ and KK barrels. 4-bet, and you're bluffing the one player at the table who cannot fold what he finally 3-bet — his range doesn't contain a folding hand. Position and prettiness don't rescue AQ from a range that's precisely QQ+/AK; only the fold button does.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_132',
+    skill: 'betsize',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Chases every draw he finds, but he does the math when you make him — pays bad prices reluctantly, good ones gladly',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (LR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♣'], ['J','♣']),
+    board: ['J♠', 'T♠', '4♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised A♣J♣ on the Button and flopped top pair, top kicker on J♠T♠4♥ — a strong hand on a board crawling with draws: two spades, straight cards everywhere. The loose rec checks. He'll chase anything; the only question is what price he chases at.",
+    question: 'Top pair on a draw-heavy board. Your bet size is a price tag — what should a flush draw have to pay?',
+    correct: 'bet_large',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Free Cards on a Board Like This', emoji: '❌',
+        fb: "Checking hands every draw on the board exactly what it wants: a free look at the card that beats you. On a dry board, checking back top pair has its moments — on J♠T♠4♥ against a chaser, it's the one play that can't be defended. The draws are there, he has them often, and the only question is whether they pay. Your check answers: no charge.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $4', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Right Idea, Wrong Price Tag', emoji: '⚠️',
+        fb: "You bet — good — but do the math on what you charged: $4 into $13 offers his draws better than 4:1, and a flush draw only needs about 4:1 to call correctly. You set a price that turns his chases profitable, which means the bet changed nothing except the pot size. A bet that doesn't change your opponent's math is a check with extra steps. Against a player who counts, make the count come out wrong for him.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $10', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'You Set the Price Draws Pay', emoji: '✅',
+        fb: "Bet $10 — about three-quarters of the pot. This is the heart of bet sizing: your bet is the price tag on his draw, and at $10 into $13 every flush draw and gutshot pays roughly 2:1 on a chase that hits far less often than that. He calls anyway — chasers chase — and every call is money moved to you in slow motion. Size to the board, not just the hand: wet boards demand a price that makes chasing a mistake.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_133',
+    skill: 'betsize',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Snap-calls any discounted price with any two cards — and he has position on you; only a full-sized raise slows him down',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      1: { label: 'HJ (You)', action: '???',    state: 'hero'   },
+      2: { label: 'CO (CS)',  action: 'Active', state: 'active' },
+      3: { label: 'BTN',      action: 'Active', state: 'active' },
+      4: { label: 'SB',       action: 'Active', state: 'active' },
+      5: { label: 'BB',       action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['K','♠'], ['Q','♥']),
+    board: null,
+    pot: '$3',
+    toCall: null,
+    body: "Folded to you in the Hijack with K♠Q♥ — an easy open. The interesting part is the size: the station in the Cutoff, sitting right behind you with position, calls anything that looks like a bargain, and KQ offsuit hates a crowded flop.",
+    question: 'The open is automatic; the amount isn\'t. What does each size invite from the seats behind you?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'limp', label: 'Limp in ($2)', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'An Invitation to the Whole Table', emoji: '❌',
+        fb: "A limp prices in everyone — the station flops anything with position on you, the blinds come along free, and KQ plays a four-way pot where top pair is never safe and second-best kickers cost real money. The problem with cheap entries isn't just passivity; it's that YOU set the price of the flop, and you set it at 'everyone welcome.'",
+      },
+      {
+        val: 'raise_small', label: 'Min-raise to $4', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'A Raise That Doesn\'t Raise Anything', emoji: '⚠️',
+        fb: "The raising instinct is right — the number is decoration. $4 changes nobody's decision: the station calls a discount with rags, the Big Blind gets 3.5:1 to peel with junk, and you've built a multiway pot at a size that filtered out no one. A raise has a job — thin the field so your big cards play against one player, not four. A min-raise skips the job and keeps the title.",
+      },
+      {
+        val: 'raise', label: 'Raise to $6', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Size the Raise to Do Its Job', emoji: '✅',
+        fb: "Raise to $6. KQ offsuit wants exactly what a full-sized raise buys: a heads-up pot, ideally against a blind, where one pair with a good kicker is usually the best hand. At $6 the station needs an actual hand to call out of position— at $4 he needs a pulse. Preflop sizing isn't about the chips, it's about the shape of the flop you'll see: full raises buy small fields, and small fields are where high-card hands make their living.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_134',
+    skill: 'bluffing',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Called your open in position and never folds once any part of his hand touches the board',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '???',     state: 'hero'   },
+      3: { label: 'BTN (CS)', action: 'Active',  state: 'active' },
+      5: { label: 'BB (LR)',  action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♦'], ['K','♦']),
+    board: ['9♣', '8♣', '7♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BTN calls' }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$19',
+    toCall: null,
+    body: "You opened A♦K♦ from the Cutoff and got two callers — the station on the Button, the loose rec in the Big Blind. The flop is 9♣8♣7♥: a total whiff for you, a playground for both of their calling ranges. The BB checks; the station waits behind you with position.",
+    question: 'Ace-king high, two opponents, and a board that hit both of them. How many people does a bluff have to fool?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Bluffs Shrink With Every Caller', emoji: '✅',
+        fb: "Check. A bluff needs everyone to fold, and everyone here won't: the odds of getting through two players are roughly the square of getting through one, this 9♣8♣7♥ board pours pairs and draws into both of their calling ranges — and one of your two targets is a station who doesn't fold on principle. Heads-up on a dry board, ace-king high c-bets happily. Multiway on a wet one, the bluff isn't brave, it's arithmetic that doesn't work. Check, and let this pot go find its rightful owner.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $10', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Two Targets, One of Them Bulletproof', emoji: '❌',
+        fb: "Any bluff into this pair of opponents fails the same test twice: BOTH players must fold, on the one flop texture — middling and connected — that hit both of their ranges square, and one of them is a station whose folding muscle atrophied years ago. Size doesn't rescue it; $19 buys the same calls as $10, just dearer. Save the c-bet for boards that missed them and, above all, for fewer of them: bluffing is a headcount business, and this room is too crowded.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $19 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Pot-Sized Into a Crowd', emoji: '❌',
+        fb: "Any bluff into this pair of opponents fails the same test twice: BOTH players must fold, on the one flop texture — middling and connected — that hit both of their ranges square, and one of them is a station whose folding muscle atrophied years ago. Size doesn't rescue it; $19 buys the same calls as $10, just dearer. Save the c-bet for boards that missed them and, above all, for fewer of them: bluffing is a headcount business, and this room is too crowded.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_135',
+    skill: 'bluffing',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Reads checked-through streets as weakness and calls river stabs with any pair; his own checks are caution, not surrender',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (LR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['6','♦'], ['5','♦']),
+    board: ['K♠', 'J♥', '8♣', '9♥', '3♣'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you check', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you check', you: true }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised 6♦5♦ on the Button, whiffed K♠J♥8♣ completely, and sensibly checked it through — twice. Now the river 3♣ changes nothing, the loose rec checks a third time, and the pot sits there looking stealable. Ask first: what hand would YOU have that plays this way and now bets?",
+    question: 'Six-high wants to bluff at a $13 pot. You checked twice already — what story would a river bet even tell?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check back — give up', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'A Bluff Needs a Story, and Yours Has Two Blank Pages', emoji: '✅',
+        fb: "Check and let it go. A believable bluff represents a real hand playing a real line — but you checked the flop AND the turn, and no value hand you could hold tells that story before suddenly betting a blank river. This opponent reads double-checks as weakness and calls with any pair on a board made of them (kings, jacks, eights, nines all connect). Six-high loses every showdown, but a called bluff loses more. Some pots were never yours; this one stopped being yours on the flop.",
+      },
+      {
+        val: 'bluff_small', label: 'Bet $9', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'A Stab With Logic but No Audience', emoji: '⚠️',
+        fb: "River stabs after checked-through streets do work — against opponents who give up. This one does the opposite: your two checks are exactly why he'll call, because they told him his bottom pair is good, and K♠J♥8♣9♥ left his loose range full of pairs to call with. The play isn't wrong in general; it's wrong against a player whose note reads 'calls river stabs with any pair.' Know which opponents fold to the weakness-stab, and save it for them.",
+      },
+      {
+        val: 'bluff_large', label: 'Bet $18', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Betting Big on a Story You Never Told', emoji: '❌',
+        fb: "An overbet is supposed to say 'I have it.' After two checks, it says 'I remembered the pot exists.' No hand you'd play this way bets this river for value, the loose rec calls stabs with any pair precisely because you showed weakness twice, and this board dealt his range pairs by the handful. Bluffing frequency starts with bluff selection: no story, no believer, no bet.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_136',
+    skill: 'potodds',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'maniac',
+      notes: 'Barrels every street once he starts and never folds to raises; his bets are constant, but they are never free cards',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (M)',  action: 'Bets $24', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['J','♥'], ['T','♥']),
+    board: ['Q♦', '9♣', '3♠', '2♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $24' }] },
+    ],
+    pot: '$29',
+    toCall: '$24',
+    body: "You defended J♥T♥ and flopped an open-ended straight draw on Q♦9♣3♠ — any king or eight. The cheap flop call was easy. But the turn 2♣ bricked, and the maniac's bet tripled: $24 into $29. You're getting 2.2:1 now, with one card to come.",
+    question: 'Eight outs \'is 32% with two cards to come\' — so why might that number be the trap here?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Two Cards Only Count If You See Them Both', emoji: '✅',
+        fb: "Fold. The famous 32% for eight outs assumes you see BOTH remaining cards — but his $24 only buys you one. On a single card, eight outs hit about 17%, roughly 5:1 against, and he's laying you just 2.2:1. That 'rule of four' number is for all-in situations; against a player who charges you street by street — and this one never stops betting — the turn is priced with the rule of two. Same outs as the flop, completely different math. The card count didn't change; the price of admission did.",
+      },
+      {
+        val: 'call', label: 'Call $24', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Paying a Two-Card Price for One Card', emoji: '❌',
+        fb: "Putting more chips in is the mistake in either form. Calling pays 2.2:1 on a 5:1 shot — the 32% two-card figure doesn't apply when the river will cost you another bet from a player who always fires. And check-raising sends good money after bad in the one matchup where semi-bluffs die: maniacs don't fold, so the 'fold equity' half of the raise is fiction and you're left all-in on eight outs. When the price is wrong and the opponent is unfoldable, the draw goes in the muck.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $60', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Semi-Bluffing the Unfoldable', emoji: '❌',
+        fb: "Putting more chips in is the mistake in either form. Calling pays 2.2:1 on a 5:1 shot — the 32% two-card figure doesn't apply when the river will cost you another bet from a player who always fires. And check-raising sends good money after bad in the one matchup where semi-bluffs die: maniacs don't fold, so the 'fold equity' half of the raise is fiction and you're left all-in on eight outs. When the price is wrong and the opponent is unfoldable, the draw goes in the muck.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_137',
+    skill: 'potodds',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'C-bets one street with his whole range — big cards included — then gives up honestly when he has nothing',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (TR)', action: 'Bets $8', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
+    }),
+    hand: mkHand(['8','♥'], ['7','♥']),
+    board: ['9♦', '8♣', '5♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }] },
+    ],
+    pot: '$13',
+    toCall: '$8',
+    body: "You defended 8♥7♥ and the flop came 9♦8♣5♥: middle pair, plus a gutshot — any six makes your straight. The tight rec fires his standard one-and-done c-bet, $8 into $13. You're getting 2.6:1. The question is what you're actually holding: one weak pair, or more?",
+    question: 'Middle pair AND a gutshot AND a c-bettor who\'s often just holding big cards. Add it all up before you decide.',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding a Hand With Three Ways to Win', emoji: '❌',
+        fb: "This fold throws away three different assets at once: a pair that's frequently the best hand right now (his c-bet range is stuffed with unpaired big cards), four straight outs, and five more outs to trips or two pair when you ARE behind. Any one of those alone might not justify $8 — together, at 2.6:1, they're not close. Weak-looking hands with layered equity are exactly where over-folders bleed.",
+      },
+      {
+        val: 'call', label: 'Call $8', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Add Up Everything You\'ve Got', emoji: '✅',
+        fb: "Call. Pot odds aren't just for flashy draws — count the WHOLE hand: your eights beat every ace-king and ace-queen he auto-c-bets, four sixes make a straight, and two eights plus three sevens upgrade you when he does have a nine or an overpair. Made-hand value plus draw value plus a 2.6:1 price is a comfortable continue, and his one-and-done habit means the turn often checks through for free. Equity comes in layers; players who only count the obvious ones fold winners.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $26', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'It Works — It\'s Just Unnecessary', emoji: '⚠️',
+        fb: "Check-raising an honest one-street c-bettor prints money in the right spots, and this isn't a terrible one. But your hand doesn't want the job: it beats the hands that would fold anyway and gets action only from the ones that beat you. Calling keeps his whiffed big cards bluffing into your pair and keeps your price on the straight draw tiny. Save the check-raise for hands that NEED fold equity; this one profits quietly without it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_138',
+    skill: 'reads',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'passive',
+      notes: 'Check-calls his draws to the bitter end and never bets without a made hand; when he suddenly leads, the last card made him',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',      state: 'hero'   },
+      5: { label: 'BB (P)',    action: 'Bets $45',  state: 'active' },
+    }),
+    hand: mkHand(['K','♠'], ['Q','♦']),
+    board: ['K♥', '9♥', '4♣', '2♠', '6♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you bet $18', you: true }, { text: 'BB calls' }] },
+      { street: 'RIVER', segments: [{ text: 'BB leads $45' }] },
+    ],
+    pot: '$65',
+    toCall: '$45',
+    body: "You value-bet K♠Q♦ — top pair, strong kicker — through K♥9♥4♣ and the 2♠ turn, and the passive rec quietly check-called both streets. The river is the 6♥, the third heart. And for the first time all hand, he bets: $45 into $65, leading straight into you.",
+    question: 'He check-called twice, then the flush card arrived, and NOW he\'s betting. What changed — his hand, or his mood?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'He Called, He Called, and Then the Heart Came', emoji: '✅',
+        fb: "Fold. Read the sequence like a sentence: passive players check-call while they're drawing and bet when they arrive — and the one card that changed between his last check-call and this sudden lead is the 6♥ completing the flush. Players like him don't invent river bluffs; the line and the card agree completely. Top pair did its job for two streets against a drawing hand. Paying $45 now isn't a call, it's a receipt. When a card that completes the obvious draw flips a caller into a bettor, believe the pattern.",
+      },
+      {
+        val: 'call', label: 'Call $45', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Paying $45 to Confirm the Obvious', emoji: '❌',
+        fb: "Every extra chip goes in against a hand that just announced itself. The story has no other reading: a player who never bets without the goods check-called two streets — the signature of a draw — and woke up betting the instant the third heart landed. Calling pays him off; raising is lighting money on fire against a range that's practically face-up flushes and re-raises you with them. His passivity made him easy to read all hand. The read only has value if you act on it: fold.",
+      },
+      {
+        val: 'raise', label: 'Raise to $120', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Raising One Pair Into a Face-Up Flush', emoji: '❌',
+        fb: "Every extra chip goes in against a hand that just announced itself. The story has no other reading: a player who never bets without the goods check-called two streets — the signature of a draw — and woke up betting the instant the third heart landed. Calling pays him off; raising is lighting money on fire against a range that's practically face-up flushes and re-raises you with them. His passivity made him easy to read all hand. The read only has value if you act on it: fold.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_139',
+    skill: 'reads',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'His value bets grow street by street; when a hand of his dies along the way, the final bet shrinks to a token stab',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Bets $4', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
+    }),
+    hand: mkHand(['9','♠'], ['9','♦']),
+    board: ['Q♣', '7♦', '4♠', 'J♦', '3♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP',  segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'you check', you: true }, { text: 'BTN bets $20' }, { text: 'you call', you: true }] },
+      { street: 'RIVER', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $4' }] },
+    ],
+    pot: '$69',
+    toCall: '$4',
+    body: "You check-called the aggressive reg twice with 9♠9♦ under the Q♣7♦4♠ board — $8, then $20 as the J♦ raised the stakes. Then the river 3♥ blanks and his story collapses: $4 into $69. From a player whose real hands bet bigger every street, the whimper is deafening.",
+    question: 'Bets of $8, $20… then $4 into a $69 pot. What does a bet that tiny usually mean from a player like this?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding at 17-to-1 to a Whimper', emoji: '❌',
+        fb: "You're being offered better than 17:1 on a bet that reads as pure surrender — from this player, value bets climb, they don't collapse. Folding a pair here needs him to have a monster more than 94% of the time, and the size says the opposite. Some folds are discipline; this one is just flinching at the word 'bet.'",
+      },
+      {
+        val: 'call', label: 'Call $4', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Big, Bigger… Tiny', emoji: '✅',
+        fb: "Call. Bets that grow tell one story — a hand that likes every card. Bets that collapse tell another: $8, $20, then $4 is a hand that stopped believing in itself, the busted straight draws and give-ups paying a token price to see if you'll fold. Your nines beat every hand that whimpers like this, and at 17:1 you'd only need to win once in eighteen for the call to break even. Sizing patterns are the loudest tell in poker; the drop-off IS the information.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $40', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'You Read Him Right, Then Overplayed It', emoji: '⚠️',
+        fb: "The read is correct — the tiny bet is weak — but the raise misuses it. His give-ups fold to your check-raise, and you beat them anyway at showdown for $4; the only hands that pay off $40 are the slow-played monsters that have your nines crushed. Raising risks ten times the price to win nothing extra from the range you beat. When the cheap call already banks the read, take the profit quietly.",
+      },
+    ],
+  }),
+
+  // ── July 2026 batch 4 (sc_140–sc_155): 2 per skill, 1 beginner + 1 int ─────
+
+  mkScenario({
+    id: 'sc_140',
+    skill: 'preflop',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'maniac',
+      notes: 'Sits directly behind you and 3-bets early-position opens constantly — small pairs can\'t stand the heat',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      0: { label: 'UTG (You)', action: '???',    state: 'hero'   },
+      1: { label: 'HJ (M)',    action: 'Active', state: 'active' },
+      2: { label: 'CO',        action: 'Active', state: 'active' },
+      3: { label: 'BTN',       action: 'Active', state: 'active' },
+      4: { label: 'SB',        action: 'Active', state: 'active' },
+      5: { label: 'BB',        action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['3','♣'], ['3','♦']),
+    board: null,
+    pot: '$3',
+    toCall: null,
+    body: "First to act, under the gun, with 3♣3♦. A pocket pair is always tempting — but this one plays the whole hand out of position against five unknown seats, and the maniac in the Hijack punishes early opens with 3-bets you can't call with treys.",
+    question: 'Bottom pocket pair from the worst seat. What do small pairs need that UTG can\'t give them?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Small Pairs Need Cheap Flops and Good Seats', emoji: '✅',
+        fb: "Fold. Treys make a set one flop in eight — the other seven you hold the worst pair possible, out of position against the whole table. Small pairs profit when the flop is cheap and your seat is late; UTG guarantees neither, and the maniac behind you makes the 'cheap' part a fantasy. The same 3♣3♦ is a fine open from the Button. Position isn't just about postflop play — it decides which hands are playable at all.",
+      },
+      {
+        val: 'limp', label: 'Limp in ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Limping Into the 3-Bet You Fear', emoji: '❌',
+        fb: "The limp tries to buy the cheap flop treys want — from the one seat where it's not for sale. The maniac attacks weak entries, and when his raise arrives you either fold $2 away or call more, out of position, still holding bottom pair. If a hand can't stand a raise from five players behind, it doesn't enter the pot from UTG.",
+      },
+      {
+        val: 'raise', label: 'Raise to $6', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'Playable Pair, Wrong Postcode', emoji: '⚠️',
+        fb: "Raising is at least honest aggression, and some players do open small pairs everywhere. But from UTG, treys open a pot they can't defend: 3-bets force a fold or a bad set-mine, callers behind hold position on you all hand, and seven flops in eight leave you with nothing to bet honestly. Save the small pairs for the seats where the flop comes cheap and you act last.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_141',
+    skill: 'preflop',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Opens wide from any seat and pays off 3-bets with most of it; his callers tend to come along too',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      1: { label: 'HJ (LR)',  action: 'Raises $6', state: 'active' },
+      3: { label: 'BTN (CS)', action: 'Calls $6',  state: 'active' },
+      5: { label: 'BB (You)', action: '???',       state: 'hero'   },
+    }),
+    hand: mkHand(['A','♦'], ['Q','♦']),
+    board: null,
+    pot: '$15',
+    toCall: '$4 more',
+    body: "The loose rec opens to $6 from the Hijack — routine for him — and the station on the Button flats, as he does with anything. You're in the Big Blind with A♦Q♦, looking at $4 more, two wide ranges, and a pile of money that already likes the pot.",
+    question: 'AQ suited against a wide opener AND a station caller. Your hand is ahead of both ranges — what does that suggest?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding the Best Hand at the Table', emoji: '❌',
+        fb: "Against these two ranges — a wide open and an any-two flat — A♦Q♦ is comfortably the strongest hand in the pot, and you're being offered it at a discount. Folding here isn't tight; it's declining money that was being handed to you.",
+      },
+      {
+        val: 'call', label: 'Call $4 more', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Closing the Action, Opening the Problems', emoji: '⚠️',
+        fb: "The $4 call is fine arithmetic — you close the action getting a great price. But it plays the hand three-way, out of position, with the pot small exactly when your edge is biggest. AQ suited against two wide, sticky ranges doesn't want a cheap look; it wants their loose money in the middle while it's still the best hand. Calling isn't wrong so much as small.",
+      },
+      {
+        val: 'raise', label: '3-Bet to $28', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'The Value Squeeze', emoji: '✅',
+        fb: "3-bet to $28 — and note why the size is big: this isn't a squeeze-bluff hoping they fold, it's a value squeeze expecting they won't. The loose opener pays off 3-bets, the station calls behind him, and every extra dollar goes in while A♦Q♦ dominates both of their ranges. When the players are this loose, the squeeze changes jobs: less about the fold button, more about the price of their stubbornness. Charge it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_142',
+    skill: 'position',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'Check-calls only with real pieces of the board; his river calls have shown top pair with good kickers',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (TR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♥'], ['8','♥']),
+    board: ['A♦', 'Q♣', '7♠', '4♥', '2♦'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you check', you: true }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$29',
+    toCall: null,
+    body: "You raised A♥8♥ on the Button and bet your top pair once on A♦Q♣7♠; the tight rec check-called — and his check-calls mean a real piece. The turn went check-check, and now his river check hands you the last word on the hand.",
+    question: 'Top pair, weak kicker, last to act. Before betting, ask: which hands call you, and which fold?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'The Free Showdown Is a Prize — Take It', emoji: '✅',
+        fb: "Check it back and turn your cards over. Run the river bet through the only test that matters: his queens and worse aces mostly fold, his better aces — the heart of a tight check-calling range — call. A bet wins nothing extra and loses more; the check wins the pot every time your hand is good, for free. That option is position itself: last to act, you're the only player at the table who can simply end the hand and collect. Out of position, A8 would be facing a bet right now, guessing.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $12', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Thin Value Needs a Different Customer', emoji: '⚠️',
+        fb: "Betting thin isn't a sin — against a station who calls with any queen, $12 here is fine. But this is a tight rec whose check-calls have shown top pair with better kickers than yours: the hands that pay your bet beat you, and the ones you beat let go. Thin value is opponent-specific. Against this customer, the showdown you already own is worth more than the bet.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $25', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Turning a Winner Into a Guess', emoji: '❌',
+        fb: "A big bet polarizes you — it tells him you have a strong ace or nothing — and a tight player responds precisely: folds everything you beat, calls everything that beats you. You've taken a hand that wins at showdown constantly and converted it into a bet that only loses. The last seat's superpower is the free showdown; this bet throws it away at maximum price.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_143',
+    skill: 'position',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Opens almost any two when folded to on the Button; folds most of it to 3-bets, barrels hard when he does continue',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Raises $6', state: 'active' },
+      4: { label: 'SB (You)', action: '???',       state: 'hero'   },
+      5: { label: 'BB',       action: 'Active',    state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['J','♠']),
+    board: null,
+    pot: '$9',
+    toCall: '$5 more',
+    body: "Folded to the aggressive regular on the Button, who raises to $6 — as he does with almost anything when it's folded to him. You're in the Small Blind with A♠J♠: too good to fold to a steal, and sitting in the one seat where calling creates its own problems.",
+    question: 'AJ suited in the Small Blind facing a Button steal. The hand clearly continues — but which way, and why?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Folding the Best Hand to the Widest Range', emoji: '⚠️',
+        fb: "Discipline in the Small Blind is usually right — but AJ suited crushes a Button-steal range, and folding it makes his any-two raise print against you. The SB's tight standards exist because of the seat's problems; a hand this far ahead is exactly the one that's supposed to fight through them.",
+      },
+      {
+        val: 'call', label: 'Call $5 more', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The Worst Seat\'s Worst Habit', emoji: '❌',
+        fb: "The Small Blind flat is a trap with three jaws: you're out of position against the whole table for the entire hand, the Big Blind is still behind you with a squeeze available, and your call caps your range — he barrels every flop knowing you'd have 3-bet your monsters. Calling turns the best hand preflop into a guessing game on every street after. In this seat, that price is never as cheap as it looks.",
+      },
+      {
+        val: 'raise', label: '3-Bet to $24', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'From the Small Blind, Play 3-Bet-or-Fold', emoji: '✅',
+        fb: "3-bet to $24. The Small Blind is the one seat where the middle option barely exists: a flat invites the squeeze, plays capped and faceup, and signs you up for three streets out of position. The 3-bet fixes all of it at once — it folds out most of his any-two range immediately, takes the initiative for the times he continues, and shuts the Big Blind out of the pot. Same hand, one seat back, calling is fine. Here, the seat picks the play: 3-bet or fold, and AJ suited is far too good to fold.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_144',
+    skill: 'aggression',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Bets tiny on rivers with medium hands hoping for a cheap showdown — and can\'t quite fold them once he\'s put chips in',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (LR)', action: 'Bets $5', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
+    }),
+    hand: mkHand(['T','♥'], ['8','♥']),
+    board: ['T♦', '8♦', '3♣', 'K♠', '2♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP',  segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'you check', you: true }, { text: 'BTN checks' }] },
+      { street: 'RIVER', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $5' }] },
+    ],
+    pot: '$29',
+    toCall: '$5',
+    body: "You check-called the flop with T♥8♥ — two pair on T♦8♦3♣ — and the K♠ turn went check-check. On the river 2♥ he bets $5 into $29: the classic tiny 'please just call' bet from a player who wants a cheap showdown with something medium.",
+    question: 'Two pair facing a $5 shrug-bet. Calling is easy and obviously fine — is it the most this hand can earn?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding Two Pair to Five Dollars', emoji: '❌',
+        fb: "You have two pair and he's begging you to call five dollars. There is no read, no board, no universe in which this fold makes sense — bets this small from medium hands are the softest money poker offers.",
+      },
+      {
+        val: 'call', label: 'Call $5', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Winning the Minimum on Purpose', emoji: '⚠️',
+        fb: "Calling banks the pot and can't lose much — but look at what the bet told you: tiny river bets are medium hands asking for a cheap showdown, which means he HAS something, and his notes say he can't fold it once chips are in. A hand that bets $5 to see your cards will pay $25 for the same view. Calling is the play against a bluff; against an announced medium hand, it's a discount you're giving him.",
+      },
+      {
+        val: 'raise', label: 'Raise to $25', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Punish the Shrug-Bet', emoji: '✅',
+        fb: "Raise to $25. His tiny bet is an open book — 'I have a medium hand, please show me yours cheaply' — and the correct response to an open book is to charge admission. King-x and worse two pairs that bet $5 for a look will grudgingly call a fair raise; that's the difference between winning the pot and winning the hand. This is the aggression that matters most at low stakes: not bluffing more, but never letting a made hand collect less than the customer was willing to pay. (When you're the one HOLDING the bluff-catcher against this bet, just call — the raise is for value.)",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_145',
+    skill: 'aggression',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'passive',
+      notes: 'Limps everything remotely playable and takes flops four ways; folds to real pressure before the flop',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      1: { label: 'HJ (P)',   action: 'Limps $2', state: 'active' },
+      2: { label: 'CO',       action: 'Limps $2', state: 'active' },
+      3: { label: 'BTN',      action: 'Limps $2', state: 'active' },
+      5: { label: 'BB (You)', action: '???',      state: 'hero'   },
+    }),
+    hand: mkHand(['K','♥'], ['Q','♥']),
+    board: null,
+    pot: '$9',
+    toCall: null,
+    body: "Limp, limp, limp — three of them, led by the passive rec in the Hijack, and the Small Blind is gone. You check your option holding K♥Q♥... or do you? The pot is $9 of loose change, and nobody has shown a hint of strength.",
+    question: 'KQ suited, a free option, and three limpers who\'ve announced weakness. What\'s wrong with taking the free flop?',
+    correct: 'raise_big',
+    choices: [
+      {
+        val: 'check', label: 'Check your option', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Free Isn\'t the Same as Best', emoji: '⚠️',
+        fb: "The check costs nothing, which makes it feel safe — but it plays KQ suited four ways, out of position, in a pot nobody built for you. Top pair in a limped family pot wins small and gets outdrawn constantly. Free flops are for junk. A premium suited broadway against three announced-weak ranges wants the pot bigger and the field smaller, and only one action does both.",
+      },
+      {
+        val: 'raise_small', label: 'Raise to $6', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'A Raise Priced Like an Invitation', emoji: '❌',
+        fb: "Raising $4 more into three limpers changes nobody's plans — each of them calls getting huge odds, and you've built a bigger four-way pot without thinning it, the worst of both worlds. Multiway raises have to be sized for the crowd: too small, and you've just sweetened the pot for the field you were trying to shrink.",
+      },
+      {
+        val: 'raise_big', label: 'Raise to $12', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Punish the Parade', emoji: '✅',
+        fb: "Raise to $12. Three limps are three confessions, and passive limpers fold to real pressure before the flop — most of that $9 walks straight into your stack uncontested. When someone does call, you've got a premium suited hand, the initiative, and a heads-up pot instead of a four-way lottery. Sizing scales with the crowd: a big raise into limpers isn't a bluff, it's collections. Checking your option with a hand this strong is the quiet leak that never shows up in anyone's notes.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_146',
+    skill: 'betsize',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Anchors on the pot, not his hand — calls half-pot river bets with any pair he\'s carried that far',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (CS)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['J','♠'], ['T','♠']),
+    board: ['Q♦', '9♥', '3♣', '8♦', '2♠'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you bet $20', you: true }, { text: 'BB calls' }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$69',
+    toCall: null,
+    body: "Your J♠T♠ turned the straight on Q♦9♥3♣8♦ and the station called you the whole way, as stations do. The river 2♠ changes nothing and he checks. The pot is $69 — and the only question left is a number.",
+    question: 'The straight is made, the caller is caught. Is a $6 bet and a $35 bet even the same kind of decision?',
+    correct: 'bet_medium',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'The Last Street Pays the Best', emoji: '❌',
+        fb: "He called two streets with a pair and arrived at the river still holding it — this is the exact moment his stubbornness is supposed to pay you. Checking back a straight against a caller isn't caution; it's leaving the biggest bet of the hand unbilled.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $6', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Six Dollars Into Sixty-Nine', emoji: '⚠️',
+        fb: "At least it's a bet — but look at it as a fraction, because that's how poker counts: $6 into $69 is under a tenth of the pot, from a hand that beats everything he called with. Bets aren't dollar amounts, they're percentages of what's in the middle, and his notes say he anchors on the pot too — he calls HALF of it with any pair. You asked for a tip when the menu said he'd pay for dinner.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $35 (half pot)', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Think in Fractions, Not Chips', emoji: '✅',
+        fb: "Bet $35 — half the pot, which is the smallest useful way to think about any bet. A $6 bet and a $35 bet aren't sizes of the same play; they're different plays entirely, because his decision runs on the pot: he calls half-pot with the pairs he's carried this far, so half-pot is what the straight charges. Train the habit now, at every stake: before picking a number, name the fraction. Chips lie; percentages don't.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_147',
+    skill: 'betsize',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Reads small bets as weakness and raises them relentlessly; lately he\'s been checking back flops when just called',
+    },
+    tableContext: 'He\'s raised two small flop bets tonight and shown down air both times.',
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Raised $6', state: 'active' },
+      5: { label: 'BB (You)', action: '???',       state: 'hero'   },
+    }),
+    hand: mkHand(['7','♠'], ['6','♠']),
+    board: ['9♠', '8♥', '5♦'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: "you're first to act", you: true }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You defended 7♠6♠ against the aggressive regular and flopped the nuts — 9♠8♥5♦ wraps your straight. You're first to act against a player who's been checking back flops lately, but who attacks small 'scared' bets on sight. Twice tonight he's raised one and shown down air.",
+    question: 'The nuts, out of position, against a bully who hates small bets. How do you get his chips moving?',
+    correct: 'bet_small',
+    choices: [
+      {
+        val: 'check', label: 'Check (go for the check-raise)', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'The Standard Play Against the Wrong Tendency', emoji: '⚠️',
+        fb: "Check-raising the c-bettor is the textbook line with a flopped monster — but you're holding the book upside down for this opponent: he's been checking back flops when merely called, so your check risks a free turn card and a pot that never grows. Reads outrank defaults. When the c-bet stopped being automatic, the check-raise stopped being the plan.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $4', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Set the Bait He Can\'t Resist', emoji: '✅',
+        fb: "Lead $4 — a bet designed to look exactly like the weakness he loves to attack. His notes write the script: small bets get raised, and twice tonight the raise was air. Your tiny lead hands him rope, his raise builds the pot with junk, and your re-raise or call keeps the nuts in the driver's seat. This is the deepest bet-sizing idea in the game: size doesn't just extract value, it PROVOKES action. Against a bully, the smallest bet is the loudest bait.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $13 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Scaring Off Your Best Customer', emoji: '❌',
+        fb: "A pot-sized lead into the preflop raiser announces strength — the one message that makes an aggressive player behave. His air folds instead of raising, his medium hands proceed with caution, and the nut straight wins a pot the size of a handshake. You have the hand that can't be outdrawn standing against the player who can't resist attacking; big sizing is the only way to lose the show.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_148',
+    skill: 'bluffing',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'Calls river bets only with a pair or better; never pays off with unimproved high cards',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (TR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♦'], ['J','♥']),
+    board: ['9♦', '8♦', '6♠', '3♣', '2♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you check', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you check', you: true }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised A♦J♥, the tight rec defended, and the 9♦8♦6♠ flop was one to check behind on — his territory, not yours. It checked through again on the 3♣, and now he checks the 2♥ river. Ace-high, $13 pot, and a strong urge to 'just take it.'",
+    question: 'Before you bluff, answer one question: which hands fold to your bet — and were any of them beating you?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Your Hand Already Beats Everything That Folds', emoji: '✅',
+        fb: "Check and show it down. A bluff earns money one way: by folding out better hands. Now audit his three checks — a tight rec with any pair bets or check-calls somewhere, so his range here is whiffed broadways and king-high, and your ace-high beats every bit of it at showdown for free. The only hands that call your bet are pairs, which beat you. Betting folds out what you beat and gets called by what beats you: the perfect anti-bluff. Hands with showdown value don't need to bluff — they already win the quiet way.",
+      },
+      {
+        val: 'bluff_small', label: 'Bet $9', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Bluffing Away a Winning Hand', emoji: '❌',
+        fb: "Run the accounting on this bet at any size: every hand that folds — busted king-high, queen-high — was already losing to your ace at showdown, so those folds earn you nothing. Every hand that calls has a pair, so those calls all cost you. The bet cannot gain and can only lose; it converts a hand that wins the pot for free into one that pays to lose it. Bluff with hands that can't win a showdown. Ace-high on this river isn't one of them.",
+      },
+      {
+        val: 'bluff_large', label: 'Bet $18', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'The Expensive Version of Pointless', emoji: '❌',
+        fb: "Run the accounting on this bet at any size: every hand that folds — busted king-high, queen-high — was already losing to your ace at showdown, so those folds earn you nothing. Every hand that calls has a pair, so those calls all cost you. The bet cannot gain and can only lose; it converts a hand that wins the pot for free into one that pays to lose it. Bluff with hands that can't win a showdown. Ace-high on this river isn't one of them.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_149',
+    skill: 'bluffing',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'Hates big rivers without the nuts — folds one-pair hands to serious pressure when obvious draws complete',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (TR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['T','♦']),
+    board: ['Q♠', '9♠', '4♦', '8♣', '2♠'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you bet $18', you: true }, { text: 'BB calls' }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$65',
+    toCall: null,
+    body: "You barreled A♠T♦ on Q♠9♠4♦ and the 8♣ — gutshot, overcard, and the nut spade in your hand — and the tight rec check-called twice. The river 2♠ completes the flush, misses you entirely… and puts the one card in your hand that matters: the A♠ says he doesn't have the nut flush, because you do... the blocker version of it.",
+    question: 'Busted draw, ace-high — and the A♠ in your hand on a three-spade river. What story can you tell that he can\'t call?',
+    correct: 'bet_huge',
+    choices: [
+      {
+        val: 'check', label: 'Check back — give up', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Surrendering With the Best Card in the Deck', emoji: '❌',
+        fb: "Checking loses at showdown almost always — he check-called two streets, so his range is pairs that beat ace-high. Unlike a hand with showdown value, this one has nothing to protect and everything to gain: the flush came in, he hates big rivers without the nuts, and you hold the A♠ that makes the nut flush impossible for him. This is the one river where giving up costs more than firing.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $25', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'A Nut Story Told in a Small Voice', emoji: '⚠️',
+        fb: "The right read, the wrong volume. A $25 bet into $65 offers his top pair 3.6:1 — a price that makes even a nervous tight player call to 'keep you honest' with the flush out there. Polarized stories need polarized sizes: if your bet claims the nut flush, it has to cost what the nut flush would charge. Small bluffs on scare cards die from their own affordability.",
+      },
+      {
+        val: 'bet_huge', label: 'Bet $70 (overbet)', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'The Blocker Bluff, Full Price', emoji: '✅',
+        fb: "Overbet — $70 into $65. Every piece is in place: the third spade is the exact card your two barrels advertised, his check-calls capped him at one pair, his notes say he folds those to big rivers when draws complete — and your A♠ is the crown jewel, removing the nut flush from his range entirely while letting you credibly claim it yourself. That's what a blocker is for: you're not just betting that he's weak, you're holding the card that proves he can't be strong. When the story, the opponent, and the blocker all agree, bet like you mean it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_150',
+    skill: 'potodds',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'maniac',
+      notes: 'Opens constantly and drags callers along; his pots go multiway and bloated more often than not',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (M)',   action: 'Raises $6', state: 'active' },
+      3: { label: 'BTN',      action: 'Calls $6',  state: 'active' },
+      4: { label: 'SB',       action: 'Calls $6',  state: 'active' },
+      5: { label: 'BB (You)', action: '???',       state: 'hero'   },
+    }),
+    hand: mkHand(['8','♦'], ['6','♦']),
+    board: null,
+    pot: '$20',
+    toCall: '$4 more',
+    body: "The maniac opens to $6 from the Cutoff, the Button calls, the Small Blind calls, and you're in the Big Blind with 8♦6♦ — a hand you'd fold without a thought heads-up. But there's $20 in the middle, it's $4 to you, and you close the action: 5:1.",
+    question: '8♦6♦ is junk. $4 into a $20 pot at 5:1, closing the action, is not junk. Which one are you playing?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Folding the Price Along With the Hand', emoji: '⚠️',
+        fb: "Folding 86 suited is never a catastrophe — but at 5:1, closing the action with no raise possible behind you, it's leaving equity on the table. You need to win about 17% of the time for the call to break even, and a live suited one-gapper against three wide ranges clears that bar with room to spare. The lesson runs one way: you don't call because the hand is good; you call because the price is.",
+      },
+      {
+        val: 'call', label: 'Call $4 more', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'The Price Makes the Hand', emoji: '✅',
+        fb: "Call. This decision is arithmetic wearing a poker face: $4 to win $20 is 5:1, meaning you need about 17% equity, and 8♦6♦ — suited, connected, fully live against three loose ranges — carries more than that to every flop. Closing the action seals it: no re-raise can punish you, so the price you see is the price you get. Fold this exact hand to a normal raise heads-up, forever. But when the pot lays 5:1 and the risk is capped, junk stops being junk. Read the price first, the cards second.",
+      },
+      {
+        val: 'raise', label: '3-Bet to $26', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Squeezing With a Hand That Wanted a Discount', emoji: '❌',
+        fb: "A squeeze needs folds, and this table doesn't sell them — the maniac continues with everything and two callers are already glued to the pot. 3-betting 86 suited turns a $4 bargain into a $26 bloated guess, out of position, with the worst high-card hand at the table. The pot odds were offering you a cheap lottery ticket; the raise buys the whole losing roll.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_151',
+    skill: 'potodds',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Marries top pair and pays it off through completed draws — as long as the danger isn\'t obvious on the board',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (LR)', action: 'Bets $10', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['7','♣'], ['6','♣']),
+    board: ['K♠', '8♦', '5♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $10' }] },
+    ],
+    pot: '$13',
+    toCall: '$10',
+    body: "You defended 7♣6♣ and flopped an open-ended straight draw on the rainbow K♠8♦5♥ — any 9 or 4 fills it. The loose rec bets $10 into $13: only 2.3:1, a thin direct price for eight outs. But study the board — when your card lands, what will he see? Nothing.",
+    question: 'The direct price is marginal. What are the other dollars in this call — and why does THIS draw collect them?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Counting Only the Dollars on the Table', emoji: '❌',
+        fb: "By raw one-card math, 2.3:1 for a 5:1 draw looks like a fold — but that arithmetic pretends the hand ends on the turn. It doesn't: this opponent marries top pair, and your straight card is a stealth missile. No flush pattern, no paired board, just a harmless-looking 9 or 4 — he'll never see it coming and his king will pay off two more streets. Direct odds are the sticker price; implied odds are the deal. Draws this disguised, against payers this loyal, call thin prices for a living.",
+      },
+      {
+        val: 'call', label: 'Call $10', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Hidden Outs Are Worth Extra', emoji: '✅',
+        fb: "Call — and know exactly why, because the direct price alone doesn't justify it. Implied odds have two requirements: an opponent who pays when you hit, and a draw he can't see coming. You have both. His notes say he marries top pair 'as long as the danger isn't obvious' — and on rainbow K♠8♦5♥, a 9 or a 4 is the least obvious card in the deck. Compare the flush draw that arrives with sirens blaring and shuts every wallet: YOUR draw completes in silence. The more invisible the draw, the more the future pays — that's the half of pot odds that isn't printed on the table.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $32', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'Semi-Bluffing the Player Who Doesn\'t Fold', emoji: '⚠️',
+        fb: "The semi-bluff check-raise is a fine weapon — against opponents who fold. This one marries top pair, so your raise mostly gets called, the pot swells to $70-plus while you're a 2:1 dog, and you've traded a cheap, disguised draw for an expensive, obvious confrontation. When the whole value of your hand is that he'll pay you off LATER, don't scare the money now.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_152',
+    skill: 'reads',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'nit',
+      notes: 'Open-limps only when he wants action on a monster; his limp-reraise has shown aces both times he\'s used it tonight',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      0: { label: 'UTG (Nit)', action: '3-Bets $32', state: 'active' },
+      3: { label: 'BTN (You)', action: 'Raises $10', state: 'hero'   },
+    }),
+    hand: mkHand(['A','♠'], ['Q','♣']),
+    board: null,
+    pot: '$45',
+    toCall: '$22 more',
+    actionHistory: [
+      { street: 'PRE', segments: [{ text: 'UTG limps' }, { text: 'you raise to $10', you: true }, { text: 'UTG re-raises to $32' }] },
+    ],
+    body: "The nit open-limped under the gun — odd, from a player this careful — and you raised A♠Q♣ to $10 on the Button to punish it. Then the trap snapped: he re-raised to $32. The limp-reraise, from a nit, who has already shown aces with this move twice tonight.",
+    question: 'Limp, then re-raise, from the table\'s tightest player. This line has a name and a face — what\'s under it?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'The Oldest Trap in the Book', emoji: '✅',
+        fb: "Fold, and be glad it only cost $10. The limp-reraise is the most famous line in poker for a reason: careful players don't limp early and then re-raise with anything except the hands they were praying you'd attack — aces, kings, little else. This nit has already shown you the answer twice tonight. Lines tell stories, and some lines only have one author. AQ is a fine hand against a raise; against a limp-reraise from a nit, it's dominated by the entire script.",
+      },
+      {
+        val: 'call', label: 'Call $22 more', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Paying to Confirm What He Already Told You', emoji: '❌',
+        fb: "Every chip that continues here runs into the same wall: his range is aces and kings, full stop. Calling 'to see a flop' is the disaster path — hit your ace and his aces have you drawing near dead in a pot that will only grow; miss and you fold anyway. And 4-betting bluffs the one range on Earth that was BUILT to re-raise you: he limped specifically hoping someone would put in more money. The read was free, loud, and repeated. Take it.",
+      },
+      {
+        val: 'raise', label: '4-Bet to $75', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: '4-Betting Into the Trap\'s Teeth', emoji: '❌',
+        fb: "Every chip that continues here runs into the same wall: his range is aces and kings, full stop. Calling 'to see a flop' is the disaster path — hit your ace and his aces have you drawing near dead in a pot that will only grow; miss and you fold anyway. And 4-betting bluffs the one range on Earth that was BUILT to re-raise you: he limped specifically hoping someone would put in more money. The read was free, loud, and repeated. Take it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_153',
+    skill: 'reads',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Bluffs plenty on flops and turns — but like most players, his river check-raises have only ever shown monsters',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: 'Bets $22',      state: 'hero'   },
+      5: { label: 'BB (AR)',   action: 'Check-Raises',  state: 'active' },
+    }),
+    hand: mkHand(['A','♣'], ['Q','♥']),
+    board: ['Q♦', 'T♠', '6♣', '3♦', '9♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP',  segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN',  segments: [{ text: 'BB checks' }, { text: 'you bet $18', you: true }, { text: 'BB calls' }] },
+      { street: 'RIVER', segments: [{ text: 'BB checks' }, { text: 'you bet $22', you: true }, { text: 'BB check-raises to $70' }] },
+    ],
+    pot: '$157',
+    toCall: '$48 more',
+    body: "You value-bet A♣Q♥ — top pair, top kicker — three times on Q♦T♠6♣3♦, and the aggressive reg check-called twice. Then the river 9♥ landed, he checked again, you bet $22… and he check-raised to $70. It's $48 more, into a pot that's now $157.",
+    question: 'He bluffs flops and turns all night. So why is a RIVER check-raise a different animal — and what beat you?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'The Least-Bluffed Line in Poker', emoji: '✅',
+        fb: "Fold, top pair and all. Reads live at two levels — the player, and the line — and here the line outranks the player: even relentless bluffers go honest on river check-raises, because the move risks the most money with zero cards left to improve and needs YOU to have a calling hand. His own history says it plainly: monsters only. Add the board's testimony — the 9♥ slots KJ and J8 into straights his two check-calls were drawing to — and every story ends the same way. Bluff-catch his barrels all night; when the river check-raise arrives, believe it.",
+      },
+      {
+        val: 'call', label: 'Call $48 more', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Calling the Player, Ignoring the Line', emoji: '⚠️',
+        fb: "The logic is tempting: he's aggressive, you hold top pair top kicker, and $48 into $157 only needs to be right one time in three. But the read you have isn't about his flop barrels — it's that his river check-raises specifically have never once been a bluff. Against THAT line, one-in-three is a fantasy: check-call, check-call, check-raise on the card that completes KJ is value telling you its name. Lines have frequencies; this one's bluff frequency rounds to zero.",
+      },
+      {
+        val: 'raise', label: 'Re-raise to $170', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Re-Raising One Pair Into the Nut Line', emoji: '❌',
+        fb: "Re-raising here takes the hand furthest from what the evidence supports: his river check-raise range is straights and sets that never fold, so your one pair is drawing dead money in. Nothing worse than top pair continues against your re-raise, and everything better snaps you off. When a line this honest raises you, the only chips worth discussing are the ones you save.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_154',
+    skill: 'opponent',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Double- and triple-barrels relentlessly once he senses weakness — but folds his bluffs instantly to a check-raise',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Bets $8', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
+    }),
+    hand: mkHand(['Q','♦'], ['J','♦']),
+    board: ['Q♠', 'J♣', '5♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }] },
+    ],
+    pot: '$13',
+    toCall: '$8',
+    body: "You defended Q♦J♦ and flopped top two pair on the dry Q♠J♣5♥. The aggressive reg c-bets $8 — and his file says the interesting part: he barrels relentlessly at weakness, but his bluffs evaporate the instant someone check-raises.",
+    question: 'Top two against a serial barreler who believes check-raises. Where does his money come from — his calls, or his next two bets?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding the Second-Best Flop You Can Hit', emoji: '❌',
+        fb: "Top two pair against a c-bet is about as far from a fold as poker gets. The only question this flop asks is how to win the MOST — folding answers a question nobody asked.",
+      },
+      {
+        val: 'call', label: 'Call $8', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Let the Barreler Keep Barreling', emoji: '✅',
+        fb: "Just call — and understand why, because the answer lives in his file, not your cards. His bluffs fold to check-raises but barrel relentlessly at weakness: your call reads as weakness, so the turn and river bets are already loading. Against the maniac, top two check-raises immediately — he pays raises with anything. Against THIS player, the raise is a mute button on his bluffs, and his bluffs are where your money is. Same monster, opposite plays, chosen entirely by who's sitting across the felt. The dry board makes the slowplay nearly free; let him write checks to your top two all the way down.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $26', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'Winning the Pot, Firing the Customer', emoji: '⚠️',
+        fb: "The check-raise isn't bad — it wins the pot and protects against the rare gutshot. But read his file again: bluffs fold INSTANTLY to check-raises, and bluffs are most of what an aggressive reg c-bets on Q-J-5. Your raise collects $21 and ends the show; his double and triple barrels were worth twice that. Strong hands against bluff-heavy barrels want to open the door, not slam it. Save this raise for the villain who pays it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_155',
+    skill: 'opponent',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'unknown',
+      notes: 'Sat down two hands ago. No showdowns, no history, no tells — you know nothing about this player yet',
+    },
+    tableContext: 'A brand-new player — you have zero reads.',
+    positions: mkPositions({
+      3: { label: 'BTN (?)',  action: 'Bets $29', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['T','♣'], ['T','♦']),
+    board: ['A♠', '8♦', '4♣', '6♠', '2♥'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP',  segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'you check', you: true }, { text: 'BTN checks' }] },
+      { street: 'RIVER', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $29' }] },
+    ],
+    pot: '$29',
+    toCall: '$29',
+    body: "A stranger sat down two hands ago; this is your first pot against him. You check-called his flop bet with T♣T♦ under the A♠8♦4♣ board, the turn checked through, and now he fires a full-pot $29 on the river. Getting 2:1 — with zero reads to lean on.",
+    question: 'You know NOTHING about this player. When the file is empty, what do you play — his tendencies, or everyone\'s?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'No Reads? Play the Population', emoji: '✅',
+        fb: "Fold — not because of anything you know about him, but because of what you know about everyone. When the file is empty, the default read IS the read: at these stakes, full-pot river bets are value far more often than the 33% your price requires, and your tens lose to every ace he's betting. Hero calls are earned by evidence, and you have none. There's a bonus in the fold, too: the note you take. 'Pots river after checking turn' goes in the file, and the NEXT decision against him won't be blind. Against unknowns, play solid and collect data — the exploits come later.",
+      },
+      {
+        val: 'call', label: 'Call $29', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'A Price That Needs a Read You Don\'t Have', emoji: '⚠️',
+        fb: "The math isn't crazy — 2:1 means you only need to be good a third of the time, and the turn check-back adds a whiff of a missed hand. But that story requires an assumption about a specific player, and you met this one two hands ago. Absent evidence, the population baseline rules: big river bets at these stakes are under-bluffed, and second pair is exactly what they're built to beat. Save the hero calls for players who've shown you they bluff. Today you pay for information either way; folding is the cheaper tuition.",
+      },
+      {
+        val: 'raise', label: 'Raise to $75', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Bluffing a Ghost', emoji: '❌',
+        fb: "Raising second pair here needs him to fold better hands — an assumption about a player you cannot possibly have modeled yet. If he's betting an ace for value, as unknowns usually are, your $75 disappears into a snap call. Fancy plays are built ON reads; with an empty file, they're built on air. Unknown opponent, standard poker: fold the bluff-catcher, open the notebook.",
+      },
+    ],
+  }),
+
+  // ── July 2026 batch 5 (sc_156–sc_171): gap-targeting — early seats, turn
+  //    street, 3-bet pots, paired/monotone textures, potodds answer variety ──
+
+  mkScenario({
+    id: 'sc_156',
+    skill: 'preflop',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'maniac',
+      notes: 'Attacks early-position opens with 3-bets for sport; five players act behind you and he\'s the first of them',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      0: { label: 'UTG (You)', action: '???',    state: 'hero'   },
+      1: { label: 'HJ (M)',    action: 'Active', state: 'active' },
+      2: { label: 'CO',        action: 'Active', state: 'active' },
+      3: { label: 'BTN',       action: 'Active', state: 'active' },
+      4: { label: 'SB',        action: 'Active', state: 'active' },
+      5: { label: 'BB',        action: 'Active', state: 'active' },
+    }),
+    hand: mkHand(['Q','♠'], ['J','♠']),
+    board: null,
+    pot: '$3',
+    toCall: null,
+    body: "Under the gun with Q♠J♠ — suited, connected, two paint cards, genuinely pretty. But you're first to speak with five players behind you, the maniac nearest of them, and every seat at the table still holding live cards against yours.",
+    question: 'Q♠J♠ is a standard open from the Button. What changes when the same two cards are UTG?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'The First Seat Plays the Tightest Range', emoji: '✅',
+        fb: "Fold. A starting hand isn't strong or weak by itself — it's strong or weak from a seat. From the Button, QJs attacks two random blinds; from UTG it asks five players in a row for permission, plays the whole hand out of position, and gets its action from ranges full of AQ, KQ, and better pairs — the exact hands that turn queen-jack top pairs into expensive second-bests. Same cards, different seat, different answer: that IS preflop discipline.",
+      },
+      {
+        val: 'limp', label: 'Limp in ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The Worst Seat and the Worst Entry', emoji: '❌',
+        fb: "Limping UTG stacks every problem this hand has on top of a new one: you invite the whole table in behind you, hand the maniac his favorite raising target, and still play the rest of the hand first to act with a dominated-prone hand. If QJs isn't strong enough to raise from here — and it isn't — it isn't strong enough to play from here.",
+      },
+      {
+        val: 'raise', label: 'Raise to $6', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'A Button Hand Raised From the Wrong Chair', emoji: '⚠️',
+        fb: "At least raising plays poker — but count the headwinds: five players behind, a maniac who 3-bets early opens for sport, and a hand that flops second-best top pairs against the ranges that call UTG raises. QJs isn't a bad hand; it's a bad hand from HERE. Move it two seats later and the raise becomes automatic. Seats set ranges — let yours.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_157',
+    skill: 'preflop',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: '3-bets middle-position opens from the Button constantly — his re-raises are about position, not premiums',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      1: { label: 'HJ (You)', action: 'Raises $6',  state: 'hero'   },
+      3: { label: 'BTN (AR)', action: '3-Bets $20', state: 'active' },
+    }),
+    hand: mkHand(['9','♠'], ['9','♥']),
+    board: null,
+    pot: '$29',
+    toCall: '$14 more',
+    body: "You opened 9♠9♥ from the Hijack and the aggressive regular did what he always does to middle-position opens: 3-bet to $20 from the Button. His re-raises are a position play, not a hand announcement. It's $14 more to you.",
+    question: 'Medium pair, wide 3-bettor. One option folds too much, one bloats the pot backwards — which one is neither?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Feeding the Position Tax', emoji: '⚠️',
+        fb: "Against a nit whose 3-bets are queens-plus, this fold is automatic. Against a player 3-betting the Button at this frequency, it's a donation: nines are comfortably ahead of a range built on position, and folding the middle of your range every time is exactly what his strategy is designed to farm. The villain sets the answer, and this villain says continue.",
+      },
+      {
+        val: 'call', label: 'Call $14 more', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Medium Pairs Are Built for This Call', emoji: '✅',
+        fb: "Call. Nines can't fold to a range this wide, and they can't 4-bet without turning themselves into a bluff — so they do what medium pairs do best: call, ahead of his ace-highs and suited junk, with a set draw as the bonus prize. Yes, you're out of position; that's the price of showing his wide 3-bets they don't get free money. Fold to the nit, call the position player — the hand is the same, the answer never is.",
+      },
+      {
+        val: 'raise', label: '4-Bet to $48', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Sorting His Range in His Favor', emoji: '❌',
+        fb: "The 4-bet does exactly one thing here: it sorts his range perfectly against you. Every hand you're crushing — the A5s, the K9s, the position junk — folds, and every hand that continues has nines crushed or flipping. Medium pairs lose their value the moment the money gets big preflop; keep the pot at a size where being ahead of his RANGE still matters.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_158',
+    skill: 'position',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'passive',
+      notes: 'Limp-completes half his hands from the Small Blind, then check-folds most flops when the texture misses him',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      4: { label: 'SB (P)',   action: 'Limps $2', state: 'active' },
+      5: { label: 'BB (You)', action: '???',      state: 'hero'   },
+    }),
+    hand: mkHand(['K','♦'], ['9','♦']),
+    board: null,
+    pot: '$4',
+    toCall: null,
+    body: "Folded around to the Small Blind, who completes for $2 — his standard shrug with half the deck. You're in the Big Blind with K♦9♦, and here's the quiet gift of this matchup: for once, the Big Blind acts LAST on every street.",
+    question: 'Blind versus blind is the one battle where your seat acts last all hand. What does that make K♦9♦ worth?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'check', label: 'Check your option', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'A Free Flop, a Wasted Edge', emoji: '⚠️',
+        fb: "Checking is free and never terrible. But tally what you're sitting on: a hand well ahead of a half-the-deck limping range, a player who check-folds most flops, and — the rarity — position on him for the entire hand. Free flops are for hands with nothing going; this one has everything going. The check doesn't lose money so much as decline it.",
+      },
+      {
+        val: 'raise_small', label: 'Min-raise to $4', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Pressure That Doesn\'t Press', emoji: '❌',
+        fb: "The min-raise gives him 3:1 to continue with the whole limping mess he arrived with — so he does, and the 'pressure' changed nothing except the pot size. If the point of raising a weak limp is to charge it or end it, $2 more does neither. Size the raise to ask a real question.",
+      },
+      {
+        val: 'raise', label: 'Raise to $8', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'The One Seat Where the Big Blind Rules', emoji: '✅',
+        fb: "Raise to $8. Blind-versus-blind is the lone matchup where the Big Blind holds position for the whole hand — the advantage every other seat pays to get, handed to you free. Add a limper who check-folds most flops and K♦9♦ becomes a value raise: he folds now and donates the limp, or he calls and plays every street first into a player holding a better hand AND the last word. When the table's worst seat becomes its best for one hand, collect.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_159',
+    skill: 'position',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Opens wide from late position and peels 3-bets out of position, then plays fit-or-fold honestly on the flop',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (LR)',   action: 'Calls $20', state: 'active' },
+      3: { label: 'BTN (You)', action: '3-Bets $20', state: 'hero'  },
+    }),
+    hand: mkHand(['A','♥'], ['K','♥']),
+    board: ['Q♠', '7♦', '3♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'CO raises to $6' }, { text: 'you 3-bet to $20', you: true }, { text: 'CO calls' }] },
+      { street: 'FLOP', segments: [{ text: 'CO checks' }] },
+    ],
+    pot: '$43',
+    toCall: null,
+    body: "You 3-bet A♥K♥ on the Button over the loose rec's Cutoff open, and he peeled from the worse seat — as he does. The flop misses you: Q♠7♦3♣. But look at the geometry: he checks, and he'll be acting first, checking to you, every single street.",
+    question: 'Ace-high in a 3-bet pot you missed — but every street runs through you last. What does the seat let you do that the cards alone don\'t?',
+    correct: 'bet_small',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Showdown Value on a Leash', emoji: '⚠️',
+        fb: "Ace-king high really can win this pot unimproved, so checking isn't absurd. But it hands a fit-or-fold player a free card and mutes everything your position offers: he'll check to you again on the turn not knowing if you have queens or air, and a check-back tells him it's air. In 3-bet pots, the in-position player who keeps the story going gets paid in folds; the one who goes quiet invites stabs.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $14', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Small Bet, Big Seat', emoji: '✅',
+        fb: "Bet $14 — a third of the pot, and let position do the heavy lifting. Your 3-bet plus this dry queen-high board own his fit-or-fold range: everything without a queen folds to any bet, so buy those folds at the cheapest price, with six outs to the nuts and last action as insurance the times he peels. This is what 3-bet pots in position are: he has to solve every street first, blind, while your small bets ask expensive questions. The seat, not the ace-king, is the hand's engine.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $40', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Paying Double for the Same Folds', emoji: '❌',
+        fb: "His no-queen hands fold to $14 exactly as fast as to $40 — that's what fit-or-fold means. The big bet buys the identical folds at triple the price, and when he does call, you're playing a bloated pot with ace-high against a range that connected. Your seat was offering cheap, multi-street control; the big bet trades it for one loud street. Efficient pressure beats loud pressure.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_160',
+    skill: 'aggression',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Double-barrels most turns once he c-bets — but gives up on rivers when two streets of pressure haven\'t worked',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Bets $20', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['7','♠'], ['7','♣']),
+    board: ['J♠', '7♦', '2♣', '3♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $20' }] },
+    ],
+    pot: '$29',
+    toCall: '$20',
+    body: "You flopped middle set with 7♠7♣ on J♠7♦2♣ and just called his c-bet — letting the barreler barrel. The 3♥ turn changes nothing, and here comes the second bullet, $20 into $29, right on schedule. His file says the third bullet rarely comes without a hand.",
+    question: 'The trap caught his second barrel. His file says there\'s rarely a third. When does the trap close?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding a Set to the Bet You Fished For', emoji: '❌',
+        fb: "You slow-played specifically to make him fire this barrel, and it worked. Folding middle set on a board with no draw in sight isn't caution — it's abandoning the plan at the moment it succeeded.",
+      },
+      {
+        val: 'call', label: 'Call $20', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Waiting for a Bullet That Isn\'t Coming', emoji: '⚠️',
+        fb: "Calling kept his bluffs firing on the flop — that was right. But read his file again before doing it twice: he gives up on rivers when two barrels haven't worked, so the third bullet you're waiting for mostly doesn't exist. Flat here and the river goes check-check, his air showing down for free. The barrels you were milking end after this street; milk the last one all the way.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $55', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Strike After the Last Bullet', emoji: '✅',
+        fb: "Check-raise to $55. Trapping has two halves and beginners only learn the first: lie in wait while the bluffs keep betting — then STRIKE before the betting dies. His file says turns get barreled and rivers get surrendered, so this $20 is the last chips his air will ever offer, and his real hands — jacks, overpairs — are exactly the ones that pay a raise right now in a pot finally worth raising. Flat the flop, raise the turn: aggression isn't just having the gas pedal; it's knowing which street to floor it.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_161',
+    skill: 'aggression',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'nit',
+      notes: 'On flush-heavy boards he\'s honest to a fault — without a piece of the suit, even his pairs fold to real bets',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (Nit)',  action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♥'], ['J','♣']),
+    board: ['9♥', '6♥', '2♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised A♥J♣ on the Button and the flop came down all hearts: 9♥6♥2♥. You hold the A♥ — the one card that makes the nut flush, in a hand that also carries two overcards. The nit checks, already looking uncomfortable.",
+    question: 'No pair — but the ace of the flopped suit is in YOUR hand. Who does a monotone board really belong to?',
+    correct: 'bet_medium',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'A Free Card You Didn\'t Need to Buy', emoji: '⚠️',
+        fb: "Checking keeps the pot small and your draw live, and against a trappy opponent that's a real plan. But this opponent isn't trappy — he's a nit staring at three hearts he doesn't hold, ready to surrender to the first bet. Taking a free card here passes up the purest kind of profit: a pot nobody wants, claimable by whoever speaks first with a credible story. You hold the best possible story in your hand.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $9', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'The Board Belongs to Whoever Holds the A♥', emoji: '✅',
+        fb: "Bet $9. Monotone boards freeze everyone who didn't flop the suit — and you own the card that trumps the whole texture: the A♥ means the nut flush is either yours already or one card away, and no hand he holds can ever be sure. His file makes it a layup (even pairs fold without a heart), and the times he does peel, nine hearts and two overcards keep you drawing to the world. Semi-bluffing is at its strongest when your worst case is this good: fold equity now, the nuts later.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $13 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Overpaying on a Frozen Board', emoji: '❌',
+        fb: "A monotone flop already did the scaring for you — his heartless hands fold to $9 just as surely as to $13, so the pot-sized bet buys nothing extra when he folds and costs extra the times he's sitting on a made flush. On boards this frightening, bets are announcements, not crowbars: say it at the cheap price.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_162',
+    skill: 'betsize',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Chases spade draws and calls with any pair; the size only matters to him as a fraction of what\'s already out there',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      1: { label: 'HJ (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (CS)',  action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['A','♥']),
+    board: ['J♦', '8♠', '3♠', '2♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$29',
+    toCall: null,
+    body: "You opened A♠A♥ from the Hijack and bet $8 on the J♦8♠3♠ flop; the station called with whatever he's chasing. The 2♣ turn changes nothing — he checks again. On the flop, $8 was a real bet — sixty percent of what was in the middle. The middle has since more than doubled.",
+    question: 'Your flop bet was 60% of the pot. Bet the same $8 now and it\'s 28%. What should actually stay the same?',
+    correct: 'bet_large',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Skipping a Street of Rent', emoji: '❌',
+        fb: "Aces against a station on a draw-flecked board is a three-street value hand — every street you don't bet is rent he skips. His spade draws get a free card, his pairs save a payment, and your best hand of the night collects two streets instead of three. Against players who can't fold, checking is the only real mistake.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $8 (same as the flop)', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Same Chips, Half the Bet', emoji: '⚠️',
+        fb: "It feels consistent — $8 worked on the flop, bet $8 again. But bets aren't measured in chips, they're measured against the pot, and the pot doubled: your 60% flop bet just shrank to 28% without you touching anything. The draws you were charging now peel at a discount, and the pairs that would pay half-pot get billed a third of that. Every street, re-derive the fraction. The pot moved; your price tag has to move with it.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $20', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Bets Scale With the Pot, Not With Habit', emoji: '✅',
+        fb: "Bet $20 — the same two-thirds fraction your flop bet was, which means it's the same BET, even though the chips doubled. That's the whole lesson: the pot is the ruler every wager gets measured against, and it grows street by street, so the chips must grow to stand still. His notes even say it plainly — size registers with him as a fraction of the middle. Charge the spades the same wrong price twice; overpairs against stations are how sessions get paid for.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_163',
+    skill: 'betsize',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'Sticks around with any pair or open draw at almost any price — top pair especially never finds the fold button',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (LR)',   action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['K','♦'], ['Q','♣']),
+    board: ['J♠', 'T♦', '4♥', 'A♦'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }, { text: 'you bet $8', you: true }, { text: 'BB calls' }] },
+      { street: 'TURN', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$29',
+    toCall: null,
+    body: "You bet K♦Q♣ on J♠T♦4♥ with an open-ended draw and the loose rec called. The turn is the A♦ — your card, twice over: it completes your Broadway straight, and it's the single best card in the deck for your preflop raising range. For his check-calling range? A card that improves almost nothing he holds.",
+    question: 'The turn made you the nuts AND made your story unbeatable. When one card does both, what happens to the price?',
+    correct: 'bet_huge',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Slow-Playing the Card That Made You', emoji: '❌',
+        fb: "Checking the nuts has one justification — keeping bluffs in — and this opponent doesn't bluff, he calls. His jacks and tens and diamond draws are sitting there ready to pay; a check collects nothing, risks a scare card killing his action, and wastes the card that just handed you both the nuts and the perfect story. The money is in his stubbornness, and stubbornness only pays when you bill it.",
+      },
+      {
+        val: 'bet_medium', label: 'Bet $15 (half pot)', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'Standard Size, Special Card', emoji: '⚠️',
+        fb: "Half pot is the textbook turn bet, and it gets called — that's exactly why it's not enough. Look at what the A♦ did to the two ranges: yours got stronger (every AK, AQ, and this exact straight lives in it), his got capped (he check-called with jacks and tens that just fell further behind). When a card widens the gap between the ranges that much, the sizing should widen with it. You're leaving the gap unbilled.",
+      },
+      {
+        val: 'bet_huge', label: 'Bet $45 (overbet)', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'Asymmetric Card, Asymmetric Size', emoji: '✅',
+        fb: "Overbet — $45 into $29. Here's the intermediate sizing idea in one sentence: bets should grow with the gap between the two ranges, and the A♦ just blew that gap wide open — it lives all over your raising range and nowhere in his check-call range, so he can never punish the size, only decide how much of it his top pair pays. Against a player who never finds the fold button with a pair, the answer is: plenty. Big cards for your range are green lights for big numbers.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_164',
+    skill: 'bluffing',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'loose',
+      notes: 'On suited boards he calls with any pair OR any card of the suit — half his range has a piece of a monotone flop',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (LR)',  action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['A','♣'], ['K','♣']),
+    board: ['9♠', '7♠', '3♠'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised A♣K♣ from the Cutoff and the flop arrived wearing one suit: 9♠7♠3♠. You hold clubs — not a spade in sight. The loose rec checks, and the c-bet feels automatic… until you ask what you'd do when a call comes back and a fourth spade hits.",
+    question: 'Monotone flop, zero cards of the suit in your hand. Which player does this board actually scare?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'You Can\'t Rep a Suit You Don\'t Hold', emoji: '✅',
+        fb: "Check. A monotone board turns every hand into a flush conversation, and you arrived without a word of the language: no spade means no draw when called, no credible flush when a fourth spade lands, and no good turn card — the spade scares YOU, everything else changes nothing. Meanwhile his loose range is full of stray spades and pairs that never fold here. Compare the mirror image: with the lone A♥ on a heart board, you attack, because the best flush card hands you the story. With nothing? The board is his. Check, and keep your chips out of a conversation you can't win.",
+      },
+      {
+        val: 'bluff_small', label: 'Bet $6', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'A Cheap Bet Into an Expensive Problem', emoji: '⚠️',
+        fb: "Six dollars looks harmless, but price was never this bluff's problem — the audience is: half his range holds a spade or a pair on this texture and calls, and then you're on the turn with ace-high, no draw, and no plan. Cheap bluffs into ranges that don't fold aren't small mistakes; they're small installments on a big one.",
+      },
+      {
+        val: 'bluff_large', label: 'Bet $13 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'The Big Bluff With No Backup', emoji: '❌',
+        fb: "A pot-sized bluff on a monotone board makes a loud claim — 'I have the flush' — to the one opponent whose range is stuffed with reasons to look you up, while your hand holds zero outs to back the story when he does. Bluffs need either folds today or equity tomorrow. Betting big here buys neither; it just sets fire to the pot you could have exited for free.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_165',
+    skill: 'bluffing',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'Defends his blind with broadways and middling cards, then plays the flop honestly — no pair, no interest',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '???',     state: 'hero'   },
+      5: { label: 'BB (TR)',  action: 'Checked', state: 'active' },
+    }),
+    hand: mkHand(['K','♥'], ['Q','♦']),
+    board: ['8♠', '8♣', '3♦'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BB calls' }] },
+      { street: 'FLOP', segments: [{ text: 'BB checks' }] },
+    ],
+    pot: '$13',
+    toCall: null,
+    body: "You raised K♥Q♦ from the Cutoff, the tight rec defended his blind, and the flop came down 8♠8♣3♦ — paired, dry, and about as far from his broadway-heavy defending range as a flop can get. He checks. Do the census: how many hands can he actually HAVE here?",
+    question: 'Two of the four eights are on the board. His range is broadways that just missed. What texture is better for a bluff than this?',
+    correct: 'bet_small',
+    choices: [
+      {
+        val: 'check', label: 'Check back', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Two Overcards Taking the Scenic Route', emoji: '⚠️',
+        fb: "Checking king-queen high isn't reckless — you have six outs and a free card is a free card. But it walks past the most profitable c-bet spot in poker: a paired, bone-dry board that missed his entire defending range, against a player who folds whatever didn't pair. Betting wins the pot outright the huge majority of the time; checking wins it only when your king or queen arrives. Take the sure small profit over the occasional lucky one.",
+      },
+      {
+        val: 'bet_small', label: 'Bet $5', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Paired Boards Hit Nobody — Bet Them Cheap', emoji: '✅',
+        fb: "Bet $5. Here's the census that makes paired boards a bluffer's paradise: only two eights remain in the deck, so his range of broadways and middling cards is almost entirely no-pair — and an honest player with no pair on 8♠8♣3♦ is done the moment chips move. That's why the size is tiny: you're not charging draws (there are none) or building value; you're buying a near-certain fold, and $5 buys it as surely as $13. Best board to bluff, best price to do it. When the board pairs low and dry, the c-bet is close to free money.",
+      },
+      {
+        val: 'bet_large', label: 'Bet $13 (pot)', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Full Price for a Discount Fold', emoji: '❌',
+        fb: "Everything foldable folds to $5, so the pot-sized bet only changes the outcomes you don't want: it loses triple when he's slow-playing the case eight, and it turns a nearly-free bluff into an expensive one for identical folds. On boards where nobody has anything, the smallest bet does the entire job — spending more isn't strength, it's leakage.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_166',
+    skill: 'potodds',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Calls everything — but his own bets mean a real hand, and he pays off in full the rare times you outdraw him',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (CS)',  action: 'Bets $12', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['J','♣'], ['T','♣']),
+    board: ['Q♦', '8♥', '4♠'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'CO raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'CO bets $12' }] },
+    ],
+    pot: '$13',
+    toCall: '$12',
+    body: "You defended J♣T♣ and the flop came Q♦8♥4♠ — a gutshot: exactly the four nines fill your straight. The station bets $12 into $13, and the tempting math whispers: he pays off EVERYTHING when you hit. Barely 2:1 on four outs. Run the real numbers.",
+    question: 'Four outs, 2:1, and the best implied odds in the room. Can a perfect payer rescue a bad enough price?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Implied Odds Have a Ceiling', emoji: '✅',
+        fb: "Fold — and this is the discipline lesson precisely BECAUSE he's a payer. Four outs is roughly 11:1 against on the turn; his bet lays you 2:1. That gap is a canyon, and implied odds are a rope bridge: even if he pays off two full streets when your nine arrives, you land the nine so rarely that the math still drowns. Implied odds sweeten close calls — 8 or 9 outs at a slightly thin price. They do not resurrect 4 outs at 2:1 against anyone, ever. The payer changes how much you win when you get there; he can't change how often you get there.",
+      },
+      {
+        val: 'call', label: 'Call $12', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'The Payer Can\'t Fix the Price', emoji: '❌',
+        fb: "Putting more chips in chases the same four cards either way. The call needs the nine to arrive about one time in twelve and pays like it comes one in three — a hole no amount of future payoff fills at these bet sizes. And raising? His notes say his bets mean a hand and his calls mean everything: a semi-bluff needs a folder, and you've picked the one player in poker guaranteed to call. Bad price, wrong target, four outs. Let it go.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $36', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Semi-Bluffing the Player Who Never Folds', emoji: '❌',
+        fb: "Putting more chips in chases the same four cards either way. The call needs the nine to arrive about one time in twelve and pays like it comes one in three — a hole no amount of future payoff fills at these bet sizes. And raising? His notes say his bets mean a hand and his calls mean everything: a semi-bluff needs a folder, and you've picked the one player in poker guaranteed to call. Bad price, wrong target, four outs. Let it go.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_167',
+    skill: 'potodds',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'His big turn bets are top-pair protection, not commitment — he has folded top pair to check-raises twice tonight',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (TR)', action: 'Bets $24', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['9','♠'], ['8','♠']),
+    board: ['K♠', '6♠', '2♦', '3♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $6' }, { text: 'you call', you: true }] },
+      { street: 'TURN', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $24' }] },
+    ],
+    pot: '$25',
+    toCall: '$24',
+    body: "Your 9♠8♠ flush draw called a cheap flop bet on K♠6♠2♦, and the 3♣ turn bricked. Now the tight rec bets $24 into $25 — 2:1 on a 4:1 draw, the classic collapsed price. But before the fold hits the muck, check his file: he's folded top pair to check-raises twice tonight.",
+    question: 'The price says fold and the price is right. Is calling or folding really the whole menu?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Right Math, Shorter Menu', emoji: '⚠️',
+        fb: "The fold is honest: 2:1 for a one-card 4:1 draw loses money, and walking away from bad prices is a real skill. But pot odds are the mathematics of CALLING — they say nothing about the third option. Against a player whose big turn bets are protection he abandons under pressure, your hand has a move left that the price can't touch. Folding is the second-best answer in a spot that has a best one.",
+      },
+      {
+        val: 'call', label: 'Call $24', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Paying the Price You Already Know Is Wrong', emoji: '❌',
+        fb: "This is the one clearly losing line: nine outs hit about 19% on the river and he's charging you like it's 33%, with a file that says he stops paying the moment the third spade lands. Calling bad turn prices with face-up draws is the leak that never feels like one — each call is 'only' $24. They add up to the session.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $65', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'When the Price Is Wrong, Renegotiate', emoji: '✅',
+        fb: "Check-raise to $65. Pot odds judge a passive call, but aggression rewrites the equation: his file says these bets are top-pair protection he's already folded twice under pressure, so the raise wins the whole pot immediately a healthy chunk of the time — and when he does call, nine outs to the flush are still yours. Fold equity plus card equity beats price alone. Compare the maniac who never folds: there, this raise is lighting money on fire and the fold is right. The draw and the price were identical; the OPPONENT decided whether math or muscle wins the street.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_168',
+    skill: 'reads',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'tight',
+      notes: 'His c-bets into multiple players — especially with a station in the field — have shown top pair or better every time; he saves his bluffs for heads-up pots',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (TR)',  action: 'Bets $14', state: 'active' },
+      3: { label: 'BTN (CS)', action: 'Calls $14', state: 'active' },
+      5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
+    }),
+    hand: mkHand(['9','♥'], ['8','♥']),
+    board: ['Q♠', '9♦', '4♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'CO raises to $6' }, { text: 'BTN calls' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'CO bets $14' }, { text: 'BTN calls' }] },
+    ],
+    pot: '$47',
+    toCall: '$14',
+    body: "Three to the flop: you defended 9♥8♥, and Q♠9♦4♣ gave you middle pair. You checked, the tight rec bet $14 — into you AND the station — and the station called. Heads-up you'd peel this all day. But nobody bluffs into a crowd, and especially not into that crowd.",
+    question: 'Middle pair faces a bet aimed at two players, one of whom never folds. What does the audience tell you about the bet?',
+    correct: 'fold',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'Nobody Bluffs Into a Calling Station', emoji: '✅',
+        fb: "Fold, and pocket the read that saved you: a bet is priced by its audience. Heads-up, a c-bet can be anything — that's why you'd peel. But betting into TWO players needs both to fold, and betting into a station needs a miracle; a tight player knows this better than anyone, which is why his multiway c-bets have shown top pair or better every single time. Then the station called in front of you, stacking a second pair-heavy range on the pile. Middle pair against one honest bet and one sticky call is drawing at five outs, priced like a hand. The crowd told you what the bet meant; believe the crowd.",
+      },
+      {
+        val: 'call', label: 'Call $14', icon: '📞', cls: 'call',
+        grade: 'partial', title: 'The Heads-Up Peel in a Three-Way Pot', emoji: '⚠️',
+        fb: "This call is correct in the pot you're imagining — heads-up, where his c-bet range includes whiffed overcards your nines beat. But that's not this pot: he chose to bet into a station, which strips the bluffs out of his range, and the station's call ahead of you means beating ONE strong range isn't even enough anymore. The same $14 buys a completely different product multiway. Count the opponents before you count the price.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $45', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'Bluffing the Honest Bet and the Unbluffable Caller', emoji: '❌',
+        fb: "The raise needs folds from two players who just told you they won't give them: the tight rec's multiway bets are never bluffs (nothing honest folds), and the station... is a station. Middle pair with a raise builds a huge pot exactly when the evidence says you're behind at least one range, probably two. Reads exist to keep chips out of spots like this.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_169',
+    skill: 'reads',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: 'Barrels his bluffs on scare cards religiously — when a turn ace arrives and he DOESN\'T bet, he\'s protecting a made hand',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      3: { label: 'BTN (AR)', action: 'Checked', state: 'active' },
+      5: { label: 'BB (You)', action: '???',     state: 'hero'   },
+    }),
+    hand: mkHand(['6','♠'], ['5','♠']),
+    board: ['K♦', '8♣', '7♥', 'A♥', 'Q♣'],
+    actionHistory: [
+      { street: 'PRE',   segments: [{ text: 'BTN raises to $6' }, { text: 'you call', you: true }] },
+      { street: 'FLOP',  segments: [{ text: 'you check', you: true }, { text: 'BTN bets $8' }, { text: 'you call', you: true }] },
+      { street: 'TURN',  segments: [{ text: 'you check', you: true }, { text: 'BTN checks' }] },
+      { street: 'RIVER', segments: [{ text: "you're first to act", you: true }] },
+    ],
+    pot: '$29',
+    toCall: null,
+    body: "You called the flop on K♦8♣7♥ with 6♠5♠ — an open-ended draw. Then the A♥ turn, the single best bluffing card in the deck for the preflop raiser… and he checked it. The river Q♣ bricks your draw. Six-high, first to act, $29 sitting there.",
+    question: 'He bluffs scare cards religiously — and checked the scariest one. What did that check tell you about bluffing him now?',
+    correct: 'check',
+    choices: [
+      {
+        val: 'check', label: 'Check — give up', icon: '🃏', cls: 'fold',
+        grade: 'correct', title: 'The Card He Didn\'t Bet Is the Tell', emoji: '✅',
+        fb: "Check and surrender. The loudest information in this hand is a bet that never happened: this player barrels scare cards religiously, the turn A♥ was the best scare card poker prints, and he declined it. Bluffs and air fire there every time — so his check means the ace didn't scare him, which means a made hand throttling down for pot control. Your six-high can't win a showdown, but bluffing into a range that just announced 'I have a hand and I intend to call' is worse than losing quietly. Read the silences, not just the bets; the missing barrel is the most honest sentence he'll say all night.",
+      },
+      {
+        val: 'bluff_small', label: 'Bet $15', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Bluffing the Man Who Told You He\'d Call', emoji: '❌',
+        fb: "Any bluff here argues with the read instead of using it. His turn check on the A♥ — the card his bluffs always bet — subtracted the air from his range and left made hands managing the pot; those hands check the turn PLANNING to call a river bet, and yours is made of six-high and hope. Size can't fix it: $15 and $35 get looked up by the same kings and aces. The information was free and it said fold your bluffing plans; paying $15 or $35 to ignore it just sets the price of not listening.",
+      },
+      {
+        val: 'bluff_large', label: 'Bet $35', icon: '⚡', cls: 'raise',
+        grade: 'incorrect', title: 'A Bigger Argument With the Same Evidence', emoji: '❌',
+        fb: "Any bluff here argues with the read instead of using it. His turn check on the A♥ — the card his bluffs always bet — subtracted the air from his range and left made hands managing the pot; those hands check the turn PLANNING to call a river bet, and yours is made of six-high and hope. Size can't fix it: $15 and $35 get looked up by the same kings and aces. The information was free and it said fold your bluffing plans; paying $15 or $35 to ignore it just sets the price of not listening.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_170',
+    skill: 'opponent',
+    difficulty: 'beginner',
+    weight: 1.0,
+    villain: {
+      type: 'calling-station',
+      notes: 'Limps most hands, calls raises with all of them, and pays off top pair no matter how the board runs out',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (CS)',   action: 'Limps $2', state: 'active' },
+      3: { label: 'BTN (You)', action: '???',      state: 'hero'   },
+      4: { label: 'SB',        action: 'Active',   state: 'active' },
+      5: { label: 'BB',        action: 'Active',   state: 'active' },
+    }),
+    hand: mkHand(['A','♠'], ['9','♠']),
+    board: null,
+    pot: '$5',
+    toCall: null,
+    body: "The station limps from the Cutoff — his tenth limp of the hour — and you're next with A♠9♠ on the Button. Against a solid opener this hand goes in the maybe pile. But that's not who's in the pot, and who's in the pot is the whole question.",
+    question: 'A9 suited is a borderline hand against most raises. Against this limper, is \'borderline\' still the right file?',
+    correct: 'raise',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'partial', title: 'Grading the Hand, Ignoring the Opponent', emoji: '⚠️',
+        fb: "If a decent player had opened, folding A9s wouldn't be wrong — kicker trouble against real ranges is real. But hand standards aren't fixed; they move with the opponent, and this opponent limp-calls with most of the deck and pays off top pair to the end. Folding here grades the cards and skips the player. The player is the profitable part.",
+      },
+      {
+        val: 'limp', label: 'Limp behind ($2)', icon: '📞', cls: 'call',
+        grade: 'incorrect', title: 'Splitting the Prize Four Ways', emoji: '❌',
+        fb: "Limping behind invites both blinds into what should be a private lesson: multiway, your A9 wins small pots and inherits kicker problems, and the station's beautiful habit — paying off top pair forever — gets diluted by two extra players who might actually have hands. You found the softest spot at the table; don't share it.",
+      },
+      {
+        val: 'raise', label: 'Raise to $10', icon: '⚡', cls: 'raise',
+        grade: 'correct', title: 'The Opponent Moves the Line', emoji: '✅',
+        fb: "Raise to $10 and isolate him. This is opponent modeling changing a preflop chart in real time: A9 suited is marginal against players who punish marginal — and a value monster against one who limp-calls everything and pays off top pair no matter what. Heads-up, in position, your ace outkicks his entire loose range for the rest of the night. The cards didn't get better than 'borderline'; the customer did. Loosen up exactly where the opposition invites it — that's the entire art of seat-and-villain selection compressed into one raise.",
+      },
+    ],
+  }),
+
+  mkScenario({
+    id: 'sc_171',
+    skill: 'opponent',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: '3-bets wide with position and c-bets every 3-bet pot once — ace-high is the backbone of his range here',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: '3-Bets $20', state: 'hero'   },
+      3: { label: 'BTN (AR)', action: 'Bets $22',   state: 'active' },
+    }),
+    hand: mkHand(['T','♥'], ['T','♣']),
+    board: ['7♦', '5♣', '2♥'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $6', you: true }, { text: 'BTN 3-bets to $20' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you check', you: true }, { text: 'BTN bets $22' }] },
+    ],
+    pot: '$43',
+    toCall: '$22',
+    body: "You opened T♥T♣ from the Cutoff, the aggressive reg 3-bet you to $20 from the Button — position, as usual — and you called. The flop couldn't be safer: 7♦5♣2♥. You check, he fires $22 into $43, the c-bet he makes with one hundred percent of his range.",
+    question: 'Overpair to the board, in a 3-bet pot, against a range built on ace-high. What\'s the plan — for this street and the next two?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding the Best Hand to the Automatic Bet', emoji: '❌',
+        fb: "His 3-bets are wide and his 3-bet-pot c-bets are universal — which means this $22 says nothing and your tens beat most of everything: every AK, AQ, AJ, every suited position play. Folding an overpair to a bet the villain makes with his whole range is paying full respect to zero information. In 3-bet pots, medium pairs ARE the calling range; if tens fold here, you have no calling range at all.",
+      },
+      {
+        val: 'call', label: 'Call $22', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'Your Hand Is a Three-Street Plan, Not One Call', emoji: '✅',
+        fb: "Call — and know the plan runs to the river. Against THIS villain the math is bluntly in your favor: wide 3-bets plus automatic c-bets means ace-high makes up the bulk of his betting range, and tens beat all of it. Raising would fix his mistake for him — folding the air you beat, keeping the overpairs you don't. So you call, and you keep calling reasonable bets on safe cards, letting his bluffs fund the pot bullet by bullet. Against a nit who 3-bet you, tens play a small, careful pot. Against the position 3-bettor, they're a bluff-catching monster. The villain didn't just size your call — he wrote your whole script.",
+      },
+      {
+        val: 'raise', label: 'Check-Raise to $60', icon: '⚡', cls: 'raise',
+        grade: 'partial', title: 'Protecting Your Hand From His Mistakes', emoji: '⚠️',
+        fb: "The raise isn't crazy — it denies AK its six outs and takes the pot now. But study what it does to his range: the ace-highs you crush fold instantly (their next two barrels were your profit), and everything that continues — jacks through aces — has tens in terrible shape. You hold a hand that wants to be paid, against a player whose style is to keep paying. Don't interrupt him.",
+      },
+    ],
+  }),
+
 ];
 
 export default SCENARIOS;
