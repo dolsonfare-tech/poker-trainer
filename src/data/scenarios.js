@@ -7445,6 +7445,50 @@ const SCENARIOS = [
     ],
   }),
 
+  // ── sc_172: founder-requested (July 7) — AKs TPTK facing a 3-bet-pot jam.
+  //    First all-in scenario and first 2-option scenario in the pool.
+  //    Founder spec was $1/$3 (18/55/100/225); scaled to house $1/$2 keeping
+  //    every ratio: 6bb open, ~3.3x 3-bet, ~0.85-pot lead, ~2.3x jam, 3.5:1. ──
+
+  mkScenario({
+    id: 'sc_172',
+    skill: 'potodds',
+    difficulty: 'intermediate',
+    weight: 1.0,
+    villain: {
+      type: 'aggressive',
+      notes: '3-bets light with position and hates being led into — his big raises mix monsters with overpairs and the occasional pure tantrum',
+    },
+    tableContext: null,
+    positions: mkPositions({
+      2: { label: 'CO (You)', action: 'Bets $70', state: 'hero'   },
+      3: { label: 'BTN (AR)', action: 'All-In',   state: 'active' },
+    }),
+    hand: mkHand(['A','♥'], ['K','♥']),
+    board: ['K♠', '9♦', '4♣'],
+    actionHistory: [
+      { street: 'PRE',  segments: [{ text: 'you raise to $12', you: true }, { text: 'BTN 3-bets to $40' }, { text: 'you call', you: true }] },
+      { street: 'FLOP', segments: [{ text: 'you bet $70', you: true }, { text: 'BTN raises all-in to $160' }] },
+    ],
+    pot: '$313',
+    toCall: '$90 more',
+    body: "You opened A♥K♥ to $12, the aggressive regular 3-bet to $40 from the Button — his favorite move — and you called. The flop is everything you wanted: K♠9♦4♣, rainbow, top pair top kicker. You led $70… and he shoved, all-in to $160. It's $90 more into a $313 pot: 3.5:1.",
+    question: 'Top pair top kicker in a 3-bet pot, facing an all-in raise from an aggressive regular. Call or fold?',
+    correct: 'call',
+    choices: [
+      {
+        val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
+        grade: 'incorrect', title: 'Folding to Monsters That Are Mostly Imaginary', emoji: '❌',
+        fb: "Run the requirement before you run the fear: at 3.5:1 the call only needs to win 22% of the time, so folding claims that four times out of five this jam shows you a set or aces exactly. But an aggressive regular's 3-bet-then-shove range is far messier than that — queens and jacks hating your king, ace-king chopping, the occasional tantrum at being led into. Yes, sets and aces are in there, and sometimes you'll pay them. That's not a mistake; it's the price the odds already covered. Folding the effective nuts of your range, in a 3-bet pot, at 3.5:1, against the table's most aggressive player is how big pots get quietly donated all night.",
+      },
+      {
+        val: 'call', label: 'Call $90 more (all-in)', icon: '📞', cls: 'call',
+        grade: 'correct', title: 'The Price Answers the Scary Question', emoji: '✅',
+        fb: "Call. The math is short and it's the whole answer: $90 to win $313 means you need 22%, and against an aggressive regular's shoving range — overpairs under your king (QQ, JJ), ace-king chopping, bluff-tantrums at being led into, alongside the real monsters — top pair top kicker clears that bar with room to spare. The hands that beat you exist; they just don't exist four times in five, and that's what your price requires. One caveat worth filing: against a NIT, this exact jam is sets and aces almost always, and the same call becomes a fold. Same cards, same price — the range across the table decides. Today that range is wide, the price is 3.5:1, and the chips go in.",
+      },
+    ],
+  }),
+
 ];
 
 export default SCENARIOS;
