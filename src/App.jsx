@@ -6,6 +6,7 @@ import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, a
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
+import { setSentryUser, clearSentryUser } from './utils/sentry';
 import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
 import FeedbackPanel from './components/FeedbackPanel';
 import SessionSummary from './components/SessionSummary';
@@ -128,6 +129,7 @@ export default function App() {
         return;
       }
       identify(session.user.id);
+      setSentryUser(session.user.id);
       if (event === 'SIGNED_IN') track('signed_in');
       const uid = session.user.id;
       if (loadedUidRef.current === uid) return;
@@ -369,6 +371,7 @@ export default function App() {
     if (hasSupabase && window.confirm('Sign out of CheckRaise?')) {
       await supabase.auth.signOut();
       resetAnalytics(); // next visitor on this device gets a fresh identity
+      clearSentryUser();
       handleRestart();
     }
   };
@@ -378,6 +381,7 @@ export default function App() {
   const handleSwitchAccount = async () => {
     await supabase.auth.signOut({ scope: 'local' });
     resetAnalytics();
+    clearSentryUser();
   };
 
   if (authPhase === 'loading') {

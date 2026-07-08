@@ -1,3 +1,4 @@
+import './utils/sentry'; // first import — error monitoring must init before anything can crash
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';

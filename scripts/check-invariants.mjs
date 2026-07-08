@@ -115,6 +115,11 @@ for (const t of tables) {
   }
 }
 
+// ── 10. Sentry touched only by src/utils/sentry.js ──────────────────────
+onlyIn('sentry', /from\s+['"]@sentry|Sentry\.(init|captureException|setUser)/,
+  ['src/utils/sentry.js'], srcFiles,
+  'components call setSentryUser()/clearSentryUser() from src/utils/sentry.js instead');
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

@@ -5,6 +5,7 @@
   "author": "David Olson",
   "private": true,
   "dependencies": {
+    "@sentry/react": "^10.64.0",
     "@supabase/supabase-js": "^2.110.0",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
