@@ -20,8 +20,10 @@ test('new user completes first session and sees the summary', async () => {
   });
   fireEvent.click(screen.getByText(/Let's Play/));
 
-  // Dashboard → difficulty (beginner is pre-selected) → session
+  // Dashboard → difficulty → session (pick intermediate so the difficulty
+  // memory has something non-default to remember)
   fireEvent.click(screen.getByText(/Deal Me In/));
+  fireEvent.click(screen.getByText('Intermediate'));
   fireEvent.click(screen.getByText(/Start Session/));
 
   // Single-canvas layout: ticker, hero cards at seat, and villain read all present
@@ -52,9 +54,23 @@ test('new user completes first session and sees the summary', async () => {
     await screen.findByText('No pattern identified yet.')
   ).toBeInTheDocument();
 
-  // Back to dashboard without crashing
-  fireEvent.click(screen.getByText('Train Again'));
+  // Scenario history persisted — the session builder's no-repeat behavior
+  // depends on every played hand landing here with its scenarioId
+  const stored = JSON.parse(localStorage.getItem('cr_user'));
+  expect(Object.keys(stored.scenarioHistory)).toHaveLength(5);
+  for (const entry of Object.values(stored.scenarioHistory)) {
+    expect(entry).toMatchObject({ seen: 1, lastSeenAt: 1 });
+  }
+
+  // Summary offers one-tap chaining plus the quiet dashboard exit
+  expect(screen.getByText(/Deal Next Session/)).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Back to dashboard'));
   expect(await screen.findByText(/Deal Me In/)).toBeInTheDocument();
+
+  // Difficulty memory: the selector preselects the last-played level
+  fireEvent.click(screen.getByText(/Deal Me In/));
+  const intermediateCard = screen.getByText('Intermediate').closest('.ds-card');
+  expect(intermediateCard.className).toContain('selected');
 });
 
 test('username is editable from the dashboard, then locked for a week', async () => {

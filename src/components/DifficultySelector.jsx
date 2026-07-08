@@ -27,8 +27,15 @@ const DIFFICULTIES = [
   },
 ];
 
-export default function DifficultySelector({ onSelect }) {
-  const [selected, setSelected] = useState('beginner');
+export default function DifficultySelector({ onSelect, initialDifficulty }) {
+  // Preselect the level from last session (device memory) — regulars
+  // shouldn't re-answer this every time. Guards against a stored value that
+  // is stale or disabled (e.g. 'expert' before it ships).
+  const [selected, setSelected] = useState(() =>
+    DIFFICULTIES.some(d => d.key === initialDifficulty && !d.disabled)
+      ? initialDifficulty
+      : 'beginner'
+  );
 
   return (
     <div className="ds-container">

@@ -3,10 +3,11 @@
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
 import { DEFAULT_SKILLS, deriveSchema, createUser } from './userStorage';
+import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
 
-function assembleUser(profile, skillRows) {
+function assembleUser(profile, skillRows, sessionRows) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
       const row = skillRows.find((r) => r.skill === k);
@@ -28,6 +29,14 @@ function assembleUser(profile, skillRows) {
       ? { body: profile.coach_note_body, focus: profile.coach_note_focus }
       : null,
     usernameChangedAt: profile.username_changed_at ?? null,
+    // Derived from the append-only session log — feeds the session builder
+    // (no repeats, comeback hands) and follows the account across devices.
+    scenarioHistory: historyFromSessions(sessionRows, profile.sessions_completed),
+    // Personal best, also derived (sessions store correct_count); null until
+    // a session row exists so a first result is never celebrated as a "best".
+    bestSessionCorrect: sessionRows?.length
+      ? Math.max(...sessionRows.map(r => r.correct_count ?? 0))
+      : null,
     leaderboard: null,
   };
 }
@@ -52,7 +61,12 @@ export async function fetchRemoteUser() {
   const { data: skillRows, error: skillsErr } = await supabase
     .from('skills').select('*').eq('user_id', uid);
   if (skillsErr) throw skillsErr;
-  return assembleUser(profile, skillRows ?? []);
+  const { data: sessionRows, error: sessionsErr } = await supabase
+    .from('sessions').select('hands, correct_count')
+    .eq('user_id', uid)
+    .order('created_at', { ascending: true });
+  if (sessionsErr) throw sessionsErr;
+  return assembleUser(profile, skillRows ?? [], sessionRows ?? []);
 }
 
 /**
@@ -94,7 +108,15 @@ export async function createRemoteProfile(username, localUser) {
   const { error: skillsErr } = await supabase
     .from('skills').upsert(skillRows, { onConflict: 'user_id,skill', ignoreDuplicates: true });
   if (skillsErr) throw skillsErr;
-  return fetchRemoteUser();
+  const created = await fetchRemoteUser();
+  // Migrated local play (guest session / pre-Supabase tester) has no sessions
+  // rows, so the rebuilt scenarioHistory is empty — carry the local map so
+  // this device doesn't re-deal hands they just played. Later loads rebuild
+  // from rows only; a one-time possible repeat after that is accepted.
+  if (created && base.scenarioHistory) {
+    created.scenarioHistory = { ...base.scenarioHistory, ...created.scenarioHistory };
+  }
+  return created;
 }
 
 /** Persist post-session state (profile fields + all 8 skills). */

@@ -92,7 +92,7 @@ export default function FeedbackPanel({ grade, loading, feedbackText, correctAns
             {timedOut ? "Time's Up" : grade.title}
           </div>
           <div className={`grade-sub ${timedOut ? 'incorrect' : grade.g}`}>
-            {timedOut ? 'Too slow — treated as incorrect' : subLabel[grade.g]}
+            {timedOut ? 'The action passed you by — scored as a miss' : subLabel[grade.g]}
           </div>
         </div>
       </div>

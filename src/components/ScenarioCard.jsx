@@ -304,6 +304,9 @@ function SessionProgress({ currentIndex, total, correctCount }) {
     <div className="session-progress">
       <span>Hand <strong>{currentIndex + 1}</strong> / {total}</span>
       <span className="progress-divider">·</span>
+      {/* Scores say "correct" (founder, July 8) — the honest-labeling rule
+          ("Recommended Play", never "Correct Play") applies to per-hand
+          grading claims, not to the running tally. */}
       <span><strong className="correct-count">{correctCount}</strong> correct</span>
     </div>
   );
@@ -403,7 +406,7 @@ function relationLine(v) {
   return `${v.posName} · acts ${v.actsAfter ? 'after' : 'before'} you, every street`;
 }
 
-function TableCanvas({ scenario }) {
+function TableCanvas({ scenario, onVillainInfo }) {
   const positions = scenario.positions;
   const heroIdx = positions.findIndex(p => p.state === 'hero');
   const villainIdx = positions.findIndex(p => p.state === 'active');
@@ -440,13 +443,17 @@ function TableCanvas({ scenario }) {
         const tail = Math.min(88, Math.max(12, ((anchor.x - (bx - HALF)) / (HALF * 2)) * 100));
         return (
           <div
-            className="sc2-bubble"
+            className={`sc2-bubble${onVillainInfo ? ' sc2-bubble-tappable' : ''}`}
             style={{ left: `${bx}%`, top: `calc(${anchor.y}% + 24px)` }}
+            onClick={onVillainInfo ? () => onVillainInfo(v.label) : undefined}
+            role={onVillainInfo ? 'button' : undefined}
+            title={onVillainInfo ? `What is a ${v.label}?` : undefined}
           >
             <span className="sc2-bub-tail" style={{ left: `${tail}%` }} />
             <div className="sc2-bub-head">
               <span className="sc2-monogram">{v.monogram}</span>
               <span className="sc2-bub-name">{v.label}</span>
+              {onVillainInfo && <span className="sc2-bub-info">ⓘ</span>}
             </div>
             <div className="sc2-bub-pos">{relationLine(v)}</div>
           </div>
@@ -508,10 +515,11 @@ function ActionButtons({ options, onDecision, decided }) {
 
 function CanvasLayout({
   scenario, currentIndex, total,
-  totalSeconds, correctCount,
+  totalSeconds, correctCount, combo = 0,
   options, onDecision, decided,
   showTimer, onTimeout,
   feedback, timedOut, onNext, nextLabel,
+  onVillainInfo,
 }) {
   const v = villainSummary(scenario);
   // Peek: temporarily lift the feedback overlay so the player can re-study
@@ -524,6 +532,11 @@ function CanvasLayout({
       <div className="sc2-chrome">
         <div className="skill-tag">{scenario.tag}</div>
         <div className="sc2-chrome-right">
+          {/* Combo pill lives in reserved chrome space — it must never shove
+              the table down mid-session (old ComboRing banner did) */}
+          {combo >= 2 && (
+            <span className="sc2-combo" title={`${combo} correct in a row`}>🔥 ×{combo}</span>
+          )}
           {showTimer && (
             <TimerRing key={currentIndex} totalSeconds={totalSeconds}
               paused={decided} onTimeout={onTimeout} />
@@ -534,8 +547,14 @@ function CanvasLayout({
 
       <StreetBar boardLength={scenario.board ? scenario.board.length : 0} />
 
+      {/* Resurfaced miss (session builder) — label the repeat honestly; the
+          comeback is the point, not a hope the player doesn't notice. */}
+      {scenario.replay && (
+        <div className="sc2-replay-line">↩ You missed this one before</div>
+      )}
+
       <div className="sc2-stage">
-        <TableCanvas scenario={scenario} key={currentIndex} />
+        <TableCanvas scenario={scenario} key={currentIndex} onVillainInfo={onVillainInfo} />
         {feedback && (
           <>
             <div className={`sc2-overlay${peek ? ' sc2-overlay-peek' : ''}`} aria-hidden={peek}>
@@ -570,12 +589,17 @@ function CanvasLayout({
       {v && (
         <div className="sc2-villain-mobile">
           <div className="sc2-strip-label">⚑ VILLAIN READ</div>
-          <div className="sc2-strip">
+          <div
+            className={`sc2-strip${onVillainInfo ? ' sc2-strip-tappable' : ''}`}
+            onClick={onVillainInfo ? () => onVillainInfo(v.label) : undefined}
+            role={onVillainInfo ? 'button' : undefined}
+          >
             <span className="sc2-monogram">{v.monogram}</span>
             <span className="sc2-strip-text">
               <b>{v.label}</b>
               <span className="sc2-strip-pos">{relationLine(v)}</span>
             </span>
+            {onVillainInfo && <span className="sc2-bub-info">ⓘ</span>}
           </div>
         </div>
       )}

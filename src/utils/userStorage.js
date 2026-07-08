@@ -1,4 +1,5 @@
 import { deriveRating, applyHandToSkill, PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
+import { applyHandsToHistory } from './spacedrep';
 
 const USER_KEY = 'cr_user';
 
@@ -87,8 +88,22 @@ export function createUser(username) {
     schema: null,
     coachNote: null,
     pokerScore: null,
+    scenarioHistory: {},
     leaderboard: null,
   };
+}
+
+// ── Difficulty memory ─────────────────────────────────────────────────────────
+// Device preference, not profile data — an intermediate player shouldn't
+// re-answer the level question every session. Deliberately survives sign-out.
+const LAST_DIFFICULTY_KEY = 'cr_last_difficulty';
+
+export function loadLastDifficulty() {
+  try { return localStorage.getItem(LAST_DIFFICULTY_KEY); } catch { return null; }
+}
+
+export function saveLastDifficulty(difficulty) {
+  try { localStorage.setItem(LAST_DIFFICULTY_KEY, difficulty); } catch {}
 }
 
 // ── Schema derivation ──────────────────────────────────────────────────────────
@@ -155,7 +170,7 @@ export function deriveSchema(skills, sessionsCompleted) {
   return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
 }
 
-function derivePokerScore(skills) {
+export function derivePokerScore(skills) {
   const SCORE = { green: 100, yellow: 65, red: 30 };
   const rated = Object.values(skills).filter(d => d.attempts >= 5 && d.rating !== 'gray');
   if (rated.length === 0) return null;
@@ -171,7 +186,7 @@ export function toLocalDateString(d) {
   return `${y}-${m}-${day}`;
 }
 
-function calcStreak(user) {
+export function calcStreak(user) {
   const today = toLocalDateString(new Date());
   if (user.lastSessionDate === today) return { streak: user.streak, lastSessionDate: today };
   const yesterday = new Date();
@@ -182,8 +197,9 @@ function calcStreak(user) {
 }
 
 // ── Apply session ─────────────────────────────────────────────────────────────
-// `hands` is one entry per hand played: [{ skill, result }] — every hand
-// counts toward that skill's accuracy, including duplicates within a session.
+// `hands` is one entry per hand played: [{ scenarioId, skill, result }] —
+// every hand counts toward that skill's accuracy, including duplicates
+// within a session.
 export function applySessionResults(user, hands, coachRead) {
   const skills = Object.fromEntries(
     Object.entries(user.skills).map(([k, d]) => [k, { ...d }])
@@ -196,6 +212,16 @@ export function applySessionResults(user, hands, coachRead) {
   const sessionsCompleted = user.sessionsCompleted + 1;
   const schema     = deriveSchema(skills, sessionsCompleted);
   const pokerScore = derivePokerScore(skills);
+  // Per-scenario history drives the session builder (no repeats, comeback
+  // hands). In Supabase mode this is also rebuilt from `sessions` rows on
+  // every profile load — this in-memory update keeps the current device
+  // accurate between loads.
+  const scenarioHistory = applyHandsToHistory(user.scenarioHistory ?? {}, hands, sessionsCompleted);
+  // Personal best (most correct in one session). In Supabase mode this is
+  // also derived from sessions.correct_count on load, so it self-heals; for
+  // legacy local users the field starts null and begins tracking now.
+  const sessionCorrect = hands.filter(h => h.result === 'correct').length;
+  const bestSessionCorrect = Math.max(user.bestSessionCorrect ?? 0, sessionCorrect);
 
   const weakest = Object.entries(skills)
     .filter(([, d]) => d.rating === 'red' && d.attempts > 0)
@@ -205,5 +231,5 @@ export function applySessionResults(user, hands, coachRead) {
     ? { body: coachRead, focus: weakest }
     : user.coachNote;
 
-  return { ...user, skills, streak, lastSessionDate, sessionsCompleted, schema, pokerScore, coachNote };
+  return { ...user, skills, streak, lastSessionDate, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, bestSessionCorrect };
 }

@@ -2,7 +2,8 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
 import { fetchCoachRead } from './utils/claude';
-import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, applySessionResults, RENAME_COOLDOWN_MS } from './utils/userStorage';
+import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, applySessionResults, calcStreak, toLocalDateString, RENAME_COOLDOWN_MS, loadLastDifficulty, saveLastDifficulty } from './utils/userStorage';
+import { buildSession, applyHandsToHistory } from './utils/spacedrep';
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
@@ -19,48 +20,39 @@ import SignIn from './components/SignIn';
 // ─── Constants ────────────────────────────────────────────────────────────
 const SESSION_LENGTH = 5;
 const TIMER_SECONDS = 60; // HARDCODED — pull from user settings in Phase 2
-
-// ─── Combo Ring ────────────────────────────────────────────────────────────
-function ComboRing({ combo }) {
-  if (combo < 2) return null;
-  return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: '8px',
-      padding: '7px 12px', borderRadius: '12px',
-      background: 'linear-gradient(90deg, rgba(232,144,40,0.15), rgba(226,85,85,0.08))',
-      border: '1px solid rgba(232,144,40,0.4)',
-      marginBottom: '10px',
-      animation: 'combo-appear 0.3s ease',
-    }}>
-      <span style={{ fontSize: combo >= 5 ? '22px' : '18px', lineHeight: 1 }}>🔥</span>
-      <div style={{ lineHeight: 1.1 }}>
-        <div style={{
-          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '0.7rem',
-          fontWeight: '700', color: 'var(--yellow)', letterSpacing: '0.05em',
-        }}>
-          ×{combo} streak
-        </div>
-        <div style={{
-          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '0.5rem',
-          letterSpacing: '0.12em', color: 'rgba(242,237,227,0.45)',
-          textTransform: 'uppercase', marginTop: '2px',
-        }}>
-          {combo} correct in a row
-        </div>
-      </div>
-    </div>
-  );
-}
+// Guest gate (founder decision July 8): one full free session, no account —
+// then a free sign-in to continue. Guest progress migrates on first sign-in
+// via the same untagged-cache path pre-Supabase testers use. Client-side
+// gate only: the sole paid surface (coach read) is already server-gated.
+const GUEST_FREE_SESSIONS = 1;
+const GUEST_NAME = 'Guest';
 
 // ─── Utility ──────────────────────────────────────────────────────────────
-function getFilteredScenarios(difficulty) {
+// Deal via the session builder (utils/spacedrep.js): unseen scenarios first,
+// two slots weighted toward the player's weakest skills, at most one
+// resurfaced miss. `pendingHands` covers session chaining — when "Deal Next
+// Session" fires before the coach-read persist has landed, the just-played
+// hands are merged in so they can't be re-dealt immediately. When the
+// persist HAS landed they're already in user.scenarioHistory (lastSeenAt ===
+// the current session count), so the merge is skipped to keep the cooldown
+// clock exact.
+function dealScenarios(difficulty, user, pendingHands = []) {
   const pool = SCENARIOS.filter(s => s.difficulty === difficulty);
-  // Fisher–Yates — Math.random() in sort() gives a biased shuffle
-  for (let i = pool.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, SESSION_LENGTH);
+  const played = user?.sessionsCompleted ?? 0;
+  const priorHistory = user?.scenarioHistory ?? {};
+  const alreadyApplied = pendingHands.length > 0 &&
+    pendingHands.every(h => priorHistory[h.scenarioId]?.lastSeenAt === played);
+  const merge = pendingHands.length > 0 && !alreadyApplied;
+  const sessionsCompleted = merge ? played + 1 : played;
+  const history = merge
+    ? applyHandsToHistory(priorHistory, pendingHands, sessionsCompleted)
+    : priorHistory;
+  return buildSession(pool, {
+    history,
+    skills: user?.skills ?? {},
+    sessionsCompleted,
+    length: SESSION_LENGTH,
+  });
 }
 
 function ProgressDots({ total, current }) {
@@ -75,11 +67,14 @@ function ProgressDots({ total, current }) {
 
 // ─── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
-  const [showVillainGuide, setShowVillainGuide]   = useState(false);
+  // null = closed; {} = open on default tab; { focus } = open scrolled to
+  // that villain archetype (tapping the villain read on the table)
+  const [guide, setGuide]                         = useState(null);
   const [user, setUser]                           = useState(() => (hasSupabase ? null : loadUser()));
   // 'local' (no Supabase keys — pre-Phase-2 behavior) | 'loading' | 'signedout'
-  // | 'noprofile' (signed in, first visit) | 'error' (profile fetch failed —
-  // NOT the same as noprofile; see the auth listener's catch) | 'ready'
+  // | 'guest' (playing the free unauthenticated session) | 'noprofile'
+  // (signed in, first visit) | 'error' (profile fetch failed — NOT the same
+  // as noprofile; see the auth listener's catch) | 'ready'
   const [authPhase, setAuthPhase]                 = useState(hasSupabase ? 'loading' : 'local');
   const [screen, setScreen]                       = useState('dashboard');
   const [difficulty, setDifficulty]               = useState('beginner');
@@ -108,6 +103,11 @@ export default function App() {
   // (hourly TOKEN_REFRESHED, tab-focus re-emits) don't refetch — or worse,
   // knock a ready user back to 'noprofile' on one flaky request.
   const loadedUidRef = useRef(null);
+  // Guests have no session, so a stray no-session auth event must not stomp
+  // their in-progress state back to the SignIn screen (ref: the listener's
+  // closure can't see authPhase)
+  const guestRef = useRef(false);
+  const isGuest = authPhase === 'guest';
 
   useEffect(() => {
     if (!hasSupabase) return;
@@ -115,6 +115,7 @@ export default function App() {
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (!session) {
+        if (guestRef.current) return; // mid-guest-session: nothing to change
         loadedUidRef.current = null;
         // Explicit sign-out: the cached profile belongs to the account that
         // just left — drop it so it can't seed the NEXT account's profile
@@ -193,7 +194,7 @@ export default function App() {
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
     appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect' });
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true });
+    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true, replay: !!scenario.replay });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct, choice: null });
@@ -202,24 +203,73 @@ export default function App() {
   }, [scenario, decided, currentIndex, appendHistory]);
 
   const handleStartSession = () => {
+    if (isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS) {
+      handleGuestSignIn('dashboard'); // gate: the free session is used
+      return;
+    }
     setScreen('difficulty');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDifficultySelect = (selected) => {
-    decidedRef.current = false;
-    setDifficulty(selected);
-    const scenarios = getFilteredScenarios(selected);
-    setShuffledScenarios(scenarios);
-    setCombo(0);
-    setCorrectCount(0);
-    setSessionDelta(null);
-    setScreen('session');
-    track('session_started', { difficulty: selected });
+  // ── Guest flow ────────────────────────────────────────────────────────────
+  // "Try a free session" from SignIn: play as an untagged local profile —
+  // the exact shape first sign-in already migrates (pre-Supabase tester path).
+  const handleGuestPlay = () => {
+    track('guest_play_clicked');
+    const existing = cacheOwner() ? null : loadUser();
+    const guest = existing ?? createUser(GUEST_NAME);
+    if (!existing) saveUser(guest);
+    guestRef.current = true;
+    setUser(guest);
+    setAuthPhase('guest');
+    // Straight toward the cards (founder decision July 8): level pick, then deal
+    setScreen('difficulty');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Guest → SignIn (gate hit, or they chose to sign in). Progress stays in
+  // the untagged cache and migrates on account creation.
+  const handleGuestSignIn = (from) => {
+    track('guest_gate_signin', { from });
+    guestRef.current = false;
+    setScreen('dashboard');
+    setAuthPhase('signedout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Shared by the difficulty screen and summary chaining — resets every piece
+  // of per-session state so a chained session can't inherit the last one's.
+  const startSession = (selected, { chained = false } = {}) => {
+    decidedRef.current = false;
+    setDifficulty(selected);
+    saveLastDifficulty(selected);
+    const pending = chained
+      ? sessionHistory.map(h => ({ scenarioId: h.scenario.id, result: h.result }))
+      : [];
+    setShuffledScenarios(dealScenarios(selected, user, pending));
+    setCurrentIndex(0);
+    setSkillResults({});
+    setDecided(false);
+    setFeedback(null);
+    setShowSummary(false);
+    setCoachRead('');
+    setTimedOut(false);
+    setCombo(0);
+    setCorrectCount(0);
+    setSessionHistory([]);
+    setSessionDelta(null);
+    setScreen('session');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    track('session_started', { difficulty: selected, chained, guest: isGuest });
+  };
+
+  const handleDifficultySelect = (selected) => startSession(selected);
+
+  // One-tap "Deal Next Session" from the summary — same difficulty, no
+  // dashboard/difficulty-screen round trip between sessions.
+  const handlePlayAgain = () => startSession(difficulty, { chained: true });
+
   const handleFetchCoachRead = async () => {
-    setCoachLoading(true);
     const prevUser = sessionUserRef.current;
     // Every hand played counts toward accuracy — not the per-skill deduped results
     const hands = sessionHistory.map(h => ({
@@ -229,7 +279,7 @@ export default function App() {
     const persist = (updated, coachText) => {
       setUser(updated);
       saveUser(updated); // localStorage cache always
-      if (hasSupabase) {
+      if (hasSupabase && !isGuest) {
         saveRemoteUser(updated).catch(err => console.error('Profile save failed', err));
         recordSession({
           difficulty,
@@ -239,6 +289,14 @@ export default function App() {
         }).catch(err => console.error('Session log failed', err));
       }
     };
+    // Guests get no coach read (the endpoint requires a signed-in user — it's
+    // the sign-in carrot, and the summary says so honestly). Results still
+    // persist locally so they migrate into the account later.
+    if (isGuest) {
+      if (prevUser) persist(applySessionResults(prevUser, hands, null), null);
+      return;
+    }
+    setCoachLoading(true);
     try {
       const text = await fetchCoachRead(sessionHistory);
       setCoachRead(text);
@@ -258,7 +316,7 @@ export default function App() {
     const gr = scenario.grading[choice];
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
     appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g });
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false });
+    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -277,6 +335,7 @@ export default function App() {
       const correct   = sessionHistory.filter(h => h.result === 'correct').length;
       const incorrect = sessionHistory.filter(h => h.result === 'incorrect').length;
       sessionUserRef.current = user;
+      const today = toLocalDateString(new Date());
       setSessionDelta({
         iqDelta: correct * 2 - incorrect,
         prevStreak: user?.streak ?? 0,
@@ -284,9 +343,15 @@ export default function App() {
         prevPokerScore: user?.pokerScore ?? null,
         prevSkills: user ? { ...user.skills } : {},
         skillResults: { ...skillResults },
+        // First session of the day = the moment the streak day is earned;
+        // later sessions the same day show nothing (already secured).
+        streakSecured: user && user.lastSessionDate !== today ? calcStreak(user).streak : null,
+        // null until a best exists (legacy local users / first session) so a
+        // first result is never hailed as a "personal best"
+        prevBest: user?.bestSessionCorrect ?? null,
       });
       setShowSummary(true);
-      track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length });
+      track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length, guest: isGuest });
       handleFetchCoachRead();
     } else {
       decidedRef.current = false;
@@ -367,13 +432,14 @@ export default function App() {
     saveUser(updated);
   };
 
+  // No confirm dialog: the account menu (Dashboard topbar) is the deliberate
+  // second tap, and the native window.confirm read as cheap.
   const handleSignOut = async () => {
-    if (hasSupabase && window.confirm('Sign out of CheckRaise?')) {
-      await supabase.auth.signOut();
-      resetAnalytics(); // next visitor on this device gets a fresh identity
-      clearSentryUser();
-      handleRestart();
-    }
+    if (!hasSupabase) return;
+    await supabase.auth.signOut();
+    resetAnalytics(); // next visitor on this device gets a fresh identity
+    clearSentryUser();
+    handleRestart();
   };
 
   // Escape hatch on UsernameEntry — without it a wrong or broken auth state
@@ -411,13 +477,21 @@ export default function App() {
     );
   }
   if (authPhase === 'signedout') {
-    return <SignIn />;
+    // Untagged cache = guest progress or a pre-Supabase tester's history.
+    // A used-up guest sees the carry-over note instead of the guest CTA; a
+    // tester (real name) sees neither — signing in migrates their history.
+    const local = cacheOwner() ? null : loadUser();
+    const guestUsed = local?.displayName === GUEST_NAME
+      && (local?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS;
+    const canGuest = !guestUsed && (!local || local.displayName === GUEST_NAME);
+    return <SignIn onGuestPlay={canGuest ? handleGuestPlay : undefined} guestUsed={guestUsed} />;
   }
   if (authPhase === 'noprofile' || !user) {
+    const localName = cacheOwner() ? undefined : loadUser()?.displayName;
     return (
       <UsernameEntry
         onSubmit={handleCreateUser}
-        defaultName={cacheOwner() ? undefined : loadUser()?.displayName}
+        defaultName={localName === GUEST_NAME ? undefined : localName}
         onSwitchAccount={hasSupabase ? handleSwitchAccount : undefined}
       />
     );
@@ -434,17 +508,26 @@ export default function App() {
           Check<em>Raise</em>
         </div>
         <div className="tagline">Find the leak in your game</div>
-        <button className="info-btn" onClick={() => setShowVillainGuide(true)}>i</button>
+        <button className="info-btn" onClick={() => setGuide({})}>i</button>
       </div>
 
-      {showVillainGuide && <VillainGuide onClose={() => setShowVillainGuide(false)} />}
+      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} />}
 
       {screen === 'dashboard' && (
-        <Dashboard onStartSession={handleStartSession} user={user} sessionDelta={sessionDelta} onSignOut={handleSignOut} onRename={handleRename} />
+        <Dashboard
+          onStartSession={handleStartSession}
+          user={user}
+          sessionDelta={sessionDelta}
+          onSignOut={handleSignOut}
+          onRename={handleRename}
+          guest={isGuest}
+          guestGated={isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS}
+          onGuestSignIn={handleGuestSignIn}
+        />
       )}
 
       {screen === 'difficulty' && (
-        <DifficultySelector onSelect={handleDifficultySelect} />
+        <DifficultySelector onSelect={handleDifficultySelect} initialDifficulty={loadLastDifficulty()} />
       )}
 
       {screen === 'session' && (
@@ -457,18 +540,23 @@ export default function App() {
               coachLoading={coachLoading}
               difficulty={difficulty}
               userSkills={sessionDelta?.prevSkills ?? user.skills}
+              streakSecured={sessionDelta?.streakSecured ?? null}
+              prevBest={sessionDelta?.prevBest ?? null}
+              guest={isGuest}
+              onGuestSignIn={handleGuestSignIn}
+              onPlayAgain={handlePlayAgain}
               onRestart={handleRestart}
             />
           ) : (
             <>
               <ProgressDots total={shuffledScenarios.length} current={currentIndex} />
-              <ComboRing combo={combo} />
               <ScenarioCard
                 scenario={scenario}
                 currentIndex={currentIndex}
                 total={shuffledScenarios.length}
                 totalSeconds={TIMER_SECONDS}
                 correctCount={correctCount}
+                combo={combo}
                 options={scenario.options}
                 onDecision={handleDecision}
                 decided={decided}
@@ -478,6 +566,10 @@ export default function App() {
                 timedOut={timedOut}
                 onNext={handleNext}
                 nextLabel={currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
+                onVillainInfo={(label) => {
+                  track('villain_guide_opened', { from: 'table', scenario_id: scenario.id });
+                  setGuide({ focus: label });
+                }}
               />
               {!USE_SINGLE_CANVAS && feedback && (
                 <>

@@ -321,8 +321,9 @@ function UsernameEditor({ user, onRename, onClose }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
-export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename }) {
+export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn }) {
   const [editingName, setEditingName] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setPulse(true), 400);
@@ -356,11 +357,29 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
 
       {/* ── Topbar ── */}
       <div className="db-topbar">
-        {editingName ? (
+        {guest ? (
+          <div className="db-account">
+            <div className="db-account-btn db-account-static">
+              <div className="db-avatar">♠</div>
+              <span className="db-username">Guest</span>
+            </div>
+            <button className="db-guest-signin" onClick={() => onGuestSignIn('topbar')}>
+              Sign in free
+            </button>
+          </div>
+        ) : editingName ? (
           <UsernameEditor user={user} onRename={onRename} onClose={() => setEditingName(false)} />
         ) : (
           <div className="db-account">
-            <button className="db-account-btn" onClick={onSignOut} title="Sign out">
+            {/* The menu is the deliberate second tap that used to be a
+                window.confirm — no native dialogs in the felt-and-gold UI */}
+            <button
+              className="db-account-btn"
+              title="Account"
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+              onClick={hasSupabase ? () => setMenuOpen(o => !o) : undefined}
+            >
               <div className="db-avatar">{initials}</div>
               <span className="db-username">{displayName}</span>
             </button>
@@ -372,6 +391,16 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             >
               ✎
             </button>
+            {menuOpen && (
+              <>
+                <div className="db-menu-scrim" onClick={() => setMenuOpen(false)} />
+                <div className="db-account-menu" role="menu">
+                  <button className="db-menu-item" role="menuitem" onClick={() => { setMenuOpen(false); onSignOut(); }}>
+                    Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
         <div className="db-plan-pill">
@@ -382,7 +411,8 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         </div>
       </div>
 
-      <StreakWarning user={user} />
+      {/* No streak nag for guests — the gate means they couldn't act on it */}
+      {!guest && <StreakWarning user={user} />}
 
       {/* ── Stats row ── */}
       <div className="db-stats-row">
@@ -467,14 +497,20 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
       <div className="db-cta-block">
         <button
           className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
-          onClick={onStartSession}
+          onClick={guestGated ? () => onGuestSignIn('dashboard') : onStartSession}
         >
-          Deal Me In
+          {guestGated ? 'Sign In Free to Keep Playing' : 'Deal Me In'}
           <span className="db-cta-arrow">→</span>
         </button>
+        {guestGated && (
+          <div className="db-guest-note">
+            Your free session's results are saved — they carry over to your account.
+          </div>
+        )}
       </div>
 
-      <BetaFeedback />
+      {/* Feedback inserts require auth — guests get the form after signing in */}
+      {!guest && <BetaFeedback />}
 
       <AdSlot placement="dashboard" />
 

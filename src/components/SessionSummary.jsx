@@ -1,6 +1,10 @@
-import { useState } from 'react';
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
+import { derivePokerScore } from '../utils/userStorage';
 import AdSlot from './AdSlot';
+
+// Streak milestones fold into the "day secured" line — the moment the day is
+// earned is the right place to acknowledge the run.
+const STREAK_MILESTONES = { 7: ' — a full week', 30: ' — a full month', 100: ' — a hundred days' };
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -30,7 +34,11 @@ function personalizeBody(scenario) {
   return text;
 }
 
-function HandReview({ entry }) {
+// `move`: 'up' | 'down' when this hand's skill changed rating this session —
+// shown on the skill chip so the hand connects to its rating move without a
+// separate skill list (the old rows + slide-over double-listed hands and
+// only covered changed skills; founders found it confusing, July 8).
+function HandReview({ entry, move = null }) {
   const { scenario, choiceVal, result } = entry;
   const userOption    = scenario.options.find(o => o.val === choiceVal);
   const correctOption = scenario.options.find(o => o.val === scenario.correct);
@@ -43,6 +51,14 @@ function HandReview({ entry }) {
       <div className="ss-hr-cards">
         <span className="ss-hr-hand">{handStr}</span>
         {boardStr && <><span className="ss-hr-divider">·</span><span className="ss-hr-board">{boardStr}</span></>}
+        <span className="ss-hr-skill">
+          {SKILL_NAMES[scenario.skill]}
+          {move && (
+            <span className="ss-hr-skill-move" data-dir={move}>
+              {move === 'up' ? ' ↑' : ' ↓'}
+            </span>
+          )}
+        </span>
       </div>
       <div className="ss-hr-context">
         {scenario.body && (
@@ -65,7 +81,8 @@ function HandReview({ entry }) {
         </div>
         {showCorrect && (
           <div className="ss-hr-play">
-            <span className="ss-hr-play-label">Correct</span>
+            {/* "Recommended", not "Correct" — honest-labeling pass, July 2026 */}
+            <span className="ss-hr-play-label">Recommended</span>
             <span className="ss-hr-play-name" style={{ color: '#56c878' }}>
               {correctOption?.label ?? scenario.correct}
             </span>
@@ -76,11 +93,7 @@ function HandReview({ entry }) {
   );
 }
 
-export default function SessionSummary({ skillResults, sessionHistory = [], coachRead, coachLoading, difficulty, userSkills = {}, onRestart }) {
-  const [activeSkill, setActiveSkill] = useState(null);
-
-  const testedSkills = Object.entries(skillResults);
-
+export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, difficulty, userSkills = {}, streakSecured = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
   // Replay this session's hands through the rating engine to get post-session
   // ratings — same math as userStorage.applySessionResults.
   const afterSkills = (() => {
@@ -95,16 +108,29 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
   })();
 
   // Use sessionHistory for accurate totals — skillResults dedupes by skill key
-  const correctCount   = sessionHistory.filter(h => h.result === 'correct').length;
-  const incorrectCount = sessionHistory.filter(h => h.result === 'incorrect').length;
-  const totalHands     = sessionHistory.length;
-  const iqDelta  = correctCount * 2 - incorrectCount;
-  const iqDir    = iqDelta > 0 ? 'up' : iqDelta < 0 ? 'down' : 'flat';
+  const correctCount = sessionHistory.filter(h => h.result === 'correct').length;
+  const totalHands   = sessionHistory.length;
 
-  const handsForSkill = (skillKey) =>
-    sessionHistory.filter(h => h.scenario.skill === skillKey && h.result !== 'correct');
+  // The REAL Poker IQ move — same derivation the dashboard displays, not an
+  // invented per-session delta (honest-numbers rule, July 2026)
+  const iqBefore = derivePokerScore(userSkills);
+  const iqAfter  = derivePokerScore(afterSkills);
+  const iqDir    = iqAfter > iqBefore ? 'up' : iqAfter < iqBefore ? 'down' : 'flat';
 
-  const activeHands = activeSkill ? handsForSkill(activeSkill) : [];
+  const perfect = totalHands >= 5 && correctCount === totalHands;
+  const newBest = prevBest != null && correctCount > prevBest;
+
+  // Rating moves per skill — rendered as an arrow on each review card's
+  // skill chip, not as a separate list (the old skill rows + slide-over
+  // double-listed hands and only covered changed skills; confusing).
+  const skillMoves = {};
+  for (const key of Object.keys(SKILL_NAMES)) {
+    const before = userSkills[key]?.rating ?? 'gray';
+    const after  = afterSkills[key]?.rating ?? before;
+    if (before === after) continue;
+    const baseForCompare = before === 'gray' ? 'red' : before;
+    skillMoves[key] = RATING_ORDER.indexOf(after) > RATING_ORDER.indexOf(baseForCompare) ? 'up' : 'down';
+  }
 
   const missedHands = sessionHistory.filter(h => h.result !== 'correct');
 
@@ -115,16 +141,31 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
         <div className="ss-difficulty-chip">{DIFFICULTY_LABELS[difficulty]}</div>
       )}
 
-      <div className="ss-score-line">
+      <div className={`ss-score-line${perfect ? ' ss-score-perfect' : ''}`}>
         <span className="ss-score-correct">{correctCount}</span>
         <span className="ss-score-sep"> / </span>
         <span className="ss-score-total">{totalHands}</span>
+        {/* Scores say "correct" (founder, July 8); per-hand grading labels
+            keep "Recommended" per the honest-labeling rule */}
         <span className="ss-score-label"> correct</span>
       </div>
 
+      {/* Earned moments, quiet-gold register (founder decision July 8) */}
+      {perfect && <div className="ss-perfect-flourish">★ Perfect Session ★</div>}
+      {newBest && !perfect && <div className="ss-newbest">🏆 New personal best</div>}
+      {streakSecured != null && (
+        <div className="ss-streak-line">
+          🔥 Day {streakSecured} secured{STREAK_MILESTONES[streakSecured] ?? ''}
+        </div>
+      )}
+
       <div className="ss-coach-read">
         <div className="ss-coach-label">🧠 Coach's Read</div>
-        {coachLoading ? (
+        {guest ? (
+          <div className="ss-coach-text ss-coach-guest">
+            Your coach's read — a personalized pattern analysis of your session — comes with a free account. Sign in and these results carry over.
+          </div>
+        ) : coachLoading ? (
           <div className="thinking">Reading your session...</div>
         ) : (
           <div className="ss-coach-text">{coachRead || 'No pattern identified yet.'}</div>
@@ -137,40 +178,16 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
         <div className="ss-impact-row ss-impact-row-iq">
           <span className="ss-impact-name">Poker IQ</span>
           <div className="ss-impact-right">
-            <span className="ss-iq-delta" data-dir={iqDir}>
-              {iqDelta > 0 ? `+${iqDelta}` : iqDelta < 0 ? `${iqDelta}` : '—'}
-            </span>
+            {iqAfter == null ? (
+              <span className="ss-iq-locked">Unlocks as skills get rated</span>
+            ) : iqBefore == null ? (
+              <span className="ss-iq-delta" data-dir="up">Unlocked · {iqAfter}</span>
+            ) : (
+              <span className="ss-iq-delta" data-dir={iqDir}>{iqBefore} → {iqAfter}</span>
+            )}
           </div>
         </div>
 
-        {testedSkills
-          .map(([key]) => {
-            const before = userSkills[key]?.rating ?? 'gray';
-            const after  = afterSkills[key]?.rating ?? before;
-            const baseForCompare = before === 'gray' ? 'red' : before;
-            const changed  = before !== after;
-            const wentUp   = changed && RATING_ORDER.indexOf(after) > RATING_ORDER.indexOf(baseForCompare);
-            return { key, changed, wentUp };
-          })
-          .filter(({ changed }) => changed)
-          .map(({ key, wentUp }) => {
-            const tappable = !wentUp;
-            return (
-              <div
-                key={key}
-                className={`ss-impact-row${tappable ? ' ss-impact-row-tappable' : ''}`}
-                onClick={tappable ? () => setActiveSkill(key) : undefined}
-              >
-                <span className="ss-impact-name">{SKILL_NAMES[key]}</span>
-                <div className="ss-impact-right">
-                  <span className="ss-rating-change" style={{ color: wentUp ? '#56c878' : '#e25555' }}>
-                    {wentUp ? '↑' : '↓'}
-                  </span>
-                  {tappable && <span className="ss-impact-chevron">›</span>}
-                </div>
-              </div>
-            );
-          })}
       </div>
 
       {missedHands.length > 0 && (
@@ -179,33 +196,27 @@ export default function SessionSummary({ skillResults, sessionHistory = [], coac
             Hands to Review ({missedHands.length})
           </div>
           <div className="ss-missed-list">
-            {missedHands.map((entry, i) => <HandReview key={i} entry={entry} />)}
+            {missedHands.map((entry, i) => (
+              <HandReview key={i} entry={entry} move={skillMoves[entry.scenario.skill] ?? null} />
+            ))}
           </div>
         </div>
       )}
 
-      <button className="restart-btn" onClick={onRestart}>Train Again</button>
+      {/* One-tap chaining is the primary action — the "one more session"
+          impulse shouldn't die across three screens. Dashboard is the quiet
+          exit (and where the skill-ledger animation plays). Guests hit the
+          gate here instead: sign in (free) to keep playing. */}
+      {guest ? (
+        <button className="restart-btn" onClick={() => onGuestSignIn('summary')}>
+          Sign in free to keep playing →
+        </button>
+      ) : (
+        <button className="restart-btn" onClick={onPlayAgain}>Deal Next Session →</button>
+      )}
+      <button className="ss-dash-link" onClick={onRestart}>Back to dashboard</button>
 
       <AdSlot placement="summary" />
-
-      {/* Slide-over */}
-      {activeSkill && (
-        <div className="ss-overlay" onClick={() => setActiveSkill(null)}>
-          <div className="ss-slideover" onClick={e => e.stopPropagation()}>
-            <div className="ss-slideover-handle" />
-            <div className="ss-slideover-header">
-              <span className="ss-slideover-title">{SKILL_NAMES[activeSkill]}</span>
-              <button className="ss-slideover-close" onClick={() => setActiveSkill(null)}>✕</button>
-            </div>
-            <div className="ss-slideover-body">
-              {activeHands.length > 0
-                ? activeHands.map((entry, i) => <HandReview key={i} entry={entry} />)
-                : <div className="ss-hr-empty">No hand data available.</div>
-              }
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

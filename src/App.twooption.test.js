@@ -47,4 +47,14 @@ test('a 2-option (all-in) scenario plays through to the summary', async () => {
   // One-scenario pool → straight to results; summary must render
   fireEvent.click(await screen.findByText(/See My Results/));
   expect(await screen.findByText('Session Complete')).toBeInTheDocument();
+
+  // Let the coach-read fetch settle so the chained deal sees persisted state
+  expect(await screen.findByText('No pattern identified yet.')).toBeInTheDocument();
+
+  // One-tap chaining re-deals at the same difficulty. With a pool of one
+  // already-played scenario this also proves the least-recently-seen
+  // fallback: the builder must serve it again rather than deal nothing.
+  fireEvent.click(screen.getByText(/Deal Next Session/));
+  expect(container.querySelectorAll('.act-btn')).toHaveLength(2);
+  expect(screen.getByText('Call $90 more')).toBeInTheDocument();
 });

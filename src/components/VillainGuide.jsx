@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, PLAYER_SCHEMAS } from '../data/constants';
 import { BALANCED_SCHEMA } from '../utils/userStorage';
 
@@ -118,8 +118,17 @@ function PositionDiagram() {
   );
 }
 
-export default function VillainGuide({ onClose }) {
+// `focus` (a villain label, e.g. "Tight Nit") opens the guide scrolled to and
+// highlighting that archetype — tapping the villain read on the table.
+export default function VillainGuide({ onClose, focus }) {
   const [activeTab, setActiveTab] = useState('players');
+  const focusRef = useRef(null);
+
+  useEffect(() => {
+    if (focus && focusRef.current) {
+      focusRef.current.scrollIntoView?.({ block: 'center' });
+    }
+  }, [focus]);
 
   const items = activeTab === 'players' ? VILLAINS
     : activeTab === 'schemas' ? SCHEMAS
@@ -176,13 +185,20 @@ export default function VillainGuide({ onClose }) {
         )}
 
         <div className="vg-list">
-          {items.map((item, i) => (
-            <div key={i} className="vg-item">
-              <div className="vg-item-label">{item.label}</div>
-              {item.quote && <div className="vg-item-quote">“{item.quote}”</div>}
-              <div className="vg-item-desc">{item.desc}</div>
-            </div>
-          ))}
+          {items.map((item, i) => {
+            const focused = activeTab === 'players' && focus === item.label;
+            return (
+              <div
+                key={i}
+                ref={focused ? focusRef : undefined}
+                className={`vg-item${focused ? ' vg-item-focus' : ''}`}
+              >
+                <div className="vg-item-label">{item.label}</div>
+                {item.quote && <div className="vg-item-quote">“{item.quote}”</div>}
+                <div className="vg-item-desc">{item.desc}</div>
+              </div>
+            );
+          })}
         </div>
 
         {activeTab === 'schemas' && (

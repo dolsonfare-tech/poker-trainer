@@ -7,7 +7,10 @@ import { track } from '../utils/analytics';
 // any error can surface in-app, so an unconfigured provider = raw 400 page.
 const GOOGLE_ENABLED = process.env.REACT_APP_GOOGLE_AUTH === '1';
 
-export default function SignIn() {
+// onGuestPlay: renders the "try a free session" path (guest flow, July 2026).
+// guestUsed: the device already played its free guest session — show the
+// carry-over reassurance instead of the CTA.
+export default function SignIn({ onGuestPlay, guestUsed }) {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +57,11 @@ export default function SignIn() {
             Founders keep this deliberately spare (July 2026). */}
         <div className="ue-title">Find the leak in your poker game</div>
         <div className="ue-subtitle">Sign in and play for free.</div>
+        {guestUsed && (
+          <div className="si-guest-note">
+            ♠ Your free session's results are saved on this device — sign in and they carry over.
+          </div>
+        )}
 
         {sent ? (
           <div className="si-sent">
@@ -85,6 +93,14 @@ export default function SignIn() {
                 {busy ? 'Sending…' : 'Email me a sign-in link →'}
               </button>
             </form>
+            {onGuestPlay && (
+              <>
+                <div className="si-divider"><span>or</span></div>
+                <button type="button" className="si-guest-btn" onClick={onGuestPlay}>
+                  Try a free session first — no account needed →
+                </button>
+              </>
+            )}
           </>
         )}
         <div className="si-legal">
