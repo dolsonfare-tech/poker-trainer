@@ -2986,7 +2986,7 @@ body {
 .sc2-strip-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem; letter-spacing: 0.2em; color: var(--cream-faint);
-  text-align: center; margin-bottom: 5px;
+  text-align: left; margin-bottom: 5px; padding-left: 2px; /* matches .sc2-history-label */
 }
 .sc2-strip {
   display: flex; align-items: center; gap: 9px;
@@ -3083,6 +3083,18 @@ body {
   .sc2-villain-mobile { display: block; }
   .sc2-board .playing-card, .sc2-board .blank-card { width: 40px; height: 56px; }
   .sc2-actions { grid-template-columns: 1fr; max-width: none; }
+  /* Type floor (July 2026): the desktop fine-print tier (0.5–0.58rem ≈
+     8–9px) is illegible at phone size and made the type scale feel chaotic
+     next to 13–16px content text — raise the floor, keep the hierarchy */
+  .st-ticker { font-size: 0.74rem; }
+  .st-stakes { font-size: 0.62rem; }
+  .street-pip { font-size: 0.62rem; }
+  .sc2-hand-name { font-size: 0.62rem; }
+  .sc2-you-chip { font-size: 0.58rem; }
+  .sc2-strip-label, .sc2-history-label { font-size: 0.62rem; }
+  .sc2-strip-pos { font-size: 0.58rem; }
+  .sc2-strip-text { font-size: 0.88rem; }
+  .sc2-replay-line { font-size: 0.66rem; }
 }
 
 /* ── Sign-in screen additions ── */
