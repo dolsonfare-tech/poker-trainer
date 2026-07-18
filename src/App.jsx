@@ -365,16 +365,26 @@ export default function App() {
       const incorrect = sessionHistory.filter(h => h.result === 'incorrect').length;
       sessionUserRef.current = user;
       const today = toLocalDateString(new Date());
+      // One streak recompute feeds every streak-mechanics surface (M1–M3):
+      // the secured line, the Rebuy-used note, and the broken-streak moment.
+      const streakResult = user && user.lastSessionDate !== today ? calcStreak(user) : null;
+      const prevStreak = user?.streak ?? 0;
       setSessionDelta({
         iqDelta: correct * 2 - incorrect,
-        prevStreak: user?.streak ?? 0,
+        prevStreak,
         prevSessions: user?.sessionsCompleted ?? 0,
         prevPokerScore: user?.pokerScore ?? null,
         prevSkills: user ? { ...user.skills } : {},
         skillResults: { ...skillResults },
         // First session of the day = the moment the streak day is earned;
         // later sessions the same day show nothing (already secured).
-        streakSecured: user && user.lastSessionDate !== today ? calcStreak(user).streak : null,
+        streakSecured: streakResult ? streakResult.streak : null,
+        // A Rebuy silently covered a missed day — streak intact (M1).
+        rebuyUsed: streakResult ? streakResult.rebuyUsed : false,
+        // A real streak (>1) reset to 1 → the broken-streak moment (M2), never
+        // a bare drop; activeDaysLast30 is the consistency record.
+        streakBroken: !!streakResult && streakResult.streak === 1 && prevStreak > 1,
+        activeDaysLast30: user?.activeDaysLast30 ?? null,
         // null until a best exists (legacy local users / first session) so a
         // first result is never hailed as a "personal best"
         prevBest: user?.bestSessionCorrect ?? null,
@@ -577,6 +587,9 @@ export default function App() {
               difficulty={difficulty}
               userSkills={sessionDelta?.prevSkills ?? user.skills}
               streakSecured={sessionDelta?.streakSecured ?? null}
+              rebuyUsed={sessionDelta?.rebuyUsed ?? false}
+              streakBroken={sessionDelta?.streakBroken ?? false}
+              activeDaysLast30={sessionDelta?.activeDaysLast30 ?? null}
               prevBest={sessionDelta?.prevBest ?? null}
               guest={isGuest}
               onGuestSignIn={handleGuestSignIn}

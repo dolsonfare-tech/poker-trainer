@@ -96,6 +96,53 @@ test('review cards carry the skill chip, with the rating-move arrow when it move
   expect(document.querySelector('.ss-slideover')).toBeNull();
 });
 
+// ── Streak mechanics (M1–M3) ─────────────────────────────────────────────
+test('milestone proximity tails the secured line when within reach (M3)', () => {
+  render(<SessionSummary {...baseProps}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+    streakSecured={5}
+  />);
+  expect(screen.getByText(/Day 5 secured/)).toBeInTheDocument();
+  expect(screen.getByText(/2 more to a full week/)).toBeInTheDocument();
+});
+
+test('no proximity tail when the milestone is out of reach', () => {
+  render(<SessionSummary {...baseProps}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+    streakSecured={3}
+  />);
+  expect(screen.getByText(/Day 3 secured/)).toBeInTheDocument();
+  expect(screen.queryByText(/more to/)).not.toBeInTheDocument();
+});
+
+test('a used Rebuy shows the streak-intact note (M1)', () => {
+  render(<SessionSummary {...baseProps}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+    streakSecured={11} rebuyUsed
+  />);
+  expect(screen.getByText(/Rebuy used — streak intact/)).toBeInTheDocument();
+});
+
+test('a broken streak renders the consistency record, not a bare reset (M2)', () => {
+  render(<SessionSummary {...baseProps}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+    streakSecured={1} streakBroken activeDaysLast30={26}
+  />);
+  expect(screen.getByText(/played 26 of the last 30 days/)).toBeInTheDocument();
+  expect(screen.getByText(/start a new run/i)).toBeInTheDocument();
+  // The broken moment replaces the bare "Day 1 secured" line
+  expect(screen.queryByText(/Day 1 secured/)).not.toBeInTheDocument();
+});
+
+test('broken streak falls back to copy-only when the record is unavailable', () => {
+  render(<SessionSummary {...baseProps}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+    streakSecured={1} streakBroken activeDaysLast30={null}
+  />);
+  expect(screen.getByText(/keep showing up/i)).toBeInTheDocument();
+  expect(screen.queryByText(/of the last 30 days/)).not.toBeInTheDocument();
+});
+
 test('daily coach limit shows honest copy, not the generic fallback', () => {
   render(<SessionSummary {...baseProps} coachLimited
     sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}

@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { SKILL_NAMES } from '../data/constants';
-import { toLocalDateString, RENAME_COOLDOWN_MS } from '../utils/userStorage';
+import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
@@ -20,6 +20,46 @@ function StreakWarning({ user }) {
         : <>🃏 You haven't played today — one session keeps the reads sharp.</>}
     </div>
   );
+}
+
+// ─── Streak status line (M1–M3) ───────────────────────────────────────────
+// One factual line under the stats row, priority-ordered. Transient
+// post-session moments come first: a Rebuy silently covering a missed day
+// (M1), or a broken streak paired with the consistency record so it never
+// reads as a bare reset (M2). Steady state: milestone proximity when a
+// milestone is within reach (M3), else the held-Rebuy protection note. Quiet
+// and factual, no guilt tones (M4).
+function StreakStatus({ user, sessionDelta }) {
+  const { streak, rebuys = 0 } = user;
+  if (sessionDelta?.rebuyUsed) {
+    return <div className="db-streak-status db-streak-rebuy">🛟 Rebuy used — streak intact</div>;
+  }
+  if (sessionDelta?.streakBroken) {
+    const n = sessionDelta.activeDaysLast30;
+    return (
+      <div className="db-streak-status db-streak-broken-line">
+        {n != null
+          ? `New run — you've played ${n} of the last 30 days.`
+          : 'New run — every session rebuilds the streak.'}
+      </div>
+    );
+  }
+  const prox = milestoneProximity(streak);
+  if (prox) {
+    return (
+      <div className="db-streak-status db-streak-proximity">
+        {streak} day streak · {prox.remaining} more to {prox.name} ★
+      </div>
+    );
+  }
+  if (rebuys > 0) {
+    return (
+      <div className="db-streak-status db-streak-held">
+        🛟 {rebuys} Rebuy{rebuys > 1 ? 's' : ''} held — covers a missed day
+      </div>
+    );
+  }
+  return null;
 }
 
 // ─── Count-up animation ───────────────────────────────────────────────────
@@ -335,7 +375,9 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   // Animation targets — when no sessionDelta, from === to so no animation runs
   const iqFrom       = sessionDelta?.prevPokerScore ?? pokerScore ?? 0;
   const iqTo         = pokerScore ?? (sessionDelta ? iqFrom + sessionDelta.iqDelta : iqFrom);
-  const streakFrom   = sessionDelta ? sessionDelta.prevStreak : streak;
+  // A broken streak counts up from 0 (a fresh run), never a demoralizing drop
+  // from the old value to 1 (M2 — never a bare reset).
+  const streakFrom   = sessionDelta ? (sessionDelta.streakBroken ? 0 : sessionDelta.prevStreak) : streak;
   const sessionsFrom = sessionDelta?.prevSessions ?? sessionsCompleted;
   const sessionsTo   = sessionDelta ? sessionsFrom + 1 : sessionsCompleted;
 
@@ -435,6 +477,10 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           <span className="db-stat-label">sessions</span>
         </div>
       </div>
+
+      {/* Streak status: Rebuy/proximity/broken-run copy (M1–M3). Guests play a
+          single gated session, so streak mechanics don't apply to them. */}
+      {!guest && <StreakStatus user={user} sessionDelta={sessionDelta} />}
 
       {/* ── Player Profile: schema + skill ledger, one card ──
           One diagnosis: the skills are the evidence, the schema is the read.

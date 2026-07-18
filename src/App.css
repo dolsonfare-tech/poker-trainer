@@ -2892,8 +2892,15 @@ body {
 }
 .sc2-chrome-right { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 10px; }
 
-/* Stage wraps the table so the feedback overlay can cover exactly it */
-.sc2-stage { position: relative; }
+/* Stage wraps the table so the feedback overlay can cover it. A single-cell
+   grid stacks the table and the overlay in the same cell, so the cell sizes to
+   the TALLER of the two: the table's fixed height when playing, and the
+   analysis's natural height once decided — no fixed-height clamp means long
+   Hand Analysis text is shown in full instead of scrolling inside a clipped box. */
+.sc2-stage { position: relative; display: grid; grid-template-columns: 1fr; }
+/* Pin the table to the same cell as the overlay so they overlap; without an
+   explicit placement, grid auto-placement would push the table to a second row. */
+.sc2-stage > .sc2-table { grid-area: 1 / 1; }
 
 .sc2-table { position: relative; height: 400px; max-width: 720px; margin: 0 auto; }
 .sc2-felt {
@@ -3036,12 +3043,15 @@ body {
   color: rgba(36,31,22,0.45); margin-top: 2px;
 }
 
-/* Feedback slides over the table — the hand is done */
+/* Feedback slides over the table — the hand is done. Stacked in the stage's
+   single grid cell (grid-area 1/1) so it overlaps the table but is free to grow
+   past the table's fixed height; the stage cell grows with it. align-self
+   stretch keeps it covering the whole table when the analysis is short. */
 .sc2-overlay {
-  position: absolute; inset: 0; z-index: 10;
+  grid-area: 1 / 1; align-self: stretch; z-index: 10;
   background: rgba(11,24,17,0.97);
   border: 1px solid rgba(200,168,75,0.35); border-radius: 14px;
-  padding: 14px 16px; overflow-y: auto;
+  padding: 14px 16px;
   animation: sc2-rise 0.28s ease;
   transition: opacity 0.22s ease;
 }
@@ -3142,6 +3152,21 @@ body {
   text-align: center;
 }
 .db-streak-warning b { color: var(--gold-light); }
+
+/* Streak status line (M1–M3) — one quiet, factual line under the stats row */
+.db-streak-status {
+  margin: -6px 0 16px;
+  text-align: center;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(242,237,227,0.55);
+  animation: fadeUp 0.6s ease;
+}
+.db-streak-proximity { color: var(--gold-light); }        /* goal-gradient (M3) */
+.db-streak-rebuy     { color: var(--gold-light); }        /* Rebuy used (M1) */
+.db-streak-held      { color: rgba(242,237,227,0.5); }    /* held-Rebuy note (M1) */
+.db-streak-broken-line { color: rgba(242,237,227,0.62); } /* new run (M2) */
 
 .si-legal {
   margin-top: 18px; text-align: center;
@@ -3290,6 +3315,42 @@ body {
   letter-spacing: 0.1em;
   color: rgba(242,237,227,0.55);
   animation: fadeUp 0.7s ease;
+}
+/* Milestone proximity (M3) — the goal-gradient tail, kept a touch brighter */
+.ss-streak-proximity { color: var(--gold-light); }
+
+/* Rebuy used (M1) — quiet, factual, no guilt (M4) */
+.ss-rebuy-line {
+  margin: -6px 0 16px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--gold-light);
+  animation: fadeUp 0.7s ease;
+}
+
+/* Broken-streak moment (M2) — never a bare zero: consistency record + the
+   always-present "Deal Next Session" restart below act as the one-tap restart */
+.ss-streak-broken {
+  margin: -2px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(242,237,227,0.14);
+  border-radius: 8px;
+  background: rgba(242,237,227,0.03);
+  animation: fadeUp 0.7s ease;
+}
+.ss-streak-broken-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.98rem;
+  color: var(--cream, #f2ede3);
+  margin-bottom: 4px;
+}
+.ss-streak-broken-note {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.64rem;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.55);
 }
 
 .ss-coach-guest { font-style: italic; color: rgba(242,237,227,0.6); }

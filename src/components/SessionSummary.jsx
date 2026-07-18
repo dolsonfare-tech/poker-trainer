@@ -1,5 +1,5 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
-import { derivePokerScore } from '../utils/userStorage';
+import { derivePokerScore, milestoneProximity } from '../utils/userStorage';
 import AdSlot from './AdSlot';
 
 // Streak milestones fold into the "day secured" line — the moment the day is
@@ -97,7 +97,7 @@ function HandReview({ entry, move = null }) {
   );
 }
 
-export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, streakSecured = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
+export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, streakSecured = null, rebuyUsed = false, streakBroken = false, activeDaysLast30 = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
   // Replay this session's hands through the rating engine to get post-session
   // ratings — same math as userStorage.applySessionResults.
   const afterSkills = (() => {
@@ -157,10 +157,33 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
       {/* Earned moments, quiet-gold register (founder decision July 8) */}
       {perfect && <div className="ss-perfect-flourish">★ Perfect Session ★</div>}
       {newBest && !perfect && <div className="ss-newbest">🏆 New personal best</div>}
-      {streakSecured != null && (
+
+      {/* Streak mechanics (M1–M3). A broken streak never renders as a bare
+          reset (M2): pair it with the consistency record + the always-present
+          "Deal Next Session" restart below. Otherwise the secured line gains
+          milestone-proximity copy (M3) and a Rebuy-used note (M1). */}
+      {streakBroken ? (
+        <div className="ss-streak-broken">
+          <div className="ss-streak-broken-title">Streak reset — start a new run</div>
+          <div className="ss-streak-broken-note">
+            {activeDaysLast30 != null
+              ? `You've played ${activeDaysLast30} of the last 30 days. One session starts the next run.`
+              : `You keep showing up — that's what builds the read. One session starts the next run.`}
+          </div>
+        </div>
+      ) : streakSecured != null && (
         <div className="ss-streak-line">
           🔥 Day {streakSecured} secured{STREAK_MILESTONES[streakSecured] ?? ''}
+          {(() => {
+            const prox = milestoneProximity(streakSecured);
+            return prox
+              ? <span className="ss-streak-proximity"> · {prox.remaining} more to {prox.name} ★</span>
+              : null;
+          })()}
         </div>
+      )}
+      {rebuyUsed && (
+        <div className="ss-rebuy-line">🛟 Rebuy used — streak intact</div>
       )}
 
       <div className="ss-coach-read">

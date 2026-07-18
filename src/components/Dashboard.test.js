@@ -22,6 +22,37 @@ test('sign-out lives behind the account menu, not a confirm dialog', () => {
   expect(onSignOut).toHaveBeenCalled();
 });
 
+// ── Streak status line (M1–M3) ───────────────────────────────────────────
+const dash = (props) => render(
+  <Dashboard onStartSession={() => {}} onSignOut={() => {}} onRename={() => {}} {...props} />
+);
+
+test('milestone proximity shows under the stats row when within reach (M3)', () => {
+  dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5 } });
+  expect(screen.getByText(/5 day streak · 2 more to a full week ★/)).toBeInTheDocument();
+});
+
+test('a used Rebuy states it plainly after the session (M1)', () => {
+  dash({
+    user: { ...createUser('Saver'), streak: 11, rebuys: 0, sessionsCompleted: 11 },
+    sessionDelta: { rebuyUsed: true, streakBroken: false, prevStreak: 10 },
+  });
+  expect(screen.getByText(/Rebuy used — streak intact/)).toBeInTheDocument();
+});
+
+test('held Rebuys surface as a protection note in steady state (M1)', () => {
+  dash({ user: { ...createUser('Holder'), streak: 9, rebuys: 2, sessionsCompleted: 9 } });
+  expect(screen.getByText(/2 Rebuys held/)).toBeInTheDocument();
+});
+
+test('a broken streak shows the consistency record, never a bare reset (M2)', () => {
+  dash({
+    user: { ...createUser('Resetter'), streak: 1, rebuys: 0, sessionsCompleted: 20, activeDaysLast30: 26 },
+    sessionDelta: { streakBroken: true, rebuyUsed: false, prevStreak: 20, activeDaysLast30: 26 },
+  });
+  expect(screen.getByText(/played 26 of the last 30 days/)).toBeInTheDocument();
+});
+
 test('gated guest sees the sign-in CTA instead of Deal Me In', () => {
   const onGuestSignIn = jest.fn();
   const guest = { ...createUser('Guest'), sessionsCompleted: 1 };

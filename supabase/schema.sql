@@ -148,3 +148,18 @@ $$;
 create trigger username_change_limit
   before update on public.profiles
   for each row execute function public.enforce_username_change_limit();
+
+-- ── streak Rebuys: earned streak-repair (M1, July 2026) ─────────────────────
+-- ⚠️ RUN THIS LINE IN THE SUPABASE SQL EDITOR *BEFORE* DEPLOYING the streak-
+-- mechanics code. createRemoteProfile() and saveRemoteUser() both send `rebuys`
+-- now, so every profile write 400s ("column profiles.rebuys does not exist")
+-- until the column is added — the whole session-save path breaks, not just the
+-- Rebuy count. (If the base schema is already deployed, run just this line.)
+--
+-- No new table and no new policy: `rebuys` lives on profiles, which already has
+-- RLS enabled + the "own profile update" policy, so a user can only ever write
+-- their own count. Trust model is identical to `streak` — client-computed
+-- (calcStreak) and written to the user's own RLS-scoped row; server-side
+-- validation of the count is out of scope, same as streak today. Earned only,
+-- never purchased (purchasable extras are a future Pro perk).
+alter table public.profiles add column rebuys int not null default 0;

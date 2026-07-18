@@ -2,10 +2,28 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, createUser } from './userStorage';
+import { DEFAULT_SKILLS, deriveSchema, createUser, toLocalDateString } from './userStorage';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
+
+// Distinct local calendar days with a session in the last 30 days — feeds the
+// broken-streak moment (M2: "you've played X of the last 30 days"). Derived
+// from the append-only session log; null with no rows (localStorage mode falls
+// back to copy-only). Today's just-finished session isn't in the rows yet at
+// that moment, which only ever undercounts by one — acceptable for encouragement.
+const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+function activeDaysLast30(sessionRows) {
+  if (!sessionRows?.length) return null;
+  const now = Date.now();
+  const days = new Set();
+  for (const r of sessionRows) {
+    const t = new Date(r.created_at).getTime();
+    if (Number.isNaN(t) || now - t > THIRTY_DAYS_MS) continue;
+    days.add(toLocalDateString(new Date(t)));
+  }
+  return days.size;
+}
 
 function assembleUser(profile, skillRows, sessionRows) {
   const skills = Object.fromEntries(
@@ -21,6 +39,8 @@ function assembleUser(profile, skillRows, sessionRows) {
     initials: profile.initials,
     streak: profile.streak,
     lastSessionDate: profile.last_session_date,
+    rebuys: profile.rebuys ?? 0,
+    activeDaysLast30: activeDaysLast30(sessionRows),
     sessionsCompleted: profile.sessions_completed,
     skills,
     schema: deriveSchema(skills, profile.sessions_completed),
@@ -91,6 +111,7 @@ export async function createRemoteProfile(username, localUser) {
     initials: username.slice(0, 2).toUpperCase(),
     streak: base.streak ?? 0,
     last_session_date: base.lastSessionDate ?? null,
+    rebuys: base.rebuys ?? 0,
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? null,
     sessions_completed: base.sessionsCompleted ?? 0,
     poker_score: base.pokerScore ?? null,
@@ -127,6 +148,7 @@ export async function saveRemoteUser(user) {
   const { error } = await supabase.from('profiles').update({
     streak: user.streak,
     last_session_date: user.lastSessionDate,
+    rebuys: user.rebuys ?? 0,
     sessions_completed: user.sessionsCompleted,
     poker_score: user.pokerScore,
     coach_note_body: user.coachNote?.body ?? null,

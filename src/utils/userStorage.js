@@ -81,6 +81,7 @@ export function createUser(username) {
     initials: username.slice(0, 2).toUpperCase(),
     streak: 0,
     lastSessionDate: null,
+    rebuys: 0,
     sessionsCompleted: 0,
     skills: Object.fromEntries(
       Object.entries(DEFAULT_SKILLS).map(([k, v]) => [k, { ...v }])
@@ -204,14 +205,79 @@ export function toLocalDateString(d) {
   return `${y}-${m}-${day}`;
 }
 
+// ── Streak mechanics (M1–M3, July 2026 — RESEARCH_LEARNING_SCIENCE.md Piece 3) ─
+// Streak Rebuys (M1): a poker-named streak freeze — the genre's most validated
+// retention mechanic (Duolingo's freeze: −21% churn for at-risk users). Earned,
+// never purchased (informational, not controlling — M4/overjustification). Earn
+// one at each 7-day milestone, hold at most REBUY_CAP; a missed day silently
+// consumes one and the streak survives. Purchasable extras are a future Pro
+// perk, not launch scope.
+export const REBUY_CAP = 2;
+const STREAK_MILESTONE_INTERVAL = 7;
+
+// Milestone proximity (M3, goal-gradient): effort accelerates as a goal nears,
+// so the streak line states how far the next milestone is when it's within
+// reach. Pure copy. Shared here so the summary and dashboard can't drift.
+export const STREAK_MILESTONES_LIST = [7, 30, 100];
+const MILESTONE_NAMES = { 7: 'a full week', 30: 'a full month', 100: 'a hundred days' };
+const PROXIMITY_WINDOW = 3;
+
+export function milestoneProximity(streak) {
+  if (!streak || streak < 1) return null;
+  for (const m of STREAK_MILESTONES_LIST) {
+    if (streak < m && m - streak <= PROXIMITY_WINDOW) {
+      return { remaining: m - streak, name: MILESTONE_NAMES[m] };
+    }
+  }
+  return null;
+}
+
+// Whole calendar days between two YYYY-MM-DD strings (UTC math on the parsed
+// components dodges DST — these are pure dates, not instants).
+function daysBetween(fromStr, toStr) {
+  const [fy, fm, fd] = fromStr.split('-').map(Number);
+  const [ty, tm, td] = toStr.split('-').map(Number);
+  return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86_400_000);
+}
+
+// Grant a Rebuy when this streak lands on a 7-day milestone (once — the streak
+// steps by exactly 1 per active day, so each multiple of 7 is hit once). Capped.
+const grantMilestoneRebuy = (streak, rebuys) =>
+  streak > 0 && streak % STREAK_MILESTONE_INTERVAL === 0
+    ? Math.min(REBUY_CAP, rebuys + 1)
+    : rebuys;
+
+// Recompute the streak (and Rebuy balance) for the first session of a new day.
+// Returns { streak, lastSessionDate, rebuys, rebuyUsed } — rebuyUsed flags the
+// transient "a missed day was covered" moment for the summary/dashboard copy.
 export function calcStreak(user) {
   const today = toLocalDateString(new Date());
-  if (user.lastSessionDate === today) return { streak: user.streak, lastSessionDate: today };
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = toLocalDateString(yesterday);
-  const newStreak = user.lastSessionDate === yesterdayStr ? user.streak + 1 : 1;
-  return { streak: newStreak, lastSessionDate: today };
+  const rebuys = user.rebuys ?? 0;
+  if (user.lastSessionDate === today) {
+    return { streak: user.streak, lastSessionDate: today, rebuys, rebuyUsed: false };
+  }
+  // First-ever session (or no prior date): a fresh streak of 1.
+  if (!user.lastSessionDate) {
+    return { streak: 1, lastSessionDate: today, rebuys, rebuyUsed: false };
+  }
+  const gap = daysBetween(user.lastSessionDate, today);
+  if (gap <= 1) {
+    // Consecutive day (gap 1) advances; gap ≤ 0 shouldn't happen but is treated
+    // as "already today" defensively.
+    const streak = gap === 1 ? user.streak + 1 : user.streak;
+    return { streak, lastSessionDate: today, rebuys: grantMilestoneRebuy(streak, rebuys), rebuyUsed: false };
+  }
+  // A gap of ≥2 means one or more missed days. Rebuys cover them one-for-one;
+  // if the balance covers every missed day, the streak survives and advances.
+  const missedDays = gap - 1;
+  if (missedDays <= rebuys) {
+    const streak = user.streak + 1;
+    const afterConsume = rebuys - missedDays;
+    return { streak, lastSessionDate: today, rebuys: grantMilestoneRebuy(streak, afterConsume), rebuyUsed: true };
+  }
+  // Streak truly breaks — fresh run, Rebuy balance resets with it (Rebuys
+  // belong to the streak they protect; the broken-streak moment lives in the UI).
+  return { streak: 1, lastSessionDate: today, rebuys: 0, rebuyUsed: false };
 }
 
 // ── Apply session ─────────────────────────────────────────────────────────────
@@ -226,7 +292,7 @@ export function applySessionResults(user, hands, coachRead) {
     if (skills[skill]) skills[skill] = applyHandToSkill(skills[skill], result);
   }
 
-  const { streak, lastSessionDate } = calcStreak(user);
+  const { streak, lastSessionDate, rebuys } = calcStreak(user);
   const sessionsCompleted = user.sessionsCompleted + 1;
   const schema     = deriveSchema(skills, sessionsCompleted);
   const pokerScore = derivePokerScore(skills);
@@ -252,5 +318,5 @@ export function applySessionResults(user, hands, coachRead) {
     ? { body: coachRead, focus: weakest }
     : user.coachNote;
 
-  return { ...user, skills, streak, lastSessionDate, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, bestSessionCorrect };
+  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, bestSessionCorrect };
 }
