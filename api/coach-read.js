@@ -55,9 +55,22 @@ module.exports = async function handler(req, res) {
     );
   }
 
-  const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
+  try {
+    const text = await callClaude(decisionsPlayed, apiKey);
+    return res.status(200).json({ text });
+  } catch (err) {
+    if (err?.upstream) return res.status(502).json({ error: 'Upstream API error' });
+    return res.status(500).json({ error: 'Upstream API call failed' });
+  }
+};
 
-  const prompt = `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
+const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
+
+// Exported for scripts/eval-coach.mjs — the eval harness must exercise the
+// REAL prompt and the REAL request params, never a copy that can drift. This
+// file remains the ONLY code that talks to the Anthropic API.
+function buildPrompt(decisionsPlayed) {
+  return `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
 
 Session decisions (what they chose vs the best play):
 ${decisionsPlayed.map(d => {
@@ -73,9 +86,12 @@ ${decisionsPlayed.map(d => {
   return `- ${line}`;
 }).join('\n')}
 
-Write 2-3 sentences identifying the pattern. Rules:
+Write ONE paragraph of 2-3 sentences, under 90 words total. Rules:
 - The direction of the mistakes is the diagnosis: folding or flat-calling when raising was best is a different leak than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
-- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, call it out directly; it's the most useful thing you can tell them
+- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, make it the first thing you say
+- Mention only hands and actions listed above — never invent holdings, outcomes, or spots that aren't in the data
+- If the misses point in different directions (some too passive, some too aggressive), say so honestly instead of forcing them into one story
+- These are exploitative judgment spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
 - No generic praise or filler
@@ -83,34 +99,34 @@ Write 2-3 sentences identifying the pattern. Rules:
 - Reference the villain types they struggled against, not just the abstract skill
 - If they got everything right, acknowledge it briefly and name one area to keep watching
 - Start with the observation, not with "you"`;
-
-  try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 300,
-        // Sonnet 5 runs adaptive thinking by default when `thinking` is
-        // omitted, and thinking tokens count against max_tokens — which can
-        // eat the whole 300 budget and return truncated or empty text.
-        thinking: { type: 'disabled' },
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    if (!response.ok) {
-      return res.status(502).json({ error: 'Upstream API error' });
-    }
-
-    const data = await response.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || '';
-    return res.status(200).json({ text });
-  } catch {
-    return res.status(500).json({ error: 'Upstream API call failed' });
-  }
 }
+
+async function callClaude(decisionsPlayed, apiKey) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-5',
+      max_tokens: 300,
+      // Sonnet 5 runs adaptive thinking by default when `thinking` is
+      // omitted, and thinking tokens count against max_tokens — which can
+      // eat the whole 300 budget and return truncated or empty text.
+      thinking: { type: 'disabled' },
+      messages: [{ role: 'user', content: buildPrompt(decisionsPlayed) }],
+    }),
+  });
+  if (!response.ok) {
+    const err = new Error(`Upstream API error (${response.status})`);
+    err.upstream = true;
+    throw err;
+  }
+  const data = await response.json();
+  return data.content?.find(b => b.type === 'text')?.text || '';
+}
+
+module.exports.buildPrompt = buildPrompt;
+module.exports.callClaude = callClaude;

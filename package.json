@@ -23,6 +23,7 @@
     "test": "react-scripts test",
     "audit:scenarios": "node scripts/audit-scenarios.mjs",
     "audit:observations": "node scripts/audit-observations.mjs",
+    "eval:coach": "node scripts/eval-coach.mjs",
     "check:invariants": "node scripts/check-invariants.mjs",
     "export:review": "node scripts/export-review.mjs",
     "simulate:schemas": "node scripts/simulate-schemas.mjs",
