@@ -4,7 +4,11 @@
 // the small max_tokens bound the cost of any single call.
 const { createClient } = require('@supabase/supabase-js');
 
-const DAILY_LIMIT = 20; // coach calls per user per day (1 per session played)
+// Coach calls per user per day (1 per session played). Lowered 20 → 5 at the
+// founder's call (July 18, 2026, subscription research): the free allowance
+// launches at its long-term level so a future Pro tier never has to take
+// anything away. Mirrored by COACH_DAILY_LIMIT in SessionSummary.jsx.
+const DAILY_LIMIT = 5;
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -64,12 +68,14 @@ ${decisionsPlayed.map(d => {
     table ? `Table: ${table}` : '',
     `chose ${clamp(d.chose, 40) || 'unknown'}, best was ${clamp(d.correctAction, 40) || 'unknown'}`,
     clamp(d.result, 20),
+    d.confidentMiss ? 'answered fast (looked sure)' : '',
   ].filter(Boolean).join(' | ');
   return `- ${line}`;
 }).join('\n')}
 
 Write 2-3 sentences identifying the pattern. Rules:
 - The direction of the mistakes is the diagnosis: folding or flat-calling when raising was best is a different leak than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
+- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, call it out directly; it's the most useful thing you can tell them
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
 - No generic praise or filler

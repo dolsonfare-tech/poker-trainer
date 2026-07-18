@@ -321,7 +321,7 @@ function UsernameEditor({ user, onRename, onClose }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
-export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn }) {
+export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn, onTableReads }) {
   const [editingName, setEditingName] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -506,6 +506,12 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           <div className="db-guest-note">
             Your free session's results are saved — they carry over to your account.
           </div>
+        )}
+        {onTableReads && (
+          <button className="db-tablereads-link" onClick={onTableReads}>
+            🂠 Table Reads — watch a hand, name the player
+            <span className="db-tr-beta">Free during beta</span>
+          </button>
         )}
       </div>
 

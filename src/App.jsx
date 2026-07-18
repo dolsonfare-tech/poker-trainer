@@ -14,6 +14,7 @@ import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 import Dashboard from './components/Dashboard';
+import TableReads from './components/TableReads';
 import UsernameEntry from './components/UsernameEntry';
 import SignIn from './components/SignIn';
 
@@ -40,18 +41,22 @@ function dealScenarios(difficulty, user, pendingHands = []) {
   const pool = SCENARIOS.filter(s => s.difficulty === difficulty);
   const played = user?.sessionsCompleted ?? 0;
   const priorHistory = user?.scenarioHistory ?? {};
+  const today = toLocalDateString(new Date());
   const alreadyApplied = pendingHands.length > 0 &&
     pendingHands.every(h => priorHistory[h.scenarioId]?.lastSeenAt === played);
   const merge = pendingHands.length > 0 && !alreadyApplied;
   const sessionsCompleted = merge ? played + 1 : played;
+  // Merge with today's date so a just-played same-day miss is stamped for the
+  // R2 day floor and can't resurface in the very next chained deal.
   const history = merge
-    ? applyHandsToHistory(priorHistory, pendingHands, sessionsCompleted)
+    ? applyHandsToHistory(priorHistory, pendingHands, sessionsCompleted, today)
     : priorHistory;
   return buildSession(pool, {
     history,
     skills: user?.skills ?? {},
     sessionsCompleted,
     length: SESSION_LENGTH,
+    currentDate: today,
   });
 }
 
@@ -86,6 +91,7 @@ export default function App() {
   const [showSummary, setShowSummary]             = useState(false);
   const [coachRead, setCoachRead]                 = useState('');
   const [coachLoading, setCoachLoading]           = useState(false);
+  const [coachLimited, setCoachLimited]           = useState(false);
   const [timedOut, setTimedOut]                   = useState(false);
   const [combo, setCombo]                         = useState(0);
   const [correctCount, setCorrectCount]           = useState(0);
@@ -95,8 +101,17 @@ export default function App() {
   // Synchronous decided guard — state/effect updates can lag in throttled
   // background tabs, so this ref is the authoritative "already answered" flag
   const decidedRef                                = useRef(false);
+  // Stamp when the current scenario was presented, so a decision can record
+  // decisionMs (F2: fast + wrong ≈ a confident miss — the resurface ladder and
+  // the coach payload lean on it).
+  const shownAtRef                                = useRef(null);
 
   const scenario = shuffledScenarios[currentIndex];
+
+  // Re-stamp on entering the session and on every new hand.
+  useEffect(() => {
+    if (screen === 'session') shownAtRef.current = Date.now();
+  }, [currentIndex, screen]);
 
   // ── Auth lifecycle (Supabase mode only) ──────────────────────────────────
   // Tracks which user's profile is already loaded so later auth events
@@ -193,7 +208,9 @@ export default function App() {
     setTimedOut(true);
     setDecided(true);
     setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
-    appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect' });
+    // A timeout froze on the decision — slow-wrong, the opposite of a confident
+    // miss — so decisionMs is null, never counted as a fast error.
+    appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect', decisionMs: null });
     track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true, replay: !!scenario.replay });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
@@ -244,7 +261,7 @@ export default function App() {
     setDifficulty(selected);
     saveLastDifficulty(selected);
     const pending = chained
-      ? sessionHistory.map(h => ({ scenarioId: h.scenario.id, result: h.result }))
+      ? sessionHistory.map(h => ({ scenarioId: h.scenario.id, result: h.result, decisionMs: h.decisionMs ?? null }))
       : [];
     setShuffledScenarios(dealScenarios(selected, user, pending));
     setCurrentIndex(0);
@@ -253,6 +270,7 @@ export default function App() {
     setFeedback(null);
     setShowSummary(false);
     setCoachRead('');
+    setCoachLimited(false);
     setTimedOut(false);
     setCombo(0);
     setCorrectCount(0);
@@ -269,12 +287,21 @@ export default function App() {
   // dashboard/difficulty-screen round trip between sessions.
   const handlePlayAgain = () => startSession(difficulty, { chained: true });
 
+  // Table Reads — signed-in users only (guests have one gated session; a
+  // second free mode would blur that gate). Mode-local scoring, see TableReads.
+  const handleOpenTableReads = () => {
+    setScreen('tablereads'); // TableReads tracks table_reads_started on mount
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const handleFetchCoachRead = async () => {
     const prevUser = sessionUserRef.current;
-    // Every hand played counts toward accuracy — not the per-skill deduped results
+    // Every hand played counts toward accuracy — not the per-skill deduped
+    // results. decisionMs rides along (additive, no schema change): it derives
+    // the confident-miss flag for the R1 ladder and the coach payload (F2).
     const hands = sessionHistory.map(h => ({
       scenarioId: h.scenario.id, skill: h.scenario.skill,
-      result: h.result, choiceVal: h.choiceVal,
+      result: h.result, choiceVal: h.choiceVal, decisionMs: h.decisionMs ?? null,
     }));
     const persist = (updated, coachText) => {
       setUser(updated);
@@ -301,7 +328,8 @@ export default function App() {
       const text = await fetchCoachRead(sessionHistory);
       setCoachRead(text);
       if (prevUser) persist(applySessionResults(prevUser, hands, text), text);
-    } catch {
+    } catch (err) {
+      if (err?.code === 'daily_limit') setCoachLimited(true);
       setCoachRead('');
       if (prevUser) persist(applySessionResults(prevUser, hands, null), null);
     }
@@ -314,8 +342,9 @@ export default function App() {
     setDecided(true);
     setTimedOut(false);
     const gr = scenario.grading[choice];
+    const decisionMs = shownAtRef.current ? Date.now() - shownAtRef.current : null;
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
-    appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g });
+    appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g, decisionMs });
     track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
@@ -372,6 +401,7 @@ export default function App() {
     setFeedback(null);
     setShowSummary(false);
     setCoachRead('');
+    setCoachLimited(false);
     setCoachLoading(false);
     setShuffledScenarios([]);
     setTimedOut(false);
@@ -523,7 +553,12 @@ export default function App() {
           guest={isGuest}
           guestGated={isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS}
           onGuestSignIn={handleGuestSignIn}
+          onTableReads={!isGuest ? handleOpenTableReads : undefined}
         />
+      )}
+
+      {screen === 'tablereads' && (
+        <TableReads onBack={() => setScreen('dashboard')} />
       )}
 
       {screen === 'difficulty' && (
@@ -538,6 +573,7 @@ export default function App() {
               sessionHistory={sessionHistory}
               coachRead={coachRead}
               coachLoading={coachLoading}
+              coachLimited={coachLimited}
               difficulty={difficulty}
               userSkills={sessionDelta?.prevSkills ?? user.skills}
               streakSecured={sessionDelta?.streakSecured ?? null}

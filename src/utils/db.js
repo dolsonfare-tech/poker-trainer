@@ -62,7 +62,7 @@ export async function fetchRemoteUser() {
     .from('skills').select('*').eq('user_id', uid);
   if (skillsErr) throw skillsErr;
   const { data: sessionRows, error: sessionsErr } = await supabase
-    .from('sessions').select('hands, correct_count')
+    .from('sessions').select('hands, correct_count, created_at')
     .eq('user_id', uid)
     .order('created_at', { ascending: true });
   if (sessionsErr) throw sessionsErr;

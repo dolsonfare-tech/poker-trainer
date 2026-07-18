@@ -96,6 +96,14 @@ test('review cards carry the skill chip, with the rating-move arrow when it move
   expect(document.querySelector('.ss-slideover')).toBeNull();
 });
 
+test('daily coach limit shows honest copy, not the generic fallback', () => {
+  render(<SessionSummary {...baseProps} coachLimited
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+  />);
+  expect(screen.getByText(/used today's 5 Coach's Reads/)).toBeInTheDocument();
+  expect(screen.queryByText(/No pattern identified yet/)).not.toBeInTheDocument();
+});
+
 test('guest summary: coach teaser + sign-in gate instead of chaining', () => {
   const onGuestSignIn = jest.fn();
   render(<SessionSummary {...baseProps} guest onGuestSignIn={onGuestSignIn}

@@ -14,6 +14,10 @@ const DIFFICULTY_LABELS = {
 
 const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e25555' };
 
+// Mirrors DAILY_LIMIT in api/coach-read.js — display only; the cap is
+// enforced server-side.
+const COACH_DAILY_LIMIT = 5;
+
 function personalizeBody(scenario) {
   if (!scenario.body) return null;
   // Bodies already written to the player ("You called BTN's open…") must be
@@ -93,7 +97,7 @@ function HandReview({ entry, move = null }) {
   );
 }
 
-export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, difficulty, userSkills = {}, streakSecured = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
+export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, streakSecured = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
   // Replay this session's hands through the rating engine to get post-session
   // ratings — same math as userStorage.applySessionResults.
   const afterSkills = (() => {
@@ -167,6 +171,10 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
           </div>
         ) : coachLoading ? (
           <div className="thinking">Reading your session...</div>
+        ) : coachLimited ? (
+          <div className="ss-coach-text ss-coach-limit">
+            You've used today's {COACH_DAILY_LIMIT} Coach's Reads — they refresh tomorrow.
+          </div>
         ) : (
           <div className="ss-coach-text">{coachRead || 'No pattern identified yet.'}</div>
         )}

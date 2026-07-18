@@ -1,5 +1,6 @@
 import { supabase, hasSupabase } from './supabase';
 import { track } from './analytics';
+import { CONFIDENT_MISS_MS } from './spacedrep';
 
 export async function fetchCoachRead(sessionHistory) {
   // One entry per hand actually played, with the per-hand result — NOT the
@@ -21,6 +22,11 @@ export async function fetchCoachRead(sessionHistory) {
       chose: choseOpt ? choseOpt.label : 'Timed out (no action)',
       correctAction: correctOpt ? correctOpt.label : '',
       result: h.result,
+      // Fast + wrong ≈ a confident miss (F2): the highest-leverage coaching
+      // moment — the leak they don't know they have. A timeout is slow-wrong,
+      // never confident (decisionMs null).
+      confidentMiss: h.result === 'incorrect'
+        && typeof h.decisionMs === 'number' && h.decisionMs > 0 && h.decisionMs <= CONFIDENT_MISS_MS,
     };
   });
 
@@ -46,6 +52,14 @@ export async function fetchCoachRead(sessionHistory) {
     throw err;
   }
 
+  if (res.status === 429) {
+    // Daily cap (DAILY_LIMIT in api/coach-read.js) — surfaced honestly in the
+    // summary instead of the generic fallback, which reads as a broken feature.
+    track('coach_read_failed', { reason: 'daily_limit' });
+    const err = new Error('Daily coach limit reached');
+    err.code = 'daily_limit';
+    throw err;
+  }
   if (!res.ok) {
     track('coach_read_failed', { reason: 'http', status: res.status });
     return '';

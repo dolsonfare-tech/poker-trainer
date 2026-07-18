@@ -106,6 +106,24 @@ export function saveLastDifficulty(difficulty) {
   try { localStorage.setItem(LAST_DIFFICULTY_KEY, difficulty); } catch {}
 }
 
+// ── Table Reads stats ─────────────────────────────────────────────────────────
+// Mode-local lifetime tally (founder decision July 18: no writes to the
+// 8-skill ratings — observation accuracy ≠ decision accuracy, and keeping the
+// mode self-contained keeps a future Pro gate clean). Device-local like the
+// difficulty memory; acceptable for beta.
+const TABLE_READS_KEY = 'cr_table_reads_stats';
+
+export function loadTableReadsStats() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(TABLE_READS_KEY));
+    return { attempts: raw?.attempts ?? 0, correct: raw?.correct ?? 0 };
+  } catch { return { attempts: 0, correct: 0 }; }
+}
+
+export function saveTableReadsStats(stats) {
+  try { localStorage.setItem(TABLE_READS_KEY, JSON.stringify(stats)); } catch {}
+}
+
 // ── Schema derivation ──────────────────────────────────────────────────────────
 // Definitions live in constants.js (PLAYER_SCHEMAS) — shared with the
 // reference guide so the two can't drift. Index is display-only, from order.
@@ -213,10 +231,13 @@ export function applySessionResults(user, hands, coachRead) {
   const schema     = deriveSchema(skills, sessionsCompleted);
   const pokerScore = derivePokerScore(skills);
   // Per-scenario history drives the session builder (no repeats, comeback
-  // hands). In Supabase mode this is also rebuilt from `sessions` rows on
-  // every profile load — this in-memory update keeps the current device
-  // accurate between loads.
-  const scenarioHistory = applyHandsToHistory(user.scenarioHistory ?? {}, hands, sessionsCompleted);
+  // hands, the R1/R2 graduation ladder). In Supabase mode this is also rebuilt
+  // from `sessions` rows on every profile load — this in-memory update keeps
+  // the current device accurate between loads. Today's date feeds the R2
+  // calendar-day floor so chained same-day sessions can't mass a miss.
+  const scenarioHistory = applyHandsToHistory(
+    user.scenarioHistory ?? {}, hands, sessionsCompleted, toLocalDateString(new Date())
+  );
   // Personal best (most correct in one session). In Supabase mode this is
   // also derived from sessions.correct_count on load, so it self-heals; for
   // legacy local users the field starts null and begins tracking now.
