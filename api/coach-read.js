@@ -56,15 +56,53 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const text = await callClaude(decisionsPlayed, apiKey);
-    return res.status(200).json({ text });
+    const raw = await callClaude(decisionsPlayed, apiKey);
+    // The wire format is always { text: string } (claude.js, the persist flow,
+    // and both DB columns are untouched by the JSON restructure). On success we
+    // re-serialize the parsed object so the string on the wire and in the DB is
+    // always canonical JSON; on any parse/validation failure we pass the model's
+    // raw text through so the client renders it as prose (graceful degradation).
+    return res.status(200).json({ text: normalizeCoachRead(raw) });
   } catch (err) {
     if (err?.upstream) return res.status(502).json({ error: 'Upstream API error' });
     return res.status(500).json({ error: 'Upstream API call failed' });
   }
 };
 
+// Validate the model's structured output and re-serialize it. Returns canonical
+// JSON when the three fields are present and well-typed, else the raw text
+// unchanged (the client's parseCoachRead falls back to prose rendering).
+function normalizeCoachRead(raw) {
+  if (typeof raw !== 'string' || !raw.trim()) return raw;
+  try {
+    const p = JSON.parse(raw);
+    const ok = p && typeof p === 'object'
+      && typeof p.headline === 'string'
+      && Array.isArray(p.evidence)
+      && typeof p.watchFor === 'string';
+    if (!ok) return raw;
+    return JSON.stringify({ headline: p.headline, evidence: p.evidence, watchFor: p.watchFor });
+  } catch {
+    return raw;
+  }
+}
+
 const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
+
+// Structured-output schema for the Coach's Read. The structured-outputs feature
+// requires additionalProperties:false and does NOT support length/count
+// constraints (maxLength, minItems/maxItems) — every word/count limit is
+// enforced in the prompt text instead. Supported on claude-sonnet-5.
+const COACH_SCHEMA = {
+  type: 'object',
+  properties: {
+    headline: { type: 'string' },
+    evidence: { type: 'array', items: { type: 'string' } },
+    watchFor: { type: 'string' },
+  },
+  required: ['headline', 'evidence', 'watchFor'],
+  additionalProperties: false,
+};
 
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
@@ -86,9 +124,14 @@ ${decisionsPlayed.map(d => {
   return `- ${line}`;
 }).join('\n')}
 
-Write ONE paragraph of 2-3 sentences, under 90 words total. Rules:
+Respond with three fields — "headline", "evidence", "watchFor":
+- headline: ONE sentence, 12 words or fewer, naming the underlying pattern or mental model plainly. Start with the observation, not with "you". If misses marked "answered fast (looked sure)" cluster, the headline MUST be about that confident-error pattern.
+- evidence: 2 to 3 short items (1 is fine for a clean session), each 20 words or fewer, each tied to a SPECIFIC hand and villain from the data above ("Fired a bluff into the calling station on Q94r; bluffs need a folder").
+- watchFor: ONE sentence, 18 words or fewer, concrete and actionable for the next session ("When a passive player raises the river, believe him").
+
+Rules for all three fields:
 - The direction of the mistakes is the diagnosis: folding or flat-calling when raising was best is a different leak than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
-- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, make it the first thing you say
+- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, the headline leads with it
 - Mention only hands and actions listed above — never invent holdings, outcomes, or spots that aren't in the data
 - If the misses point in different directions (some too passive, some too aggressive), say so honestly instead of forcing them into one story
 - These are exploitative judgment spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
@@ -97,8 +140,7 @@ Write ONE paragraph of 2-3 sentences, under 90 words total. Rules:
 - No generic praise or filler
 - Be direct and specific about what you observe
 - Reference the villain types they struggled against, not just the abstract skill
-- If they got everything right, acknowledge it briefly and name one area to keep watching
-- Start with the observation, not with "you"`;
+- If they got everything right, acknowledge it briefly in the headline and name one area to keep watching in watchFor`;
 }
 
 async function callClaude(decisionsPlayed, apiKey) {
@@ -111,11 +153,16 @@ async function callClaude(decisionsPlayed, apiKey) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-5',
-      max_tokens: 300,
+      // Raised 300 → 500 for the structured (JSON) output: three fields plus
+      // JSON syntax overhead need headroom, and a truncated response is
+      // unparseable rather than merely short (truncation was a real eval defect).
+      max_tokens: 500,
       // Sonnet 5 runs adaptive thinking by default when `thinking` is
       // omitted, and thinking tokens count against max_tokens — which can
-      // eat the whole 300 budget and return truncated or empty text.
+      // eat the whole budget and return truncated or empty text.
       thinking: { type: 'disabled' },
+      // Structured output: constrain the response to the three-field schema.
+      output_config: { format: { type: 'json_schema', schema: COACH_SCHEMA } },
       messages: [{ role: 'user', content: buildPrompt(decisionsPlayed) }],
     }),
   });

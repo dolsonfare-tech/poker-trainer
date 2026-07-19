@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { SKILL_NAMES } from '../data/constants';
-import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity } from '../utils/userStorage';
+import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
@@ -518,26 +518,41 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
               <SkillLedger skills={skills} prevSkills={sessionDelta?.prevSkills ?? null} />
             </div>
           </div>
+
+          {/* ── Last Session's Read ──
+              The read belongs to the player profile (founder decision) — a
+              full-width strip beneath the schema/ledger columns. Compact:
+              headline + watch-for + focus chip; the per-hand evidence rows
+              stay on the summary. Legacy prose reads clamp to ~2 lines. */}
+          {coachNote && (() => {
+            const parsed = parseCoachRead(coachNote.body);
+            return (
+              <div className="db-profile-read">
+                <div className="db-profile-read-label">Last Session's Read</div>
+                {parsed?.structured ? (
+                  <>
+                    <div className="db-profile-read-headline">{parsed.structured.headline}</div>
+                    {parsed.structured.watchFor && (
+                      <div className="db-profile-read-watchfor">
+                        <span className="db-profile-read-wf-label">Watch for</span>
+                        <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <p className="db-profile-read-prose">{parsed?.legacy}</p>
+                )}
+                {coachNote.focus && (
+                  <div className="db-profile-read-focus">
+                    <span className="db-profile-read-focus-label">Focus this session</span>
+                    <span className="db-profile-read-focus-skill">{coachNote.focus}</span>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
-
-      {/* ── Coach's Note ── */}
-      {coachNote && (
-        <div className="db-section">
-          <div className="db-section-label">
-            <span>Last Session's Read</span>
-          </div>
-          <div className="db-coach-note">
-            <p className="db-coach-note-body">{coachNote.body}</p>
-            {coachNote.focus && (
-              <div className="db-coach-note-footer">
-                <span className="db-coach-note-focus-label">Focus this session</span>
-                <span className="db-coach-note-focus">{coachNote.focus}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* ── CTA ── */}
       <div className="db-cta-block">

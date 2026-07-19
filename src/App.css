@@ -1766,6 +1766,87 @@ body {
   }
 }
 
+/* ── Last Session's Read: full-width strip inside the Player Profile card ──
+   Spans beneath the schema/ledger columns (founder: the read belongs to the
+   profile). Compact — headline + watch-for + focus chip; no evidence rows. */
+.db-profile-read {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(200,168,75,0.2);
+  text-align: left;
+}
+
+.db-profile-read-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.3);
+  margin-bottom: 8px;
+}
+
+.db-profile-read-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--cream);
+  text-wrap: balance;
+}
+
+/* Legacy prose read — clamped to ~2 lines rather than the full wall. */
+.db-profile-read-prose {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.72);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.db-profile-read-watchfor {
+  margin-top: 8px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.78);
+}
+
+.db-profile-read-wf-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.7);
+  margin-right: 8px;
+}
+
+.db-profile-read-focus {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(42,66,52,0.9);
+}
+
+.db-profile-read-focus-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.3);
+}
+
+.db-profile-read-focus-skill {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--yellow);
+}
+
 .db-schema-name {
   font-family: 'Playfair Display', Georgia, serif;
   font-style: normal;
@@ -2152,6 +2233,60 @@ body {
   line-height: 1.7;
   color: rgba(242,237,227,0.8);
   font-style: italic;
+}
+
+/* ── Structured Coach's Read (July 18, 2026) ──
+   headline (Playfair, quiet-gold register — in keeping with the schema name) →
+   compact evidence rows → a labeled closing watch-for line. */
+.ss-coach-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  color: var(--cream);
+  text-wrap: balance;
+}
+
+.ss-coach-evidence {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.ss-coach-evidence-row {
+  position: relative;
+  padding: 4px 0 4px 16px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(242,237,227,0.78);
+}
+.ss-coach-evidence-row::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 12px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(200,168,75,0.55);
+}
+
+.ss-coach-watchfor {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(200,168,75,0.18);
+  font-size: 0.83rem;
+  line-height: 1.55;
+  color: rgba(242,237,227,0.8);
+}
+
+.ss-coach-watchfor-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.7);
+  margin-right: 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -2902,7 +3037,11 @@ body {
    explicit placement, grid auto-placement would push the table to a second row. */
 .sc2-stage > .sc2-table { grid-area: 1 / 1; }
 
-.sc2-table { position: relative; height: 400px; max-width: 720px; margin: 0 auto; }
+/* width:100% is load-bearing: as a grid item (sc2-stage went grid July 18 so
+   the overlay can outgrow the table), auto margins would otherwise switch the
+   box to fit-content sizing — and with only absolute children that's 0px wide
+   (the collapsed-table bug). Explicit width keeps auto margins as centering. */
+.sc2-table { position: relative; height: 400px; width: 100%; max-width: 720px; margin: 0 auto; }
 .sc2-felt {
   position: absolute; inset: 7% 6% 13% 6%;
   /* Fabric grain (inline SVG noise) over a baize-green radial — reads as real felt */

@@ -2,7 +2,7 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, createUser, toLocalDateString } from './userStorage';
+import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, createUser, toLocalDateString } from './userStorage';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
@@ -44,7 +44,11 @@ function assembleUser(profile, skillRows, sessionRows) {
     sessionsCompleted: profile.sessions_completed,
     skills,
     schema: deriveSchema(skills, profile.sessions_completed),
-    pokerScore: profile.poker_score,
+    // Derived fresh from live accuracy (like `schema` above), not the trusted
+    // profiles.poker_score column, so existing users heal off the old
+    // bucket-based number on their next load rather than at their next session.
+    // The column is still written on create/save — only its read is bypassed.
+    pokerScore: derivePokerScore(skills),
     coachNote: profile.coach_note_body
       ? { body: profile.coach_note_body, focus: profile.coach_note_focus }
       : null,

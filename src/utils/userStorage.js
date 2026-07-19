@@ -35,7 +35,16 @@ function migrateUser(user) {
       return [k, { ...d, correct, rating: deriveRating(correct, d.attempts) }];
     })
   );
-  return changed ? { ...user, skills } : user;
+  const migrated = changed ? { ...user, skills } : user;
+  // Self-heal a stale bucket-based pokerScore (pre-July 18, 2026): the score is
+  // trusted on load, so a cached local user would keep the old inflated number
+  // until their next session. Re-derive it under the continuous-accuracy formula
+  // whenever any skill is rated. Cheap and idempotent.
+  const healed = derivePokerScore(migrated.skills);
+  if (healed !== null && healed !== migrated.pokerScore) {
+    return { ...migrated, pokerScore: healed };
+  }
+  return migrated;
 }
 
 export function loadUser() {
@@ -189,11 +198,42 @@ export function deriveSchema(skills, sessionsCompleted) {
   return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
 }
 
+// Continuous true accuracy (July 18, 2026) — the average of each rated skill's
+// real correct/attempts, not a bucket anchor (green=100/yellow=65/red=30) that
+// only moved when a session crossed a rating boundary. The old formula read an
+// 0/5 session as "nothing happened" (Poker IQ 69 → 69); this moves with every
+// hand, honoring the honest-numbers rule the summary is built on. `correct` can
+// be fractional (partial credit = 0.5 via applyHandToSkill) — the division
+// handles it. Same gate as before (rated = 5+ attempts, not gray); null when
+// nothing is rated.
 export function derivePokerScore(skills) {
-  const SCORE = { green: 100, yellow: 65, red: 30 };
   const rated = Object.values(skills).filter(d => d.attempts >= 5 && d.rating !== 'gray');
   if (rated.length === 0) return null;
-  return Math.round(rated.reduce((sum, d) => sum + (SCORE[d.rating] ?? 0), 0) / rated.length);
+  return Math.round(rated.reduce((sum, d) => sum + (d.correct / d.attempts) * 100, 0) / rated.length);
+}
+
+// ── Coach's Read parsing ────────────────────────────────────────────────────
+// The Coach's Read is a structured JSON string on the wire and in the DB
+// (headline/evidence/watchFor via output_config json_schema, July 18, 2026).
+// This turns that string into a render shape: { structured } for a JSON read,
+// { legacy } for prose (every pre-restructure read in the DB, plus the server's
+// graceful-degradation fallback when the model's JSON fails to validate).
+// Returns null for empty/missing input.
+export function parseCoachRead(raw) {
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null;
+  try {
+    const p = JSON.parse(raw);
+    if (p && typeof p === 'object' && !Array.isArray(p) && typeof p.headline === 'string') {
+      return {
+        structured: {
+          headline: p.headline,
+          evidence: Array.isArray(p.evidence) ? p.evidence : [],
+          watchFor: typeof p.watchFor === 'string' ? p.watchFor : '',
+        },
+      };
+    }
+  } catch { /* not JSON — prose */ }
+  return { legacy: raw };
 }
 
 // ── Streak ────────────────────────────────────────────────────────────────────

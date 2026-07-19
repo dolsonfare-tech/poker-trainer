@@ -56,7 +56,7 @@ test('no best line without a prior best (first session is never a "best")', () =
 });
 
 test('Poker IQ shows the real before→after, never an invented delta', () => {
-  // potodds rated red (30) and untouched by these hands → 30 → 30
+  // potodds rated red at 1/5 = 20% accuracy, untouched by these hands → 20 → 20
   const rated = {
     ...DEFAULT_SKILLS,
     potodds: { rating: 'red', attempts: 5, correct: 1 },
@@ -66,7 +66,24 @@ test('Poker IQ shows the real before→after, never an invented delta', () => {
   render(<SessionSummary {...baseProps} userSkills={rated}
     sessionHistory={hist(['correct', 'correct', 'incorrect', 'correct', 'incorrect'])}
   />);
-  expect(screen.getByText('30 → 30')).toBeInTheDocument();
+  expect(screen.getByText('20 → 20')).toBeInTheDocument();
+});
+
+test('Poker IQ moves on misses even when no rating bucket flips (the 0/5 bug)', () => {
+  // The reported bug: a losing session read as "69 → 69" because the score only
+  // moved when a skill crossed a rating boundary. With continuous accuracy, a
+  // miss on a rated skill moves the number even while the bucket holds.
+  // potodds at 10/14 = 71% (yellow). One incorrect potodds hand → 10/15 = 67%,
+  // still yellow, but the IQ line must read 71 → 67, not a flat number.
+  const potodds = SCENARIOS.filter(s => s.skill === 'potodds');
+  const target = potodds[0];
+  // Guard: the fixture must be a single rated skill and the played hand must be
+  // on it, or the before/after math below wouldn't isolate the move.
+  expect(target).toBeTruthy();
+  const skills = { ...DEFAULT_SKILLS, potodds: { rating: 'yellow', attempts: 14, correct: 10 } };
+  const history = [{ scenario: target, choiceVal: null, result: 'incorrect' }];
+  render(<SessionSummary {...baseProps} userSkills={skills} sessionHistory={history} />);
+  expect(screen.getByText('71 → 67')).toBeInTheDocument();
 });
 
 test('Poker IQ reads as locked while nothing is rated', () => {
@@ -141,6 +158,36 @@ test('broken streak falls back to copy-only when the record is unavailable', () 
   />);
   expect(screen.getByText(/keep showing up/i)).toBeInTheDocument();
   expect(screen.queryByText(/of the last 30 days/)).not.toBeInTheDocument();
+});
+
+// ── Coach's Read rendering (structured JSON + legacy prose) ─────────────────
+test('a structured coach read renders headline, evidence rows, and watch-for', () => {
+  const read = JSON.stringify({
+    headline: 'Confident errors are the pattern here',
+    evidence: ['Snap-called the station on Q94r', 'Raised the nit who never bluffs'],
+    watchFor: 'When a tight player raises, slow down before you act',
+  });
+  render(<SessionSummary {...baseProps} coachRead={read}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+  />);
+  expect(screen.getByText('Confident errors are the pattern here')).toBeInTheDocument();
+  expect(screen.getByText(/Snap-called the station/)).toBeInTheDocument();
+  expect(screen.getByText(/Raised the nit/)).toBeInTheDocument();
+  expect(screen.getByText(/slow down before you act/)).toBeInTheDocument();
+  expect(screen.getByText(/Watch for/i)).toBeInTheDocument();
+  // No prose fallback element when structured
+  expect(document.querySelector('.ss-coach-structured')).toBeInTheDocument();
+  expect(screen.queryByText(/No pattern identified yet/)).not.toBeInTheDocument();
+});
+
+test('a legacy (prose) coach read renders as the italic paragraph', () => {
+  const prose = 'You are folding too often against aggressive regulars. Tighten up your calls.';
+  render(<SessionSummary {...baseProps} coachRead={prose}
+    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
+  />);
+  const el = document.querySelector('.ss-coach-text');
+  expect(el).toHaveTextContent(prose);
+  expect(document.querySelector('.ss-coach-structured')).toBeNull();
 });
 
 test('daily coach limit shows honest copy, not the generic fallback', () => {

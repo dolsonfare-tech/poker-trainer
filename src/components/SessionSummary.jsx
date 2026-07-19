@@ -1,5 +1,5 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
-import { derivePokerScore, milestoneProximity } from '../utils/userStorage';
+import { derivePokerScore, milestoneProximity, parseCoachRead } from '../utils/userStorage';
 import AdSlot from './AdSlot';
 
 // Streak milestones fold into the "day secured" line — the moment the day is
@@ -199,7 +199,32 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
             You've used today's {COACH_DAILY_LIMIT} Coach's Reads — they refresh tomorrow.
           </div>
         ) : (
-          <div className="ss-coach-text">{coachRead || 'No pattern identified yet.'}</div>
+          (() => {
+            // Structured reads render as headline + evidence rows + a closing
+            // watch-for line; legacy/prose reads (pre-restructure DB rows, or the
+            // graceful-degradation fallback) render as the italic paragraph.
+            const parsed = parseCoachRead(coachRead);
+            if (parsed?.structured) {
+              const { headline, evidence, watchFor } = parsed.structured;
+              return (
+                <div className="ss-coach-structured">
+                  <div className="ss-coach-headline">{headline}</div>
+                  {evidence.length > 0 && (
+                    <ul className="ss-coach-evidence">
+                      {evidence.map((e, i) => <li key={i} className="ss-coach-evidence-row">{e}</li>)}
+                    </ul>
+                  )}
+                  {watchFor && (
+                    <div className="ss-coach-watchfor">
+                      <span className="ss-coach-watchfor-label">Watch for</span>
+                      <span className="ss-coach-watchfor-text">{watchFor}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return <div className="ss-coach-text">{parsed?.legacy || 'No pattern identified yet.'}</div>;
+          })()
         )}
       </div>
 
