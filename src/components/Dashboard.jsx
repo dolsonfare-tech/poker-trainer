@@ -532,6 +532,13 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                 {parsed?.structured ? (
                   <>
                     <div className="db-profile-read-headline">{parsed.structured.headline}</div>
+                    {parsed.structured.evidence.length > 0 && (
+                      <ul className="db-profile-read-evidence">
+                        {parsed.structured.evidence.map((e, i) => (
+                          <li key={i} className="db-profile-read-evidence-row">{e}</li>
+                        ))}
+                      </ul>
+                    )}
                     {parsed.structured.watchFor && (
                       <div className="db-profile-read-watchfor">
                         <span className="db-profile-read-wf-label">Watch for</span>

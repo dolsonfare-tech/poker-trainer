@@ -4,7 +4,7 @@
 // Run:  node scripts/audit-scenarios.mjs
 // Exit code 1 if any ERROR-level findings (safe for CI).
 
-import SCENARIOS from '../src/data/scenarios.js';
+import SCENARIOS, { CONTRAST_PAIRS } from '../src/data/scenarios.js';
 
 const findings = [];
 const flag = (sev, id, rule, msg) => findings.push({ sev, id, rule, msg });
@@ -208,6 +208,25 @@ for (const s of SCENARIOS) {
         flag('WARN', id, 'street', `body references the ${word} but board has ${s.board?.length ?? 0} cards`);
     }
   }
+}
+
+// ── CONTRAST_PAIRS (R4): every id real, groups of exactly 2 distinct ids that
+//    share a difficulty (only same-difficulty pairs can co-deal from one pool) ─
+{
+  const byId = new Map(SCENARIOS.map(s => [s.id, s]));
+  (CONTRAST_PAIRS ?? []).forEach((group, gi) => {
+    const label = `group ${gi} (${JSON.stringify(group)})`;
+    if (!Array.isArray(group) || group.length !== 2 || group[0] === group[1]) {
+      flag('ERROR', 'CONTRAST', 'pairs', `${label} must be exactly 2 distinct ids`);
+      return;
+    }
+    const scs = group.map(gid => byId.get(gid));
+    scs.forEach((sc, i) => {
+      if (!sc) flag('ERROR', 'CONTRAST', 'pairs', `${label} id ${JSON.stringify(group[i])} is not in the pool`);
+    });
+    if (scs[0] && scs[1] && scs[0].difficulty !== scs[1].difficulty)
+      flag('ERROR', 'CONTRAST', 'pairs', `${label} spans difficulties (${scs[0].difficulty} vs ${scs[1].difficulty}) — only same-difficulty pairs can co-deal`);
+  });
 }
 
 // ── Report ──────────────────────────────────────────────────────────────

@@ -54,7 +54,7 @@ test('a broken streak shows the consistency record, never a bare reset (M2)', ()
 });
 
 // ── Last Session's Read lives inside the Player Profile card ────────────────
-test('a structured coach read renders headline + watch-for inside the Player Profile card, no evidence', () => {
+test('a structured coach read renders headline + evidence + watch-for inside the Player Profile card', () => {
   const u = {
     ...createUser('Reader'),
     sessionsCompleted: 6,
@@ -73,8 +73,10 @@ test('a structured coach read renders headline + watch-for inside the Player Pro
   const headline = document.querySelector('.db-schema-card .db-profile-read-headline');
   expect(headline).toHaveTextContent('You over-fold to river bets');
   expect(screen.getByText(/Believe passive raisers/)).toBeInTheDocument();
-  // Per-hand evidence stays on the summary — not on the dashboard
-  expect(screen.queryByText(/Folded top pair to the nit/)).not.toBeInTheDocument();
+  // Evidence rows render on the dashboard too (founder, July 18 — the full
+  // structured read is scannable; only the prose format was the problem)
+  expect(screen.getByText(/Folded top pair to the nit/)).toBeInTheDocument();
+  expect(screen.getByText(/Passed on a value raise/)).toBeInTheDocument();
   // Focus chip
   expect(document.querySelector('.db-profile-read-focus-skill')).toHaveTextContent('Pot Odds');
   // The standalone "Last Session's Read" section is gone

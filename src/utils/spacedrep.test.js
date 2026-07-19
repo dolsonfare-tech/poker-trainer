@@ -300,3 +300,112 @@ test('a confident miss jumps the resurface queue and tags the replay', () => {
   expect(replays[0].id).toBe(pool[0].id);       // confident wins the single slot
   expect(replays[0].confidentMiss).toBe(true);  // and the flag rides the object
 });
+
+// ── R4 contrast-pair-aware dealing ─────────────────────────────────────────
+// Tests pass their own `contrastPairs` so they're independent of the authored
+// real map; the mock ids never intersect the real CONTRAST_PAIRS, which is also
+// why every test above (using the default map) sees zero pairing.
+
+test('a weak-skill pick with a contrast partner deals both, adjacent, within length 5', () => {
+  const pool = [
+    mk('X', 'potodds'),                                            // the weak pick
+    mk('Y', 'reads'),                                              // its contrast partner
+    ...Array.from({ length: 12 }, (_, i) => mk(`f_${i}`, 'aggression')),
+  ];
+  const skills = { potodds: { rating: 'red', attempts: 10, correct: 2 } };
+  const contrastPairs = [['X', 'Y']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, { skills, contrastPairs, length: 5 });
+    expect(session).toHaveLength(5);
+    const ix = session.findIndex(s => s.id === 'X');
+    const iy = session.findIndex(s => s.id === 'Y');
+    expect(ix).toBeGreaterThanOrEqual(0);
+    expect(iy).toBeGreaterThanOrEqual(0);
+    expect(Math.abs(ix - iy)).toBe(1); // juxtaposed — the contrast is the mechanism
+  }
+});
+
+test('at most one contrast pair per session even when two weak picks both qualify', () => {
+  // Both partners are already SEEN, so neither can enter via ordinary unseen
+  // fill — a partner in the session can only be there because it was PAIRED.
+  // Plenty of unseen fillers keep the pool from exhausting into the seen
+  // fallback, so exactly one partner present == exactly one pair seated.
+  const pool = [
+    mk('X1', 'potodds'), mk('Y1', 'reads'),
+    mk('X2', 'bluffing'), mk('Y2', 'position'),
+    ...Array.from({ length: 12 }, (_, i) => mk(`f_${i}`, 'aggression')),
+  ];
+  const skills = {
+    potodds: { rating: 'red', attempts: 10, correct: 2 },
+    bluffing: { rating: 'red', attempts: 10, correct: 2 },
+  };
+  const history = { Y1: seenCorrect(1), Y2: seenCorrect(1) };
+  const contrastPairs = [['X1', 'Y1'], ['X2', 'Y2']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, { skills, history, sessionsCompleted: 1, contrastPairs, length: 5 });
+    const partnersDealt = ['Y1', 'Y2'].filter(id => session.some(s => s.id === id)).length;
+    expect(partnersDealt).toBe(1); // the 1-pair cap held
+  }
+});
+
+test('pairing leaves the resurfaced-miss slot and its cooldown untouched', () => {
+  const pool = [
+    mk('M', 'aggression'),                    // the due miss (resurfaces)
+    mk('X', 'potodds'), mk('Y', 'reads'),     // the contrast pair
+    ...Array.from({ length: 12 }, (_, i) => mk(`f_${i}`, 'opponent')),
+  ];
+  const skills = { potodds: { rating: 'red', attempts: 10, correct: 2 } };
+  const history = { M: { seen: 1, lastResult: 'incorrect', lastSeenAt: 1, lastSeenDate: '2026-07-01', remediating: true, rung: 0 } };
+  const contrastPairs = [['X', 'Y']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, {
+      skills, history, sessionsCompleted: 10, currentDate: '2026-07-30', contrastPairs, length: 5,
+    });
+    expect(session).toHaveLength(5);
+    const replays = session.filter(s => s.replay);
+    expect(replays).toHaveLength(1);      // still exactly one comeback hand
+    expect(replays[0].id).toBe('M');      // the pairing didn't displace it
+    expect(session.some(s => s.id === 'M' && !s.replay)).toBe(false); // nor duplicate it
+    // The pair still co-deals adjacently alongside the replay
+    const ix = session.findIndex(s => s.id === 'X');
+    const iy = session.findIndex(s => s.id === 'Y');
+    expect(Math.abs(ix - iy)).toBe(1);
+  }
+});
+
+test('a same-skill contrast pair does not breach the per-skill cap', () => {
+  // X and Y are both betsize (like sc_088 + sc_113). X is the only UNSEEN
+  // betsize, so the weak slot always seats X and pairs its (seen) partner Y —
+  // a guaranteed same-skill pair. bs_0 is a would-be third betsize; the pair
+  // consumes both betsize slots, so the per-skill cap must keep it out.
+  const NON_BETSIZE = SKILLS.filter(k => k !== 'betsize');
+  const pool = [
+    mk('X', 'betsize'), mk('Y', 'betsize'), mk('bs_0', 'betsize'),
+    ...Array.from({ length: 12 }, (_, i) => mk(`ot_${i}`, NON_BETSIZE[i % NON_BETSIZE.length])),
+  ];
+  const skills = { betsize: { rating: 'red', attempts: 10, correct: 2 } };
+  const history = { Y: seenCorrect(1), bs_0: seenCorrect(1) };
+  const contrastPairs = [['X', 'Y']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, { skills, history, sessionsCompleted: 1, contrastPairs, length: 5 });
+    expect(session.filter(s => s.skill === 'betsize')).toHaveLength(2); // the pair, no third
+    expect(session.some(s => s.id === 'X')).toBe(true);
+    expect(session.some(s => s.id === 'Y')).toBe(true); // seen partner pulled in only by pairing
+  }
+});
+
+test('with no matching partner the session builds exactly as pre-R4 (weak weighting intact)', () => {
+  // Same shape as the "weights two slots" test but with pairing wired: an empty
+  // map (and, by extension, any pool whose ids miss the real map) must not
+  // perturb the weak-skill composition.
+  const pool = [
+    ...Array.from({ length: 4 }, (_, i) => mk(`po_${i}`, 'potodds')),
+    ...Array.from({ length: 16 }, (_, i) => mk(`ot_${i}`, SKILLS[i % 4])),
+  ];
+  const skills = { potodds: { rating: 'red', attempts: 10, correct: 2 } };
+  for (let run = 0; run < 20; run++) {
+    const session = buildSession(pool, { skills, contrastPairs: [], length: 5 });
+    expect(session).toHaveLength(5);
+    expect(session.filter(s => s.skill === 'potodds')).toHaveLength(2);
+  }
+});

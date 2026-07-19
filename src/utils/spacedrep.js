@@ -1,3 +1,5 @@
+import { CONTRAST_PAIRS } from '../data/scenarios';
+
 // Spaced repetition v2 — the session builder.
 //
 // Replaces pure-random dealing with three ordered priorities:
@@ -47,6 +49,13 @@ export const CONFIDENT_MISS_MS = 15000;
 const MAX_REPLAYS_PER_SESSION = 1;            // one redemption hand per session, not a re-exam
 const WEAK_SLOT_TARGET = 2;                   // slots aimed at red/yellow skills
 const MAX_PER_SKILL = 2;                      // soft cap — a targeted session, not 5 of one drill
+// R4 contrast-pair-aware dealing (RESEARCH_LEARNING_SCIENCE.md Piece 1 R4): the
+// authored CONTRAST_PAIRS are the product's interleaving mechanism — juxtaposing
+// a pair in the SAME session (adjacent, so the contrast is felt) is what makes it
+// teach. When a weak-skill slot seats a scenario that has an eligible same-pool
+// partner, we also seat the partner (spending a general slot). One pair per
+// session — a variety guard, tunable here.
+const MAX_CONTRAST_PAIRS_PER_SESSION = 1;
 // Preflop-street cap (founder, July 8): weak-skill weighting on preflop/
 // position leaks was filling half a session with boardless preflop spots —
 // samey and frustrating. 2 of 5 max; postflop streets vary enough to stay
@@ -60,6 +69,36 @@ function shuffle(arr) {
     const j = Math.floor(Math.random() * (i + 1));
     [out[i], out[j]] = [out[j], out[i]];
   }
+  return out;
+}
+
+// id → [partner ids] from the flat list of 2-item contrast groups. A scenario
+// may sit in several groups (so it can have several partners); ids match
+// scenario `id` exactly (legacy = numeric, batch = string — never normalized).
+function buildPartnerIndex(pairs) {
+  const idx = new Map();
+  for (const group of pairs ?? []) {
+    if (!Array.isArray(group) || group.length !== 2) continue;
+    const [a, b] = group;
+    if (!idx.has(a)) idx.set(a, []);
+    if (!idx.has(b)) idx.set(b, []);
+    if (!idx.get(a).includes(b)) idx.get(a).push(b);
+    if (!idx.get(b).includes(a)) idx.get(b).push(a);
+  }
+  return idx;
+}
+
+// Place the seated contrast pair adjacent in the dealt order (juxtaposition is
+// the mechanism). Moves the second member to sit right after the first,
+// preserving every other hand's relative order.
+function enforceAdjacency(list, [idA, idB]) {
+  const ib = list.findIndex((s) => s.id === idB);
+  const ia = list.findIndex((s) => s.id === idA);
+  if (ia === -1 || ib === -1 || Math.abs(ia - ib) === 1) return list;
+  const out = [...list];
+  const [moved] = out.splice(ib, 1);
+  const anchor = out.findIndex((s) => s.id === idA); // recompute after the splice
+  out.splice(anchor + 1, 0, moved);
   return out;
 }
 
@@ -98,7 +137,7 @@ function dueForResurface(h, sessionsCompleted, currentDate) {
  * Resurfaced misses are shallow copies tagged { replay: true }; everything
  * else is the pool's own object, untouched.
  */
-export function buildSession(pool, { history = {}, skills = {}, sessionsCompleted = 0, length = 5, currentDate = null } = {}) {
+export function buildSession(pool, { history = {}, skills = {}, sessionsCompleted = 0, length = 5, currentDate = null, contrastPairs = CONTRAST_PAIRS } = {}) {
   const picked = [];
   const pickedIds = new Set();
   const skillCount = {};
@@ -113,6 +152,31 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
     if (isPreflop(s)) preCount++;
   };
   const preBlocked = (s) => isPreflop(s) && preCount >= preCap;
+
+  // R4 pairing state. `seatedPair` records the one pair we co-deal so the final
+  // order can put them adjacent; it's spent from a general slot, never from the
+  // resurfaced-miss slot (partners in pickedIds are already ineligible).
+  const partnersOf = buildPartnerIndex(contrastPairs);
+  let pairsSeated = 0;
+  let seatedPair = null;
+  const canSeat = (s) =>
+    !pickedIds.has(s.id) && (skillCount[s.skill] ?? 0) < MAX_PER_SKILL && !preBlocked(s);
+  // After seating a weak-skill pick `x`, seat one eligible contrast partner (if
+  // any) into a general slot. Prefers an unseen partner; a seen one still
+  // teaches the contrast (novelty is secondary). Respects the length + caps.
+  const seatContrastPartner = (x) => {
+    if (pairsSeated >= MAX_CONTRAST_PAIRS_PER_SESSION || picked.length >= length) return;
+    const partnerIds = partnersOf.get(x.id);
+    if (!partnerIds) return;
+    const candidates = shuffle(
+      partnerIds.map((pid) => pool.find((p) => p.id === pid)).filter((y) => y && canSeat(y))
+    );
+    if (!candidates.length) return;
+    const y = candidates.find((c) => !history[c.id]) ?? candidates[0];
+    take(y);
+    pairsSeated++;
+    seatedPair = [x.id, y.id];
+  };
 
   // 1 — comeback hand: a scenario still on the graduation ladder whose rung
   // interval AND the 1-day floor have both elapsed. Confident misses (fast +
@@ -142,6 +206,8 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
       if (preBlocked(s)) continue;
       take(s);
       weakPicked++;
+      // R4: juxtapose this weak-skill hand with its contrast partner.
+      seatContrastPartner(s);
     }
   }
 
@@ -170,7 +236,8 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
     }
   }
 
-  return shuffle(picked);
+  const dealt = shuffle(picked);
+  return seatedPair ? enforceAdjacency(dealt, seatedPair) : dealt;
 }
 
 const isConfidentMiss = (decisionMs) =>

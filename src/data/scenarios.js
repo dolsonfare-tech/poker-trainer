@@ -7491,4 +7491,25 @@ const SCENARIOS = [
 
 ];
 
+// Contrast pairs (R4): same-difficulty groups the session builder prefers to
+// deal together. Ids match scenario `id` values exactly — the original 83 are
+// numeric. Cross-difficulty mirrors are listed in comments only (they cannot
+// co-deal): sc_161↔sc_164 monotone attack/release · sc_122↔sc_136 price
+// mirror · sc_138↔sc_123 river-lead mirror · {4,'sc_117'}↔'sc_131' trio arm ·
+// sc_122↔sc_092 price mirror.
+export const CONTRAST_PAIRS = [
+  // beginner
+  [2, 'sc_084'],          // A7o: open on the BTN vs fold in the CO (position)
+  [4, 'sc_117'],          // JJ: call the nit vs shove on the maniac 4-bet
+  ['sc_088', 'sc_113'],   // sizing: small on nit-dry vs pot on station-wet
+  ['sc_111', 'sc_154'],   // same monster: raise the maniac vs check-call the barreler
+  ['sc_139', 'sc_144'],   // tiny river bet: call w/ bluff-catcher vs value-raise
+  ['sc_154', 'sc_160'],   // milk the barrels vs raise the turn (sequenced pair)
+  // intermediate
+  ['sc_122', 'sc_167'],   // same 2:1-ish price, opposite answer (fold vs check-raise)
+  ['sc_122', 'sc_151'],   // face-up flush draw vs hidden-outs implied odds
+  ['sc_118', 'sc_127'],   // float in position vs abandon the c-bet vs the floater
+  ['sc_083', 'sc_104'],   // price-based call vs great-price-dead-hand fold
+];
+
 export default SCENARIOS;

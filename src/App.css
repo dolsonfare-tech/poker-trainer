@@ -1807,6 +1807,32 @@ body {
   overflow: hidden;
 }
 
+/* Evidence rows on the dashboard too (founder, July 18) — the structured
+   one-liners are scannable; the old wall-of-prose problem was format, not
+   content. Mirrors ss-coach-evidence a touch smaller. */
+.db-profile-read-evidence {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+}
+.db-profile-read-evidence-row {
+  position: relative;
+  padding: 3px 0 3px 15px;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.72);
+}
+.db-profile-read-evidence-row::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 11px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(200,168,75,0.5);
+}
+
 .db-profile-read-watchfor {
   margin-top: 8px;
   font-size: 0.8rem;
