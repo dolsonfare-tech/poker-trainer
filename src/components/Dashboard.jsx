@@ -338,26 +338,23 @@ function CoachNotebook({ reads }) {
                     {headline}
                   </span>
                 </button>
-                {isOpen && (
+                {/* Legacy prose has no separate detail — its "headline" IS the
+                    whole read, so expanding just un-clamps the row (a detail
+                    block would duplicate the text; founder-reported July 19). */}
+                {isOpen && parsed?.structured && (
                   <div className="db-notebook-detail">
-                    {parsed?.structured ? (
-                      <>
-                        {parsed.structured.evidence.length > 0 && (
-                          <ul className="db-profile-read-evidence">
-                            {parsed.structured.evidence.map((e, j) => (
-                              <li key={j} className="db-profile-read-evidence-row">{e}</li>
-                            ))}
-                          </ul>
-                        )}
-                        {parsed.structured.watchFor && (
-                          <div className="db-profile-read-watchfor">
-                            <span className="db-profile-read-wf-label">Watch for</span>
-                            <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <p className="db-notebook-prose">{parsed?.legacy}</p>
+                    {parsed.structured.evidence.length > 0 && (
+                      <ul className="db-profile-read-evidence">
+                        {parsed.structured.evidence.map((e, j) => (
+                          <li key={j} className="db-profile-read-evidence-row">{e}</li>
+                        ))}
+                      </ul>
+                    )}
+                    {parsed.structured.watchFor && (
+                      <div className="db-profile-read-watchfor">
+                        <span className="db-profile-read-wf-label">Watch for</span>
+                        <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
+                      </div>
                     )}
                   </div>
                 )}

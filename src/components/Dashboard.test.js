@@ -182,7 +182,7 @@ test('tapping a structured notebook row expands to its evidence and watch-for', 
   expect(screen.getByText('Price your draws')).toBeInTheDocument();
 });
 
-test('a legacy prose notebook row renders clamped', () => {
+test('a legacy prose notebook row renders clamped, and expanding un-clamps without duplicating', () => {
   const prose = 'You keep folding rivers to tight players — that leaks value over many hands.';
   const past = [{ date: '2026-07-18', body: prose }];
   dash({ user: withNotebook(past) });
@@ -190,6 +190,12 @@ test('a legacy prose notebook row renders clamped', () => {
   const headline = document.querySelector('.db-notebook-list .db-notebook-headline');
   expect(headline).toHaveTextContent(prose);
   expect(headline).toHaveClass('db-notebook-clamp');
+  // Expand: the row un-clamps (full prose in place) and NO detail block renders —
+  // a detail would repeat the same text (founder-reported duplication, July 19).
+  fireEvent.click(headline);
+  expect(headline).not.toHaveClass('db-notebook-clamp');
+  expect(document.querySelector('.db-notebook-detail')).toBeNull();
+  expect(screen.getAllByText(new RegExp('You keep folding rivers'))).toHaveLength(1);
 });
 
 test('gated guest sees the sign-in CTA instead of Deal Me In', () => {
