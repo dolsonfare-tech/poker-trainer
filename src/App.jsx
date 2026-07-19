@@ -345,7 +345,10 @@ export default function App() {
     const decisionMs = shownAtRef.current ? Date.now() - shownAtRef.current : null;
     setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
     appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g, decisionMs });
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay });
+    // decision_ms powers the per-scenario comprehension heatmap (July 19, 2026
+    // audit): p50 decision time + timeout rate per scenario = the ranked list
+    // of spots where players can't parse the situation fast enough.
+    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay, decision_ms: decisionMs });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);

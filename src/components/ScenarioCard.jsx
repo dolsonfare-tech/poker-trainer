@@ -119,7 +119,7 @@ function StreetBar({ boardLength }) {
 // Street-by-street action summary. Derivation logic (incl. the R2/R4/R6
 // inference rules that used to live in buildActionTrail) is in utils/ticker.js.
 
-function SituationTicker({ scenario }) {
+export function SituationTicker({ scenario }) {
   const { stakes, rows } = buildTicker(scenario);
   if (rows.length === 0) return null;
   return (
@@ -136,6 +136,15 @@ function SituationTicker({ scenario }) {
           ))}
         </span>
       ))}
+      {/* Session-level read (July 19, 2026 comprehension audit C1): tableContext
+          was graded on but never rendered — ~20 scenarios turned on reads the
+          player couldn't see. If a scenario has a table file, it shows here. */}
+      {scenario.tableContext && (
+        <span className="st-row st-tablefile">
+          <span className="st-street st-file-label">FILE</span>
+          <span>{scenario.tableContext}</span>
+        </span>
+      )}
     </div>
   );
 }

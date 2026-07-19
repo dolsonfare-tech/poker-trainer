@@ -290,6 +290,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 6,
+    tableContext: 'Caught bluffing three times this session.',
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5160,7 +5161,7 @@ const SCENARIOS = [
       type: 'calling-station',
       notes: 'Pays off any river bet with top pair or better; bet size does not register once he\'s decided to call',
     },
-    tableContext: null,
+    tableContext: 'His file: once he decides to call, bet size does not register.',
     positions: mkPositions({
       3: { label: 'BTN (You)', action: '???',     state: 'hero'   },
       5: { label: 'BB (CS)',   action: 'Checked', state: 'active' },
@@ -5297,7 +5298,7 @@ const SCENARIOS = [
       type: 'aggressive',
       notes: 'Plays his strong hands fast — bets and raises early; passive-then-sudden-aggression lines are not his value pattern',
     },
-    tableContext: null,
+    tableContext: 'His file: strong hands bet early in his playbook, never late.',
     positions: mkPositions({
       3: { label: 'BTN (You)', action: '???',      state: 'hero'   },
       5: { label: 'BB (AR)',   action: 'Bets $50', state: 'active' },
@@ -5387,7 +5388,7 @@ const SCENARIOS = [
       type: 'aggressive',
       notes: '3-bets from the blinds relentlessly against steals; folds to 4-bets far more often than he continues',
     },
-    tableContext: null,
+    tableContext: 'Fourth 3-bet over a steal tonight. His 3-bets are wide; his folds to 4-bets, wider.',
     positions: mkPositions({
       3: { label: 'BTN (You)', action: 'Raises $6',  state: 'hero'   },
       4: { label: 'SB (AR)',   action: '3-Bets $22', state: 'active' },
@@ -5995,7 +5996,7 @@ const SCENARIOS = [
       type: 'aggressive',
       notes: 'His value bets grow street by street; when a hand of his dies along the way, the final bet shrinks to a token stab',
     },
-    tableContext: null,
+    tableContext: 'His file: real hands size up street by street.',
     positions: mkPositions({
       3: { label: 'BTN (AR)', action: 'Bets $4', state: 'active' },
       5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
@@ -6261,7 +6262,7 @@ const SCENARIOS = [
       type: 'passive',
       notes: 'Limps everything remotely playable and takes flops four ways; folds to real pressure before the flop',
     },
-    tableContext: null,
+    tableContext: 'Three limpers in, nobody showing strength — a loose family pot.',
     positions: mkPositions({
       1: { label: 'HJ (P)',   action: 'Limps $2', state: 'active' },
       2: { label: 'CO',       action: 'Limps $2', state: 'active' },
@@ -6571,7 +6572,7 @@ const SCENARIOS = [
       type: 'nit',
       notes: 'Open-limps only when he wants action on a monster; his limp-reraise has shown aces both times he\'s used it tonight',
     },
-    tableContext: null,
+    tableContext: 'His file: this limp-reraise has shown aces twice tonight.',
     positions: mkPositions({
       0: { label: 'UTG (Nit)', action: '3-Bets $32', state: 'active' },
       3: { label: 'BTN (You)', action: 'Raises $10', state: 'hero'   },
@@ -6660,7 +6661,7 @@ const SCENARIOS = [
       type: 'aggressive',
       notes: 'Double- and triple-barrels relentlessly once he senses weakness — but folds his bluffs instantly to a check-raise',
     },
-    tableContext: null,
+    tableContext: 'His file: barrels relentlessly at weakness, but his bluffs evaporate against a check-raise.',
     positions: mkPositions({
       3: { label: 'BTN (AR)', action: 'Bets $8', state: 'active' },
       5: { label: 'BB (You)', action: 'Checked', state: 'hero'   },
@@ -6921,7 +6922,7 @@ const SCENARIOS = [
       type: 'aggressive',
       notes: 'Double-barrels most turns once he c-bets — but gives up on rivers when two streets of pressure haven\'t worked',
     },
-    tableContext: null,
+    tableContext: 'His file: the third bullet rarely comes without a hand.',
     positions: mkPositions({
       3: { label: 'BTN (AR)', action: 'Bets $20', state: 'active' },
       5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },
@@ -7232,7 +7233,7 @@ const SCENARIOS = [
       type: 'tight',
       notes: 'His big turn bets are top-pair protection, not commitment — he has folded top pair to check-raises twice tonight',
     },
-    tableContext: null,
+    tableContext: 'His file: folded top pair to a check-raise twice tonight.',
     positions: mkPositions({
       3: { label: 'BTN (TR)', action: 'Bets $24', state: 'active' },
       5: { label: 'BB (You)', action: 'Checked',  state: 'hero'   },

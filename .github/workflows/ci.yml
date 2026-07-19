@@ -1,0 +1,38 @@
+# The proactive bug net (July 19, 2026) — every deterministic gate, enforced on
+# every push. Zero LLM tokens: mechanical rules, unit/integration tests,
+# content audits, behavioral harnesses, and browser e2e with geometry guards.
+# The Definition of Done in CLAUDE.md is law here, not discipline.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Invariants (architecture rules)
+        run: npm run check:invariants
+      - name: Scenario content audit
+        run: npm run audit:scenarios
+      - name: Observations content audit
+        run: npm run audit:observations
+      - name: Unit + integration tests
+        run: CI=true npm test
+      - name: Schema-diagnosis bias harness
+        run: npm run simulate:schemas
+      - name: Persona playtest (mechanical invariants, 1 trial)
+        run: npm run playtest:personas
+      - name: Production build (localStorage mode — no env in CI)
+        run: npm run build
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+      - name: Browser e2e (geometry guards, streak clock, comprehension surfaces)
+        run: npm run e2e

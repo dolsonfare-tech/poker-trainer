@@ -694,6 +694,12 @@ body {
   text-indent: 0; /* inline-block inherits the row's hanging indent — don't re-apply it */
 }
 
+/* Session-level read line (comprehension audit C1) — visually distinct from the
+   action rows: the FILE label in gold, the read in the cream register. */
+.st-tablefile { border-top: 1px dashed rgba(200,168,75,0.25); margin-top: 4px; padding-top: 5px; }
+.st-file-label { color: var(--gold); }
+.st-tablefile > span:last-child { color: rgba(242,237,227,0.85); }
+
 .st-you { color: var(--green); }
 
 .st-sep { color: var(--cream-faint); }

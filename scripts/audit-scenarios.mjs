@@ -210,6 +210,21 @@ for (const s of SCENARIOS) {
   }
 }
 
+// ── Comprehension audit C1 (July 19, 2026): session-level reads must be ON
+//    SCREEN at decision time. If a body references table history ("tonight",
+//    "this session", "his file") the scenario needs a tableContext — bodies
+//    render only in post-session review, and grading on invisible reads is the
+//    failure mode C1 documented (sc_167's fold-looked-correct case). WARN, not
+//    ERROR: the phrase list is heuristic — judge each hit, don't silence it. ─
+{
+  const READ_MARKERS = /(tonight|this session|all session|already shown|been caught|his (notes|file)|playbook|on sight|lately)/i;
+  for (const s2 of SCENARIOS) {
+    if (s2.tableContext) continue;
+    const m = (s2.body || '').match(READ_MARKERS);
+    if (m) flag('WARN', s2.id, 'context', `body references table history ("${m[0]}") but scenario has no tableContext — the read never renders at decision time`);
+  }
+}
+
 // ── CONTRAST_PAIRS (R4): every id real, groups of exactly 2 distinct ids that
 //    share a difficulty (only same-difficulty pairs can co-deal from one pool) ─
 {

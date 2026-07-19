@@ -8,7 +8,7 @@ Full strategic review of all 83 scenarios: is the graded-correct action actually
 
 **FIXED in scenarios.js (founder-approved July 5):** all four HIGH items — H1 sc_024 (board → K♠9♦3♦, flush draw now real) · H2 sc_054 (hand → 8♦7♦, a real bluff-catcher) · H3 sc_056 (feedback rewritten with real combos, $85 aligned) · H4 sc_064 (regraded: call correct, fold partial; AJ error fixed) — plus the mechanical text corrections: M1, M5, M6, M7, M8, M9, L1, L4 (math part), L5, L6, L7, L8, L9, L10, L11, L12.
 
-**STILL OPEN for the SME** (grading-judgment calls, not applied): **M2** (sc_025 — should fold be partial/correct for a gutshot at 3:1?) · **M3** (sc_043 — raise vs call with top set on KQJ; note/feedback contradiction) · **M4** (sc_057 — scenario logic references a check that hasn't happened; needs redesign) · **L2** (sc_009 — fold AJo vs nit as partial?) · **L3** (sc_023 — confirm monotone-bluff lesson intended). The sections below are the full original findings for context.
+**STILL OPEN for the SME** (grading-judgment calls, not applied): **M2** (sc_025 — should fold be partial/correct for a gutshot at 3:1?) · **M3** (sc_043 — raise vs call with top set on KQJ; note/feedback contradiction) · **M4** (sc_057 — scenario logic references a check that hasn't happened; needs redesign) · **L2** (sc_009 — fold AJo vs nit as partial?) · **L3** (sc_023 — confirm monotone-bluff lesson intended) · **M10** (sc_098 — first live `scenario_feedback` dispute, July 19, 2026: should the Button call with QJs vs the nit's UTG open be *partial* instead of incorrect?). The sections below are the full original findings for context.
 
 Scope notes: pot arithmetic was verified separately (potpre audit rule, fixed July 5). The 11 explicit "X:1" odds claims in question/body all check out. This review found **zero problems in 58 of 83 scenarios** — the core grading logic is largely sound; the errors cluster in draw/out-counting and river feedback text.
 
@@ -63,6 +63,9 @@ HU: BTN raises $6, BB calls, SB folds → pot $13. Field/body say $15 ("bets $10
 Top set on A K 9 3 T **river**; correct-answer feedback: "Three streets of $35 extracts more than one street of $130" — there is one street left. The sizing logic (medium beats overbet vs this villain) survives; the feedback needs to be about this street.
 
 ---
+
+### M10 · sc_098 — call graded incorrect; disputed via the in-app "Disagree?" box (first live intake, July 19, 2026)
+BTN Q♠J♠ vs a nit's UTG open ($6 into $9 — the price needs ~28.6%, QJs has ~30-31% raw vs the stated {QQ+, AK}-shaped range). The dispute is legitimate: in position against a face-up range, QJs plays as a pure drawing hand (pairs are disciplined folds BECAUSE the range is known; wins come from straights/flushes/two-pair with excellent implied odds against overpairs that pay). Counter-case, and why the grading was left standing pending SME: the implied-odds defense requires deep effective stacks, which the data model doesn't carry or display (Phase 1.6 gap) — on displayed information, domination doctrine governs; the blinds still act behind the flat (squeeze risk); and this is a position-skill hand whose lesson IS "tighten hard vs early-seat opens" — partial credit would blunt the trained lesson for an audience that already over-calls here. Mirror-image of the L2/sc_009 question. SME: should call be partial? If yes, note the fb text (which argues domination well) still fits a partial grade unchanged.
 
 ## LOW — polish, terminology, SME-confirm (12)
 
