@@ -237,7 +237,256 @@ const OBSERVATIONS = [
       'aggressive': 'He never once bet or raised across four streets. Disqualified at the verb level.',
     },
   }),
+
+  // ── Batch 2 (July 20, 2026) — 12 intermediate hands on the four confusable
+  // fault lines, authored per the TABLE_READS_DESIGN.md checklist. Mostly
+  // no-showdown (the difficulty dial); showdown kept only where hiding it
+  // leaves two defensible answers. One tell per hand.
+
+  mkObservation({
+    id: 'ob_011',
+    difficulty: 'intermediate',
+    answer: 'aggressive',
+    distractors: ['maniac', 'loose', 'tight'],
+    context: 'Seat 3 has been raising steadily but selectively all night — and winning small pots nobody contests.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'Seat 3 (BTN) raises to $6' }, { text: 'BB calls' }] },
+      { street: 'FLOP', board: 'Q♠ 8♦ 3♣', segments: [{ text: 'BB checks' }, { text: 'Seat 3 bets $8' }, { text: 'BB calls' }] },
+      { street: 'TURN', board: 'A♦', segments: [{ text: 'BB checks' }, { text: 'Seat 3 bets $24' }, { text: 'BB calls' }] },
+      { street: 'RIVER', board: '6♥', segments: [{ text: 'BB checks' }, { text: 'Seat 3 checks back' }] },
+    ],
+    tell: 'Read the story he was telling: small on the dry flop, big on the ace — the card his raising range owns. That barrel had a thesis: fold out the queens. When the call came anyway and the river changed nothing, the story was over, and he stopped paying to tell it. Pressure with a target, and a budget, is the aggressive regular\'s signature.',
+    whyNot: {
+      'maniac': 'A maniac fires the third bullet every time — the pot is the point, not the plan. The river check-back is the exact moment a maniac doesn\'t possess.',
+      'loose': 'Loose recreationals call wide, but they don\'t construct two-street stories with sizes that read the board. The turn bet tripling on the scare card is range logic, not looseness.',
+      'tight': 'A tight player with a real ace bets that river for value. Checking back after barreling the ace is what a thesis without a hand looks like — tight players don\'t barrel without one.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_012',
+    difficulty: 'intermediate',
+    answer: 'passive',
+    distractors: ['calling-station', 'tight', 'loose'],
+    context: 'Seat 3 sees plenty of flops and rarely raises. Tonight he has quietly called down two players — and folded two rivers.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'CO raises to $6' }, { text: 'Seat 3 (BB) calls' }] },
+      { street: 'FLOP', board: 'J♥ 7♦ 2♠', segments: [{ text: 'Seat 3 checks' }, { text: 'CO bets $6' }, { text: 'Seat 3 calls' }] },
+      { street: 'TURN', board: '9♣', segments: [{ text: 'Seat 3 checks' }, { text: 'CO bets $15' }, { text: 'Seat 3 calls' }] },
+      { street: 'RIVER', board: 'K♠', segments: [{ text: 'Seat 3 checks' }, { text: 'CO bets $50' }, { text: 'Seat 3 thinks for a while and folds' }] },
+    ],
+    tell: 'He called $6, he called $15, and when the bet grew teeth he let the hand go. That is the line that separates passive from station: a passive player\'s calls thin out as the price climbs. He will pay a little to see your hand — he will not pay a lot. The long think before the fold was the sound of a made hand losing an argument with a price.',
+    whyNot: {
+      'calling-station': 'The river fold is disqualifying. A station\'s calls are price-blind — $50 into $55 gets called with the same shrug as $6. Passive players fold rivers; stations see them.',
+      'tight': 'A tight player is out of this hand on the flop — no pair, no plan, no $6 call from a defended big blind. Two streets of peeling is too sticky for tight.',
+      'loose': 'Loose describes what he shows up with, not how he responds to pressure. And a loose rec\'s fit-or-fold instinct usually ends this hand earlier — the slow, reluctant call-down is the passive fingerprint.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_013',
+    difficulty: 'intermediate',
+    answer: 'calling-station',
+    distractors: ['passive', 'loose', 'tight'],
+    context: 'Seat 3 has seen nine rivers this session and won two of them. The table has stopped bluffing him — mostly.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'HJ raises to $6' }, { text: 'Seat 3 (BTN) calls' }] },
+      { street: 'FLOP', board: 'T♣ 6♥ 2♦', segments: [{ text: 'HJ bets $9' }, { text: 'Seat 3 calls' }] },
+      { street: 'TURN', board: 'Q♦', segments: [{ text: 'HJ bets $25' }, { text: 'Seat 3 calls' }] },
+      { street: 'RIVER', board: 'Q♠', segments: [{ text: 'HJ bets $80' }, { text: 'Seat 3 calls' }] },
+    ],
+    tell: 'Nine rivers seen is the tell before the hand even starts — then watch the sizes: $9, $25, $80, each one a louder question, each answered with the same flat call. The river pairs the turn card, the bet is nearly the pot, and none of it registers. Stations aren\'t reading you; they\'ve decided not to be moved, and price is not part of the decision.',
+    whyNot: {
+      'passive': 'The closest neighbor — but a passive player\'s calls shrink from the $80 river. Nine rivers a session is not "plays carefully and calls sometimes"; it is a policy.',
+      'loose': 'Loose is about the cards he arrives with. This diagnosis is about what happens after: a loose rec\'s wide range still folds when the board pairs and the bet triples.',
+      'tight': 'A tight player is not on nine rivers a night from the wrong side of the bet. The context line alone retires this one.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_014',
+    difficulty: 'intermediate',
+    answer: 'nit',
+    distractors: ['tight', 'passive', 'aggressive'],
+    context: 'Seat 3 has open-raised exactly twice in three hours. Both times, the table folded and he flashed a big pair anyway — as if to apologize.',
+    replay: [
+      { street: 'PRE', segments: [
+        { text: 'Seat 3 (UTG) raises to $6' },
+        { text: 'MP 3-bets to $20' },
+        { text: 'action folds back' },
+        { text: 'Seat 3 4-bets to $55 without a pause' },
+      ] },
+    ],
+    tell: 'Two opens in three hours is a range you can count on one hand — and when the 3-bet came, there was no decision to make, because a range that small doesn\'t contain decisions. The instant 4-bet from the session\'s tightest seat is the least bluff-like action in poker. The frequency told you the range; the speed told you there was nothing marginal in it.',
+    whyNot: {
+      'tight': 'A tight recreational opens more than twice in three hours, and his 4-bets include hands that have to think first — the big ace, the medium pair. The zero-hesitation 4-bet on top of that entry frequency is the stricter religion.',
+      'passive': 'Passive players don\'t 4-bet — pressure is not in the vocabulary. Two raises and a re-raise in one hand disqualifies it, however quiet the seat has been.',
+      'aggressive': 'An aggressive regular generates this action with a range, plural. The context line is the refutation: regs don\'t sit on their hands for three hours waiting for aces.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_015',
+    difficulty: 'intermediate',
+    answer: 'tight',
+    distractors: ['nit', 'passive', 'loose'],
+    context: 'Seat 3 plays maybe two hands an orbit, and plays them straightforwardly. This is his first open in a while.',
+    replay: [
+      { street: 'PRE', segments: [
+        { text: 'Seat 3 (CO) raises to $6' },
+        { text: 'BTN 3-bets to $20' },
+        { text: 'blinds fold' },
+        { text: 'Seat 3 thinks, then calls' },
+      ] },
+      { street: 'FLOP', board: 'K♠ 7♣ 2♥', segments: [{ text: 'Seat 3 checks' }, { text: 'BTN bets $22' }, { text: 'Seat 3 folds' }] },
+    ],
+    tell: 'The 3-bet call is the hinge: a genuinely narrow player still has hands worth continuing with — the queens, the ace-king — and position or price can talk him into seeing a flop with them. Then the flop missed, and the discipline showed: no float, no fight, done. Selective entry, honest continuation, clean exit — that is tight, working as intended.',
+    whyNot: {
+      'nit': 'A nit\'s continuing range against a 3-bet is 4-bet-or-fold — there is nothing in it that calls to "see what happens." The flat call is the tell that his range has a middle.',
+      'passive': 'The fold ends it — but the open started it. Passive players rarely arrive in pots by raising; the shape of this hand is initiative, then discipline, which is a different animal.',
+      'loose': 'Two hands an orbit is the opposite of loose before any street is dealt. The context line does the work here.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_016',
+    difficulty: 'intermediate',
+    answer: 'maniac',
+    distractors: ['aggressive', 'loose', 'tight'],
+    context: 'Four players to the flop. The two callers in the middle have not folded a river between them all night.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'UTG limps' }, { text: 'MP limps' }, { text: 'Seat 3 (BTN) raises to $12' }, { text: 'both limpers call' }] },
+      { street: 'FLOP', board: 'A♠ K♦ Q♦', segments: [{ text: 'checks to Seat 3' }, { text: 'Seat 3 bets $30' }, { text: 'both call' }] },
+      { street: 'TURN', board: '4♣', segments: [{ text: 'checks to Seat 3' }, { text: 'Seat 3 moves all in for $150' }, { text: 'UTG calls' }, { text: 'MP calls' }] },
+    ],
+    tell: 'Look at the audience before you judge the performance: two players who haven\'t folded a river all night, on the one flop that smashes everyone\'s calling range, and Seat 3 chose maximum pressure into both of them. An aggressive player asks "who can fold?" before betting. This bet never asked. Pressure that ignores whether pressure can work is the maniac\'s whole engine.',
+    whyNot: {
+      'aggressive': 'The board and the opponents are the refutation: no thinking aggressor picks THIS flop, against THESE two, for a two-barrel jam. Regs perform for audiences that can fold; this room can\'t.',
+      'loose': 'Loose players call too much — they don\'t manufacture $150 turn jams into a field. The verbs are all wrong.',
+      'tight': 'A tight player holding the hand this line claims (aces up, a set, the straight) exists — but tight players bet it in sizes that keep the callers in. The overjam into two stations is money-repellent, and tight players don\'t repel money with value.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_017',
+    difficulty: 'intermediate',
+    answer: 'aggressive',
+    distractors: ['maniac', 'tight', 'passive'],
+    context: 'Seat 3 wins a lot of pots that never see a showdown. Nobody at the table can remember what his cards looked like.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'Seat 3 (CO) raises to $6' }, { text: 'BB calls' }] },
+      { street: 'FLOP', board: 'T♠ 6♣ 2♥', segments: [{ text: 'BB checks' }, { text: 'Seat 3 bets $4' }, { text: 'BB calls' }] },
+      { street: 'TURN', board: '9♠', segments: [{ text: 'BB checks' }, { text: 'Seat 3 bets $11' }, { text: 'BB calls' }] },
+      { street: 'RIVER', board: 'Q♥', segments: [{ text: 'BB checks' }, { text: 'Seat 3 bets $38' }] },
+    ],
+    tell: 'The sizes are doing the reading for you: a third of the pot on the static flop, half on the blank turn — cheap, mounting pressure while nothing changed — then the queen arrives, the one card that beats every ten the caller holds, and the bet triples into it. Each size is priced to its street\'s job. That is a player betting a PLAN, and the plan is the tell: sizing that tracks the board belongs to the aggressive regular.',
+    whyNot: {
+      'maniac': 'A maniac\'s sizes track his mood, not the board — big early, bigger later, with no relationship to the card that fell. Three sizes, each with a reason, is too much bookkeeping for chaos.',
+      'tight': 'The win-without-showdown context is the wrong shape for tight: tight players show up with the goods and get called. A no-showdown lifestyle is built on bets like these, not on hands.',
+      'passive': 'Three bets on three streets, escalating. There is no passive reading of this hand at any speed.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_018',
+    difficulty: 'intermediate',
+    answer: 'loose',
+    distractors: ['calling-station', 'passive', 'maniac'],
+    context: 'Seat 3 has limped into eight of the last twelve pots. He does fold — just never before the flop.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'Seat 3 (HJ) limps' }, { text: 'CO raises to $8' }, { text: 'action folds' }, { text: 'Seat 3 calls' }] },
+      { street: 'FLOP', board: 'A♥ 9♦ 5♣', segments: [{ text: 'Seat 3 checks' }, { text: 'CO bets $10' }, { text: 'Seat 3 folds' }] },
+    ],
+    tell: 'The door is wide open and the exit is fast: eight limps in twelve hands is a preflop range with no bouncer, but the moment the flop missed, the hand went in the muck at the first bet. Loose recreationals are curious, not stubborn — they pay to arrive, then play fit-or-fold once they\'re there. The frequency is the entry tell; the quick surrender is the confirmation.',
+    whyNot: {
+      'calling-station': 'A station\'s whole identity is the call he makes AFTER missing. One bet folding out a station on an ace-high flop doesn\'t happen — the flop fold is the dividing line between the two.',
+      'passive': 'Passive players avoid pots; this player collects them. Eight limps in twelve hands is a volume habit, not a caution habit — the confusion dissolves at the context line.',
+      'maniac': 'Limping eight times is the least maniac statistic in poker. Maniacs arrive raising or not at all.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_019',
+    difficulty: 'intermediate',
+    answer: 'passive',
+    distractors: ['calling-station', 'tight', 'aggressive'],
+    context: 'Seat 3 has been at the table two hours and has not raised once — preflop or after.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'BTN raises to $6' }, { text: 'Seat 3 (BB) calls' }] },
+      { street: 'FLOP', board: '8♠ 7♠ 6♦', segments: [{ text: 'Seat 3 checks' }, { text: 'BTN bets $8' }, { text: 'Seat 3 calls' }] },
+      { street: 'TURN', board: '2♣', segments: [{ text: 'Seat 3 checks' }, { text: 'BTN bets $20' }, { text: 'Seat 3 calls' }] },
+      { street: 'RIVER', board: 'K♦', segments: [{ text: 'Seat 3 checks' }, { text: 'BTN bets $40' }, { text: 'Seat 3 calls' }] },
+    ],
+    showdown: 'Seat 3 tables T♦9♦ — he flopped the straight, the best hand on every street, and never put in a raise.',
+    tell: 'The station calls with nothing; the passive player fails to raise with EVERYTHING. He flopped the current nuts on a board screaming for protection, three chances to grow the pot came and went, and every one became a call. The tell isn\'t that he called — it\'s the raises that never happened. Two hours without one is the context; the flopped straight played like a bluff-catcher is the proof.',
+    whyNot: {
+      'calling-station': 'The station diagnosis needs weak hands calling big bets. This was the strongest hand at the table declining to bet itself — same verbs, opposite disease.',
+      'tight': 'Entering with ten-nine suited from the blind is fine for tight — but tight players raise the nuts, because value is the entire reason they play. The missing raises rule it out.',
+      'aggressive': 'Nothing here was aggressive at any point — the label with the least evidence in a four-street hand.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_020',
+    difficulty: 'intermediate',
+    answer: 'maniac',
+    distractors: ['aggressive', 'loose', 'calling-station'],
+    context: 'Seat 3 has shown down three stone bluffs this hour. Each time, he re-bought the smile along with the chips.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'MP raises to $6' }, { text: 'Seat 3 (SB) 3-bets to $24' }, { text: 'MP calls' }] },
+      { street: 'FLOP', board: 'K♥ K♦ 4♠', segments: [{ text: 'Seat 3 bets $30' }, { text: 'MP calls' }] },
+      { street: 'TURN', board: '8♣', segments: [{ text: 'Seat 3 moves all in for $160' }] },
+    ],
+    tell: 'The paired king board is the trap he refuses to see: when a caller continues on King-King-four, his range is a king or a big pair — the two things that never fold. The jam answers a question nobody asked. Add the context — three shown bluffs this hour — and the pattern is frequency without feedback: a maniac doesn\'t adjust to being caught, because getting caught is part of the show.',
+    whyNot: {
+      'aggressive': 'An aggressive reg who has been caught three times TIGHTENS — the whole point of a table image is to cash it in, not to keep spending it. Bluffing more after being caught is anti-strategy.',
+      'loose': 'Loose players show down bad calls, not stone bluffs. The three bluff showdowns in the context line are the wrong exhibit for the loose museum.',
+      'calling-station': 'He 3-bet, led the flop, and jammed the turn. There is not one call in the hand.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_021',
+    difficulty: 'intermediate',
+    answer: 'tight',
+    distractors: ['aggressive', 'nit', 'passive'],
+    context: 'When Seat 3 bets big, players fold and he shows the goods. His bets have been two-thirds pot all night, like a metronome.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'Seat 3 (HJ) raises to $6' }, { text: 'BTN calls' }] },
+      { street: 'FLOP', board: 'K♦ Q♣ 4♥', segments: [{ text: 'Seat 3 bets $9' }, { text: 'BTN calls' }] },
+      { street: 'TURN', board: '3♠', segments: [{ text: 'Seat 3 bets $22' }, { text: 'BTN calls' }] },
+      { street: 'RIVER', board: 'Q♥', segments: [{ text: 'Seat 3 checks' }, { text: 'BTN checks back' }] },
+    ],
+    tell: 'Two confident streets at the metronome size, then the river pairs the queen — the exact card that turns his one-pair hands into the second-best hand — and the metronome stops. Tight aggression has a ceiling: it bets what it can value, and the moment the board outgrows the hand, it stops paying. The bet NOT made on the paired river is the read.',
+    whyNot: {
+      'aggressive': 'That river is an aggressive reg\'s favorite card to bet — the queen scares the caller\'s kings-and-draws range, and the check surrenders exactly the pressure a reg would apply. The stop is the wrong verb for the reg.',
+      'nit': 'A nit didn\'t open this often or barrel this willingly all night. The metronome of two-thirds-pot value bets is a wider, healthier game than the nit plays.',
+      'passive': 'He raised preflop and bet two streets unprompted. The river check is discipline at the end of an aggressive line, not a passive hand.',
+    },
+  }),
+
+  mkObservation({
+    id: 'ob_022',
+    difficulty: 'intermediate',
+    answer: 'loose',
+    distractors: ['passive', 'calling-station', 'maniac'],
+    context: 'Seat 3 is in a lot of pots and cheerful about all of them. His stack drifts down, then spikes, then drifts again.',
+    replay: [
+      { street: 'PRE', segments: [{ text: 'UTG raises to $6' }, { text: 'Seat 3 (BTN) calls' }, { text: 'BB calls' }] },
+      { street: 'FLOP', board: 'J♣ 8♥ 3♦', segments: [{ text: 'checks to UTG' }, { text: 'UTG bets $12' }, { text: 'BB folds' }, { text: 'Seat 3 calls' }] },
+      { street: 'TURN', board: '4♦', segments: [{ text: 'UTG bets $30' }, { text: 'Seat 3 calls' }] },
+      { street: 'RIVER', board: '8♦', segments: [{ text: 'UTG checks' }, { text: 'Seat 3 checks back' }] },
+    ],
+    showdown: 'Seat 3 tables J♠8♠ — flopped top two pair, rivered a full house... and never raised, because he was never sure.',
+    tell: 'The cards are the tell: jack-eight suited, cold-calling an under-the-gun raise on the button. That hand in that spot is the loose recreational\'s membership card — pretty, connected, and nowhere near the raising range it ran into. Note what he is NOT: the calls all had a real piece (top two!), so this is not a station; the passivity came from uncertainty, not policy. Loose is a range disease first — the postflop symptoms vary.',
+    whyNot: {
+      'passive': 'Genuinely close — the missing raises are passive-shaped. But the diagnosis starts a street earlier: passive describes verbs, and this is about the CARDS. Jack-eight suited against a UTG raise is an entry no discipline explains; the range is the primary symptom.',
+      'calling-station': 'Every call in this hand had top two pair or better behind it. Stations call without the goods; calling WITH the goods is just poker, played timidly.',
+      'maniac': 'He never raised once, with the second nuts at the end. The maniac reading has no evidence anywhere in the hand.',
+    },
+  }),
 ];
+
 
 // Same startup guard discipline as scenarios.js — catch authoring slips loudly
 // in dev; the audit script enforces the same rules as a hard gate.

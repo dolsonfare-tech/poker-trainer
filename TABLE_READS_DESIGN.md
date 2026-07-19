@@ -219,3 +219,18 @@ Learned from writing these ten (and from the July 5 scenario audit — same fail
 3. **One tell per hand.** Frequency tells (context line), range tells (what entered), verb tells (raise vs call), sizing tells (baseline breaks), and stop tells (the bet not made). Don't stack three tells — the player should be able to name what they learned.
 4. **Showdown = difficulty dial.** Author the hand with the showdown, then decide whether hiding it still leaves exactly one defensible answer. If it doesn't, it's a beginner hand — keep the showdown.
 5. **The confusable pairs are the curriculum:** nit↔tight, passive↔station, maniac↔aggressive, loose↔station. Every intermediate hand should sit on one of these fault lines. (Notice the pool maps 7 archetypes onto 4 confusions — that's the whole syllabus.)
+
+---
+
+## Batch 2 (July 20, 2026) — ob_011 through ob_022
+
+Authored directly in `src/data/observations.js` per the checklist above (this doc
+remains the design source; code is the canonical content). 12 intermediate hands,
+one per fault-line/tell-type cell: aggressive ×3 total (thesis-abort stop tell,
+board-tracking sizing tell), passive ×3 (price-ceiling fold, the unraised nuts),
+station ×3 (price-blind escalation without showdown — context frequency carries
+it), nit ×3 (two-opens-in-three-hours 4-bet), tight ×3 (3-bet call with a middle
+of the range, the metronome that stops on the paired river), maniac ×4
+(audience-blind jam into two stations, bluffing MORE after being caught), loose
+×3 (wide-door fit-or-fold, the jack-eight-suited membership card). 9 of 12 drop
+the showdown; ob_019 and ob_022 keep it because the lesson IS what was shown down.
