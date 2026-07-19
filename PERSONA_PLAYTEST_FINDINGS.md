@@ -27,6 +27,25 @@ The arithmetic: ~5 hands/session at 62% ≈ 1.9 new misses/session vs. a hard ma
 
 ## F2 · HIGH — Schema diagnosis is blind to directional players, and can mislabel one badly
 
+> **Verification addendum (Fable, same day):** the session-level adversarial sweep caught transient wrong direction labels the final-session bars missed; fixed with an evidence-confidence ramp + a miss-rate materiality gate (see the calibration comment in `userStorage.js`). Re-verified at 15 trials: zero wrong direction labels in any session of any trial. The skill-schema residual (PBS/ER under-fire, OA→Results-Thinker sideways labels) is deliberately deferred to a skill-side v2 (F2b) per the founder's scope call.
+
+> **FIXED (direction schemas) July 18, 2026 — schema-diagnosis v2, the hybrid direction/skill model. See CLAUDE.md ("Schema diagnosis engine v2" under Post-Phase-1.5). The three DIRECTION schemas (Conflict Avoider / The Gambler / The Overaggressor) are now scored from a direction-of-error TALLY — `choiceVal` × option `cls` on the fold(0)<call(1)<raise(2) axis, weighted incorrect 1.0 / partial 0.5 — measured as each cell's EXCESS over the pool's neutral baseline (because "under" absorbs 3 of 6 mispairs and sits ~0.53 for a balanced player). All in `userStorage.js` (`classifyDirection` / `addHandsToDirectionTally` / `deriveSchema`), rebuilt from the session log in `db.js` (`directionTallyFromSessions`). Zero schema/DB change. `simulate-schemas.mjs` reworked to v2 (direction profiles carry synthesized tallies) and still gates structural bias.**
+>
+> **Before → after, final schema over 10 trials (beginner pool):**
+>
+> | Persona | v1 correct | v1 opposite-dir | **v2 correct** | **v2 opposite-dir** |
+> |---|---|---|---|---|
+> | Conflict Avoider | 0/10 | **2/10 Overaggressor** | **6–9/10** | **0/10 ✓** |
+> | Overaggressor | 0/10 | (0) | **8–10/10** | **0/10 ✓** |
+> | Gambler | 1/10 | — | **8–9/10** | — |
+> | Improver / Steady-strong | Balanced 9–10/10 | — | **Balanced 10/10** | **0/10 ✓** |
+>
+> The trust-killer — a passive player told *"Pressure wins pots regardless"* — is eliminated: **zero opposite-direction labels across 30 trials**, and a strong/improving player is never mislabeled directional. Direction knobs: `MIN_DIRECTION_EVIDENCE=6`, `DIRECTION_DOMINANCE=0.4`, `DIRECTION_SEV_SCALE=2.5` (excess-over-baseline severity is what separates a true Gambler at loose 0.62 from an 85%-flat player at under 0.63 — a flat share threshold cannot).
+>
+> **Residual, ACCEPTED by founder (Option 1, July 18):** the SKILL schemas (Positional ~1/10, Exploitable Regular / Results Thinker combined ~5–7/10) still under-fire, blocked by the two causes below (partial-credit yellow-straddle + the opponent/reads red-red tie) — both require touching frozen skill scoring, which this task scoped out. Pre-existing v1 behavior; the direction fix does not regress it. Revisit with the schema-v2 skill-side work (relative-weakness model) when real distributions land.
+
+_Original finding (v1 baseline), for the record:_
+
 Final-schema distribution over 10 trials (beginner pool):
 
 | Persona | Correct diagnosis | Balanced | Wrong schema |

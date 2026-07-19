@@ -1,6 +1,6 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
-import { recentHandsFromSessions } from './db';
+import { recentHandsFromSessions, directionTallyFromSessions } from './db';
 import { RECENT_HANDS_CAP } from './userStorage';
 
 jest.mock('./supabase', () => ({ supabase: null, hasSupabase: false }));
@@ -40,4 +40,32 @@ test('recentHandsFromSessions tolerates null / empty / missing hands', () => {
   expect(recentHandsFromSessions(null)).toEqual([]);
   expect(recentHandsFromSessions([])).toEqual([]);
   expect(recentHandsFromSessions([{ hands: null }, {}])).toEqual([]);
+});
+
+// ── directionTallyFromSessions (schema v2) ────────────────────────────────────
+// Lifetime, order-independent rebuild of the direction-of-error tally from the
+// append-only session log. Scenario id 1 is legacy/numeric: correct 'call', with
+// 'fold' (under) and 'raise' (over) as the mis-picks.
+test('directionTallyFromSessions folds every row into a lifetime tally', () => {
+  const rows = [
+    { hands: [
+      { scenarioId: 1, skill: 'preflop', result: 'incorrect', choiceVal: 'fold' },  // under +1.0
+      { scenarioId: 1, skill: 'preflop', result: 'partial',   choiceVal: 'raise' }, // over  +0.5
+    ] },
+    { hands: [
+      { scenarioId: 1, skill: 'preflop', result: 'incorrect', choiceVal: 'raise' }, // over +1.0
+      { scenarioId: 1, skill: 'preflop', result: 'correct',   choiceVal: 'call' },  // skipped
+    ] },
+  ];
+  expect(directionTallyFromSessions(rows)).toEqual({ under: 1.0, over: 1.5, loose: 0, evidence: 2.5, hands: 4 });
+});
+
+test('directionTallyFromSessions skips hands with no choiceVal (pre-v2 rows) and tolerates empties', () => {
+  const rows = [
+    { hands: [{ scenarioId: 1, skill: 'preflop', result: 'incorrect' }] }, // no choiceVal → skip
+    { hands: null },
+    {},
+  ];
+  expect(directionTallyFromSessions(rows)).toEqual({ under: 0, over: 0, loose: 0, evidence: 0, hands: 1 });
+  expect(directionTallyFromSessions(null)).toEqual({ under: 0, over: 0, loose: 0, evidence: 0, hands: 0 });
 });

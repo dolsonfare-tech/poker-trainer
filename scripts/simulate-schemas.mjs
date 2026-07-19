@@ -5,15 +5,29 @@
 //
 // Why this exists: the July 2026 v1 bug (Conflict Avoider firing ~90% under
 // uniform play) was a STRUCTURAL bias — detectable with synthetic players, no
-// real data needed. This harness is the regression test for that class of bug,
-// and the pre-calibration testbed for the post-launch v2 relative-weakness
-// model: implement a candidate scorer, point it at these profiles, and see
-// whether every archetype gets the right diagnosis before touching thresholds.
+// real data needed. This harness is the regression test for that class of bug.
+//
+// Schema v2 (July 18, 2026 — the hybrid direction/skill model): diagnosis is no
+// longer accuracy-only. The three DIRECTION schemas (Conflict Avoider, The
+// Gambler, The Overaggressor) are scored from a direction-of-error TALLY —
+// which fold/call/raise mistake a player makes — not from per-skill accuracy;
+// the three SKILL schemas (Positional Blind Spot, Results Thinker, Exploitable
+// Regular) keep their absolute per-skill-weakness scoring. So each profile now
+// carries BOTH:
+//   • an accuracy dial (`acc`/`base`) that drives skill ratings → skill schemas
+//     + the Balanced tie, exactly as before, AND
+//   • a synthesized direction tally (`dir` shares, scaled by session volume):
+//     direction-leak profiles get a dominant cell at realistic evidence
+//     matching their archetype (a Conflict Avoider's mistakes skew 'under'); the
+//     skill-leak and balanced profiles get a NEAR-NEUTRAL tally that stays below
+//     the severity gate, so no direction schema can steal their diagnosis.
+// The exit-1 structural-bias gate is unchanged: with abundant data the expected
+// diagnosis must dominate.
 //
 // Model: each session = 5 hands; each hand tests a uniformly random skill
 // (approximates the shuffled scenario draw); the player answers correctly with
-// their true per-skill accuracy, else incorrectly (partial credit not modeled).
-// Results are folded through the production applyHandToSkill accounting.
+// their true per-skill accuracy, else incorrectly (partial credit not modeled
+// here — the persona harness models it; this harness isolates the diagnosis).
 
 import { register } from 'node:module';
 register(new URL('ext-resolver.mjs', import.meta.url));
@@ -26,25 +40,63 @@ const TRIALS = 500;
 const SESSION_COUNTS = [5, 10, 20, 40];
 const HANDS_PER_SESSION = 5;
 
-// True per-skill accuracy for each synthetic archetype, and the diagnosis a
-// correct engine should produce. `acc` sets listed skills; `base` covers the rest.
+// Neutral direction shares — what a uniform-random mistaker produces on the pool
+// (mirrors computeDirectionBaseline in userStorage.js; 'under' absorbs 3 of the
+// 6 ordered mispairs so it sits near 0.53 even for a balanced player). A profile
+// with these shares has zero excess over baseline → no direction schema fires,
+// however much evidence it accrues.
+const NEUTRAL_DIR = { under: 0.53, over: 0.33, loose: 0.14 };
+// Evidence a mistaking player accrues per session (a couple of direction-bearing
+// misses). 5 sessions → 10 evidence, already clear of MIN_DIRECTION_EVIDENCE.
+const EVIDENCE_PER_SESSION = 2;
+
+// Direction shares for the leak profiles are taken from what the REAL directional
+// personas produce in playtest-personas (Conflict Avoider under≈0.88, The
+// Overaggressor over≈0.77, The Gambler loose≈0.62) — so the sim exercises the
+// same excess-over-baseline severities the live loop does.
+const CA_DIR = { under: 0.88, over: 0.02, loose: 0.10 };
+const OA_DIR = { under: 0.06, over: 0.77, loose: 0.17 };
+const GAMBLER_DIR = { under: 0.23, over: 0.15, loose: 0.62 };
+
+// True per-skill accuracy for each synthetic archetype, its (optional) direction
+// tally shares, and the diagnosis a correct engine should produce. `acc` sets
+// listed skills; `base` covers the rest. `dir` omitted → NEUTRAL_DIR.
 const PROFILES = [
   { label: 'Uniform beginner (all 45%)',            base: 0.45, acc: {},                                       expect: 'The Balanced Player' },
   { label: 'Uniform mediocre (all 65%)',            base: 0.65, acc: {},                                       expect: 'The Balanced Player' },
   { label: 'Uniform strong (all 85%)',              base: 0.85, acc: {},                                       expect: 'The Balanced Player' },
   { label: 'Coin-flipper (all 50%)',                base: 0.50, acc: {},                                       expect: 'The Balanced Player' },
-  { label: 'Conflict Avoider (aggr/bluff 40%)',     base: 0.80, acc: { aggression: 0.4, bluffing: 0.4 },       expect: 'The Conflict Avoider' },
-  { label: 'Gambler (preflop/potodds 40%)',         base: 0.80, acc: { preflop: 0.4, potodds: 0.4 },           expect: 'The Gambler' },
+  // Direction-leak profiles: diagnosed from `dir`, NOT accuracy. Their weak
+  // skills (aggression/bluffing/preflop/potodds/betsize) are no longer scored by
+  // any schema, so they name nothing on their own — the tally does the work.
+  { label: 'Conflict Avoider (under-dominant)',     base: 0.80, acc: { aggression: 0.4, bluffing: 0.4 }, dir: CA_DIR,      expect: 'The Conflict Avoider' },
+  { label: 'Gambler (loose-dominant)',              base: 0.80, acc: { preflop: 0.4, potodds: 0.4 },     dir: GAMBLER_DIR, expect: 'The Gambler' },
+  { label: 'Overaggressor (over-dominant)',         base: 0.80, acc: { betsize: 0.4 },                   dir: OA_DIR,      expect: 'The Overaggressor' },
+  // Skill-leak profiles: a genuinely red primary skill + a near-neutral tally.
   { label: 'Positional Blind Spot (position 40%)',  base: 0.80, acc: { position: 0.4 },                        expect: 'The Positional Blind Spot' },
   { label: 'Results Thinker (reads 40%)',           base: 0.80, acc: { reads: 0.4 },                           expect: 'The Results Thinker' },
   { label: 'Exploitable Regular (opponent 40%)',    base: 0.80, acc: { opponent: 0.4 },                        expect: 'The Exploitable Regular' },
-  { label: 'Overaggressor (betsize 40%)',           base: 0.80, acc: { betsize: 0.4 },                         expect: 'The Overaggressor' },
   // Yellow-only leak reads as Balanced BY DESIGN since the July 2026 bar raise
   // (SCHEMA_MIN_SEVERITY 1.25): the schema card only names a leak when a skill
   // is genuinely red; yellow shows in the skill ledger instead.
   { label: 'Mild single leak (position 60%)',       base: 0.85, acc: { position: 0.6 },                        expect: 'The Balanced Player' },
-  { label: 'Two leaks (aggression 40%, position 40%)', base: 0.80, acc: { aggression: 0.4, position: 0.4 },    expect: 'The Positional Blind Spot' }, // position scores 2.0 alone; CA averages in healthy bluffing
+  // position scores 2.0 alone → Positional; the aggression red is inert under v2
+  // (aggression no longer names a schema — Conflict Avoider is direction-scored),
+  // and this profile's near-neutral tally can't fire a direction schema.
+  { label: 'Two leaks (aggression 40%, position 40%)', base: 0.80, acc: { aggression: 0.4, position: 0.4 },    expect: 'The Positional Blind Spot' },
+  // Guard: an under-dominant tally must NOT overpower a genuinely red skill leak
+  // — a seat-blind player who also happens to over-fold is still Positional here
+  // (position 2.0 > CA severity ~1.9). Protects the "direction can't hijack a
+  // real skill leak" boundary.
+  { label: 'Positional + mild under-skew',          base: 0.80, acc: { position: 0.4 }, dir: CA_DIR,           expect: 'The Positional Blind Spot' },
 ];
+
+// Synthesize a lifetime direction tally scaled to the session volume.
+function synthTally(profile, sessions) {
+  const shares = profile.dir ?? NEUTRAL_DIR;
+  const ev = EVIDENCE_PER_SESSION * sessions;
+  return { under: shares.under * ev, over: shares.over * ev, loose: shares.loose * ev, evidence: ev };
+}
 
 function simulatePlayer(profile, sessions) {
   const skills = Object.fromEntries(SKILLS.map(k => [k, { rating: 'gray', attempts: 0, correct: 0 }]));
@@ -54,7 +106,7 @@ function simulatePlayer(profile, sessions) {
     const result = Math.random() < p ? 'correct' : 'incorrect';
     skills[skill] = applyHandToSkill(skills[skill], result);
   }
-  return deriveSchema(skills, sessions);
+  return deriveSchema(skills, sessions, synthTally(profile, sessions));
 }
 
 let structuralFailures = 0;

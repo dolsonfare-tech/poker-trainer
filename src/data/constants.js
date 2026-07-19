@@ -26,20 +26,38 @@ export const SKILL_DESCRIPTIONS = {
 
 // ─── Player schemas ─────────────────────────────────────────────────────────
 // Single source for the 6 schema definitions. The diagnosis engine
-// (deriveSchema in userStorage.js) reads name/quote/primary; the reference
-// guide (VillainGuide) reads name/quote/desc. Edit here and both stay in step.
-// Quotes carry no trailing period — the dashboard card and the guide add
-// their own quote marks.
+// (deriveSchema in userStorage.js) reads name/quote plus the scoring field; the
+// reference guide (VillainGuide) reads name/quote/desc. Edit here and both stay
+// in step. Quotes carry no trailing period — the dashboard card and the guide
+// add their own quote marks.
+//
+// Schema-diagnosis v2 (July 18, 2026 — founder decision, hybrid model):
+//   • DIRECTION schemas carry a `direction` field ('under' | 'loose' | 'over')
+//     and are scored from the fold/call/raise DIRECTION of a player's mistakes
+//     (the direction tally in userStorage.js), NOT per-skill accuracy. Two
+//     players with identical accuracy but opposite mistakes (over-folding vs
+//     over-raising) must diagnose differently, and accuracy alone can't tell
+//     them apart — worse, it manufactures the opposite label (a passive player's
+//     misses turn `betsize` red, and red betsize used to read as aggression).
+//   • SKILL schemas (Positional Blind Spot, Results Thinker, Exploitable
+//     Regular) have NO `direction` field and keep the absolute-weakness scoring
+//     off their `primary` skill.
+//   • The `primary` arrays on the three DIRECTION schemas are NO LONGER scored
+//     (founder call July 18: aggression / bluffing / preflop / potodds / betsize
+//     no longer name a schema — they live in the skill ledger). They're kept as
+//     reference only; VillainGuide doesn't read them.
 export const PLAYER_SCHEMAS = [
   {
     name: 'The Conflict Avoider',
     quote: "I shouldn't put money in unless I'm sure",
+    direction: 'under',                 // chose more passive than correct
     primary: ['aggression', 'bluffing'],
     desc: 'You fold too often and only bet the nuts, leaking value and getting pushed off winning hands. Loosen up — bet strong-but-not-perfect hands and call down more.',
   },
   {
     name: 'The Gambler',
     quote: 'Any two cards can win',
+    direction: 'loose',                 // called when folding was correct
     primary: ['preflop', 'potodds'],
     desc: 'You play too many hands and chase weak draws, bleeding chips preflop and on bad odds. Tighten your starting hands and fold when the price is wrong.',
   },
@@ -64,6 +82,7 @@ export const PLAYER_SCHEMAS = [
   {
     name: 'The Overaggressor',
     quote: 'Pressure wins pots regardless',
+    direction: 'over',                  // chose raise when call/fold was correct
     primary: ['betsize'],
     desc: 'You bet and raise too often and too big, turning good hands into bluffs and spewing chips. Pick better spots and size for a purpose.',
   },

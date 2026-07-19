@@ -2,7 +2,7 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, createUser, toLocalDateString } from './userStorage';
+import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, createUser, toLocalDateString, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './userStorage';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
@@ -38,6 +38,17 @@ export function recentHandsFromSessions(sessionRows) {
   return stream.length > RECENT_HANDS_CAP ? stream.slice(stream.length - RECENT_HANDS_CAP) : stream;
 }
 
+// Direction-of-error tally for schema v2, rebuilt from the append-only session
+// log — lifetime and order-independent (it's a sum), self-healing across devices
+// like recentHands/scenarioHistory. Each hand carries scenarioId + choiceVal +
+// result; rows whose hands predate the choiceVal field skip gracefully
+// (addHandsToDirectionTally drops hands with no directional signal).
+export function directionTallyFromSessions(sessionRows) {
+  const hands = [];
+  for (const r of sessionRows ?? []) for (const h of r.hands ?? []) hands.push(h);
+  return addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands);
+}
+
 function assembleUser(profile, skillRows, sessionRows) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
@@ -48,6 +59,7 @@ function assembleUser(profile, skillRows, sessionRows) {
     })
   );
   const recentHands = recentHandsFromSessions(sessionRows);
+  const directionTally = directionTallyFromSessions(sessionRows);
   return {
     displayName: profile.display_name,
     initials: profile.initials,
@@ -57,7 +69,11 @@ function assembleUser(profile, skillRows, sessionRows) {
     activeDaysLast30: activeDaysLast30(sessionRows),
     sessionsCompleted: profile.sessions_completed,
     skills,
-    schema: deriveSchema(skills, profile.sessions_completed),
+    schema: deriveSchema(skills, profile.sessions_completed, directionTally),
+    // Direction-of-error tally (schema v2), rebuilt from the session log so the
+    // hybrid diagnosis follows the account across devices; also kept in memory
+    // so applySessionResults can increment it between loads.
+    directionTally,
     // Derived fresh from live accuracy (like `schema` above), not the trusted
     // profiles.poker_score column, so existing users heal off the old
     // bucket-based number on their next load rather than at their next session.
