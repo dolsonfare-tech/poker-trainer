@@ -8,6 +8,7 @@ jest.mock('../utils/db', () => ({ submitFeedback: jest.fn() }));
 
 import Dashboard from './Dashboard';
 import { createUser } from '../utils/userStorage';
+import { SKILL_NAMES } from '../data/constants';
 
 const user = { ...createUser('RiverRat'), sessionsCompleted: 3 };
 
@@ -51,6 +52,22 @@ test('a broken streak shows the consistency record, never a bare reset (M2)', ()
     sessionDelta: { streakBroken: true, rebuyUsed: false, prevStreak: 20, activeDaysLast30: 26 },
   });
   expect(screen.getByText(/played 26 of the last 30 days/)).toBeInTheDocument();
+});
+
+test('the Unrated ledger row hides once every skill is rated', () => {
+  const rated = Object.fromEntries(
+    Object.keys(SKILL_NAMES).map(k => [k, { rating: 'yellow', attempts: 10, correct: 6 }])
+  );
+  dash({ user: { ...createUser('Rated'), skills: rated } });
+  expect(screen.queryByText('Unrated')).not.toBeInTheDocument();
+  // Empty Weak/Strong rows stay — they are dynamic and their empty state is signal
+  expect(screen.getByText('Weak')).toBeInTheDocument();
+  expect(screen.getByText('Strong')).toBeInTheDocument();
+});
+
+test('the Unrated ledger row shows while unrated skills exist', () => {
+  dash({ user: createUser('Fresh') });
+  expect(screen.getByText('Unrated')).toBeInTheDocument();
 });
 
 // ── Last Session's Read lives inside the Player Profile card ────────────────

@@ -164,6 +164,11 @@ function SkillLedger({ skills, prevSkills }) {
     <div className="db-skill-ledger">
       {RATING_GROUPS.map(({ key, label, sym }) => {
         const members = Object.keys(SKILL_NAMES).filter(k => ratings[k] === key);
+        // Unrated is the one group that can never repopulate (attempts only
+        // grow), so once every skill is rated the row is permanently dead
+        // space — hide it. Weak/Work On/Strong stay visible when empty: they
+        // are dynamic, and their empty states carry signal ("no weak skills").
+        if (key === 'gray' && members.length === 0) return null;
         return (
           <div key={key} className="db-ledger-group">
             <div className={`db-ledger-head db-ledger-${key}`}>
