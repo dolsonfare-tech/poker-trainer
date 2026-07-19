@@ -27,6 +27,7 @@
     "check:invariants": "node scripts/check-invariants.mjs",
     "export:review": "node scripts/export-review.mjs",
     "simulate:schemas": "node scripts/simulate-schemas.mjs",
+    "playtest:personas": "node scripts/playtest-personas.mjs",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {

@@ -5,7 +5,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import SessionSummary from './SessionSummary';
 import SCENARIOS from '../data/scenarios';
-import { DEFAULT_SKILLS } from '../utils/userStorage';
+import { DEFAULT_SKILLS, RECENT_WINDOW } from '../utils/userStorage';
 
 jest.mock('../utils/supabase', () => ({ supabase: null, hasSupabase: false }));
 
@@ -84,6 +84,22 @@ test('Poker IQ moves on misses even when no rating bucket flips (the 0/5 bug)', 
   const history = [{ scenario: target, choiceVal: null, result: 'incorrect' }];
   render(<SessionSummary {...baseProps} userSkills={skills} sessionHistory={history} />);
   expect(screen.getByText('71 → 67')).toBeInTheDocument();
+});
+
+test('Poker IQ before→after uses the recency basis when recentHands is provided', () => {
+  // potodds lifetime is red (4/20 = 20%), but the recent buffer is all wins, so
+  // the recency-weighted IQ reads 100 — proving the display ignores the lifetime
+  // 20 (F3). One incorrect potodds hand this session dilutes only the window: the
+  // last RECENT_WINDOW becomes (WINDOW-1) wins + 1 loss.
+  const potodds = SCENARIOS.filter(s => s.skill === 'potodds');
+  const target = potodds[0];
+  expect(target).toBeTruthy();
+  const skills = { ...DEFAULT_SKILLS, potodds: { rating: 'red', attempts: 20, correct: 4 } };
+  const recentHands = Array.from({ length: RECENT_WINDOW + 4 }, () => ({ skill: 'potodds', result: 'correct' }));
+  const history = [{ scenario: target, choiceVal: null, result: 'incorrect' }];
+  const after = Math.round(((RECENT_WINDOW - 1) / RECENT_WINDOW) * 100);
+  render(<SessionSummary {...baseProps} userSkills={skills} recentHands={recentHands} sessionHistory={history} />);
+  expect(screen.getByText(`100 → ${after}`)).toBeInTheDocument();
 });
 
 test('Poker IQ reads as locked while nothing is rated', () => {

@@ -375,6 +375,9 @@ export default function App() {
         prevSessions: user?.sessionsCompleted ?? 0,
         prevPokerScore: user?.pokerScore ?? null,
         prevSkills: user ? { ...user.skills } : {},
+        // Pre-session recent-hands buffer for the recency-weighted IQ before→after
+        // (F3) — the summary folds this session's hands on top, matching apply.
+        prevRecentHands: user?.recentHands ?? [],
         skillResults: { ...skillResults },
         // First session of the day = the moment the streak day is earned;
         // later sessions the same day show nothing (already secured).
@@ -586,6 +589,7 @@ export default function App() {
               coachLimited={coachLimited}
               difficulty={difficulty}
               userSkills={sessionDelta?.prevSkills ?? user.skills}
+              recentHands={sessionDelta?.prevRecentHands ?? user.recentHands}
               streakSecured={sessionDelta?.streakSecured ?? null}
               rebuyUsed={sessionDelta?.rebuyUsed ?? false}
               streakBroken={sessionDelta?.streakBroken ?? false}

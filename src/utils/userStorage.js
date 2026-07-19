@@ -1,4 +1,4 @@
-import { deriveRating, applyHandToSkill, PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
+import { deriveRating, applyHandToSkill, RESULT_CREDIT, PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
 import { applyHandsToHistory } from './spacedrep';
 
 const USER_KEY = 'cr_user';
@@ -39,8 +39,10 @@ function migrateUser(user) {
   // Self-heal a stale bucket-based pokerScore (pre-July 18, 2026): the score is
   // trusted on load, so a cached local user would keep the old inflated number
   // until their next session. Re-derive it under the continuous-accuracy formula
-  // whenever any skill is rated. Cheap and idempotent.
-  const healed = derivePokerScore(migrated.skills);
+  // whenever any skill is rated. Cheap and idempotent. Pass any cached
+  // recentHands so the healed value uses the same recency basis the last session
+  // saved (legacy users have no stream → lifetime fallback, identical to before).
+  const healed = derivePokerScore(migrated.skills, migrated.recentHands);
   if (healed !== null && healed !== migrated.pokerScore) {
     return { ...migrated, pokerScore: healed };
   }
@@ -99,6 +101,7 @@ export function createUser(username) {
     coachNote: null,
     pokerScore: null,
     scenarioHistory: {},
+    recentHands: [],
     leaderboard: null,
   };
 }
@@ -198,18 +201,72 @@ export function deriveSchema(skills, sessionsCompleted) {
   return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
 }
 
-// Continuous true accuracy (July 18, 2026) — the average of each rated skill's
-// real correct/attempts, not a bucket anchor (green=100/yellow=65/red=30) that
-// only moved when a session crossed a rating boundary. The old formula read an
-// 0/5 session as "nothing happened" (Poker IQ 69 → 69); this moves with every
-// hand, honoring the honest-numbers rule the summary is built on. `correct` can
-// be fractional (partial credit = 0.5 via applyHandToSkill) — the division
-// handles it. Same gate as before (rated = 5+ attempts, not gray); null when
-// nothing is rated.
-export function derivePokerScore(skills) {
-  const rated = Object.values(skills).filter(d => d.attempts >= 5 && d.rating !== 'gray');
+// Poker IQ — RECENCY-WEIGHTED as of July 18, 2026 (PERSONA_PLAYTEST_FINDINGS.md
+// F3). The July-18-morning fix made this continuous true accuracy (a running
+// correct/attempts per rated skill), which killed the 0/5 → "69 → 69" bug but is
+// still structurally backward-looking: the persona harness's Improver climbs
+// 45% → 85% accuracy across 40 sessions while his LIFETIME IQ reads 68→64→65→69,
+// dropping through his fastest improvement and ending where it began. So the IQ
+// DISPLAY now scores each rated skill off its most recent hands instead of its
+// whole record. IMPORTANT: only the IQ display is recency-weighted — the skill
+// ratings/buckets (deriveRating) and schema diagnosis (deriveSchema) stay
+// lifetime-based on purpose; the ledger and schema deliberately measure the
+// whole record, and only the headline number should chase current form.
+//
+// Per rated skill: if it has at least MIN_RECENT_HANDS samples in the stream,
+// score = accuracy over its last RECENT_WINDOW hands; otherwise fall back to
+// lifetime correct/attempts (a rarely-dealt skill must not oscillate on a
+// handful of hands). MIN_RECENT_HANDS is the ACTIVATION floor (how many samples
+// before we trust the recent window); RECENT_WINDOW is the SCORING depth. They
+// are independent. Called with recentHands missing/empty → behaves EXACTLY like
+// the lifetime formula, so legacy users degrade gracefully until their window
+// fills.
+//
+// Tuned via `npm run playtest:personas -- --trials=10`: the window is PER SKILL
+// and the dealer serves each skill only ~0.6 hands/session, so even a small hand
+// count spans many sessions. Swept 5/6/8/20: WINDOW=20 leaves the Improver's end
+// IQ at 72 (barely above the lifetime 69, F3's whole complaint); 5 swings the
+// leak personas wildly (per-trial 60-84). 6 and 8 both clear every bar
+// (Improver 83 vs 79, bar >=78); 8 wins on FEEL — steady-state volatility drops
+// from ~2.1 to ~1.4 mean |dIQ|/session with max single-session jump 8 -> 6, a
+// meaningful smoothness gain for a small responsiveness cost. The 8-sample
+// activation gate keeps the window from oscillating before enough data exists.
+export const RECENT_WINDOW = 8;
+const MIN_RECENT_HANDS = 8;
+// Rolling recent-hands buffer cap (newest last), ~40 sessions deep — far more
+// than RECENT_WINDOW needs, so every rated skill's window can fill.
+export const RECENT_HANDS_CAP = 200;
+
+// Same gate as the lifetime formula (rated = 5+ attempts, not gray); null when
+// nothing is rated. `correct` can be fractional (partial credit = 0.5); the
+// windowed path applies the same RESULT_CREDIT weighting per hand.
+export function derivePokerScore(skills, recentHands = []) {
+  const rated = Object.entries(skills).filter(([, d]) => d.attempts >= 5 && d.rating !== 'gray');
   if (rated.length === 0) return null;
-  return Math.round(rated.reduce((sum, d) => sum + (d.correct / d.attempts) * 100, 0) / rated.length);
+  const stream = Array.isArray(recentHands) ? recentHands : [];
+  const skillScore = (key, d) => {
+    // MIN_RECENT_HANDS gates on how many samples the skill HAS (anti-oscillation);
+    // RECENT_WINDOW is the scoring depth once activated. These are independent —
+    // slicing before the count check would couple them and silently disable
+    // windowing whenever WINDOW < MIN.
+    const all = stream.filter(h => h.skill === key);
+    if (all.length >= MIN_RECENT_HANDS) {
+      const recent = all.slice(-RECENT_WINDOW);
+      const credit = recent.reduce((s, h) => s + (RESULT_CREDIT[h.result] ?? 0), 0);
+      return (credit / recent.length) * 100;
+    }
+    return (d.correct / d.attempts) * 100;  // lifetime fallback
+  };
+  return Math.round(rated.reduce((sum, [key, d]) => sum + skillScore(key, d), 0) / rated.length);
+}
+
+// Append this session's hands to the rolling recent-hands buffer and trim to the
+// cap (newest last). Stored on the user object (JSON, so it persists in the
+// localStorage cache automatically); in Supabase mode db.js rebuilds it fresh
+// from the session log, same self-healing pattern as scenarioHistory.
+export function appendRecentHands(recentHands, hands) {
+  const next = [...(recentHands ?? []), ...hands.map(h => ({ skill: h.skill, result: h.result }))];
+  return next.length > RECENT_HANDS_CAP ? next.slice(next.length - RECENT_HANDS_CAP) : next;
 }
 
 // ── Coach's Read parsing ────────────────────────────────────────────────────
@@ -335,7 +392,11 @@ export function applySessionResults(user, hands, coachRead) {
   const { streak, lastSessionDate, rebuys } = calcStreak(user);
   const sessionsCompleted = user.sessionsCompleted + 1;
   const schema     = deriveSchema(skills, sessionsCompleted);
-  const pokerScore = derivePokerScore(skills);
+  // Recency-weighted Poker IQ (F3): fold this session's hands into the rolling
+  // buffer BEFORE deriving the score so the number reflects current form. The
+  // buffer is trimmed to the cap inside appendRecentHands.
+  const recentHands = appendRecentHands(user.recentHands, hands);
+  const pokerScore = derivePokerScore(skills, recentHands);
   // Per-scenario history drives the session builder (no repeats, comeback
   // hands, the R1/R2 graduation ladder). In Supabase mode this is also rebuilt
   // from `sessions` rows on every profile load — this in-memory update keeps
@@ -358,5 +419,5 @@ export function applySessionResults(user, hands, coachRead) {
     ? { body: coachRead, focus: weakest }
     : user.coachNote;
 
-  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, bestSessionCorrect };
+  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, recentHands, bestSessionCorrect };
 }

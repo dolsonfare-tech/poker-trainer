@@ -28,6 +28,14 @@ html, body, #root {
   min-height: 100vh;
 }
 
+/* iOS Safari auto-inflates text in blocks it deems primary unless the site
+   opts out — the dashboard read rendered comically large on the founder's
+   phone (July 18, 2026). 100% = render exactly the authored sizes. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   background-color: var(--felt-dark);
   background-image:
@@ -1871,6 +1879,28 @@ body {
   font-size: 0.7rem;
   letter-spacing: 0.1em;
   color: var(--yellow);
+}
+
+/* Mobile: tighten the read's hierarchy — the headline must clearly outrank the
+   evidence rows, and the strip shouldn't dominate the card on a narrow screen. */
+@media (max-width: 700px) {
+  .db-profile-read { margin-top: 14px; padding-top: 14px; }
+  .db-profile-read-headline { font-size: 0.95rem; line-height: 1.3; }
+  .db-profile-read-evidence { margin-top: 8px; }
+  .db-profile-read-evidence-row {
+    font-size: 0.76rem;
+    line-height: 1.45;
+    padding: 3px 0 3px 13px;
+    color: rgba(242,237,227,0.66);
+  }
+  .db-profile-read-evidence-row::before { top: 10px; }
+  .db-profile-read-watchfor {
+    margin-top: 10px;
+    padding-top: 9px;
+    font-size: 0.76rem;
+    line-height: 1.45;
+  }
+  .db-profile-read-wf-label { display: block; margin: 0 0 3px; }
 }
 
 .db-schema-name {

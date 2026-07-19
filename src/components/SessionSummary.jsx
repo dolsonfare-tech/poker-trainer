@@ -97,7 +97,7 @@ function HandReview({ entry, move = null }) {
   );
 }
 
-export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, streakSecured = null, rebuyUsed = false, streakBroken = false, activeDaysLast30 = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
+export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, recentHands = [], streakSecured = null, rebuyUsed = false, streakBroken = false, activeDaysLast30 = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
   // Replay this session's hands through the rating engine to get post-session
   // ratings — same math as userStorage.applySessionResults.
   const afterSkills = (() => {
@@ -116,9 +116,12 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
   const totalHands   = sessionHistory.length;
 
   // The REAL Poker IQ move — same derivation the dashboard displays, not an
-  // invented per-session delta (honest-numbers rule, July 2026)
-  const iqBefore = derivePokerScore(userSkills);
-  const iqAfter  = derivePokerScore(afterSkills);
+  // invented per-session delta (honest-numbers rule, July 2026). Recency-
+  // weighted (F3): before = the pre-session recent-hands buffer; after = the
+  // same buffer with this session's hands folded in, matching applySessionResults.
+  const sessionHands = sessionHistory.map(h => ({ skill: h.scenario.skill, result: h.result }));
+  const iqBefore = derivePokerScore(userSkills, recentHands);
+  const iqAfter  = derivePokerScore(afterSkills, [...(recentHands ?? []), ...sessionHands]);
   const iqDir    = iqAfter > iqBefore ? 'up' : iqAfter < iqBefore ? 'down' : 'flat';
 
   const perfect = totalHands >= 5 && correctCount === totalHands;

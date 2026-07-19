@@ -2,7 +2,7 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, createUser, toLocalDateString } from './userStorage';
+import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, createUser, toLocalDateString } from './userStorage';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
@@ -25,6 +25,19 @@ function activeDaysLast30(sessionRows) {
   return days.size;
 }
 
+// Rolling recent-hands buffer for the recency-weighted Poker IQ (F3), rebuilt
+// from the append-only session log — self-healing across devices, same pattern
+// as scenarioHistory. sessionRows arrive ordered created_at ascending (oldest
+// first); flatten each row's hands[] in that order and keep the last CAP so the
+// buffer is chronological, newest last, exactly like applySessionResults builds it.
+export function recentHandsFromSessions(sessionRows) {
+  const stream = [];
+  for (const r of sessionRows ?? []) {
+    for (const h of r.hands ?? []) stream.push({ skill: h.skill, result: h.result });
+  }
+  return stream.length > RECENT_HANDS_CAP ? stream.slice(stream.length - RECENT_HANDS_CAP) : stream;
+}
+
 function assembleUser(profile, skillRows, sessionRows) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
@@ -34,6 +47,7 @@ function assembleUser(profile, skillRows, sessionRows) {
         : { ...DEFAULT_SKILLS[k] }];
     })
   );
+  const recentHands = recentHandsFromSessions(sessionRows);
   return {
     displayName: profile.display_name,
     initials: profile.initials,
@@ -48,7 +62,11 @@ function assembleUser(profile, skillRows, sessionRows) {
     // profiles.poker_score column, so existing users heal off the old
     // bucket-based number on their next load rather than at their next session.
     // The column is still written on create/save — only its read is bypassed.
-    pokerScore: derivePokerScore(skills),
+    // Recency-weighted (F3) off the rebuilt recent-hands buffer.
+    pokerScore: derivePokerScore(skills, recentHands),
+    // Rolling recent-hands buffer (F3) — rebuilt from the session log so the
+    // recency-weighted IQ follows the account across devices.
+    recentHands,
     coachNote: profile.coach_note_body
       ? { body: profile.coach_note_body, focus: profile.coach_note_focus }
       : null,
