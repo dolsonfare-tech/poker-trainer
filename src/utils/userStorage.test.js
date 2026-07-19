@@ -249,6 +249,31 @@ test('directionOfHand returns null for correct answers, timeouts, and unknown id
   expect(directionOfHand(null)).toBeNull();
 });
 
+// ── Level-aware Balanced fallback (founder, July 19, 2026) ──────────────────
+const uniformSkills = (rating, correct, attempts = 10) => Object.fromEntries(
+  ['preflop','position','aggression','betsize','bluffing','potodds','reads','opponent']
+    .map(k => [k, { rating, attempts, correct }])
+);
+
+test('no-dominant-leak + mostly-yellow ledger reads as The Student of the Game', () => {
+  const schema = deriveSchema(uniformSkills('yellow', 6), 10);
+  expect(schema.name).toBe('The Student of the Game');
+});
+
+test('no-dominant-leak + majority-green ledger stays The Balanced Player', () => {
+  const skills = { ...uniformSkills('green', 8), potodds: { rating: 'yellow', attempts: 10, correct: 6 } };
+  const schema = deriveSchema(skills, 10);
+  expect(schema.name).toBe('The Balanced Player');
+});
+
+test('an exact half-green ledger reads as Student (majority means MORE than half)', () => {
+  const skills = {
+    ...Object.fromEntries(['preflop','position','aggression','betsize'].map(k => [k, { rating: 'green', attempts: 10, correct: 8 }])),
+    ...Object.fromEntries(['bluffing','potodds','reads','opponent'].map(k => [k, { rating: 'yellow', attempts: 10, correct: 6 }])),
+  };
+  expect(deriveSchema(skills, 10).name).toBe('The Student of the Game');
+});
+
 // ── addHandsToDirectionTally: weighting + skips ──────────────────────────────
 test('addHandsToDirectionTally weights incorrect 1.0 and partial 0.5', () => {
   const hands = [

@@ -62,10 +62,10 @@ const GAMBLER_DIR = { under: 0.23, over: 0.15, loose: 0.62 };
 // tally shares, and the diagnosis a correct engine should produce. `acc` sets
 // listed skills; `base` covers the rest. `dir` omitted → NEUTRAL_DIR.
 const PROFILES = [
-  { label: 'Uniform beginner (all 45%)',            base: 0.45, acc: {},                                       expect: 'The Balanced Player' },
-  { label: 'Uniform mediocre (all 65%)',            base: 0.65, acc: {},                                       expect: 'The Balanced Player' },
+  { label: 'Uniform beginner (all 45%)',            base: 0.45, acc: {},                                       expect: 'The Student of the Game' },
+  { label: 'Uniform mediocre (all 65%)',            base: 0.65, acc: {},                                       expect: 'The Student of the Game' },
   { label: 'Uniform strong (all 85%)',              base: 0.85, acc: {},                                       expect: 'The Balanced Player' },
-  { label: 'Coin-flipper (all 50%)',                base: 0.50, acc: {},                                       expect: 'The Balanced Player' },
+  { label: 'Coin-flipper (all 50%)',                base: 0.50, acc: {},                                       expect: 'The Student of the Game' },
   // Direction-leak profiles: diagnosed from `dir`, NOT accuracy. Their weak
   // skills (aggression/bluffing/preflop/potodds/betsize) are no longer scored by
   // any schema, so they name nothing on their own — the tally does the work.
@@ -76,6 +76,9 @@ const PROFILES = [
   { label: 'Positional Blind Spot (position 40%)',  base: 0.80, acc: { position: 0.4 },                        expect: 'The Positional Blind Spot' },
   { label: 'Results Thinker (reads 40%)',           base: 0.80, acc: { reads: 0.4 },                           expect: 'The Results Thinker' },
   { label: 'Exploitable Regular (opponent 40%)',    base: 0.80, acc: { opponent: 0.4 },                        expect: 'The Exploitable Regular' },
+  // Fallback voice is level-aware (founder, July 19, 2026): no-dominant-leak +
+  // majority-green ledger → 'The Balanced Player'; otherwise 'The Student of
+  // the Game' — uniform weakness must not read as reassurance.
   // Yellow-only leak reads as Balanced BY DESIGN since the July 2026 bar raise
   // (SCHEMA_MIN_SEVERITY 1.25): the schema card only names a leak when a skill
   // is genuinely red; yellow shows in the skill ledger instead.

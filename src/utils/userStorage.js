@@ -261,6 +261,29 @@ export const BALANCED_SCHEMA = {
   balanced: true,
 };
 
+// The level-aware sibling of BALANCED_SCHEMA (founder, July 19, 2026): "no
+// dominant leak" is true of two very different players — the solid all-rounder
+// and the uniformly-developing one. Calling the second "Balanced" reads as
+// reassurance ("no single leak dominates your game" at 52 IQ), when the honest
+// message is that the whole skillset is the opportunity. Same diagnosis, two
+// voices: the fallback picks by ledger level (majority of rated skills green →
+// Balanced, else Student). Diagnostic logic and severity bars are untouched.
+export const STUDENT_SCHEMA = {
+  name: 'The Student of the Game',
+  quote: 'Every part of my game is still sharpening',
+  index: '—',
+  total: '06',
+  affected: [],
+};
+
+// Majority-green gate for the fallback voice (founder call: simple,
+// ledger-consistent, no new thresholds). No rated skills yet → Student.
+function balancedFallback(skills) {
+  const rated = Object.values(skills).filter(d => d.attempts >= 5 && d.rating !== 'gray');
+  const green = rated.filter(d => d.rating === 'green').length;
+  return rated.length > 0 && green * 2 > rated.length ? BALANCED_SCHEMA : STUDENT_SCHEMA;
+}
+
 // Minimum normalized severity for a schema to count as your leak: its measured
 // primary skills must average ABOVE yellow-level — i.e., at least one
 // contributing skill genuinely red. Raised 1.0 → 1.25 July 2026 after
@@ -378,7 +401,7 @@ export function deriveSchema(skills, sessionsCompleted, directionTally) {
 
   // No dominant, unambiguous leak → Balanced (kills the array-order tiebreak
   // that always crowned index 01). Requires a clear winner above the severity bar.
-  if (!best || bestScore < SCHEMA_MIN_SEVERITY || tied) return BALANCED_SCHEMA;
+  if (!best || bestScore < SCHEMA_MIN_SEVERITY || tied) return balancedFallback(skills);
 
   // Direction schemas display no per-skill "affected" chips (the chips were
   // removed from the card in July 2026); the return shape stays identical.
