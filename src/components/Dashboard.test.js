@@ -111,6 +111,87 @@ test('a legacy prose read clamps inside the profile card', () => {
   expect(document.querySelector('.db-coach-note')).toBeNull();
 });
 
+// ── Coach's Notebook (read history under the current read) ──────────────────
+const structured = (headline, evidence = [], watchFor = '') =>
+  JSON.stringify({ headline, evidence, watchFor });
+
+const withNotebook = (past) => ({
+  ...createUser('Historian'),
+  sessionsCompleted: 8,
+  coachNote: { body: structured('Newest read headline'), focus: null },
+  coachReads: [{ date: '2026-07-19', body: structured('Newest read headline') }, ...past],
+});
+
+test('the notebook toggle is hidden with fewer than two reads', () => {
+  const u = {
+    ...createUser('Solo'),
+    sessionsCompleted: 8,
+    coachNote: { body: structured('Only read'), focus: null },
+    coachReads: [{ date: '2026-07-19', body: structured('Only read') }],
+  };
+  dash({ user: u });
+  expect(screen.queryByText(/Past reads/)).not.toBeInTheDocument();
+});
+
+test('the notebook toggle shows the count of prior reads', () => {
+  const past = [
+    { date: '2026-07-18', body: structured('Older read one') },
+    { date: '2026-07-17', body: structured('Older read two') },
+  ];
+  dash({ user: withNotebook(past) });
+  expect(screen.getByText(/Past reads · 2/)).toBeInTheDocument();
+});
+
+test('the notebook is hidden for guests (the caller gates it)', () => {
+  const past = [
+    { date: '2026-07-18', body: structured('Older read one') },
+    { date: '2026-07-17', body: structured('Older read two') },
+  ];
+  render(<Dashboard user={withNotebook(past)} guest onStartSession={() => {}}
+    onSignOut={() => {}} onRename={() => {}} onGuestSignIn={() => {}} />);
+  expect(screen.queryByText(/Past reads/)).not.toBeInTheDocument();
+});
+
+test('expanding the notebook lists prior reads only, excluding the newest', () => {
+  const past = [
+    { date: '2026-07-18', body: structured('Older read one') },
+    { date: '2026-07-17', body: structured('Older read two') },
+  ];
+  dash({ user: withNotebook(past) });
+  fireEvent.click(screen.getByText(/Past reads · 2/));
+
+  const list = document.querySelector('.db-notebook-list');
+  expect(list).toHaveTextContent('Jul 18');
+  expect(list).toHaveTextContent('Older read one');
+  expect(list).toHaveTextContent('Older read two');
+  // The newest read is shown in the strip above, never duplicated in the list.
+  expect(list).not.toHaveTextContent('Newest read headline');
+});
+
+test('tapping a structured notebook row expands to its evidence and watch-for', () => {
+  const past = [
+    { date: '2026-07-18', body: structured('Older read one', ['Chased a dead draw', 'Under-bet the nuts'], 'Price your draws') },
+  ];
+  dash({ user: withNotebook(past) });
+  fireEvent.click(screen.getByText(/Past reads · 1/));
+  // Detail is collapsed until the row is tapped
+  expect(screen.queryByText('Chased a dead draw')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByText('Older read one'));
+  expect(screen.getByText('Chased a dead draw')).toBeInTheDocument();
+  expect(screen.getByText('Under-bet the nuts')).toBeInTheDocument();
+  expect(screen.getByText('Price your draws')).toBeInTheDocument();
+});
+
+test('a legacy prose notebook row renders clamped', () => {
+  const prose = 'You keep folding rivers to tight players — that leaks value over many hands.';
+  const past = [{ date: '2026-07-18', body: prose }];
+  dash({ user: withNotebook(past) });
+  fireEvent.click(screen.getByText(/Past reads · 1/));
+  const headline = document.querySelector('.db-notebook-list .db-notebook-headline');
+  expect(headline).toHaveTextContent(prose);
+  expect(headline).toHaveClass('db-notebook-clamp');
+});
+
 test('gated guest sees the sign-in CTA instead of Deal Me In', () => {
   const onGuestSignIn = jest.fn();
   const guest = { ...createUser('Guest'), sessionsCompleted: 1 };

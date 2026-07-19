@@ -2,7 +2,7 @@
 // the Rebuy earn/consume/cap ladder, the streak-break reset, and milestone
 // proximity. calcStreak reads new Date() at call time, so fixtures set
 // lastSessionDate relative to today rather than mocking the clock.
-import { calcStreak, createUser, toLocalDateString, milestoneProximity, REBUY_CAP, parseCoachRead, derivePokerScore, applySessionResults, RECENT_HANDS_CAP, RECENT_WINDOW, classifyDirection, directionOfHand, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY, deriveSchema } from './userStorage';
+import { calcStreak, createUser, toLocalDateString, milestoneProximity, REBUY_CAP, parseCoachRead, derivePokerScore, applySessionResults, RECENT_HANDS_CAP, RECENT_WINDOW, COACH_READS_CAP, classifyDirection, directionOfHand, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY, deriveSchema } from './userStorage';
 
 const daysAgo = (n) => {
   const d = new Date();
@@ -324,6 +324,48 @@ test('deriveSchema: direction schema returns the unchanged shape with empty affe
 
 test('deriveSchema stays locked under 5 sessions', () => {
   expect(deriveSchema(allGreen(), 4, { under: 17, over: 1, loose: 2, evidence: 20 })).toBeNull();
+});
+
+// ── Coach's Notebook history (applySessionResults) ───────────────────────────
+const oneHand = [{ scenarioId: 1, skill: 'preflop', result: 'correct' }];
+
+test('createUser seeds an empty coachReads history', () => {
+  expect(createUser('X').coachReads).toEqual([]);
+});
+
+test('applySessionResults prepends a read, newest first, storing the raw body', () => {
+  const today = toLocalDateString(new Date());
+  const u = { ...createUser('N'), coachReads: [{ date: '2026-07-17', body: 'older read' }] };
+  const out = applySessionResults(u, oneHand, 'newest read');
+  expect(out.coachReads).toEqual([
+    { date: today, body: 'newest read' },
+    { date: '2026-07-17', body: 'older read' },
+  ]);
+});
+
+test('applySessionResults does not append when there is no coach read', () => {
+  const u = { ...createUser('N'), coachReads: [{ date: '2026-07-17', body: 'older read' }] };
+  const out = applySessionResults(u, oneHand, null);
+  expect(out.coachReads).toEqual([{ date: '2026-07-17', body: 'older read' }]);
+});
+
+test('applySessionResults trims the notebook to COACH_READS_CAP (newest kept)', () => {
+  const full = Array.from({ length: COACH_READS_CAP }, (_, i) => ({ date: '2026-01-01', body: `read ${i}` }));
+  const u = { ...createUser('N'), coachReads: full };
+  const out = applySessionResults(u, oneHand, 'freshest');
+  expect(out.coachReads).toHaveLength(COACH_READS_CAP);
+  expect(out.coachReads[0].body).toBe('freshest');
+  // The oldest entry rolled off the end.
+  expect(out.coachReads[COACH_READS_CAP - 1].body).toBe(`read ${COACH_READS_CAP - 2}`);
+});
+
+test('applySessionResults tolerates a legacy user with no coachReads field', () => {
+  const { coachReads, ...legacy } = createUser('Legacy'); // strip the field
+  void coachReads;
+  expect(applySessionResults(legacy, oneHand, null).coachReads).toEqual([]);
+  expect(applySessionResults(legacy, oneHand, 'first read').coachReads).toEqual([
+    { date: toLocalDateString(new Date()), body: 'first read' },
+  ]);
 });
 
 test('applySessionResults maintains the lifetime direction tally', () => {

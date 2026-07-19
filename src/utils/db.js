@@ -2,7 +2,7 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, createUser, toLocalDateString, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './userStorage';
+import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, COACH_READS_CAP, createUser, toLocalDateString, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './userStorage';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);
@@ -49,6 +49,23 @@ export function directionTallyFromSessions(sessionRows) {
   return addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands);
 }
 
+// Coach's Notebook history, rebuilt from the append-only session log —
+// self-healing across devices, same pattern as recentHands/scenarioHistory.
+// Rows arrive created_at ascending (oldest first); skip null/empty coach_read,
+// date each read from created_at via the local-date helper, newest first, cap.
+// Bodies are the RAW stored strings (structured JSON or legacy prose) — the
+// dashboard parses them at render time.
+export function coachReadsFromSessions(sessionRows) {
+  const out = [];
+  for (const r of sessionRows ?? []) {
+    const body = r.coach_read;
+    if (typeof body !== 'string' || !body.trim()) continue;
+    out.push({ date: toLocalDateString(new Date(r.created_at)), body });
+  }
+  out.reverse();  // ascending rows → newest first
+  return out.length > COACH_READS_CAP ? out.slice(0, COACH_READS_CAP) : out;
+}
+
 function assembleUser(profile, skillRows, sessionRows) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
@@ -86,6 +103,9 @@ function assembleUser(profile, skillRows, sessionRows) {
     coachNote: profile.coach_note_body
       ? { body: profile.coach_note_body, focus: profile.coach_note_focus }
       : null,
+    // Coach's Notebook — full read history derived from the session log
+    // (newest first, capped), self-healing like recentHands/scenarioHistory.
+    coachReads: coachReadsFromSessions(sessionRows),
     usernameChangedAt: profile.username_changed_at ?? null,
     // Derived from the append-only session log — feeds the session builder
     // (no repeats, comeback hands) and follows the account across devices.
@@ -120,7 +140,7 @@ export async function fetchRemoteUser() {
     .from('skills').select('*').eq('user_id', uid);
   if (skillsErr) throw skillsErr;
   const { data: sessionRows, error: sessionsErr } = await supabase
-    .from('sessions').select('hands, correct_count, created_at')
+    .from('sessions').select('hands, correct_count, created_at, coach_read')
     .eq('user_id', uid)
     .order('created_at', { ascending: true });
   if (sessionsErr) throw sessionsErr;

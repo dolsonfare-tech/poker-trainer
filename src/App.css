@@ -1903,6 +1903,104 @@ body {
   .db-profile-read-wf-label { display: block; margin: 0 0 3px; }
 }
 
+/* ── Coach's Notebook ── read history under the current read. Quiet toggle
+   opening an in-place list; each row expands to the full read. */
+.db-notebook {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(42,66,52,0.9);
+}
+
+.db-notebook-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.4);
+  transition: color 0.15s ease;
+}
+.db-notebook-toggle:hover { color: rgba(242,237,227,0.65); }
+
+.db-notebook-arrow {
+  font-size: 0.6rem;
+  color: rgba(200,168,75,0.7);
+}
+
+.db-notebook-list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.db-notebook-item {
+  border-top: 1px solid rgba(42,66,52,0.6);
+}
+.db-notebook-item:first-child { border-top: none; }
+
+.db-notebook-row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 9px 0;
+  cursor: pointer;
+}
+
+.db-notebook-date {
+  flex: 0 0 auto;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(200,168,75,0.6);
+  min-width: 44px;
+}
+
+.db-notebook-headline {
+  flex: 1 1 auto;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: rgba(242,237,227,0.82);
+}
+.db-notebook-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.db-notebook-detail {
+  padding: 0 0 10px 56px;
+}
+.db-notebook-detail .db-profile-read-evidence { margin-top: 2px; }
+
+.db-notebook-prose {
+  margin: 0;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.72);
+}
+
+@media (max-width: 700px) {
+  .db-notebook { margin-top: 10px; padding-top: 9px; }
+  .db-notebook-headline { font-size: 0.82rem; line-height: 1.3; }
+  .db-notebook-date { min-width: 40px; font-size: 0.58rem; }
+  .db-notebook-detail { padding-left: 0; }
+  .db-notebook-prose { font-size: 0.8rem; }
+}
+
 .db-schema-name {
   font-family: 'Playfair Display', Georgia, serif;
   font-style: normal;

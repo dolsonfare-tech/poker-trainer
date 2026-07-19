@@ -1,7 +1,7 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
-import { recentHandsFromSessions, directionTallyFromSessions } from './db';
-import { RECENT_HANDS_CAP } from './userStorage';
+import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions } from './db';
+import { RECENT_HANDS_CAP, COACH_READS_CAP } from './userStorage';
 
 jest.mock('./supabase', () => ({ supabase: null, hasSupabase: false }));
 
@@ -68,4 +68,43 @@ test('directionTallyFromSessions skips hands with no choiceVal (pre-v2 rows) and
   ];
   expect(directionTallyFromSessions(rows)).toEqual({ under: 0, over: 0, loose: 0, evidence: 0, hands: 1 });
   expect(directionTallyFromSessions(null)).toEqual({ under: 0, over: 0, loose: 0, evidence: 0, hands: 0 });
+});
+
+// ── coachReadsFromSessions (Coach's Notebook) ─────────────────────────────────
+// Rows arrive created_at ascending (oldest first); the history is newest first,
+// dated from created_at, null/empty reads skipped, capped.
+test('coachReadsFromSessions derives newest-first, dating each read from created_at', () => {
+  const rows = [
+    { created_at: '2026-07-17T12:00:00Z', coach_read: 'older read' },
+    { created_at: '2026-07-18T12:00:00Z', coach_read: 'newer read' },
+  ];
+  const out = coachReadsFromSessions(rows);
+  expect(out.map(r => r.body)).toEqual(['newer read', 'older read']);
+  // Dated via the local-date helper (compare against the same derivation).
+  expect(out[0].date).toBe(new Date('2026-07-18T12:00:00Z').getFullYear() +
+    '-' + String(new Date('2026-07-18T12:00:00Z').getMonth() + 1).padStart(2, '0') +
+    '-' + String(new Date('2026-07-18T12:00:00Z').getDate()).padStart(2, '0'));
+});
+
+test('coachReadsFromSessions skips null / empty reads and tolerates empties', () => {
+  const rows = [
+    { created_at: '2026-07-16T12:00:00Z', coach_read: null },
+    { created_at: '2026-07-17T12:00:00Z', coach_read: '   ' },
+    { created_at: '2026-07-18T12:00:00Z', coach_read: 'kept' },
+    { created_at: '2026-07-19T12:00:00Z' }, // missing field
+  ];
+  expect(coachReadsFromSessions(rows).map(r => r.body)).toEqual(['kept']);
+  expect(coachReadsFromSessions(null)).toEqual([]);
+  expect(coachReadsFromSessions([])).toEqual([]);
+});
+
+test('coachReadsFromSessions caps at COACH_READS_CAP, keeping the newest', () => {
+  // 40 rows ascending; only the last CAP reads survive, newest first.
+  const rows = Array.from({ length: 40 }, (_, i) => ({
+    created_at: `2026-01-01T00:00:00Z`, coach_read: `read ${i}`,
+  }));
+  const out = coachReadsFromSessions(rows);
+  expect(out).toHaveLength(COACH_READS_CAP);
+  expect(out[0].body).toBe('read 39');                       // newest
+  expect(out[COACH_READS_CAP - 1].body).toBe(`read ${40 - COACH_READS_CAP}`); // oldest survivor
 });

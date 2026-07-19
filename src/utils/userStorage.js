@@ -100,6 +100,7 @@ export function createUser(username) {
     ),
     schema: null,
     coachNote: null,
+    coachReads: [],
     pokerScore: null,
     scenarioHistory: {},
     recentHands: [],
@@ -459,6 +460,15 @@ export function appendRecentHands(recentHands, hands) {
   return next.length > RECENT_HANDS_CAP ? next.slice(next.length - RECENT_HANDS_CAP) : next;
 }
 
+// ── Coach's Notebook ────────────────────────────────────────────────────────
+// A player accumulates one Coach's Read per session; the dashboard surfaces the
+// latest in the Player Profile strip and the rest in the notebook history. The
+// history is DERIVED state (like recentHands/scenarioHistory): in Supabase mode
+// db.js rebuilds it fresh from the append-only session log; here we keep it in
+// the localStorage cache, newest first, capped. Entries hold the RAW stored
+// string (structured JSON or legacy prose) — parseCoachRead runs at render time.
+export const COACH_READS_CAP = 30;
+
 // ── Coach's Read parsing ────────────────────────────────────────────────────
 // The Coach's Read is a structured JSON string on the wire and in the DB
 // (headline/evidence/watchFor via output_config json_schema, July 18, 2026).
@@ -615,5 +625,11 @@ export function applySessionResults(user, hands, coachRead) {
     ? { body: coachRead, focus: weakest }
     : user.coachNote;
 
-  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, scenarioHistory, recentHands, directionTally, bestSessionCorrect };
+  // Coach's Notebook history (newest first, capped). Only a real read this
+  // session prepends; the raw string is stored verbatim (parsed at render).
+  const coachReads = coachRead
+    ? [{ date: toLocalDateString(new Date()), body: coachRead }, ...(user.coachReads ?? [])].slice(0, COACH_READS_CAP)
+    : (user.coachReads ?? []);
+
+  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, directionTally, bestSessionCorrect };
 }

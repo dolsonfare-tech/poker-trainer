@@ -287,6 +287,89 @@ function BetaFeedback() {
   );
 }
 
+// ─── Coach's Notebook ──────────────────────────────────────────────────────
+// The latest Coach's Read lives in the strip above; every prior read is kept in
+// the history (user.coachReads, newest first). This is a quiet, in-place list —
+// no modal. A collapsed row is date + headline; tapping expands the full read.
+// Hidden when there are fewer than two reads total (the strip already shows the
+// only one) and for guests (the caller gates that).
+
+// 'YYYY-MM-DD' → compact "Jul 18" without a UTC shift (local constructor).
+function fmtReadDate(iso) {
+  const [y, m, d] = (iso ?? '').split('-').map(Number);
+  if (!y || !m || !d) return iso ?? '';
+  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+function CoachNotebook({ reads }) {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(null); // index of the expanded row
+  // The newest read is the one shown in the strip above — exclude it here.
+  const past = (reads ?? []).slice(1);
+  if (past.length < 1) return null; // fewer than 2 reads total
+
+  const toggle = () => {
+    const next = !open;
+    setOpen(next);
+    if (next) track('coach_notebook_opened', { reads: past.length });
+  };
+
+  return (
+    <div className="db-notebook">
+      <button className="db-notebook-toggle" onClick={toggle} aria-expanded={open}>
+        <span className="db-notebook-arrow">{open ? '▾' : '▸'}</span>
+        Past reads · {past.length}
+      </button>
+      {open && (
+        <ul className="db-notebook-list">
+          {past.map((r, i) => {
+            const parsed = parseCoachRead(r.body);
+            const isOpen = expanded === i;
+            const headline = parsed?.structured ? parsed.structured.headline : (parsed?.legacy ?? '');
+            return (
+              <li key={i} className="db-notebook-item">
+                <button
+                  className="db-notebook-row"
+                  aria-expanded={isOpen}
+                  onClick={() => setExpanded(isOpen ? null : i)}
+                >
+                  <span className="db-notebook-date">{fmtReadDate(r.date)}</span>
+                  <span className={`db-notebook-headline${isOpen ? '' : ' db-notebook-clamp'}`}>
+                    {headline}
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className="db-notebook-detail">
+                    {parsed?.structured ? (
+                      <>
+                        {parsed.structured.evidence.length > 0 && (
+                          <ul className="db-profile-read-evidence">
+                            {parsed.structured.evidence.map((e, j) => (
+                              <li key={j} className="db-profile-read-evidence-row">{e}</li>
+                            ))}
+                          </ul>
+                        )}
+                        {parsed.structured.watchFor && (
+                          <div className="db-profile-read-watchfor">
+                            <span className="db-profile-read-wf-label">Watch for</span>
+                            <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="db-notebook-prose">{parsed?.legacy}</p>
+                    )}
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 // ─── Username editor ──────────────────────────────────────────────────────
 // Inline in the topbar, opened from the ✎ next to the account pill. Same
 // validation as first-time creation (UsernameEntry). Renames are limited to
@@ -560,6 +643,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                     <span className="db-profile-read-focus-skill">{coachNote.focus}</span>
                   </div>
                 )}
+                {!guest && <CoachNotebook reads={user.coachReads} />}
               </div>
             );
           })()}
