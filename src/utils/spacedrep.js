@@ -37,8 +37,28 @@ import { CONTRAST_PAIRS } from '../data/scenarios';
 // a daily player. R3: a fixed ladder is within noise of SM-2/FSRS at this pool
 // size and infinitely more debuggable — do NOT add per-item ease.
 export const LADDER_SESSIONS = [2, 5, 13];
-// Spaced corrects needed to clear a miss (graduate off the ladder).
-export const GRADUATION_TARGET = LADDER_SESSIONS.length;
+// Spaced corrects needed to clear a miss (graduate off the ladder) — GRADED by
+// how many times the hand has been missed (F1 fix, July 18, 2026):
+//   - a hand missed only ONCE is a cheap lapse → GRADUATION_TARGET_FIRST (2);
+//   - a REPEAT miss is the hypercorrection-relapse case the 3-rung ladder
+//     exists for → GRADUATION_TARGET_REPEAT (3).
+// Both stay inside R1's 2–3-retrieval evidence range (RESEARCH_LEARNING_SCIENCE
+// Piece 1). The graded target is what lets a leaky player's queue actually
+// drain: at realistic accuracy 3-spaced-corrects-with-miss-resets is an ~8-hand
+// consecutive-success chain per graduation; halving it for first-timers roughly
+// doubles their drain rate.
+export const GRADUATION_TARGET_FIRST = 2;
+export const GRADUATION_TARGET_REPEAT = 3;
+// Back-compat: the ladder's rung count and the conservative (repeat) target.
+// Kept exported for call sites/tests that reference the old single knob.
+export const GRADUATION_TARGET = GRADUATION_TARGET_REPEAT;
+// Graduation target for a hand with a known lifetime miss count. A remediating
+// entry with an UNDEFINED miss count (legacy / pre-graded history) is treated
+// as a repeat offender (3) — the conservative pre-graded default.
+const graduationTargetFor = (misses) =>
+  misses == null ? GRADUATION_TARGET_REPEAT
+    : misses <= 1 ? GRADUATION_TARGET_FIRST
+      : GRADUATION_TARGET_REPEAT;
 // Kept for back-compat (tests + call sites) — the bottom rung's interval.
 export const RESURFACE_COOLDOWN_SESSIONS = LADDER_SESSIONS[0];
 // Fast + wrong under this threshold reads as a confident (high-conviction)
@@ -46,7 +66,14 @@ export const RESURFACE_COOLDOWN_SESSIONS = LADDER_SESSIONS[0];
 // is slow-wrong (froze), the opposite, so it never counts (decisionMs null).
 export const CONFIDENT_MISS_MS = 15000;
 
-const MAX_REPLAYS_PER_SESSION = 1;            // one redemption hand per session, not a re-exam
+// Replay slots are DYNAMIC (F1 fix): normally 1 redemption hand per session
+// (not a re-exam), but SURGE to 2 while the pool-scoped remediation queue is
+// backed up past SURGE_QUEUE_THRESHOLD — one slot can't drain a leaky player's
+// queue when ~1.9 new misses arrive per session. Both replays go through the
+// same eligibility path (due rung interval + calendar-day floor + confident-
+// miss ordering) and both carry the honest replay chip; two still leaves 3
+// slots for weak-skill targeting + R4 pairing.
+export const SURGE_QUEUE_THRESHOLD = 8;
 const WEAK_SLOT_TARGET = 2;                   // slots aimed at red/yellow skills
 const MAX_PER_SKILL = 2;                      // soft cap — a targeted session, not 5 of one drill
 // R4 contrast-pair-aware dealing (RESEARCH_LEARNING_SCIENCE.md Piece 1 R4): the
@@ -178,10 +205,15 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
     seatedPair = [x.id, y.id];
   };
 
-  // 1 — comeback hand: a scenario still on the graduation ladder whose rung
+  // 1 — comeback hand(s): scenarios still on the graduation ladder whose rung
   // interval AND the 1-day floor have both elapsed. Confident misses (fast +
   // wrong) first, then oldest. Shuffle before the stable sort so same-age
-  // misses don't resurface in authoring order.
+  // misses don't resurface in authoring order. Replay count SURGES to 2 when the
+  // POOL-SCOPED remediation queue is deeper than the threshold — a deep beginner
+  // queue must not surge an intermediate session, so the depth counts only
+  // remediating hands whose id is in THIS pool.
+  const remediationDepth = pool.filter((s) => isRemediating(history[s.id])).length;
+  const maxReplays = remediationDepth > SURGE_QUEUE_THRESHOLD ? 2 : 1;
   const misses = shuffle(
     pool.filter((s) => dueForResurface(history[s.id], sessionsCompleted, currentDate))
   ).sort((a, b) => {
@@ -189,25 +221,48 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
     const conf = (hb.lastMissConfident ? 1 : 0) - (ha.lastMissConfident ? 1 : 0);
     return conf !== 0 ? conf : ha.lastSeenAt - hb.lastSeenAt;
   });
-  for (const s of misses.slice(0, MAX_REPLAYS_PER_SESSION)) {
-    if (picked.length < length) take(s, true, history[s.id]);
+  // Walk the due list rather than a pre-sliced window: F4's replay pairing can
+  // seat a due miss's partner as a FRESH deal, and if both members of a pair
+  // are due (perfectly possible post-miss), the partner must not then be dealt
+  // again as the second surge replay — skip already-seated hands and let the
+  // next eligible miss take the slot. (This loop historically ran into an empty
+  // session and needed no guard; F4 broke that assumption — caught as duplicate
+  // ids by the persona harness.)
+  let replaysSeated = 0;
+  for (const s of misses) {
+    if (replaysSeated >= maxReplays || picked.length >= length) break;
+    if (pickedIds.has(s.id)) continue;
+    take(s, true, history[s.id]);
+    replaysSeated++;
+    // F4: re-encountering a missed hand NEXT TO its contrast partner is the
+    // highest-value juxtaposition — seat the partner (fresh deal, no replay
+    // tag) when one is eligible. Shares the 1-pair-per-session cap.
+    seatContrastPartner(s);
   }
 
   // 2 — unseen, weakest skills first (red before yellow), capped per skill
   // and per the preflop-street cap
   const unseen = shuffle(pool.filter((s) => !history[s.id] && !pickedIds.has(s.id)));
   let weakPicked = 0;
+  // F4: within each tier, PREFER pair members (pass 1) over the rest (pass 2) —
+  // pairing only ever triggers off a weak-slot or replay seat, and leaving it
+  // to shuffle luck fired pairs in only ~1-3 of 40 sessions. Preference, not a
+  // guarantee: all caps and the 1-pair session cap still apply, and pass 2
+  // keeps any pass-1 skip fully eligible.
   for (const tier of ['red', 'yellow']) {
-    for (const s of unseen) {
-      if (weakPicked >= WEAK_SLOT_TARGET || picked.length >= length) break;
-      if (pickedIds.has(s.id)) continue;
-      if (skills[s.skill]?.rating !== tier) continue;
-      if ((skillCount[s.skill] ?? 0) >= MAX_PER_SKILL) continue;
-      if (preBlocked(s)) continue;
-      take(s);
-      weakPicked++;
-      // R4: juxtapose this weak-skill hand with its contrast partner.
-      seatContrastPartner(s);
+    for (const preferPaired of [true, false]) {
+      for (const s of unseen) {
+        if (weakPicked >= WEAK_SLOT_TARGET || picked.length >= length) break;
+        if (preferPaired && !partnersOf.has(s.id)) continue;
+        if (pickedIds.has(s.id)) continue;
+        if (skills[s.skill]?.rating !== tier) continue;
+        if ((skillCount[s.skill] ?? 0) >= MAX_PER_SKILL) continue;
+        if (preBlocked(s)) continue;
+        take(s);
+        weakPicked++;
+        // R4: juxtapose this weak-skill hand with its contrast partner.
+        seatContrastPartner(s);
+      }
     }
   }
 
@@ -265,12 +320,18 @@ function localDateFrom(value) {
  * The per-scenario ladder state (remediating / rung / lastMissConfident) is
  * derived here so it rebuilds identically from live play and from replayed
  * `sessions` rows:
- *   - a miss (re)enters the ladder at rung 0 and records whether it was a
- *     confident (fast) miss;
+ *   - a miss (re)enters the ladder at rung 0, bumps the lifetime `misses`
+ *     count, and records whether it was a confident (fast) miss;
  *   - a SPACED correct (a different calendar day from the last sighting) is one
- *     retrieval up the ladder — GRADUATION_TARGET of them clears it. A same-day
- *     correct is massed practice and doesn't advance (R2);
+ *     retrieval up the ladder — the GRADED target (2 for a once-missed hand, 3
+ *     for a repeat offender) clears it. A same-day correct is massed practice
+ *     and doesn't advance (R2);
  *   - a partial is neutral (neither advances nor resets).
+ *
+ * `misses` is lifetime and derived — historyFromSessions rebuilds it by replay,
+ * so there's no schema change. It stays UNDEFINED for legacy/pre-graded entries
+ * until the next real miss re-establishes it (the graduation check treats
+ * undefined as a repeat offender — the conservative default).
  */
 export function applyHandsToHistory(history, hands, sessionNo, sessionDate = null) {
   const next = { ...history };
@@ -280,16 +341,20 @@ export function applyHandsToHistory(history, hands, sessionNo, sessionDate = nul
     let remediating = isRemediating(prev);
     let rung = prev?.rung ?? 0;
     let lastMissConfident = prev?.lastMissConfident ?? false;
+    let misses = prev?.misses; // undefined for legacy / never-missed entries
 
     if (h.result === 'incorrect') {
       remediating = true;
       rung = 0;
       lastMissConfident = isConfidentMiss(h.decisionMs);
+      misses = (misses ?? 0) + 1;
     } else if (h.result === 'correct' && remediating) {
       // Missing dates on either side (legacy rows) → treat as spaced, since we
       // can't prove massing.
       const spaced = !sessionDate || !prev?.lastSeenDate || sessionDate !== prev.lastSeenDate;
-      if (spaced && ++rung >= GRADUATION_TARGET) {
+      // `misses` here is still the incoming (pre-hand) lifetime count, so an
+      // entry that entered remediation with no `misses` field grades at 3.
+      if (spaced && ++rung >= graduationTargetFor(misses)) {
         remediating = false;
         rung = 0;
         lastMissConfident = false;
@@ -304,6 +369,7 @@ export function applyHandsToHistory(history, hands, sessionNo, sessionDate = nul
       remediating,
       rung,
       lastMissConfident,
+      misses,
     };
   }
   return next;

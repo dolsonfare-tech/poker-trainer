@@ -8,6 +8,25 @@
 
 ## F1 · HIGH — The graduation ladder can't keep up with a leaky player
 
+> **FIXED July 19, 2026 — graded target + surge slot. See CLAUDE.md (the "F1 (graduation-ladder drain)" roadmap entry + the "Sessions are dealt by the session builder" durable bullet). Two `spacedrep.js` levers, zero schema change: (1) GRADED graduation target — a once-missed hand clears on 2 spaced corrects (`GRADUATION_TARGET_FIRST`), a repeat offender still needs 3 (`GRADUATION_TARGET_REPEAT`), driven by a derived lifetime `misses` count; (2) SURGE slot — replay cap 1→2 while the pool-scoped remediation queue exceeds `SURGE_QUEUE_THRESHOLD`=8. Option (b) from the original recommendation was already true (natural re-deals credit graduation via the `remediating` flag, not the replay flag) — no work needed.**
+>
+> **Acceptance (`--trials=10`, end-queue median, baseline → after; bar = 70% of baseline):**
+>
+> | Persona | baseline | bar (≤) | after | verdict |
+> |---|---|---|---|---|
+> | Conflict Avoider | 34 | 23.8 | ~26 | **MISS — structural (see below)** |
+> | Improver | 31 | 21.7 | 17 | ✓ |
+> | Confident-misser | 26 | 18.2 | 16 | ✓ |
+> | Positional | 23 | 16.1 | 14 | ✓ |
+> | Overaggressor | 22 | 15.4 | 14 | ✓ |
+> | Exploitable Reg | 20 | 14.0 | 13 | ✓ |
+> | Gambler | 19 | 13.3 | 13 | ✓ |
+> | Steady strong | — | 10 | 6 | ✓ |
+>
+> **7 of 8 clear.** The surge does nearly all the work (graded-target-only, surge off: leak personas barely move — they become repeat offenders fast; the FIRST=2 mainly helps recovering/strong players). **Conflict Avoider is a genuine structural miss, not a tuning gap:** at 55% accuracy it perpetually re-misses its raise-correct hands, which reset to rung 0 rather than graduate, so its queue carries an un-graduatable core. Its queue is chronically >> any tested threshold, so the surge is *always on* for it and lower thresholds (tested 6/8/10) don't help; it averages only 1.65 replays/session (also due-availability-bound by the R1 intervals). Draining CA further needs >2 slots or graduation-proximity-aware surge targeting — both outside this task's spec. **Schema-v2 not regressed** (direction personas keep/improve correct diagnosis, zero opposite-direction labels). Threshold chosen at 8 (below the 10–15 starting range) because it clears Exploitable Reg robustly where 10 does not, with the same CA/Gambler outcome. `SURGE_QUEUE_THRESHOLD` is the tuning knob; the harness remains the regression bed.
+
+_Original finding, for the record:_
+
 At realistic accuracy (60–68% — every leak persona), misses join the remediation queue faster than the one-replay-per-session slot can drain them:
 
 | Persona (acc) | Remediating queue at s40, median (min–max) |
@@ -66,6 +85,8 @@ Three compounding causes, all visible in the data: (1) **direction-blindness** �
 The Improver goes from 45% to 85% accuracy over 40 sessions. His IQ (median across trials): **s10 = 68 → s20 = 64 → s30 = 65 → s40 = 69** — it *drops* through his fastest-improving stretch and ends where it started, because lifetime-average accuracy is dominated by his early sessions; near s40 his recent-5-session accuracy is 84% while the display says 69. This upgrades this morning's "accepted residual" on the continuous-IQ fix into a measured product problem: the one number on the dashboard is structurally unable to reward the exact player journey the product exists to create. **Recommendation:** recency-weighted accuracy (e.g., last ~30 attempts per skill, derivable from the existing `sessions` rows — zero schema change) as a post-launch task; this harness's Improver curve is the acceptance test.
 
 ## F4 · MEDIUM — Contrast pairs fire too rarely to matter yet
+
+> **FIXED July 19, 2026 (Fable) — two trigger changes in `spacedrep.js`:** weak slots now PREFER pair members among equally-eligible candidates, and a resurfaced miss deals its contrast partner adjacent (fresh deal, no replay tag — re-encountering a missed hand next to its contrast is the highest-value juxtaposition). The 1-pair-per-session cap stays. Pair firing rose from median 1–3/40 sessions to ~4–14/40 (most personas 5–12; the Conflict Avoider's deep queue makes replay-pairing especially productive at ~14; the Overaggressor lags at ~2–4 — his weak-skill mix intersects few authored pairs, a content note for future pair authoring, not a scheduler gap). One real bug caught by the harness during this work: when BOTH halves of a pair were due misses under an F1 surge, the partner could be dealt twice (fresh + replay) — the replay loop now skips already-seated hands; regression test pins it. Verified: zero duplicate ids, zero wrong direction labels, schema/queue metrics unregressed, invariants held.
 
 R4 delivered a pair in a median of **1–3 sessions out of 40** (~5%). Mechanism: pairing only triggers when a *weak-skill slot* happens to seat one of the ~11 beginner pair-member hands. The 1-pair-per-session cap is not the bottleneck — trigger frequency is. Cheap options if the founders want pairs felt: have the weak-slot picker *prefer* pair members among equally-eligible candidates, and/or extend pairing to the replay slot (re-encountering a missed hand next to its contrast partner is arguably the highest-value juxtaposition). Both are small `spacedrep.js` changes, measurable here.
 

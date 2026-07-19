@@ -38,7 +38,7 @@ Date = class extends RealDate {
 };
 
 const { default: SCENARIOS } = await import('../src/data/scenarios.js');
-const { buildSession } = await import('../src/utils/spacedrep.js');
+const { buildSession, SURGE_QUEUE_THRESHOLD } = await import('../src/utils/spacedrep.js');
 const userStorage = await import('../src/utils/userStorage.js');
 const { applySessionResults, createUser, derivePokerScore, toLocalDateString } = userStorage;
 
@@ -143,6 +143,13 @@ function runPersona(persona, difficulty) {
     if (si > 0 && si % 5 !== 4) DAY_OFFSET++;
     const today = toLocalDateString(new Date());
 
+    // Pre-session pool-scoped remediation depth — the surge trigger. A 2-replay
+    // session is only legal when this exceeded SURGE_QUEUE_THRESHOLD.
+    const remediatingInPool = pool.filter((s) => {
+      const h = user.scenarioHistory?.[s.id];
+      return h && (h.remediating ?? h.lastResult === 'incorrect');
+    }).length;
+
     const dealt = buildSession(pool, {
       history: user.scenarioHistory ?? {},
       skills: user.skills,
@@ -156,7 +163,11 @@ function runPersona(persona, difficulty) {
     const ids = dealt.map((s) => s.id);
     if (new Set(ids).size !== ids.length) violation(persona.key, si, `duplicate ids: ${ids}`);
     const replays = dealt.filter((s) => s.replay);
-    if (replays.length > 1) violation(persona.key, si, `${replays.length} replay hands`);
+    // Up to 2 replays allowed, but only via the surge — and the surge is only
+    // legal when the pre-session pool-scoped queue exceeded the threshold.
+    if (replays.length > 2) violation(persona.key, si, `${replays.length} replay hands`);
+    if (replays.length === 2 && remediatingInPool <= SURGE_QUEUE_THRESHOLD)
+      violation(persona.key, si, `surged to 2 replays with queue ${remediatingInPool} <= ${SURGE_QUEUE_THRESHOLD}`);
     for (const r of replays) {
       const h = user.scenarioHistory[r.id];
       if (!h || !(h.remediating ?? h.lastResult === 'incorrect'))

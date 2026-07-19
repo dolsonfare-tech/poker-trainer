@@ -3,7 +3,9 @@
 // the history rebuild from `sessions` rows.
 import {
   buildSession, applyHandsToHistory, historyFromSessions,
-  RESURFACE_COOLDOWN_SESSIONS, LADDER_SESSIONS, GRADUATION_TARGET, CONFIDENT_MISS_MS,
+  RESURFACE_COOLDOWN_SESSIONS, LADDER_SESSIONS, GRADUATION_TARGET,
+  GRADUATION_TARGET_FIRST, GRADUATION_TARGET_REPEAT, SURGE_QUEUE_THRESHOLD,
+  CONFIDENT_MISS_MS,
 } from './spacedrep';
 
 // Minimal scenario stand-ins — the builder reads id, skill, and board (the
@@ -133,12 +135,13 @@ test('applyHandsToHistory records result, session number, and ladder state', () 
   const h1 = applyHandsToHistory({}, [{ scenarioId: 'sc_1', result: 'incorrect' }], 3, '2026-07-03');
   expect(h1.sc_1).toEqual({
     seen: 1, lastResult: 'incorrect', lastSeenAt: 3, lastSeenDate: '2026-07-03',
-    remediating: true, rung: 0, lastMissConfident: false,
+    remediating: true, rung: 0, lastMissConfident: false, misses: 1,
   });
   const h2 = applyHandsToHistory(h1, [{ scenarioId: 'sc_1', result: 'correct' }], 6, '2026-07-06');
   expect(h2.sc_1).toEqual({
     seen: 2, lastResult: 'correct', lastSeenAt: 6, lastSeenDate: '2026-07-06',
-    remediating: true, rung: 1, lastMissConfident: false, // one spaced correct: advanced, not cleared
+    // one spaced correct on a once-missed hand: rung 1, cleared at 2 (target FIRST)
+    remediating: true, rung: 1, lastMissConfident: false, misses: 1,
   });
   expect(h1.sc_1.lastResult).toBe('incorrect'); // pure — input untouched
   expect(h1.sc_1.rung).toBe(0);                  // and the rung++ didn't mutate it
@@ -168,17 +171,57 @@ test('historyFromSessions derives the ladder + confident flag from created_at ro
 
 // ── R1 graduation ladder ────────────────────────────────────────────────────
 
-test('a miss needs GRADUATION_TARGET spaced corrects to graduate off the ladder', () => {
+// GRADED graduation target (F1 fix): a hand missed ONCE clears on 2 spaced
+// corrects; a repeat offender needs 3. GRADUATION_TARGET is the repeat/back-
+// compat knob (= 3).
+test('a once-missed hand graduates after GRADUATION_TARGET_FIRST (2) spaced corrects', () => {
+  expect(GRADUATION_TARGET_FIRST).toBe(2);
   expect(GRADUATION_TARGET).toBe(3);
   expect(LADDER_SESSIONS).toEqual([2, 5, 13]);
   let h = applyHandsToHistory({}, [{ scenarioId: 'sc_1', result: 'incorrect' }], 1, '2026-07-01');
-  expect(h.sc_1).toMatchObject({ remediating: true, rung: 0 });
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 0, misses: 1 });
   h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 3, '2026-07-03');
-  expect(h.sc_1).toMatchObject({ remediating: true, rung: 1 });
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 1 }); // one spaced correct
   h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 8, '2026-07-08');
-  expect(h.sc_1).toMatchObject({ remediating: true, rung: 2 });
-  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 21, '2026-07-21');
-  expect(h.sc_1).toMatchObject({ remediating: false, rung: 0 }); // cleared
+  expect(h.sc_1).toMatchObject({ remediating: false, rung: 0 }); // cleared at 2 (first-timer)
+});
+
+test('a twice-missed (repeat) hand needs GRADUATION_TARGET_REPEAT (3) spaced corrects', () => {
+  expect(GRADUATION_TARGET_REPEAT).toBe(3);
+  // Miss, one spaced correct (rung 1), miss again → repeat offender (misses 2).
+  let h = applyHandsToHistory({}, [{ scenarioId: 'sc_1', result: 'incorrect' }], 1, '2026-07-01');
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 3, '2026-07-03');
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'incorrect' }], 5, '2026-07-05');
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 0, misses: 2 });
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 8, '2026-07-08');
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 1 });
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 13, '2026-07-13');
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 2 }); // still not cleared at 2
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 27, '2026-07-27');
+  expect(h.sc_1).toMatchObject({ remediating: false, rung: 0 }); // cleared at 3 (repeat)
+});
+
+test('a legacy remediating entry with no misses field is graded as a repeat (3)', () => {
+  // Pre-graded history: remediating, no `misses` field → conservative target 3.
+  const legacy = {
+    sc_1: { seen: 2, lastResult: 'correct', lastSeenAt: 3, lastSeenDate: '2026-07-03', remediating: true, rung: 0 },
+  };
+  let h = applyHandsToHistory(legacy, [{ scenarioId: 'sc_1', result: 'correct' }], 6, '2026-07-06');
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 1 });
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 9, '2026-07-09');
+  expect(h.sc_1).toMatchObject({ remediating: true, rung: 2 }); // undefined misses → not cleared at 2
+  h = applyHandsToHistory(h, [{ scenarioId: 'sc_1', result: 'correct' }], 13, '2026-07-13');
+  expect(h.sc_1).toMatchObject({ remediating: false, rung: 0 }); // cleared at 3
+});
+
+test('misses survives the historyFromSessions rebuild', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', hands: [{ scenarioId: 'sc_1', result: 'incorrect' }] },
+    { created_at: '2026-07-03T12:00:00Z', hands: [{ scenarioId: 'sc_1', result: 'correct' }] },
+    { created_at: '2026-07-05T12:00:00Z', hands: [{ scenarioId: 'sc_1', result: 'incorrect' }] },
+  ];
+  const history = historyFromSessions(rows, 3);
+  expect(history.sc_1).toMatchObject({ remediating: true, rung: 0, misses: 2 });
 });
 
 test('a new miss resets the ladder to rung 0', () => {
@@ -301,10 +344,160 @@ test('a confident miss jumps the resurface queue and tags the replay', () => {
   expect(replays[0].confidentMiss).toBe(true);  // and the flag rides the object
 });
 
+// ── F1 surge slot (dynamic replay cap) ─────────────────────────────────────
+// When the POOL-SCOPED remediation queue is deeper than SURGE_QUEUE_THRESHOLD,
+// the builder deals up to TWO comeback hands (both honest-labeled) so a leaky
+// player's backlog can actually drain; at/below the threshold it stays at one.
+
+// A remediating entry that is NOT yet due (interval hasn't elapsed) — counts
+// toward queue depth but can't resurface.
+const remediatingNotDue = (lastSeenAt) => ({
+  seen: 1, lastResult: 'incorrect', lastSeenDate: '2026-07-29',
+  lastSeenAt, remediating: true, rung: 0, misses: 1,
+});
+// A remediating entry that IS due (old sighting, different day).
+const dueMiss = (lastSeenAt, confident = false) => ({
+  seen: 1, lastResult: 'incorrect', lastSeenDate: '2026-07-01',
+  lastSeenAt, remediating: true, rung: 0, misses: 1, lastMissConfident: confident,
+});
+
+// Both tests build the pool-scoped remediation queue relative to the imported
+// SURGE_QUEUE_THRESHOLD, so re-tuning the constant never breaks them. The queue
+// = (due hands) + (not-yet-due remediating fillers); depth strictly ABOVE the
+// threshold surges to 2, depth AT the threshold stays at 1.
+const notDueFillers = (count) =>
+  Object.fromEntries(Array.from({ length: count }, (_, i) => [`nd_${i}`, remediatingNotDue(29)]));
+const notDuePool = (count) => Array.from({ length: count }, (_, i) => mk(`nd_${i}`, SKILLS[i % 8]));
+const unseenFillers = (count) => Array.from({ length: count }, (_, i) => mk(`f_${i}`, SKILLS[i % 8]));
+
+test('a deep queue (>threshold) surges to two replays, both tagged, honoring confident-first order', () => {
+  // 3 due + (threshold - 2) not-due = threshold + 1 remediating → strictly above.
+  const fillerCount = SURGE_QUEUE_THRESHOLD - 2;
+  const pool = [
+    mk('D_conf', 'aggression'), mk('D_old', 'betsize'), mk('D_new', 'bluffing'), // 3 due
+    ...notDuePool(fillerCount),
+    ...unseenFillers(12),
+  ];
+  const history = {
+    D_conf: dueMiss(5, true),   // confident — jumps the queue
+    D_old: dueMiss(3, false),   // oldest ordinary
+    D_new: dueMiss(8, false),   // newest ordinary — the one left out (only 2 slots)
+    ...notDueFillers(fillerCount),
+  };
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, {
+      history, sessionsCompleted: 30, currentDate: '2026-07-30', length: 5,
+    });
+    const replays = session.filter(s => s.replay);
+    expect(replays).toHaveLength(2);
+    const ids = replays.map(s => s.id).sort();
+    expect(ids).toEqual(['D_conf', 'D_old']); // confident + oldest ordinary; D_new left out
+    expect(session.find(s => s.id === 'D_conf').confidentMiss).toBe(true);
+    expect(session.filter(s => s.replay).every(s => s.replay === true)).toBe(true); // both tagged
+  }
+});
+
+test('a queue at the threshold stays at exactly one replay', () => {
+  // 2 due + (threshold - 2) not-due = exactly threshold remediating → NOT above.
+  const fillerCount = SURGE_QUEUE_THRESHOLD - 2;
+  const pool = [
+    mk('D_conf', 'aggression'), mk('D_old', 'betsize'), // 2 due
+    ...notDuePool(fillerCount),
+    ...unseenFillers(12),
+  ];
+  const history = {
+    D_conf: dueMiss(5, true),
+    D_old: dueMiss(3, false),
+    ...notDueFillers(fillerCount),
+  };
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, {
+      history, sessionsCompleted: 30, currentDate: '2026-07-30', length: 5,
+    });
+    const replays = session.filter(s => s.replay);
+    expect(replays).toHaveLength(1);
+    expect(replays[0].id).toBe('D_conf'); // confident wins the single slot
+  }
+});
+
 // ── R4 contrast-pair-aware dealing ─────────────────────────────────────────
 // Tests pass their own `contrastPairs` so they're independent of the authored
 // real map; the mock ids never intersect the real CONTRAST_PAIRS, which is also
 // why every test above (using the default map) sees zero pairing.
+
+// ── F4: pair-trigger frequency (replay pairing + weak-slot preference) ──────
+
+test('both pair members due under a surge never duplicate — the partner seat wins (F4 regression)', () => {
+  // sc_154/sc_160-style case: BOTH halves of a pair are due misses and the
+  // queue is surging (2 replay slots). Replay 1 seats its partner fresh; the
+  // partner must NOT then be dealt again as replay 2 — the next due miss gets
+  // the slot instead.
+  const fillerCount = SURGE_QUEUE_THRESHOLD + 1;
+  const pool = [
+    mk('PA', 'potodds'), mk('PB', 'reads'),  // the pair — both due
+    mk('D3', 'betsize'),                     // the next due miss in line
+    ...notDuePool(fillerCount),
+    ...unseenFillers(10),
+  ];
+  const history = {
+    PA: dueMiss(2, true),   // confident — wins slot 1
+    PB: dueMiss(3, false),
+    D3: dueMiss(4, false),
+    ...notDueFillers(fillerCount),
+  };
+  const contrastPairs = [['PA', 'PB']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, {
+      history, sessionsCompleted: 30, currentDate: '2026-07-30', contrastPairs, length: 5,
+    });
+    const ids = session.map(x => x.id);
+    expect(new Set(ids).size).toBe(ids.length); // no duplicates, ever
+    expect(session.filter(x => x.replay)).toHaveLength(2); // surge still delivers 2 replays
+    expect(ids).toContain('PA');
+    expect(ids).toContain('PB');
+  }
+});
+
+test('a resurfaced miss deals its contrast partner adjacent, without the replay tag (F4)', () => {
+  const pool = [
+    mk('RX', 'potodds'),   // the due miss
+    mk('RY', 'reads'),     // its contrast partner — fresh deal, not a replay
+    ...unseenFillers(12),
+  ];
+  const history = { RX: dueMiss(3, false) };
+  const contrastPairs = [['RX', 'RY']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, {
+      history, sessionsCompleted: 30, currentDate: '2026-07-30', contrastPairs, length: 5,
+    });
+    const rx = session.find(s => s.id === 'RX');
+    const ry = session.find(s => s.id === 'RY');
+    expect(rx?.replay).toBe(true);
+    expect(ry).toBeTruthy();
+    expect(ry.replay).toBeUndefined(); // the partner is a fresh deal, honest labeling intact
+    const ix = session.findIndex(s => s.id === 'RX');
+    const iy = session.findIndex(s => s.id === 'RY');
+    expect(Math.abs(ix - iy)).toBe(1);
+  }
+});
+
+test('weak slots prefer pair members over equally-eligible candidates (F4)', () => {
+  // Six equally-eligible red-skill candidates; only PM has a partner. Without
+  // the preference pass PM is picked ~1/3 of the time — with it, always.
+  const pool = [
+    mk('PM', 'potodds'), // the pair member
+    ...Array.from({ length: 5 }, (_, i) => mk(`np_${i}`, 'potodds')),
+    mk('PP', 'reads'),   // PM's partner
+    ...unseenFillers(10),
+  ];
+  const skills = { potodds: { rating: 'red', attempts: 10, correct: 2 } };
+  const contrastPairs = [['PM', 'PP']];
+  for (let run = 0; run < 30; run++) {
+    const session = buildSession(pool, { skills, contrastPairs, length: 5 });
+    expect(session.some(s => s.id === 'PM')).toBe(true);
+    expect(session.some(s => s.id === 'PP')).toBe(true);
+  }
+});
 
 test('a weak-skill pick with a contrast partner deals both, adjacent, within length 5', () => {
   const pool = [
