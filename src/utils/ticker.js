@@ -25,6 +25,14 @@ const STREET_BY_BOARD = { 0: 'PRE', 3: 'FLOP', 4: 'TURN', 5: 'RIVER' };
 
 // All scenarios are authored against a $1/$2 six-max cash game.
 export const TICKER_STAKES = '$1/$2 CASH · 6-MAX';
+// Effective stacks joined the data model July 20, 2026 (three forcing votes:
+// sc_172's all-in had no stack field, the M10 implied-odds dispute was
+// unevaluable without depth, and the Expert tier is defined by it). One
+// display site only (never repeat info): the stakes row.
+const stakesFor = (scenario) =>
+  scenario?.effectiveStacks
+    ? `${TICKER_STAKES} · $${scenario.effectiveStacks} EFFECTIVE`
+    : TICKER_STAKES;
 
 const basePos = (label) => String(label ?? '').split(' ')[0];
 
@@ -68,7 +76,7 @@ export function villainSummary(scenario) {
 
 export function buildTicker(scenario) {
   if (Array.isArray(scenario.actionHistory)) {
-    return { stakes: TICKER_STAKES, rows: scenario.actionHistory };
+    return { stakes: stakesFor(scenario), rows: scenario.actionHistory };
   }
 
   const rows = [];
@@ -132,5 +140,5 @@ export function buildTicker(scenario) {
     rows.push({ street: STREET_BY_BOARD[boardLen] ?? 'NOW', segments });
   }
 
-  return { stakes: TICKER_STAKES, rows };
+  return { stakes: stakesFor(scenario), rows };
 }

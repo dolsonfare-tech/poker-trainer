@@ -94,6 +94,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 1,
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -133,6 +134,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 2,
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -173,6 +175,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 3,
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -212,6 +215,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 4,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -251,6 +255,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 5,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -290,6 +295,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 6,
+    effectiveStacks: 200,
     tableContext: 'Caught bluffing three times this session.',
     skill: 'opponent',
     difficulty: 'intermediate',
@@ -330,6 +336,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 7,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -369,6 +376,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 8,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -410,6 +418,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 9,
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -449,6 +458,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 10,
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -489,6 +499,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 11,
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -528,6 +539,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 12,
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -568,6 +580,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 13,
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -611,6 +624,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 14,
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -654,6 +668,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 15,
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -697,6 +712,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 16,
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -740,6 +756,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 17,
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -783,6 +800,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 18,
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -826,6 +844,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 19,
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -869,6 +888,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 20,
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -912,6 +932,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 21,
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -955,6 +976,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 22,
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -998,6 +1020,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 23,
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1041,6 +1064,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 24,
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1084,6 +1108,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 25,
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1123,6 +1148,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 26,
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1162,6 +1188,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 27,
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1202,6 +1229,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 28,
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1247,6 +1275,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 29,
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1290,6 +1319,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 30,
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1333,6 +1363,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 31,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1376,6 +1407,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 32,
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1419,6 +1451,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 33,
+    effectiveStacks: 300, // deep — the $220 3-bet line commits ~$251; ~150bb spot
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1464,6 +1497,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_034',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1504,6 +1538,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_035',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1546,6 +1581,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_036',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1586,6 +1622,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_037',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1626,6 +1663,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_038',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1666,6 +1704,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_039',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1706,6 +1745,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_040',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1751,6 +1791,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_041',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1796,6 +1837,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_042',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1841,6 +1883,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_043',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -1881,6 +1924,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_044',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1927,6 +1971,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_045',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -1967,6 +2012,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_046',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2007,6 +2053,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_047',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2053,6 +2100,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_048',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2093,6 +2141,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_049',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2133,6 +2182,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_050',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2178,6 +2228,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_051',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2224,6 +2275,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_052',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2270,6 +2322,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_053',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2310,6 +2363,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_054',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2356,6 +2410,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_055',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2396,6 +2451,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_056',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2442,6 +2498,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_057',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2487,6 +2544,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_058',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2532,6 +2590,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_059',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2572,6 +2631,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_060',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2612,6 +2672,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_061',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2652,6 +2713,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_062',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2698,6 +2760,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_063',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2738,6 +2801,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_064',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2783,6 +2847,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_065',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2824,6 +2889,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_066',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2864,6 +2930,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_067',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -2904,6 +2971,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_068',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2950,6 +3018,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_069',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -2990,6 +3059,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_070',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3030,6 +3100,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_071',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3075,6 +3146,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_072',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3115,6 +3187,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_073',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3155,6 +3228,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_074',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3201,6 +3275,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_075',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3246,6 +3321,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_076',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3286,6 +3362,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_077',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3326,6 +3403,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_078',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3372,6 +3450,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_079',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3415,6 +3494,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_080',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3460,6 +3540,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_081',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3500,6 +3581,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_082',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3540,6 +3622,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_083',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -3588,6 +3671,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_084',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3630,6 +3714,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_085',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3670,6 +3755,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_086',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3716,6 +3802,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_087',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3760,6 +3847,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_088',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3804,6 +3892,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_089',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3845,6 +3934,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_090',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3891,6 +3981,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_091',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3936,6 +4027,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_092',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -3980,6 +4072,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_093',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4024,6 +4117,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_094',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4069,6 +4163,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_095',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4115,6 +4210,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_096',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4155,6 +4251,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_097',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4197,6 +4294,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_098',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4237,6 +4335,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_099',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4283,6 +4382,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_100',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4328,6 +4428,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_101',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4374,6 +4475,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_102',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4418,6 +4520,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_103',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4462,6 +4565,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_104',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4508,6 +4612,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_105',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4553,6 +4658,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_106',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4593,6 +4699,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_107',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -4635,6 +4742,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_108',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4675,6 +4783,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_109',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4718,6 +4827,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_110',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4759,6 +4869,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_111',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4803,6 +4914,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_112',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4848,6 +4960,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_113',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4892,6 +5005,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_114',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4936,6 +5050,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_115',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -4980,6 +5095,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_116',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5025,6 +5141,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_117',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5065,6 +5182,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_118',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5110,6 +5228,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_119',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5154,6 +5273,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_120',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5200,6 +5320,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_121',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5246,6 +5367,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_122',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5291,6 +5413,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_123',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5339,6 +5462,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_124',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5381,6 +5505,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_125',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5421,6 +5546,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_126',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5465,6 +5591,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_127',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5509,6 +5636,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_128',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5551,6 +5679,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_129',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5595,6 +5724,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_130',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5636,6 +5766,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_131',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -5676,6 +5807,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_132',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5720,6 +5852,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_133',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5763,6 +5896,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_134',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5808,6 +5942,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_135',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5854,6 +5989,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_136',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5899,6 +6035,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_137',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5943,6 +6080,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_138',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -5989,6 +6127,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_139',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6037,6 +6176,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_140',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6081,6 +6221,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_141',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6122,6 +6263,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_142',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6168,6 +6310,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_143',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6209,6 +6352,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_144',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6255,6 +6399,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_145',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6297,6 +6442,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_146',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6343,6 +6489,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_147',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6387,6 +6534,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_148',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6433,6 +6581,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_149',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6479,6 +6628,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_150',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6521,6 +6671,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_151',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6565,6 +6716,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_152',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6608,6 +6760,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_153',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6654,6 +6807,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_154',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6698,6 +6852,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_155',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6747,6 +6902,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_156',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6791,6 +6947,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_157',
+    effectiveStacks: 200,
     skill: 'preflop',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6831,6 +6988,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_158',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6871,6 +7029,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_159',
+    effectiveStacks: 200,
     skill: 'position',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -6915,6 +7074,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_160',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'beginner',
     weight: 1.0,
@@ -6960,6 +7120,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_161',
+    effectiveStacks: 200,
     skill: 'aggression',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7004,6 +7165,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_162',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'beginner',
     weight: 1.0,
@@ -7049,6 +7211,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_163',
+    effectiveStacks: 200,
     skill: 'betsize',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7094,6 +7257,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_164',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'beginner',
     weight: 1.0,
@@ -7138,6 +7302,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_165',
+    effectiveStacks: 200,
     skill: 'bluffing',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7182,6 +7347,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_166',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'beginner',
     weight: 1.0,
@@ -7226,6 +7392,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_167',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7271,6 +7438,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_168',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'beginner',
     weight: 1.0,
@@ -7316,6 +7484,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_169',
+    effectiveStacks: 200,
     skill: 'reads',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7362,6 +7531,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_170',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
@@ -7404,6 +7574,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_171',
+    effectiveStacks: 200,
     skill: 'opponent',
     difficulty: 'intermediate',
     weight: 1.0,
@@ -7453,6 +7624,7 @@ const SCENARIOS = [
 
   mkScenario({
     id: 'sc_172',
+    effectiveStacks: 200,
     skill: 'potodds',
     difficulty: 'intermediate',
     weight: 1.0,

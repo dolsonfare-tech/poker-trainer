@@ -316,7 +316,7 @@ Phase 2 timeline estimate: 6–8 weeks with a developer.
 
 - Scale up total scenario count significantly
 - Build out Expert difficulty scenarios
-- Add effective stack sizes to the scenario data model and gameplay display — players can't evaluate all-in or big-raise decisions without stack depth. Requires authoring a stack value for all existing scenarios.
+- ✅ **Effective stacks in the data model + display — DONE July 20, 2026** (pulled forward from Phase 1.6 after three forcing votes: sc_172's stack-less all-in, the M10 implied-odds dispute, the Expert card's identity). Every scenario now states `effectiveStacks` explicitly (house default **200 = 100bb** at $1/$2; sc_33 overridden to 300 — its $220 3-bet line commits ~$251, caught by the new audit rule on its first run). Display: ONE site (never repeat info) — the ticker stakes row reads `$1/$2 CASH · 6-MAX · $200 EFFECTIVE` via `stakesFor()` in ticker.js, both buildTicker paths; missing field degrades to the plain stakes line. Enforcement: audit rule `stacks` (R10) — field required ≥ $40, no option bet or toCall may exceed the stack (ERROR), pot > 2×stacks+dead WARNs. Pinned in jest (SituationTicker) + the e2e smoke geometry pass. **When authoring: state the depth; bets must fit inside it — the auditor checks. Expert-tier stack-dependent spots are now expressible.** Follow-up NOT done on purpose: adding stacks to the coach-read prompt is a prompt change → requires a live `eval:coach` re-run; do it as its own pass.
 - Expert-level features TBD based on Phase 1.5 findings
 - Lock in Bundle ID (cannot change after App Store submission — decide here, before Phase 3)
 - SME review of all scenario gradings (carried from Phase 1.0)

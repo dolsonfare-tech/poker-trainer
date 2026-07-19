@@ -22,6 +22,8 @@ export default async function run({ browser, baseURL, check }) {
       check('hero cards visible', !!hero && hero.width > 40, hero ? `w=${hero.width}` : 'missing');
       const opts = await page.locator('.sc2-actions button').count();
       check('2-3 action options rendered', opts >= 2 && opts <= 3, `n=${opts}`);
+      const stakes = await page.textContent('.st-stakes');
+      check('stakes row states the effective stack', /\$\d+ EFFECTIVE/.test(stakes), stakes.trim());
       const ticker = await page.locator('.st-ticker').boundingBox();
       check('hand-so-far ticker visible', !!ticker && ticker.width > 300, ticker ? `w=${ticker.width}` : 'missing');
       // villain bubble must not cover the hero cards or the board (July 18 class)

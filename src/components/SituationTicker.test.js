@@ -24,3 +24,8 @@ test('no tableContext, no FILE line', () => {
   render(<SituationTicker scenario={{ ...base, tableContext: null }} />);
   expect(screen.queryByText('FILE')).not.toBeInTheDocument();
 });
+
+test('the stakes row carries the effective stack when the scenario states one', () => {
+  render(<SituationTicker scenario={{ ...base, effectiveStacks: 200, tableContext: null }} />);
+  expect(screen.getByText(/\$200 EFFECTIVE/)).toBeInTheDocument();
+});

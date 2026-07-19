@@ -210,6 +210,27 @@ for (const s of SCENARIOS) {
   }
 }
 
+// ── R10 effective stacks (July 20, 2026): every scenario states its effective
+//    stack (house default $200 = 100bb at $1/$2), and the hand's money must
+//    fit inside it — no option bet or call can exceed the stack, and the pot
+//    can't exceed what two stacks plus dead money could build. This is the
+//    Expert-tier / all-in enabling field (sc_172, M10). ─────────────────────
+for (const s2 of SCENARIOS) {
+  const es = s2.effectiveStacks;
+  if (typeof es !== 'number' || !(es >= 40)) {
+    flag('ERROR', s2.id, 'stacks', `effectiveStacks missing or implausible (${JSON.stringify(es)}) — every scenario states its depth; house default 200`);
+    continue;
+  }
+  const toCall = Number(String(s2.toCall ?? '').replace(/[^0-9]/g, '')) || 0;
+  if (toCall > es) flag('ERROR', s2.id, 'stacks', `toCall $${toCall} exceeds effective stack $${es}`);
+  for (const o of s2.options ?? []) {
+    const amt = Number((String(o.label).match(/\$(\d+)/) || [])[1]) || 0;
+    if (amt > es) flag('ERROR', s2.id, 'stacks', `option "${o.label}" exceeds effective stack $${es}`);
+  }
+  const pot = Number(String(s2.pot ?? '').replace(/[^0-9]/g, '')) || 0;
+  if (pot > 2 * es + 15) flag('WARN', s2.id, 'stacks', `pot $${pot} exceeds two effective stacks ($${es}) + dead money — check the depth`);
+}
+
 // ── Comprehension audit C1 (July 19, 2026): session-level reads must be ON
 //    SCREEN at decision time. If a body references table history ("tonight",
 //    "this session", "his file") the scenario needs a tableContext — bodies
