@@ -221,6 +221,6 @@ test('guest summary: coach teaser + sign-in gate instead of chaining', () => {
   />);
   expect(screen.getByText(/comes with a free account/)).toBeInTheDocument();
   expect(screen.queryByText(/Deal Next Session/)).not.toBeInTheDocument();
-  screen.getByText(/Sign in free to keep playing/).click();
+  screen.getByText(/Sign In Free to Keep Playing/).click();
   expect(onGuestSignIn).toHaveBeenCalledWith('summary');
 });

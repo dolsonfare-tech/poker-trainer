@@ -59,7 +59,11 @@ const POSITION_NAMES = {
 
 /**
  * Villain identity + position relation, for the table bubble / tell strip.
- * Returns { label, monogram, pos, posName, actsAfter } or null.
+ * Returns { label, monogram, pos, posName, actsAfter, actsAfterPost, isPostflop }
+ * or null. `actsAfter` is the CURRENT street's relation: preflop order is the
+ * positions-array index order (blinds act last), postflop order is
+ * POSTFLOP_ORDER (blinds act first) — the two can disagree, which is exactly
+ * the positional fact the relation line must not blur.
  */
 export function villainSummary(scenario) {
   const positions = scenario.positions ?? [];
@@ -69,9 +73,15 @@ export function villainSummary(scenario) {
   const label = scenario.villain?.label ?? 'Unknown';
   const monogram = label.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   const pos = basePos(positions[villainIdx].label);
-  const actsAfter = heroIdx !== -1 &&
+  const isPostflop = (scenario.board?.length ?? 0) > 0;
+  const actsAfterPost = heroIdx !== -1 &&
     POSTFLOP_ORDER[villainIdx] > POSTFLOP_ORDER[heroIdx];
-  return { label, monogram, pos, posName: POSITION_NAMES[pos] ?? pos, actsAfter };
+  const actsAfterPre = heroIdx !== -1 && villainIdx > heroIdx;
+  return {
+    label, monogram, pos, posName: POSITION_NAMES[pos] ?? pos,
+    actsAfter: isPostflop ? actsAfterPost : actsAfterPre,
+    actsAfterPost, isPostflop,
+  };
 }
 
 export function buildTicker(scenario) {

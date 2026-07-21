@@ -35,12 +35,12 @@ test('new user completes first session and sees the summary', async () => {
   // Deciding brings up the feedback overlay over the table
   fireEvent.click(container.querySelector('.act-btn'));
   expect(container.querySelector('.sc2-overlay')).toBeInTheDocument();
-  fireEvent.click(await screen.findByText(/Next Scenario/));
+  fireEvent.click(await screen.findByText(/Next Hand/));
 
   // Play the remaining 4 hands — always pick the first action button
   for (let i = 1; i < 5; i++) {
     fireEvent.click(container.querySelector('.act-btn'));
-    const next = await screen.findByText(i < 4 ? /Next Scenario/ : /See My Results/);
+    const next = await screen.findByText(i < 4 ? /Next Hand/ : /See My Results/);
     fireEvent.click(next);
   }
 

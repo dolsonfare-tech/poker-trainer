@@ -40,7 +40,7 @@ test('guest plays one free session, then every path gates to sign-in with progre
 
   for (let i = 0; i < 5; i++) {
     fireEvent.click(container.querySelector('.act-btn'));
-    const next = await screen.findByText(i < 4 ? /Next Scenario/ : /See My Results/);
+    const next = await screen.findByText(i < 4 ? /Next Hand/ : /See My Results/);
     fireEvent.click(next);
   }
 
@@ -49,7 +49,7 @@ test('guest plays one free session, then every path gates to sign-in with progre
   expect(await screen.findByText('Session Complete')).toBeInTheDocument();
   expect(screen.getByText(/comes with a free account/)).toBeInTheDocument();
   expect(screen.queryByText(/Deal Next Session/)).not.toBeInTheDocument();
-  expect(screen.getByText(/Sign in free to keep playing/)).toBeInTheDocument();
+  expect(screen.getByText(/Sign In Free to Keep Playing/)).toBeInTheDocument();
 
   // Progress lives in the untagged cache (= the migration payload shape)
   const stored = JSON.parse(localStorage.getItem('cr_user'));

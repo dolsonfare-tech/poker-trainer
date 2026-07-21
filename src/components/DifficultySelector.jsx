@@ -6,21 +6,23 @@ const DIFFICULTIES = [
     label: 'Beginner',
     sublabel: 'Learning the game',
     desc: 'Starting hands, clear prices, honest opponents',
-    icon: '🂡',
+    icon: '♣',
     disabled: false,
   },
   {
     key: 'intermediate',
     label: 'Intermediate',
     sublabel: 'Solid foundation',
-    desc: 'Line-reading, sizing tells, tougher prices',
+    desc: 'Line-reading, sizing tells, tougher prices — on the clock',
     icon: '♠',
     disabled: false,
   },
   {
     key: 'expert',
     label: 'Expert',
-    sublabel: 'Coming soon',
+    // Availability lives in the badge — the sublabel keeps the player-identity
+    // register of its siblings.
+    sublabel: 'Playing for a living',
     desc: 'Deep stacks, multi-street plans, villains who adjust',
     icon: '⚡',
     disabled: true,
@@ -43,7 +45,7 @@ export default function DifficultySelector({ onSelect, initialDifficulty }) {
         <div className="ds-pre-label">Before we begin</div>
         <div className="ds-title">Choose your level</div>
         <div className="ds-subtitle">
-          Scenarios are filtered to match your level. Pick honest — the coaching works better when it's calibrated to you.
+          Hands are dealt to match your level. Pick honest — the coaching works better when it's calibrated to you.
         </div>
       </div>
 

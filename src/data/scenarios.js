@@ -60,7 +60,10 @@ const mkScenario = ({ choices, ...rest }) => {
 };
 // ─── Villain label lookup ─────────────────────────────────────────────────
 
-const VILLAIN_LABELS = {
+// Exported so the VillainGuide derives its archetype list from the same map
+// the dealer uses — the guide can never drift from what the game deals
+// (same pattern as skills/schemas living in constants.js).
+export const VILLAIN_LABELS = {
   'aggressive':      'Aggressive Regular',
   'passive':         'Passive Player',
   'tight':           'Tight Recreational',
@@ -1212,7 +1215,7 @@ const SCENARIOS = [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'correct', title: "Reading a Nit's Flush Range", emoji: '✅',
-        fb: "Correct fold. A nit betting AKQ monotone has a J-high flush or better — your 8-high flush is almost never good. The pot odds are irrelevant when your outs are dead.",
+        fb: "Clear fold. A nit betting AKQ monotone has a J-high flush or better — your 8-high flush is almost never good. The pot odds are irrelevant when your outs are dead.",
       },
       {
         val: 'call', label: 'Call $40', icon: '📞', cls: 'call',

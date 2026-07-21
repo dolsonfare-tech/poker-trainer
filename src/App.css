@@ -139,25 +139,6 @@ body {
   margin-top: 7px;
 }
 
-/* ── Progress Dots ── */
-.progress {
-  display: flex;
-  justify-content: center;
-  gap: 7px;
-  margin-bottom: 20px;
-}
-
-.pdot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.12);
-  transition: all 0.3s;
-}
-
-.pdot.done    { background: var(--gold); }
-.pdot.current { background: var(--cream); transform: scale(1.4); }
-
 /* ── Scenario Card ── */
 .scenario-card {
   background: rgba(27,61,42,0.55);
@@ -695,9 +676,9 @@ body {
 }
 
 /* Session-level read line (comprehension audit C1) — visually distinct from the
-   action rows: the FILE label in gold, the read in the cream register. */
+   action rows: the READ label in gold, the read in the cream register. */
 .st-tablefile { border-top: 1px dashed rgba(200,168,75,0.25); margin-top: 4px; padding-top: 5px; }
-.st-file-label { color: var(--gold); }
+.st-read-label { color: var(--gold); }
 .st-tablefile > span:last-child { color: rgba(242,237,227,0.85); }
 
 .st-you { color: var(--green); }
@@ -1013,6 +994,15 @@ body {
   font-size: 0.65rem;
   letter-spacing: 0.12em;
 }
+
+/* The session-level read on a review card — same gold register as the READ
+   line in the gameplay ticker (they carry the same information). */
+.ss-hr-read {
+  display: block;
+  font-size: 0.74rem;
+  color: rgba(226,198,106,0.85);
+}
+.ss-hr-read .ss-hr-ctx-label { color: rgba(200,168,75,0.6); }
 
 .ss-hr-situation {
   font-size: 0.74rem;
@@ -2035,6 +2025,23 @@ body {
 .db-schema-quote::before { content: '❝ '; color: var(--gold); font-style: normal; }
 .db-schema-quote::after  { content: ' ❞'; color: var(--gold); font-style: normal; }
 
+/* Quiet path from the diagnosis to the guide's Schemas tab — the schema is
+   the product's core claim; explaining it shouldn't require finding the
+   header "i" and then discovering the right tab. */
+.db-schema-guide-link {
+  display: block;
+  margin: 10px auto 0;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: rgba(200,168,75,0.8);
+  cursor: pointer;
+}
+.db-schema-guide-link:hover { color: var(--gold); }
+
 /* Provisional tag under the schema while the diagnosis is still low-confidence
    (< 10 sessions). Label styling per font rules: JetBrains Mono, quiet. */
 .db-schema-early {
@@ -2291,6 +2298,18 @@ body {
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(242,237,227,0.35);
+}
+
+/* Empty-state hint under a stat chip (new-user Poker IQ) — quieter than the
+   label so the dash reads as "not yet", not "broken". */
+.db-stat-hint {
+  display: block;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.28);
+  margin-top: 2px;
 }
 
 .db-stat-divider {
@@ -3703,7 +3722,12 @@ body {
 .tr-title { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.85rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold, #c8a84b); }
 .tr-count { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.72rem; color: rgba(242,237,227,0.5); }
 .tr-context { font-style: italic; color: rgba(242,237,227,0.85); border-left: 2px solid rgba(200,168,75,0.5); padding: 6px 12px; margin-bottom: 14px; line-height: 1.5; }
-.tr-replay { background: rgba(0,0,0,0.25); border: 1px solid rgba(242,237,227,0.12); border-radius: var(--radius-md, 10px); padding: 12px 14px; margin-bottom: 16px; cursor: default; }
+.tr-replay { background: rgba(0,0,0,0.25); border: 1px solid rgba(242,237,227,0.12); border-radius: var(--radius-md, 10px); padding: 12px 14px; margin-bottom: 16px; cursor: pointer; }
+.tr-skip-hint { text-align: center; font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(242,237,227,0.45); padding-top: 6px; }
+.tr-question-lead { margin-bottom: 12px; }
+.tr-scored-note { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.7rem; color: rgba(242,237,227,0.45); margin: -14px 0 22px; }
+.tr-guide-link { display: block; margin-top: 10px; padding: 4px 0; background: none; border: none; color: rgba(200,168,75,0.85); font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.08em; cursor: pointer; }
+.tr-guide-link:hover { color: var(--gold, #c8a84b); }
 .tr-row { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid rgba(242,237,227,0.06); animation: slideUp 0.3s ease; }
 .tr-row:last-child { border-bottom: none; }
 .tr-street { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.7rem; color: var(--gold, #c8a84b); min-width: 86px; padding-top: 2px; white-space: nowrap; }

@@ -1,10 +1,6 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
-import { derivePokerScore, milestoneProximity, parseCoachRead } from '../utils/userStorage';
+import { derivePokerScore, milestoneProximity, parseCoachRead, MILESTONE_NAMES } from '../utils/userStorage';
 import AdSlot from './AdSlot';
-
-// Streak milestones fold into the "day secured" line — the moment the day is
-// earned is the right place to acknowledge the run.
-const STREAK_MILESTONES = { 7: ' — a full week', 30: ' — a full month', 100: ' — a hundred days' };
 
 const DIFFICULTY_LABELS = {
   beginner:     'Beginner',
@@ -68,6 +64,15 @@ function HandReview({ entry, move = null }) {
         {scenario.body && (
           <span className="ss-hr-situation">{personalizeBody(scenario)}</span>
         )}
+        {/* The gold READ line renders at decision time (comprehension audit
+            C1) — ~10 scenarios grade on it, so the review card must carry it
+            too or the player reviews a grading justified by invisible info. */}
+        {scenario.tableContext && (
+          <span className="ss-hr-read">
+            <span className="ss-hr-ctx-label">Read: </span>
+            {scenario.tableContext}
+          </span>
+        )}
         {scenario.pot && (
           <span className="ss-hr-pot">
             <span className="ss-hr-ctx-label">Pot: </span>
@@ -80,7 +85,7 @@ function HandReview({ entry, move = null }) {
         <div className="ss-hr-play">
           <span className="ss-hr-play-label">You played</span>
           <span className="ss-hr-play-name" style={{ color: RESULT_COLOR[result] }}>
-            {choiceVal ? (userOption?.label ?? choiceVal) : 'Time ran out'}
+            {choiceVal ? (userOption?.label ?? choiceVal) : 'Action passed you by'}
           </span>
         </div>
         {showCorrect && (
@@ -176,7 +181,9 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
         </div>
       ) : streakSecured != null && (
         <div className="ss-streak-line">
-          🔥 Day {streakSecured} secured{STREAK_MILESTONES[streakSecured] ?? ''}
+          {/* Milestone wording shared with the dashboard via MILESTONE_NAMES —
+              the moment the day is earned is the right place to acknowledge it */}
+          🔥 Day {streakSecured} secured{MILESTONE_NAMES[streakSecured] ? ` — ${MILESTONE_NAMES[streakSecured]}` : ''}
           {(() => {
             const prox = milestoneProximity(streakSecured);
             return prox
@@ -193,10 +200,10 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
         <div className="ss-coach-label">🧠 Coach's Read</div>
         {guest ? (
           <div className="ss-coach-text ss-coach-guest">
-            Your coach's read — a personalized pattern analysis of your session — comes with a free account. Sign in and these results carry over.
+            Your Coach's Read — a personalized pattern analysis of your session — comes with a free account. Sign in and these results carry over.
           </div>
         ) : coachLoading ? (
-          <div className="thinking">Reading your session...</div>
+          <div className="thinking">Reading your session…</div>
         ) : coachLimited ? (
           <div className="ss-coach-text ss-coach-limit">
             You've used today's {COACH_DAILY_LIMIT} Coach's Reads — they refresh tomorrow.
@@ -268,7 +275,7 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
           gate here instead: sign in (free) to keep playing. */}
       {guest ? (
         <button className="restart-btn" onClick={() => onGuestSignIn('summary')}>
-          Sign in free to keep playing →
+          Sign In Free to Keep Playing →
         </button>
       ) : (
         <button className="restart-btn" onClick={onPlayAgain}>Deal Next Session →</button>

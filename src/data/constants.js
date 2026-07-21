@@ -88,19 +88,13 @@ export const PLAYER_SCHEMAS = [
   },
 ];
 
-export const COLOR_LABELS = {
-  green:  'Strong · 75%+ accuracy',
-  yellow: 'Work On · 50–74% accuracy',
-  red:    'Weak · below 50% accuracy',
-  gray:   'Unrated · fewer than 5 attempts',
-};
-
 export const RATING_ORDER = ['red', 'yellow', 'green'];
 
 // ─── Rating engine: true accuracy ─────────────────────────────────────────
-// Ratings are derived from correct/attempts, matching COLOR_LABELS exactly:
-// green ≥75%, yellow 50–74%, red <50%, gray until 5 attempts.
-// A 'partial' (acceptable but not optimal) answer earns half credit.
+// Ratings are derived from correct/attempts: green ≥75%, yellow 50–74%,
+// red <50%, gray until 5 attempts. A 'partial' (acceptable but not optimal)
+// answer earns half credit. These thresholds are engine internals — never
+// surface them in user-facing copy (the guide shows status names only).
 
 export const MIN_RATED_ATTEMPTS = 5;
 

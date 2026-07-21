@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { track } from '../utils/analytics';
+import { hasSupabase } from '../utils/supabase';
 
 export default function UsernameEntry({ onSubmit, defaultName, onSwitchAccount }) {
   const [name, setName]   = useState(defaultName ?? '');
@@ -28,7 +29,14 @@ export default function UsernameEntry({ onSubmit, defaultName, onSwitchAccount }
       <div className="ue-card">
         <div className="ue-logo">Check<em>Raise</em></div>
         <div className="ue-title">Create your profile</div>
-        <div className="ue-subtitle">Your stats and progress will be saved to this device.</div>
+        {/* In Supabase mode this screen appears AFTER sign-in — progress saves
+            to the account, not the device. The device wording is only true in
+            localStorage-only mode. */}
+        <div className="ue-subtitle">
+          {hasSupabase
+            ? 'Your stats and progress save to your account and follow you on any device.'
+            : 'Your stats and progress will be saved to this device.'}
+        </div>
         <form className="ue-form" onSubmit={handleSubmit}>
           <input
             className={`ue-input${error ? ' ue-input-error' : ''}`}

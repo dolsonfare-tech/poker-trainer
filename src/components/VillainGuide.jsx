@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, PLAYER_SCHEMAS } from '../data/constants';
-import { BALANCED_SCHEMA } from '../utils/userStorage';
+import { BALANCED_SCHEMA, STUDENT_SCHEMA } from '../utils/userStorage';
+import { VILLAIN_LABELS } from '../data/scenarios';
 
 // The 8 measured skills, sourced from the shared constants so the guide can
 // never drift from what the dashboard and rating engine use.
@@ -18,16 +19,27 @@ const SKILL_RATINGS = [
   { key: 'gray',   sym: '○', label: 'Unrated' },
 ];
 
-const VILLAINS = [
-  { label: 'Tight Nit', desc: 'Only plays premium hands from any position. If they bet or raise, they almost always have it — never bluff them off a hand.' },
-  { label: 'Calling Station', desc: 'Calls everything down with any pair or draw. Bluffing is useless — bet big for value and never try to make them fold.' },
-  { label: 'Maniac', desc: 'Raises and re-raises constantly with a wide range including bluffs. Let them bluff into you and trap with strong hands.' },
-  { label: 'Aggressive Regular', desc: "Skilled and unpredictable — applies pressure with both value and bluffs. Respect their bets but don't over-fold." },
-  { label: 'Passive Player', desc: 'Checks and calls rather than betting or raising. When they do bet, take it seriously — it usually means a strong hand.' },
-  { label: 'Loose Recreational', desc: 'Plays too many hands and chases draws. Bet for value liberally and avoid fancy bluffs — they call too wide to fold.' },
-  { label: 'Tight Recreational', desc: "Plays few hands but lacks the skill to fold once they're in. Easy to read but hard to get value from when they fold pre." },
-  { label: 'Unknown', desc: 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.' },
-];
+// Descriptions keyed by the dealer's villain TYPE keys; labels come from
+// VILLAIN_LABELS so the list can't drift from what the game actually deals.
+// VILLAIN_ORDER is pedagogical (confusable pairs near each other), not the
+// map's insertion order.
+const VILLAIN_DESCS = {
+  'nit': 'Only plays premium hands from any position. If they bet or raise, they almost always have it — never bluff them off a hand.',
+  'calling-station': 'Calls everything down with any pair or draw. Bluffing is useless — bet big for value and never try to make them fold.',
+  'maniac': 'Raises and re-raises constantly with a wide range including bluffs. Let them bluff into you and trap with strong hands.',
+  'aggressive': "Skilled and unpredictable — applies pressure with both value and bluffs. Respect their bets but don't over-fold.",
+  'passive': 'Checks and calls rather than betting or raising. When they do bet, take it seriously — it usually means a strong hand.',
+  'loose': 'Plays too many hands and chases draws. Bet for value liberally and avoid fancy bluffs — they call too wide to fold.',
+  'tight': "Plays few hands preflop, but once they connect with a flop they struggle to let go. Value-bet them firmly when you have them beat — and don't bluff a player who has finally made a hand.",
+  'unknown': 'No read yet — play solid fundamentals, take notes on their tendencies, and adjust once you have a sample size.',
+};
+const VILLAIN_ORDER = ['nit', 'calling-station', 'maniac', 'aggressive', 'passive', 'loose', 'tight', 'unknown'];
+Object.keys(VILLAIN_LABELS).forEach((k) => {
+  if (!VILLAIN_DESCS[k]) console.warn(`VillainGuide: no description for villain type '${k}'`);
+});
+const VILLAINS = VILLAIN_ORDER
+  .filter((k) => VILLAIN_LABELS[k])
+  .map((k) => ({ label: VILLAIN_LABELS[k], desc: VILLAIN_DESCS[k] }));
 
 // Schema content comes from the shared definitions the diagnosis engine
 // uses — the guide can never drift from what the dashboard diagnoses.
@@ -41,22 +53,34 @@ const GLOSSARY = [
   { label: 'Pot Odds', desc: 'The ratio of the current pot size to the cost of calling — used to decide if chasing a draw is mathematically profitable.' },
   { label: 'Fold Equity', desc: 'The added value of a bet or raise that comes from the chance your opponent will fold, giving you the pot without a showdown.' },
   { label: 'Range', desc: 'The full set of hands a player could have in a given situation, rather than one specific hand.' },
-  { label: 'Position', desc: 'Where you sit relative to the dealer button. BTN (Button) acts last and has the most advantage. CO (Cutoff) is one seat right of BTN. HJ (Hijack) is two seats right. UTG (Under the Gun) acts first preflop. SB (Small Blind) and BB (Big Blind) act last preflop but first postflop.' },
+  { label: 'Position', desc: 'Where you sit relative to the dealer button — the later you act, the more information you have. The Positions tab maps every seat.' },
   { label: 'Check-raise', desc: 'Checking when it is your turn, then raising after your opponent bets — a deceptive move used with strong hands or as a bluff.' },
   { label: 'Value Bet', desc: 'A bet made with a strong hand to get called by weaker hands and win more money.' },
   { label: 'Bluff', desc: 'A bet or raise made with a weak hand to make your opponent fold a better hand.' },
   { label: 'Donk Bet', desc: 'A bet made out of position into the player who had the betting initiative — considered unusual and often signals a strong hand or a mistake.' },
   { label: 'Slow Play', desc: 'Playing a strong hand passively by checking or calling instead of betting, to disguise its strength and trap your opponent.' },
-  { label: 'ICM', desc: 'Independent Chip Model — a tournament concept where chip value is not linear, so decisions near the money or final table require extra caution.' },
+  { label: 'Effective Stacks', desc: 'The smaller of the two stacks in a hand — the most either player can win or lose. The stakes row shows it on every hand (e.g. $200 EFFECTIVE).' },
+  { label: 'Limp', desc: 'Just calling the big blind preflop instead of raising. Generally a weak play — raise or fold instead.' },
+  { label: 'Equity', desc: "Your hand's share of the pot if the cards were run out right now — a hand with 40% equity wins the pot 40% of the time." },
+  { label: 'Outs', desc: 'The unseen cards that improve your hand to a likely winner — a flush draw has nine outs, an open-ended straight draw eight, a gutshot four.' },
+  { label: 'Gutshot', desc: 'An inside straight draw needing one exact rank to fill — four outs, half the outs of an open-ended draw.' },
+  { label: 'Kicker', desc: 'The side card that breaks ties between matching hands — on an ace-high board, A♥K♦ beats A♠Q♣ because the king outkicks the queen.' },
+  { label: 'Barrel', desc: 'Continuing to bet street after street as the aggressor — a second barrel on the turn, a third barrel on the river.' },
+  { label: 'Overbet', desc: 'A bet larger than the pot. It polarizes the bettor: usually a very strong hand or a bluff, rarely anything in between.' },
+  { label: 'Semi-bluff', desc: 'A bet or raise with a drawing hand — you can win two ways: everyone folds now, or your draw arrives when called.' },
+  { label: 'Float', desc: 'Calling a bet with a weak hand, planning to take the pot away on a later street when the aggressor gives up.' },
+  { label: 'Blocker', desc: 'A card in your hand that makes an opponent less likely to hold a certain hand — holding the A♠ blocks the nut flush on a spade board.' },
+  { label: 'Implied Odds', desc: 'Money you expect to win on later streets if your draw hits. Good implied odds can make a call profitable even when the immediate pot odds fall short.' },
+  { label: 'Wet / Dry Board', desc: 'A wet board offers many draws (9♥8♥7♦); a dry board offers few (K♠7♦2♣). Wet boards call for bigger bets and closer attention.' },
 ];
 
 const POSITIONS = [
   { label: 'BTN — Button', desc: 'The best seat at the table — you act last on every postflop street, giving you maximum information before making a decision.' },
   { label: 'SB — Small Blind', desc: 'Posts half the big blind and acts first on every postflop street — the worst position postflop despite acting late preflop.' },
-  { label: 'BB — Big Blind', desc: 'Posts the full big blind, acts last preflop, and acts second on every postflop street — better than SB but still out of position most of the time.' },
+  { label: 'BB — Big Blind', desc: 'Posts the full big blind and acts last preflop — but postflop you act first unless the Small Blind is still in the hand. Out of position most of the time.' },
   { label: 'UTG — Under the Gun', desc: "First to act preflop, the worst position — you have no information about anyone else's hand when you make your decision." },
-  { label: 'HJ — Hijack', desc: 'Two seats right of the Button — decent position with three players still to act behind you preflop.' },
-  { label: 'CO — Cutoff', desc: 'One seat right of the Button, second best position — you act last preflop if the BTN folds and nearly last postflop.' },
+  { label: 'HJ — Hijack', desc: 'Two seats right of the Button — decent position, but four players (CO, BTN, and both blinds) still act behind you preflop.' },
+  { label: 'CO — Cutoff', desc: 'One seat right of the Button, second-best position — postflop, only the Button acts after you.' },
 ];
 
 // ─── Position diagram ─────────────────────────────────────────────────────
@@ -118,10 +142,12 @@ function PositionDiagram() {
   );
 }
 
-// `focus` (a villain label, e.g. "Tight Nit") opens the guide scrolled to and
-// highlighting that archetype — tapping the villain read on the table.
-export default function VillainGuide({ onClose, focus }) {
-  const [activeTab, setActiveTab] = useState('players');
+// `focus` (a villain label like "Tight Nit", or a schema name like "The
+// Results Thinker") opens the guide scrolled to and highlighting that item;
+// `initialTab` picks the starting tab (the dashboard schema card opens
+// 'schemas'; the villain read on the table opens the default 'players').
+export default function VillainGuide({ onClose, focus, initialTab }) {
+  const [activeTab, setActiveTab] = useState(initialTab ?? 'players');
   const focusRef = useRef(null);
 
   useEffect(() => {
@@ -151,11 +177,13 @@ export default function VillainGuide({ onClose, focus }) {
 
         <div className="vg-header">
           <div className="vg-title">Reference Guide</div>
-          <button className="vg-close" onClick={onClose}>✕</button>
+          <button className="vg-close" aria-label="Close guide" onClick={onClose}>✕</button>
         </div>
 
         <div className="vg-tabs">
-          <button className={`vg-tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>Player Types</button>
+          {/* Named to match the in-game "Villain Read" label a tapping player
+              is coming from (founder, July 20, 2026). */}
+          <button className={`vg-tab ${activeTab === 'players' ? 'active' : ''}`} onClick={() => setActiveTab('players')}>Villains</button>
           <button className={`vg-tab ${activeTab === 'schemas' ? 'active' : ''}`} onClick={() => setActiveTab('schemas')}>Schemas</button>
           <button className={`vg-tab ${activeTab === 'skills' ? 'active' : ''}`} onClick={() => setActiveTab('skills')}>Skills</button>
           <button className={`vg-tab ${activeTab === 'positions' ? 'active' : ''}`} onClick={() => setActiveTab('positions')}>Positions</button>
@@ -186,7 +214,7 @@ export default function VillainGuide({ onClose, focus }) {
 
         <div className="vg-list">
           {items.map((item, i) => {
-            const focused = activeTab === 'players' && focus === item.label;
+            const focused = (activeTab === 'players' || activeTab === 'schemas') && focus === item.label;
             return (
               <div
                 key={i}
@@ -203,7 +231,9 @@ export default function VillainGuide({ onClose, focus }) {
 
         {activeTab === 'schemas' && (
           <p className="vg-positions-note">
-            No single leak dominant? You'll show as <strong>{BALANCED_SCHEMA.name}</strong> — no one weakness is driving your mistakes.
+            No single leak dominant? You'll show as <strong>{BALANCED_SCHEMA.name}</strong> when
+            most of your rated skills are strong — no one weakness is driving your mistakes —
+            or <strong>{STUDENT_SCHEMA.name}</strong> while your whole game is still developing.
           </p>
         )}
       </div>

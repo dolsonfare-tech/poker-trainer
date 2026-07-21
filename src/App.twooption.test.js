@@ -14,6 +14,7 @@ jest.mock('./data/scenarios', () => {
   const actual = jest.requireActual('./data/scenarios');
   return {
     __esModule: true,
+    ...actual, // keep named exports (VILLAIN_LABELS, CONTRAST_PAIRS) intact
     default: actual.default.filter((s) => s.id === 'sc_172'),
   };
 });

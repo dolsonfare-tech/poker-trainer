@@ -30,7 +30,7 @@ const dash = (props) => render(
 
 test('milestone proximity shows under the stats row when within reach (M3)', () => {
   dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5 } });
-  expect(screen.getByText(/5 day streak · 2 more to a full week ★/)).toBeInTheDocument();
+  expect(screen.getByText(/2 more to a full week ★/)).toBeInTheDocument();
 });
 
 test('a used Rebuy states it plainly after the session (M1)', () => {

@@ -141,7 +141,7 @@ export function SituationTicker({ scenario }) {
           player couldn't see. If a scenario has a table file, it shows here. */}
       {scenario.tableContext && (
         <span className="st-row st-tablefile">
-          <span className="st-street st-file-label">READ</span>
+          <span className="st-street st-read-label">READ</span>
           <span>{scenario.tableContext}</span>
         </span>
       )}
@@ -412,7 +412,15 @@ function seatPercent(i, heroIdx) {
 const CHIP_GLYPHS = { fold: '✕', call: '=', raise: '↑' };
 
 function relationLine(v) {
-  return `${v.posName} · acts ${v.actsAfter ? 'after' : 'before'} you, every street`;
+  const now = v.actsAfter ? 'after' : 'before';
+  // Postflop the relation holds for every remaining street; preflop it can
+  // flip once the flop comes (blinds act last pre, first post) — only claim
+  // "every street" when it's actually true.
+  if (v.isPostflop || v.actsAfter === v.actsAfterPost) {
+    return `${v.posName} · acts ${now} you, every street`;
+  }
+  const post = v.actsAfterPost ? 'after' : 'before';
+  return `${v.posName} · acts ${now} you now, ${post} you postflop`;
 }
 
 function TableCanvas({ scenario, onVillainInfo }) {
@@ -456,7 +464,7 @@ function TableCanvas({ scenario, onVillainInfo }) {
             style={{ left: `${bx}%`, top: `calc(${anchor.y}% + 24px)` }}
             onClick={onVillainInfo ? () => onVillainInfo(v.label) : undefined}
             role={onVillainInfo ? 'button' : undefined}
-            title={onVillainInfo ? `What is a ${v.label}?` : undefined}
+            title={onVillainInfo ? `About the ${v.label}` : undefined}
           >
             <span className="sc2-bub-tail" style={{ left: `${tail}%` }} />
             <div className="sc2-bub-head">
@@ -544,7 +552,7 @@ function CanvasLayout({
           {/* Combo pill lives in reserved chrome space — it must never shove
               the table down mid-session (old ComboRing banner did) */}
           {combo >= 2 && (
-            <span className="sc2-combo" title={`${combo} correct in a row`}>🔥 ×{combo}</span>
+            <span className="sc2-combo">🔥 {combo} in a row</span>
           )}
           {showTimer && (
             <TimerRing key={currentIndex} totalSeconds={totalSeconds}
@@ -557,9 +565,15 @@ function CanvasLayout({
       <StreetBar boardLength={scenario.board ? scenario.board.length : 0} />
 
       {/* Resurfaced miss (session builder) — label the repeat honestly; the
-          comeback is the point, not a hope the player doesn't notice. */}
+          comeback is the point, not a hope the player doesn't notice. A
+          confident miss (fast + wrong, F2) gets its own line: the
+          hypercorrection case wants the player to slow down, not just retry. */}
       {scenario.replay && (
-        <div className="sc2-replay-line">↩ You missed this one before</div>
+        <div className="sc2-replay-line">
+          {scenario.confidentMiss
+            ? '⚡ You answered this fast last time — and missed. Take a beat.'
+            : '↩ You missed this one before'}
+        </div>
       )}
 
       <div className="sc2-stage">

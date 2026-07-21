@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { SKILL_NAMES } from '../data/constants';
-import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead } from '../utils/userStorage';
+import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead, SCHEMA_UNLOCK_SESSIONS } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
@@ -46,9 +46,11 @@ function StreakStatus({ user, sessionDelta }) {
   }
   const prox = milestoneProximity(streak);
   if (prox) {
+    // The stats chip directly above already shows the streak count — never
+    // repeat info; this line carries only the proximity.
     return (
       <div className="db-streak-status db-streak-proximity">
-        {streak} day streak · {prox.remaining} more to {prox.name} ★
+        {prox.remaining} more to {prox.name} ★
       </div>
     );
   }
@@ -301,12 +303,14 @@ function fmtReadDate(iso) {
   return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
-function CoachNotebook({ reads }) {
+function CoachNotebook({ reads, includeLatest = false }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(null); // index of the expanded row
-  // The newest read is the one shown in the strip above — exclude it here.
-  const past = (reads ?? []).slice(1);
-  if (past.length < 1) return null; // fewer than 2 reads total
+  // The newest read is normally the one shown in the strip above — exclude it.
+  // When there's no strip (latest session produced no read), the notebook is
+  // the only surface for the history, so include everything.
+  const past = includeLatest ? (reads ?? []) : (reads ?? []).slice(1);
+  if (past.length < 1) return null;
 
   const toggle = () => {
     const next = !open;
@@ -446,7 +450,7 @@ function UsernameEditor({ user, onRename, onClose }) {
 }
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
-export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn, onTableReads }) {
+export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn, onTableReads, onSchemaInfo }) {
   const [editingName, setEditingName] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -530,12 +534,15 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             )}
           </div>
         )}
-        <div className="db-plan-pill">
-          <span className="db-plan-label">Free Plan</span>
-          <button className="db-gopro-btn" onClick={teasePro} disabled={proTeased}>
-            {proTeased ? 'Coming soon ✨' : 'Go Pro'}
-          </button>
-        </div>
+        {/* Guests have no plan — the pill is noise until an account exists */}
+        {!guest && (
+          <div className="db-plan-pill">
+            <span className="db-plan-label">Free Plan</span>
+            <button className="db-gopro-btn" onClick={teasePro} disabled={proTeased}>
+              {proTeased ? 'Coming soon ✨' : 'Go Pro'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* No streak nag for guests — the gate means they couldn't act on it */}
@@ -549,13 +556,23 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             {pokerScore != null && <span className="db-stat-denom">/100</span>}
           </span>
           <span className="db-stat-label">poker iq</span>
+          {/* Same empty-state copy the summary uses — the dashboard is where
+              a new player stares first, so don't leave a bare dash. */}
+          {pokerScore == null && (
+            <span className="db-stat-hint">unlocks as skills get rated</span>
+          )}
         </div>
-        <div className="db-stat-divider" />
-        <div className="db-stat-chip">
-          <span className="db-stat-num">{displayStreak}</span>
-          <span className="db-stat-flame">🔥</span>
-          <span className="db-stat-label">day streak</span>
-        </div>
+        {/* Guests play one gated session — a streak they can't extend is noise */}
+        {!guest && (
+          <>
+            <div className="db-stat-divider" />
+            <div className="db-stat-chip">
+              <span className="db-stat-num">{displayStreak}</span>
+              <span className="db-stat-flame">🔥</span>
+              <span className="db-stat-label">day streak</span>
+            </div>
+          </>
+        )}
         <div className="db-stat-divider" />
         <div className="db-stat-chip">
           <span className="db-stat-num db-stat-cream">{displaySessions}</span>
@@ -588,12 +605,23 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                   {sessionsCompleted < 10 && (
                     <div className="db-schema-early">Early read · sharpens as you play</div>
                   )}
+                  {onSchemaInfo && (
+                    <button
+                      className="db-schema-guide-link"
+                      onClick={() => onSchemaInfo(schema.name)}
+                    >
+                      About this read →
+                    </button>
+                  )}
                 </>
               ) : (
                 <div className="db-schema-locked">
                   <div className="db-schema-locked-icon">🔒</div>
+                  {/* "player profile" not "archetype" — archetype is the VILLAIN
+                      word (Table Reads, the guide); the player-side diagnosis
+                      must not borrow it. */}
                   <div className="db-schema-locked-text">
-                    {`Play ${5 - sessionsCompleted} more session${5 - sessionsCompleted !== 1 ? 's' : ''} to unlock your archetype`}
+                    {`Play ${SCHEMA_UNLOCK_SESSIONS - sessionsCompleted} more session${SCHEMA_UNLOCK_SESSIONS - sessionsCompleted !== 1 ? 's' : ''} to unlock your player profile`}
                   </div>
                 </div>
               )}
@@ -609,10 +637,17 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
               full-width strip beneath the schema/ledger columns. Compact:
               headline + watch-for + focus chip; the per-hand evidence rows
               stay on the summary. Legacy prose reads clamp to ~2 lines. */}
-          {coachNote && (() => {
-            const parsed = parseCoachRead(coachNote.body);
+          {(() => {
+            // The notebook must not vanish just because the LATEST session
+            // produced no read (daily cap / failed call) — with no strip it
+            // becomes the only surface for the history, latest included.
+            const readsCount = user.coachReads?.length ?? 0;
+            const showNotebook = !guest && readsCount >= (coachNote ? 2 : 1);
+            if (!coachNote && !showNotebook) return null;
+            const parsed = coachNote ? parseCoachRead(coachNote.body) : null;
             return (
               <div className="db-profile-read">
+                {coachNote && (<>
                 <div className="db-profile-read-label">Last Session's Read</div>
                 {parsed?.structured ? (
                   <>
@@ -640,7 +675,10 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                     <span className="db-profile-read-focus-skill">{coachNote.focus}</span>
                   </div>
                 )}
-                {!guest && <CoachNotebook reads={user.coachReads} />}
+                </>)}
+                {showNotebook && (
+                  <CoachNotebook reads={user.coachReads} includeLatest={!coachNote} />
+                )}
               </div>
             );
           })()}
@@ -663,7 +701,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         )}
         {onTableReads && (
           <button className="db-tablereads-link" onClick={onTableReads}>
-            🂠 Table Reads — watch a hand, name the player
+            🃏 Table Reads — watch a hand, name the player
             <span className="db-tr-beta">Free during beta</span>
           </button>
         )}

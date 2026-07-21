@@ -60,16 +60,6 @@ function dealScenarios(difficulty, user, pendingHands = []) {
   });
 }
 
-function ProgressDots({ total, current }) {
-  return (
-    <div className="progress">
-      {Array.from({ length: total }, (_, i) => (
-        <div key={i} className={`pdot ${i < current ? 'done' : i === current ? 'current' : ''}`} />
-      ))}
-    </div>
-  );
-}
-
 // ─── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
   // null = closed; {} = open on default tab; { focus } = open scrolled to
@@ -554,10 +544,10 @@ export default function App() {
           Check<em>Raise</em>
         </div>
         <div className="tagline">Find the leak in your game</div>
-        <button className="info-btn" onClick={() => setGuide({})}>i</button>
+        <button className="info-btn" aria-label="Open the guide" onClick={() => setGuide({})}>i</button>
       </div>
 
-      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} />}
+      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} initialTab={guide.tab} />}
 
       {screen === 'dashboard' && (
         <Dashboard
@@ -570,11 +560,21 @@ export default function App() {
           guestGated={isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS}
           onGuestSignIn={handleGuestSignIn}
           onTableReads={!isGuest ? handleOpenTableReads : undefined}
+          onSchemaInfo={(name) => {
+            track('schema_guide_opened', { schema: name });
+            setGuide({ focus: name, tab: 'schemas' });
+          }}
         />
       )}
 
       {screen === 'tablereads' && (
-        <TableReads onBack={() => setScreen('dashboard')} />
+        <TableReads
+          onBack={() => setScreen('dashboard')}
+          onOpenGuide={(label) => {
+            track('villain_guide_opened', { from: 'tablereads' });
+            setGuide({ focus: label });
+          }}
+        />
       )}
 
       {screen === 'difficulty' && (
@@ -605,7 +605,6 @@ export default function App() {
             />
           ) : (
             <>
-              <ProgressDots total={shuffledScenarios.length} current={currentIndex} />
               <ScenarioCard
                 scenario={scenario}
                 currentIndex={currentIndex}
@@ -621,7 +620,7 @@ export default function App() {
                 feedback={feedback}
                 timedOut={timedOut}
                 onNext={handleNext}
-                nextLabel={currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
+                nextLabel={currentIndex < shuffledScenarios.length - 1 ? 'Next Hand →' : 'See My Results →'}
                 onVillainInfo={(label) => {
                   track('villain_guide_opened', { from: 'table', scenario_id: scenario.id });
                   setGuide({ focus: label });
@@ -640,7 +639,7 @@ export default function App() {
                   />
                   {!feedback.loading && (
                     <button className="next-btn" onClick={handleNext}>
-                      {currentIndex < shuffledScenarios.length - 1 ? 'Next Scenario →' : 'See My Results →'}
+                      {currentIndex < shuffledScenarios.length - 1 ? 'Next Hand →' : 'See My Results →'}
                     </button>
                   )}
                 </>

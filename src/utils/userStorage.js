@@ -130,10 +130,18 @@ export function saveLastDifficulty(difficulty) {
 const TABLE_READS_KEY = 'cr_table_reads_stats';
 
 export function loadTableReadsStats() {
+  // Backward-compatible: legacy objects (attempts/correct only) load fine; the
+  // dealing-memory fields (correctIds, lastDeck) default to empty arrays.
   try {
     const raw = JSON.parse(localStorage.getItem(TABLE_READS_KEY));
-    return { attempts: raw?.attempts ?? 0, correct: raw?.correct ?? 0 };
-  } catch { return { attempts: 0, correct: 0 }; }
+    return {
+      attempts: raw?.attempts ?? 0,
+      correct: raw?.correct ?? 0,
+      seenIds: Array.isArray(raw?.seenIds) ? raw.seenIds : [],
+      correctIds: Array.isArray(raw?.correctIds) ? raw.correctIds : [],
+      lastDeck: Array.isArray(raw?.lastDeck) ? raw.lastDeck : [],
+    };
+  } catch { return { attempts: 0, correct: 0, seenIds: [], correctIds: [], lastDeck: [] }; }
 }
 
 export function saveTableReadsStats(stats) {
@@ -349,13 +357,17 @@ const DIRECTION_MISS_MATERIALITY = 0.15;
 const DIRECTION_DOMINANCE = 0.4;
 const DIRECTION_SEV_SCALE = 2.5;
 
+// Sessions before a schema can be diagnosed — exported so the dashboard's
+// locked-card countdown can never drift from the engine's actual gate.
+export const SCHEMA_UNLOCK_SESSIONS = 5;
+
 // v2 hybrid: DIRECTION schemas score from the direction tally, SKILL schemas
 // from absolute per-skill weakness; the single highest severity across all six
 // wins (below the bar or tied → Balanced). `directionTally` is optional — when
 // missing/undefined the direction schemas simply can't qualify, so skill
 // schemas + Balanced still work (legacy callers, pre-v2 users with no tally).
 export function deriveSchema(skills, sessionsCompleted, directionTally) {
-  if (sessionsCompleted < 5) return null;  // locked: not enough data to diagnose
+  if (sessionsCompleted < SCHEMA_UNLOCK_SESSIONS) return null;  // locked: not enough data to diagnose
 
   let best = null;
   let bestScore = 0;
@@ -539,7 +551,9 @@ const STREAK_MILESTONE_INTERVAL = 7;
 // so the streak line states how far the next milestone is when it's within
 // reach. Pure copy. Shared here so the summary and dashboard can't drift.
 export const STREAK_MILESTONES_LIST = [7, 30, 100];
-const MILESTONE_NAMES = { 7: 'a full week', 30: 'a full month', 100: 'a hundred days' };
+// Exported: the summary's "Day N secured — a full week" line reads from this
+// same map, so milestone wording can't drift between surfaces.
+export const MILESTONE_NAMES = { 7: 'a full week', 30: 'a full month', 100: 'a hundred days' };
 const PROXIMITY_WINDOW = 3;
 
 export function milestoneProximity(streak) {

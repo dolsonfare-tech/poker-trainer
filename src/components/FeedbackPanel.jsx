@@ -47,7 +47,7 @@ function DisagreeBox({ scenarioId, choice, result }) {
           className="fb-disagree-toggle"
           onClick={() => { setOpen(true); track('scenario_disagree_opened', { scenario_id: scenarioId, result }); }}
         >
-          Disagree? Let us know if we have this wrong →
+          Disagree? Let us know if we have this wrong
         </button>
       ) : (
         <>
@@ -104,11 +104,11 @@ export default function FeedbackPanel({ grade, loading, feedbackText, correctAns
           display: 'flex', alignItems: 'center', gap: '8px',
           background: 'rgba(39,174,96,0.08)', border: '1px solid rgba(39,174,96,0.2)',
           borderRadius: '8px', padding: '8px 12px', marginBottom: '12px',
-          fontFamily: "'Courier New', Courier, monospace", fontSize: '0.72rem',
+          fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '0.72rem',
           letterSpacing: '0.08em',
         }}>
           <span style={{ color: 'var(--green)' }}>✅</span>
-          <span style={{ color: 'rgba(242,237,227,0.5)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' }}>Recommended play:</span>
+          <span style={{ color: 'rgba(242,237,227,0.5)', textTransform: 'uppercase', fontSize: '0.6rem', letterSpacing: '0.15em' }}>Recommended Play:</span>
           <span style={{ color: 'var(--green)', fontWeight: '600' }}>{correctAnswer}</span>
         </div>
       )}
@@ -116,7 +116,17 @@ export default function FeedbackPanel({ grade, loading, feedbackText, correctAns
         {loading
           ? <div className="thinking">Analyzing your decision…</div>
           : timedOut
-          ? <span style={{ color: 'rgba(242,237,227,0.6)', fontStyle: 'italic' }}>
+          ? // The fb text is written for the player who chose the recommended
+            // play — a timed-out player chose nothing, so frame it as the
+            // explanation of the line they never got to take.
+            <span style={{ color: 'rgba(242,237,227,0.6)', fontStyle: 'italic' }}>
+              <span style={{
+                display: 'block', marginBottom: '6px', fontStyle: 'normal',
+                textTransform: 'uppercase', fontSize: '0.62rem',
+                letterSpacing: '0.12em', color: 'rgba(242,237,227,0.45)',
+              }}>
+                The thinking behind the recommended play
+              </span>
               {feedbackText}
             </span>
           : feedbackText
