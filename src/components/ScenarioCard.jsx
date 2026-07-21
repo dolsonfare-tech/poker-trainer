@@ -141,7 +141,7 @@ export function SituationTicker({ scenario }) {
           player couldn't see. If a scenario has a table file, it shows here. */}
       {scenario.tableContext && (
         <span className="st-row st-tablefile">
-          <span className="st-street st-file-label">FILE</span>
+          <span className="st-street st-file-label">READ</span>
           <span>{scenario.tableContext}</span>
         </span>
       )}

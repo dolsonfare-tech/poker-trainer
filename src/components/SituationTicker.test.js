@@ -11,18 +11,18 @@ const base = {
   ],
 };
 
-test('a scenario with a tableContext renders the FILE line in the ticker', () => {
+test('a scenario with a tableContext renders the READ line in the ticker', () => {
   render(<SituationTicker scenario={{
     ...base,
-    tableContext: 'His file: folded top pair to a check-raise twice tonight.',
+    tableContext: 'Folded top pair to a check-raise twice tonight.',
   }} />);
-  expect(screen.getByText('FILE')).toBeInTheDocument();
-  expect(screen.getByText(/folded top pair to a check-raise twice tonight/)).toBeInTheDocument();
+  expect(screen.getByText('READ')).toBeInTheDocument();
+  expect(screen.getByText(/Folded top pair to a check-raise twice tonight/)).toBeInTheDocument();
 });
 
-test('no tableContext, no FILE line', () => {
+test('no tableContext, no READ line', () => {
   render(<SituationTicker scenario={{ ...base, tableContext: null }} />);
-  expect(screen.queryByText('FILE')).not.toBeInTheDocument();
+  expect(screen.queryByText('READ')).not.toBeInTheDocument();
 });
 
 test('the stakes row carries the effective stack when the scenario states one', () => {
