@@ -1795,7 +1795,11 @@ body {
   font-size: 1rem;
   line-height: 1.35;
   color: var(--cream);
-  text-wrap: balance;
+  /* NOT `balance` — iOS Safari balanced a 2-line headline into a short first
+     line over a longer second (founder screenshot, July 20, 2026), reading as
+     a premature wrap. `pretty` only prevents orphaned last words; browsers
+     without it fall back to normal full-width wrapping. */
+  text-wrap: pretty;
 }
 
 /* Legacy prose read — clamped to ~2 lines rather than the full wall. */
@@ -2423,7 +2427,10 @@ body {
   font-size: 1.05rem;
   line-height: 1.35;
   color: var(--cream);
-  text-wrap: balance;
+  /* `pretty`, not `balance` — same premature-wrap issue as
+     .db-profile-read-headline (left-aligned sentence headlines; balance is
+     kept only on the centered .db-schema-name where it reads correctly). */
+  text-wrap: pretty;
 }
 
 .ss-coach-evidence {
