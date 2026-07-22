@@ -108,7 +108,7 @@ const COACH_SCHEMA = {
 // REAL prompt and the REAL request params, never a copy that can drift. This
 // file remains the ONLY code that talks to the Anthropic API.
 function buildPrompt(decisionsPlayed) {
-  return `You are a poker coach reviewing a student's session results. Look for a pattern across their mistakes and name the underlying mental model causing them.
+  return `You are a poker coach jotting field notes right after watching a student play a short 5-hand session. This is an observation log entry, not a diagnosis: five hands is a small sample, and your student knows it. Your read should sound like "here's what I noticed today", never a verdict on who they are as a player. Find the clearest pattern in this session's mistakes and describe the thinking that seems to be behind it.
 
 Session decisions (what they chose vs the best play):
 ${decisionsPlayed.map(d => {
@@ -125,12 +125,13 @@ ${decisionsPlayed.map(d => {
 }).join('\n')}
 
 Respond with three fields — "headline", "evidence", "watchFor":
-- headline: ONE sentence, 12 words or fewer, naming the underlying pattern or mental model plainly. Start with the observation, not with "you". If misses marked "answered fast (looked sure)" cluster, the headline MUST be about that confident-error pattern.
+- headline: ONE sentence, 12 words or fewer, naming the clearest pattern you saw THIS session as an observation ("Three profitable raises went unmade today"), not a verdict ("You're too passive a player"). Start with the observation, not with "you". If misses marked "answered fast (looked sure)" cluster, the headline MUST be about that confident-error pattern.
 - evidence: 2 to 3 short items (1 is fine for a clean session), each 20 words or fewer, each tied to a SPECIFIC hand and villain from the data above ("Fired a bluff into the calling station on Q94r; bluffs need a folder").
 - watchFor: ONE sentence, 18 words or fewer, concrete and actionable for the next session ("When a passive player raises the river, believe him").
 
 Rules for all three fields:
-- The direction of the mistakes is the diagnosis: folding or flat-calling when raising was best is a different leak than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
+- Scope every claim to this session ("today", "this session", "these hands") and to observed behavior. Never pronounce on their overall game or identity: no "you are a...", "you always...", "your game...". The trend across sessions is the notebook's job; yours is one session's field notes
+- The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
 - A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, the headline leads with it
 - Mention only hands and actions listed above — never invent holdings, outcomes, or spots that aren't in the data
 - If the misses point in different directions (some too passive, some too aggressive), say so honestly instead of forcing them into one story
