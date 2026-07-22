@@ -120,9 +120,12 @@ here's what it looks like compressed."
    (observation_id, picked, correct) — the post-launch check is whether passive↔station
    and loose↔station actually discriminate (picked-vs-correct matrix per pair). If a pair
    never separates, sharpen its authoring before considering a merge.
-5. **Authoring rule (do with next observation batch):** frequency-dependent answers must
-   carry frequency evidence in context text (§Observables above); consider encoding as an
-   `audit:observations` WARN.
+5. ~~**Authoring rule:** frequency-dependent answers must carry frequency evidence in
+   context text~~ ✅ **ENCODED same session (July 22) as `audit:observations` rule O6**
+   (gate-7 ratchet law): a tell making observed-this-session repetition claims WARNs
+   unless the context/showdown carries the frequency evidence. All 22 existing hands
+   pass (5 make such claims, all covered — the authoring was already disciplined);
+   synthetic-violation trip verified.
 6. **Optional content audit:** main-pool archetype distribution vs the verified
    majority-recreational population reality — are strong-reg villains over-represented
    relative to a real $1/$2 pool? Low priority; scenario villains are chosen for lessons,

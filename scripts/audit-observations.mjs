@@ -13,6 +13,10 @@ const flag = (sev, id, rule, msg) => findings.push({ sev, id, rule, msg });
 const STREETS = ['PRE', 'FLOP', 'TURN', 'RIVER'];
 // Shorthand card notation (KQs, 98d) is banned repo-wide — suit symbols only.
 const SHORTHAND_RE = /\b[AKQJT2-9]{2,3}[shdc]\b/;
+// Observed-this-session repetition claims (O6). Matches session windows
+// ("this orbit", "all night", "an hour of folding"), counted repetition
+// ("four times", "47 of the last 50"), and habitual verbs ("keeps calling").
+const SESSION_FREQ_RE = /\b(this (orbit|session)|tonight|all (night|session|evening)|(over|in|for) an hour|past hour|hour of|so far|(twice|\d+|two|three|four|five|six) +(times|hands|rivers|raises|straight)|of the last \d+|first \w+ in over|every hand (he|she|they)|keeps? (calling|raising|betting|folding|limping|3-betting)|hasn'?t (raised|folded|bet|called|3-bet) (once|all|a single))\b/i;
 
 const seenIds = new Set();
 for (const ob of OBSERVATIONS) {
@@ -82,6 +86,17 @@ for (const ob of OBSERVATIONS) {
     ...ob.replay.flatMap(r => (r.segments ?? []).map(sg => sg.text))];
   for (const t of texts) {
     if (SHORTHAND_RE.test(t)) flag('ERROR', id, 'O5', `shorthand card notation in: "${t.slice(0, 60)}…"`);
+  }
+
+  // O6 — frequency evidence must ride in the context (RESEARCH_VILLAIN_TYPES.md,
+  // July 2026): coaches form type reads over 30–100+ observed hands, so a tell
+  // that leans on session-frequency claims about Seat 3 ("this orbit", "an hour
+  // of folding", "N of the last M") can't be carried by the single replayed
+  // hand — the context (or showdown) must state that frequency evidence.
+  // Deliberately narrow: general type knowledge ("stations never fold") is fine;
+  // only observed-this-session repetition claims trigger it.
+  if (SESSION_FREQ_RE.test(ob.tell) && !SESSION_FREQ_RE.test(`${ob.context} ${ob.showdown ?? ''}`)) {
+    flag('WARN', id, 'O6', 'tell leans on session-frequency evidence the context/showdown does not carry');
   }
 }
 
