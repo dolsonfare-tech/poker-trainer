@@ -32,7 +32,7 @@ test('guest plays one free session, then every path gates to sign-in with progre
 
   // SignIn screen offers the guest path
   expect(await screen.findByText('Find the leak in your poker game')).toBeInTheDocument();
-  fireEvent.click(screen.getByText(/Try a free session first/));
+  fireEvent.click(screen.getByText(/Play a Free Session/));
 
   // Straight toward the cards: level pick, then deal (no username step)
   expect(await screen.findByText('Choose your level')).toBeInTheDocument();
@@ -68,7 +68,9 @@ test('guest plays one free session, then every path gates to sign-in with progre
   fireEvent.click(gateCta);
   expect(await screen.findByText('Find the leak in your poker game')).toBeInTheDocument();
   expect(screen.getByText(/sign in and they carry over/)).toBeInTheDocument();
-  expect(screen.queryByText(/Try a free session first/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Play a Free Session/)).not.toBeInTheDocument();
+  // A used-up guest gets no reveal link — the sign-in form is shown immediately
+  expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument();
 
   // The cache survives the gate — it's the migration payload for sign-in
   expect(JSON.parse(localStorage.getItem('cr_user')).sessionsCompleted).toBe(1);

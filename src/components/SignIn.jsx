@@ -15,6 +15,10 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  // Guest-first hierarchy (July 2026): a fresh visitor (onGuestPlay set) sees the
+  // guest CTA as the primary action and the sign-in stack behind a quiet reveal.
+  // A used-up guest / real-name-cache visitor (no onGuestPlay) sees the form now.
+  const [showSignIn, setShowSignIn] = useState(!onGuestPlay);
 
   const sendLink = async (e) => {
     e.preventDefault();
@@ -56,7 +60,9 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
             lands here — lead with what it does, not with the sign-in demand.
             Founders keep this deliberately spare (July 2026). */}
         <div className="ue-title">Find the leak in your poker game</div>
-        <div className="ue-subtitle">Sign in and play for free.</div>
+        <div className="ue-subtitle">
+          {onGuestPlay ? 'Free to play — no account needed.' : 'Sign in and play for free.'}
+        </div>
         {guestUsed && (
           <div className="si-guest-note">
             ♠ Your free session's results are saved on this device — sign in and they carry over.
@@ -70,35 +76,40 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
           </div>
         ) : (
           <>
-            {GOOGLE_ENABLED && (
-              <>
-                <button className="si-google-btn" type="button" onClick={signInWithGoogle}>
-                  <span className="si-g">G</span> Continue with Google
-                </button>
-                <div className="si-divider"><span>or</span></div>
-              </>
-            )}
-            <form className="ue-form" onSubmit={sendLink}>
-              <input
-                className={`ue-input${error ? ' ue-input-error' : ''}`}
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => { setEmail(e.target.value); setError(''); }}
-                required
-                autoComplete="email"
-              />
-              {error && <div className="ue-error">{error}</div>}
-              <button className="ue-submit-btn" type="submit" disabled={busy || !email.includes('@')}>
-                {busy ? 'Sending…' : 'Email me a sign-in link →'}
-              </button>
-            </form>
             {onGuestPlay && (
+              <button type="button" className="si-guest-btn" onClick={onGuestPlay}>
+                Play a Free Session →
+              </button>
+            )}
+            {onGuestPlay && !showSignIn ? (
+              <button type="button" className="si-signin-link" onClick={() => setShowSignIn(true)}>
+                Already have an account? Sign in
+              </button>
+            ) : (
               <>
-                <div className="si-divider"><span>or</span></div>
-                <button type="button" className="si-guest-btn" onClick={onGuestPlay}>
-                  Try a free session first — no account needed →
-                </button>
+                {GOOGLE_ENABLED && (
+                  <>
+                    <button className="si-google-btn" type="button" onClick={signInWithGoogle}>
+                      <span className="si-g">G</span> Continue with Google
+                    </button>
+                    <div className="si-divider"><span>or</span></div>
+                  </>
+                )}
+                <form className="ue-form" onSubmit={sendLink}>
+                  <input
+                    className={`ue-input${error ? ' ue-input-error' : ''}`}
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    required
+                    autoComplete="email"
+                  />
+                  {error && <div className="ue-error">{error}</div>}
+                  <button className="ue-submit-btn" type="submit" disabled={busy || !email.includes('@')}>
+                    {busy ? 'Sending…' : 'Email me a sign-in link →'}
+                  </button>
+                </form>
               </>
             )}
           </>

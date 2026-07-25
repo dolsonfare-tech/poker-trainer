@@ -3515,20 +3515,41 @@ body {
    GUEST FLOW + EARNED MOMENTS (July 2026)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* ── SignIn: try-before-signup ── */
+/* ── SignIn: guest-first hierarchy (July 2026) — the guest CTA is now the
+   PRIMARY action (gold, same weight as .ue-submit-btn); sign-in is a quiet
+   reveal below via .si-signin-link. ── */
 .si-guest-btn {
   width: 100%;
-  padding: 12px;
-  background: none;
-  border: 1px solid rgba(200,168,75,0.35);
-  border-radius: var(--radius-md);
-  color: var(--gold-light);
-  font-family: Georgia, serif;
-  font-size: 0.88rem;
+  padding: 14px;
+  border-radius: 10px;
+  border: none;
+  background: var(--yellow, #f0a500);
+  color: #0e1117;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: opacity 0.15s, transform 0.1s;
 }
-.si-guest-btn:hover { background: rgba(200,168,75,0.1); border-color: rgba(200,168,75,0.55); }
+.si-guest-btn:hover { opacity: 0.92; }
+.si-guest-btn:active { transform: scale(0.98); }
+
+.si-signin-link {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 8px;
+  background: none;
+  border: none;
+  color: rgba(242,237,227,0.5);
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: color 0.18s ease;
+}
+.si-signin-link:hover { color: var(--gold-light); }
 
 .si-guest-note {
   margin: 0 0 18px;
