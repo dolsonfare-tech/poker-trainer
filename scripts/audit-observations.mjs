@@ -1,6 +1,6 @@
 // Observation auditor — content gate for Table Reads hands
 // (src/data/observations.js), per the authoring checklist in
-// TABLE_READS_DESIGN.md. Ships WITH the mode, not after it.
+// docs/findings/TABLE_READS_DESIGN.md. Ships WITH the mode, not after it.
 //
 // Run:  node scripts/audit-observations.mjs
 // Exit code 1 if any ERROR-level findings (safe for CI).
@@ -88,7 +88,7 @@ for (const ob of OBSERVATIONS) {
     if (SHORTHAND_RE.test(t)) flag('ERROR', id, 'O5', `shorthand card notation in: "${t.slice(0, 60)}…"`);
   }
 
-  // O6 — frequency evidence must ride in the context (RESEARCH_VILLAIN_TYPES.md,
+  // O6 — frequency evidence must ride in the context (docs/research/RESEARCH_VILLAIN_TYPES.md,
   // July 2026): coaches form type reads over 30–100+ observed hands, so a tell
   // that leans on session-frequency claims about Seat 3 ("this orbit", "an hour
   // of folding", "N of the last M") can't be carried by the single replayed

@@ -4,7 +4,7 @@ AI-powered Texas Hold'em skill trainer. Presents poker scenarios, grades your de
 
 Live at: https://checkraise.ai
 
-> **Working on this repo with Claude?** Read `Claude.md` first — it's the authoritative context file (current phase, decisions, what never to do). `SCENARIO_AUDIT.md` documents the content-quality rules and the automated auditor.
+> **Working on this repo with Claude?** Read `Claude.md` first — it's the authoritative context file (current phase, decisions, what never to do). `docs/findings/SCENARIO_AUDIT.md` documents the content-quality rules and the automated auditor.
 
 ---
 
@@ -73,7 +73,7 @@ src/
 
 ## Scenario Format
 
-Scenarios are built with the `mkScenario` helper in `scenarios.js` — never add raw objects. Key fields: `id`, `skill`, `difficulty`, `villain {type, notes}`, `positions` (6 seats), `hand`, `board` (null preflop), `pot`, `toCall`, optional `actionHistory` (street-by-street story shown in the ticker), `body`, `correct`, and `choices` (label/grade/title/feedback per option). `tag` and `villain.label` are derived at runtime — do not add them. Full authoring rules: `SCENARIO_AUDIT.md`.
+Scenarios are built with the `mkScenario` helper in `scenarios.js` — never add raw objects. Key fields: `id`, `skill`, `difficulty`, `villain {type, notes}`, `positions` (6 seats), `hand`, `board` (null preflop), `pot`, `toCall`, optional `actionHistory` (street-by-street story shown in the ticker), `body`, `correct`, and `choices` (label/grade/title/feedback per option). `tag` and `villain.label` are derived at runtime — do not add them. Full authoring rules: `docs/findings/SCENARIO_AUDIT.md`.
 
 ---
 

@@ -137,7 +137,7 @@ here's what it looks like compressed."
   yielded no fetched source in the top-9 cut; the one contrarian datum that survived is
   the fuzzy-centroid finding [P1, blog-tier]. The synthesis therefore avoids claiming
   types are stable traits — consistent with the chess-study caution already recorded in
-  RESEARCH_SCHEMA_TAXONOMY.md (errors/styles are substantially situation-driven).
+  docs/research/RESEARCH_SCHEMA_TAXONOMY.md (errors/styles are substantially situation-driven).
 - The 2-1 verdict on Little's three-type taxonomy: the dissenting verifier confirmed the
   substance (three motivation-based types) but flagged that the type NAMES in the claim
   are paraphrased glosses, not Little's verbatim labels. Treated as verified substance,

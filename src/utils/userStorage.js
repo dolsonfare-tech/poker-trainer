@@ -428,7 +428,7 @@ export function deriveSchema(skills, sessionsCompleted, directionTally) {
   return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
 }
 
-// Poker IQ — RECENCY-WEIGHTED as of July 18, 2026 (PERSONA_PLAYTEST_FINDINGS.md
+// Poker IQ — RECENCY-WEIGHTED as of July 18, 2026 (docs/findings/PERSONA_PLAYTEST_FINDINGS.md
 // F3). The July-18-morning fix made this continuous true accuracy (a running
 // correct/attempts per rated skill), which killed the 0/5 → "69 → 69" bug but is
 // still structurally backward-looking: the persona harness's Improver climbs
@@ -534,7 +534,7 @@ export function parseCoachRead(raw) {
 // tests) are untouched. The definition lives in dates.js (CA-028).
 export { toLocalDateString } from './dates';
 
-// ── Streak mechanics (M1–M3, July 2026 — RESEARCH_LEARNING_SCIENCE.md Piece 3) ─
+// ── Streak mechanics (M1–M3, July 2026 — docs/research/RESEARCH_LEARNING_SCIENCE.md Piece 3) ─
 // Streak Rebuys (M1): a poker-named streak freeze — the genre's most validated
 // retention mechanic (Duolingo's freeze: −21% churn for at-risk users). Earned,
 // never purchased (informational, not controlling — M4/overjustification). Earn

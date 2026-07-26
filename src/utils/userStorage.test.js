@@ -1,4 +1,4 @@
-// Streak-mechanics unit tests (M1–M3, RESEARCH_LEARNING_SCIENCE.md Piece 3):
+// Streak-mechanics unit tests (M1–M3, docs/research/RESEARCH_LEARNING_SCIENCE.md Piece 3):
 // the Rebuy earn/consume/cap ladder, the streak-break reset, and milestone
 // proximity. calcStreak reads new Date() at call time, so fixtures set
 // lastSessionDate relative to today rather than mocking the clock.
@@ -134,7 +134,7 @@ test('parseCoachRead returns null for empty or missing input', () => {
   expect(parseCoachRead(undefined)).toBeNull();
 });
 
-// ── Recency-weighted Poker IQ (PERSONA_PLAYTEST_FINDINGS.md F3) ──────────────
+// ── Recency-weighted Poker IQ (docs/findings/PERSONA_PLAYTEST_FINDINGS.md F3) ──────────────
 const stream = (skill, results) => results.map(result => ({ skill, result }));
 
 test('derivePokerScore: a red-lifetime skill reads high when recent form is high', () => {
@@ -211,7 +211,7 @@ test('applySessionResults: legacy user with no recentHands field seeds the buffe
   expect(out.recentHands).toEqual([{ skill: 'preflop', result: 'correct' }]);
 });
 
-// ── Schema v2: direction-of-error classification (PERSONA_PLAYTEST_FINDINGS F2) ─
+// ── Schema v2: direction-of-error classification (docs/findings/PERSONA_PLAYTEST_FINDINGS.md F2) ─
 // The fold(0) < call(1) < raise(2) ordinal axis. `loose` (call-when-fold) is
 // carved out of the too-loose delta BEFORE `over`, so a call-when-fold is
 // Gambler evidence, never Overaggressor evidence.

@@ -19,7 +19,7 @@ import { localDateFrom } from './dates';
 // change — the ladder rung/streak and the calendar dates are folded out of
 // the same rows historyFromSessions already replays.
 //
-// v2 upgrades (July 2026, RESEARCH_LEARNING_SCIENCE.md Piece 1 R1–R3 / Piece 2 F2):
+// v2 upgrades (July 2026, docs/research/RESEARCH_LEARNING_SCIENCE.md Piece 1 R1–R3 / Piece 2 F2):
 //   R1 — graduation ladder: a miss is NOT cleared by one correct replay. It
 //        needs GRADUATION_TARGET spaced correct retrievals, resurfacing on an
 //        expanding LADDER_SESSIONS interval; a new miss resets it to rung 0.
@@ -43,7 +43,7 @@ export const LADDER_SESSIONS = [2, 5, 13];
 //   - a hand missed only ONCE is a cheap lapse → GRADUATION_TARGET_FIRST (2);
 //   - a REPEAT miss is the hypercorrection-relapse case the 3-rung ladder
 //     exists for → GRADUATION_TARGET_REPEAT (3).
-// Both stay inside R1's 2–3-retrieval evidence range (RESEARCH_LEARNING_SCIENCE
+// Both stay inside R1's 2–3-retrieval evidence range (docs/research/RESEARCH_LEARNING_SCIENCE.md
 // Piece 1). The graded target is what lets a leaky player's queue actually
 // drain: at realistic accuracy 3-spaced-corrects-with-miss-resets is an ~8-hand
 // consecutive-success chain per graduation; halving it for first-timers roughly
@@ -77,7 +77,7 @@ export const CONFIDENT_MISS_MS = 15000;
 export const SURGE_QUEUE_THRESHOLD = 8;
 const WEAK_SLOT_TARGET = 2;                   // slots aimed at red/yellow skills
 const MAX_PER_SKILL = 2;                      // soft cap — a targeted session, not 5 of one drill
-// R4 contrast-pair-aware dealing (RESEARCH_LEARNING_SCIENCE.md Piece 1 R4): the
+// R4 contrast-pair-aware dealing (docs/research/RESEARCH_LEARNING_SCIENCE.md Piece 1 R4): the
 // authored CONTRAST_PAIRS are the product's interleaving mechanism — juxtaposing
 // a pair in the SAME session (adjacent, so the contrast is felt) is what makes it
 // teach. When a weak-skill slot seats a scenario that has an eligible same-pool

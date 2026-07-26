@@ -1,5 +1,5 @@
 // Scenario auditor — implements the Agent Rules + Audit Checklist from
-// SCENARIO_AUDIT.md against all scenarios in src/data/scenarios.js.
+// docs/findings/SCENARIO_AUDIT.md against all scenarios in src/data/scenarios.js.
 //
 // Run:  node scripts/audit-scenarios.mjs
 // Exit code 1 if any ERROR-level findings (safe for CI).

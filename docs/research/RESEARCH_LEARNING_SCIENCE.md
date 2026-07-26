@@ -1,6 +1,6 @@
 # Learning-Science Research — input to spacedrep v2 & feedback design
 
-*July 18, 2026. Run lean and in pieces (session-limit strategy): targeted searches + source reads, verification reserved for load-bearing claims. Cognitive-science findings here are stable, replicated literature — unlike the volatile pricing data in `RESEARCH_SUBSCRIPTION_MARKET.md`, they don't need 3-vote adversarial verification.*
+*July 18, 2026. Run lean and in pieces (session-limit strategy): targeted searches + source reads, verification reserved for load-bearing claims. Cognitive-science findings here are stable, replicated literature — unlike the volatile pricing data in `docs/research/RESEARCH_SUBSCRIPTION_MARKET.md`, they don't need 3-vote adversarial verification.*
 
 **Status: Piece 1 (scheduling) DONE · Piece 2 (feedback design) DONE · Piece 3 (motivation mechanics) DONE — all three pieces complete**
 
@@ -76,7 +76,7 @@
 
 ### What this means for CheckRaise (M1–M4)
 
-**M1 — Build a streak-repair mechanic; poker gives it a perfect name: the Rebuy.** The strongest evidence-backed retention feature not yet in the product. Proposed shape honoring the quiet/honest register: earn one Rebuy automatically at each 7-day milestone (max 1–2 held); a missed day silently consumes one, dashboard notes it plainly ("Rebuy used — streak intact"). Earned-not-bought keeps it informational at launch; note Duolingo monetizes freezes heavily, so **purchasable/extra Rebuys are a natural Pro-tier perk later** (ties to RESEARCH_SUBSCRIPTION_MARKET.md). **Founder call needed on the design; not added to the build roadmap yet.**
+**M1 — Build a streak-repair mechanic; poker gives it a perfect name: the Rebuy.** The strongest evidence-backed retention feature not yet in the product. Proposed shape honoring the quiet/honest register: earn one Rebuy automatically at each 7-day milestone (max 1–2 held); a missed day silently consumes one, dashboard notes it plainly ("Rebuy used — streak intact"). Earned-not-bought keeps it informational at launch; note Duolingo monetizes freezes heavily, so **purchasable/extra Rebuys are a natural Pro-tier perk later** (ties to `docs/research/RESEARCH_SUBSCRIPTION_MARKET.md`). **Founder call needed on the design; not added to the build roadmap yet.**
 
 **M2 — Design the broken-streak moment (currently an undesigned bare reset).** Never show a naked zero: pair the reset with the consistency record ("You've played 26 of the last 30 days") and an immediate one-tap restart. This is the abandonment cliff — the copy here matters more than the milestone copy.
 

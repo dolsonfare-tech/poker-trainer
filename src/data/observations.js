@@ -1,6 +1,6 @@
 // ─── Table Reads — observation hands ────────────────────────────────────────
 // The inverse of the core trainer: the player watches a replay and names the
-// villain archetype. Authored content lives in TABLE_READS_DESIGN.md; this
+// villain archetype. Authored content lives in docs/findings/TABLE_READS_DESIGN.md; this
 // file is its code form. Same world as scenarios.js: $1/$2 six-max, $6 open,
 // suit symbols only. The villain is always "Seat 3" in replay text.
 //
@@ -239,7 +239,7 @@ const OBSERVATIONS = [
   }),
 
   // ── Batch 2 (July 20, 2026) — 12 intermediate hands on the four confusable
-  // fault lines, authored per the TABLE_READS_DESIGN.md checklist. Mostly
+  // fault lines, authored per the docs/findings/TABLE_READS_DESIGN.md checklist. Mostly
   // no-showdown (the difficulty dial); showdown kept only where hiding it
   // leaves two defensible answers. One tell per hand.
 

@@ -13,7 +13,7 @@
 //                     segments: [{ text, you?: true }] }]
 // — which overrides derivation entirely.
 //
-// Inference rules R2/R4/R6 from SCENARIO_AUDIT.md live here (moved from
+// Inference rules R2/R4/R6 from docs/findings/SCENARIO_AUDIT.md live here (moved from
 // ScenarioCard's buildActionTrail, which this supersedes).
 
 const CHECK_RE = /^Checks?d?$/i;

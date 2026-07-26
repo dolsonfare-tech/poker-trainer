@@ -190,7 +190,7 @@ July 25, 2026 (noted during guest-first SignIn build).
 
 **SME engagement path changed: founder self-grades via gameplay + the Disagree box triage pipeline.**
 July 20, 2026 (founder decision). The planned external SME review stalled. The disagree box + `scenario_feedback` table is the live capture mechanism. sc_098/M10 was the first live cycle.
-*Revisit if:* an SME is engaged and `scenario-review.csv` + `SCENARIO_GRADING_FINDINGS.md` are sent together.
+*Revisit if:* an SME is engaged and `scenario-review.csv` + `docs/findings/SCENARIO_GRADING_FINDINGS.md` are sent together.
 
 ---
 
@@ -243,7 +243,7 @@ July 2026. Screenshot diffing is flaky and rots; geometry assertions catch the c
 - Never add Tailwind to existing Phase 1 CSS — only on new screens if adopted — **prose-only**
 - Never modify `scenarios.js` for UI work — it's content, not layout — **prose-only**
 - Never commit `.env` to GitHub — **invariant rule 7 (`env-tracked`)**
-- Never add answer-until-correct / re-attempt to the SCORED main loop — it corrupts the skill-accuracy ratings the whole rating engine stands on (RESEARCH_LEARNING_SCIENCE.md F4). An unscored "replay this hand" study mode is the acceptable form. — **prose-only**
+- Never add answer-until-correct / re-attempt to the SCORED main loop — it corrupts the skill-accuracy ratings the whole rating engine stands on (`docs/research/RESEARCH_LEARNING_SCIENCE.md` F4). An unscored "replay this hand" study mode is the acceptable form. — **prose-only**
 - When authoring scenario feedback text: the fb must explain WHY (price, position, villain type) — never just restate or dress up the action taken. Explanation quality is the highest-effect-size lever in the product (F1). — **prose-only**
 - Never `await` Supabase (or any async) calls inside the `onAuthStateChange` callback — supabase-js holds its auth lock during the callback and authed calls need that lock, so it deadlocks intermittently (the "stuck on Shuffling up…" bug, July 2026). Defer with `setTimeout(async () => {...}, 0)`. — **invariant rule 6 (`auth-deadlock`)**
 
@@ -267,7 +267,7 @@ These were considered, debated, and explicitly rejected. Record them so future s
 
 **FSRS / SM-2 per-item ease factors** (July 2026, R3). Rejected in favour of the fixed graduation ladder. Reason: at a ~170-scenario pool, a fixed ladder performs within noise of adaptive scheduling and is enormously more debuggable. Revisit post-scale with real miss-rate distributions.
 
-**Answer-until-correct / re-attempt in the scored main loop** (standing rule, reinforced July 2026, RESEARCH_LEARNING_SCIENCE.md F4). Reason: corrupts the skill-accuracy ratings the entire rating engine stands on. An unscored study mode is the acceptable form if ever needed.
+**Answer-until-correct / re-attempt in the scored main loop** (standing rule, reinforced July 2026, `docs/research/RESEARCH_LEARNING_SCIENCE.md` F4). Reason: corrupts the skill-accuracy ratings the entire rating engine stands on. An unscored study mode is the acceptable form if ever needed.
 
 **Schema diagnosis score-margin knob, rated-only-skills scoring, unlock-at-8-sessions** (July 2026, simulation tuning). All three were tested in `simulate:schemas` and rejected. Reason: score-margin created false ties; rated-only changed unlock timing without diagnostic benefit; 8-session unlock moved the bar without evidence. `SCHEMA_MIN_SEVERITY = 1.25` and the 10-session early-read chip are the calibrated survivors.
 

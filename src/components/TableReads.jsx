@@ -4,7 +4,7 @@ import { loadTableReadsStats, saveTableReadsStats } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 
 // Table Reads — the inverse trainer: watch the hand, name the player.
-// Design + authored content in TABLE_READS_DESIGN.md. Mode-local scoring
+// Design + authored content in docs/findings/TABLE_READS_DESIGN.md. Mode-local scoring
 // only (founder decision July 18) — no writes to the 8-skill ratings.
 
 const TR_SESSION_LENGTH = 5;

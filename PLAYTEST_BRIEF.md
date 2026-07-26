@@ -108,7 +108,7 @@ All passive — the infrastructure already exists. Testers only need to sign in.
 | Free-text reports | Supabase `feedback` | Everything else |
 | `table_reads_started/answered/completed` (observation_id, picked, correct) | PostHog | Table Reads difficulty ordering + which distractors actually confuse |
 | Streak survival, Rebuy consumption | Derivable from `sessions.created_at` gaps per profile | Does the daily loop hold for strangers with no founder loyalty? |
-| Remediation-queue depth per tester at day 14 | Derivable from `sessions` rows (count `remediating` entries in the rebuilt history), especially for low-accuracy/passive-profile testers | **F1 / Conflict-Avoider deferral (RESEARCH_SCHEMA_TAXONOMY.md, July 22)**: the harness's stuck-queue signature may be an artifact of personas that can't learn. If real strugglers ALSO show un-draining queues → build graduation-proximity-aware surge targeting; if their queues drain as they improve → the deferral was right |
+| Remediation-queue depth per tester at day 14 | Derivable from `sessions` rows (count `remediating` entries in the rebuilt history), especially for low-accuracy/passive-profile testers | **F1 / Conflict-Avoider deferral (docs/research/RESEARCH_SCHEMA_TAXONOMY.md, July 22)**: the harness's stuck-queue signature may be an artifact of personas that can't learn. If real strugglers ALSO show un-draining queues → build graduation-proximity-aware surge targeting; if their queues drain as they improve → the deferral was right |
 | Crashes | Sentry (email alerts now on) | Stability under real devices |
 | First-session recordings (2–3 testers) | Sent files | Onboarding friction telemetry can't see |
 

@@ -150,7 +150,7 @@ Correct answers and timeouts (`choiceVal == null`) carry no directional signal.
 
 The three SKILL schemas (Positional Blind Spot, Results Thinker, Exploitable Regular) still score fixed red/yellow buckets (absolute weakness). Known residuals from the persona harness: skill schemas under-fire for true skill personas (Positional ~1/10, Exploitable Regular/Results Thinker combined ~5–7/10) because partial credit lifts scoring skills into yellow at realistic accuracy, and villain-blind personas fail `opponent` AND `reads` equally (red-red ties → Balanced).
 
-Spec inputs for the eventual rewrite (from `RESEARCH_SCHEMA_TAXONOMY.md` — path will exist post-Task 7):
+Spec inputs for the eventual rewrite (from `docs/research/RESEARCH_SCHEMA_TAXONOMY.md`):
 - Re-anchor **Results Thinker** on an observable signature (remediation-resistance or confident-miss density). The reads-skill proxy is the weakest mapping in the taxonomy — RT is a belief about the learning process, not a decision-observable skill leak.
 - Extend `classifyDirection` with a **bet-sizing sub-axis.** Too-small and too-big both read as "raise" in the ordinal today; option `cls` already distinguishes sizes so the data exists.
 - Consider scenario-difficulty normalization. Chess human-error research shows errors are dominantly situation-driven, not trait-driven.
@@ -318,9 +318,9 @@ Mechanical checks in the harness flag structural issues (parses, three fields, e
 
 These are documented rejections that bind the engines. Each one has costed evidence behind it — reintroducing any of them is a regression, not a design proposal.
 
-- **Per-item SM-2 / FSRS ease on the graduation ladder** (R3). A fixed `LADDER_SESSIONS` ladder is within noise of adaptive-ease algorithms at this pool size and infinitely more debuggable. See `RESEARCH_LEARNING_SCIENCE.md` Piece 1.
+- **Per-item SM-2 / FSRS ease on the graduation ladder** (R3). A fixed `LADDER_SESSIONS` ladder is within noise of adaptive-ease algorithms at this pool size and infinitely more debuggable. See `docs/research/RESEARCH_LEARNING_SCIENCE.md` Piece 1.
 - **Answer-until-correct / re-attempt in the SCORED main loop** (F4). Corrupts the skill-accuracy ratings the whole rating engine stands on. An unscored "replay this hand" study mode is the acceptable form.
-- **XP system / points as currency.** Streak is the sole engagement metric. Overjustification research (RESEARCH_LEARNING_SCIENCE.md Piece 3, M4) — validated the founder's quiet-gold / honest-labeling instincts.
+- **XP system / points as currency.** Streak is the sole engagement metric. Overjustification research (`docs/research/RESEARCH_LEARNING_SCIENCE.md` Piece 3, M4) — validated the founder's quiet-gold / honest-labeling instincts.
 - **Coach's Read verdict phrasing.** Never `"you are a..."`, `"you always..."`, `"your game..."`. One 5-hand session cannot honestly diagnose a player — the coach jots field notes; the notebook accumulates trends. The soft mechanical check in `eval-coach.mjs` flags these patterns.
 - **Solver / GTO language in the coach's voice.** These are exploitative judgment spots, not solver outputs. Say "the recommended play", never "the solve". Extends the honest-labeling rule (per-hand feedback says "Recommended play", never "Correct play").
 - **Skill ratings surfaced with numeric thresholds.** The 0.75 / 0.50 cutoffs are engine internals. Show status names only.

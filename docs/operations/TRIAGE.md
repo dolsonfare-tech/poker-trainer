@@ -20,7 +20,7 @@ own; this drill is what routes them into the ratchet.
    `username_change_failed`, `stale_session_cleared` (a spike = sessions being
    revoked somewhere). Plus the **comprehension heatmap**: `decision_made.decision_ms`
    p50 + `timed_out` rate per `scenario_id` — sustained outliers are comprehension
-   bugs (see GAMEPLAY_COMPREHENSION_FINDINGS.md C4).
+   bugs (see `docs/findings/GAMEPLAY_COMPREHENSION_FINDINGS.md` C4).
 3. **`scenario_feedback`** (SQL editor) — most-flagged hands; grading disputes are
    content bugs:
 

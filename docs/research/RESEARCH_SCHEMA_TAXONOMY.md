@@ -3,7 +3,7 @@
 > **Status: DONE.** Deep-research workflow ran July 21–22 (5 search angles → 22 sources →
 > 100+ extracted claims → top 25 adversarially verified, 3 votes each). Two session-limit
 > interruptions killed the automated synthesis step both times — as with
-> RESEARCH_SUBSCRIPTION_MARKET.md, **this synthesis is Claude-written from the vote-verified
+> docs/research/RESEARCH_SUBSCRIPTION_MARKET.md, **this synthesis is Claude-written from the vote-verified
 > claims**, with verification status marked throughout: **[VERIFIED]** = survived 3-vote
 > adversarial verification (vote count shown), **[PLAUSIBLE]** = extracted from a fetched
 > source, verification votes errored on session limits (none of these were refuted),
@@ -128,7 +128,7 @@ qualitative content anywhere."
    evidence gates are validated; the taxonomy size is right.
 2. **Skill-side v2 (already queued, post-playtest):** fold in (a) Results Thinker
    re-anchoring, (b) the sizing sub-direction, (c) scenario-difficulty normalization per
-   the chess-study caution. This doc + PERSONA_PLAYTEST_FINDINGS.md F2b are its spec inputs.
+   the chess-study caution. This doc + docs/findings/PERSONA_PLAYTEST_FINDINGS.md F2b are its spec inputs.
 3. **Post-launch instrument idea (backlog):** session-level tilt-signature detector feeding
    the Coach's Read (not the schema card).
 4. **Marketing/copy note:** the schema system is genuinely novel — safe to lead with it;
