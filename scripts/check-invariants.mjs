@@ -47,11 +47,25 @@ onlyIn('supabase-client', /createClient\s*\(/, ['src/utils/supabase.js'], srcFil
 
 // ── 2. Supabase reads/writes only in src/utils/db.js ───────────────────
 // Table access always passes a string literal: .from('profiles').
+// CA-047: also assert that db.js itself uses no dynamic table names —
+// every .from( in db.js must be followed immediately by a string/template
+// literal so a generic helper can't launder variable table names.
 onlyIn('db-access', /\.from\(\s*['"`]/, ['src/utils/db.js'], srcFiles,
   'all Supabase reads/writes live in src/utils/db.js');
+{
+  const dbSrc = read(join(ROOT, 'src/utils/db.js'));
+  // Match .from( NOT followed by a quote or backtick (dynamic table name).
+  const dynamic = dbSrc.match(/\.from\(\s*[^'"`\s)]/g);
+  if (dynamic)
+    flag('ERROR', 'db-access',
+      `src/utils/db.js contains a dynamic .from() — every table name must be a string literal ('${dynamic[0].trim().slice(0, 60)}'); no generic query helpers allowed`);
+}
 
 // ── 3. PostHog touched only by src/utils/analytics.js ──────────────────
-onlyIn('posthog', /from\s+['"]posthog-js['"]|posthog\.(capture|identify|init|reset)/,
+// CA-046: also catch CJS require('posthog-js') so the rule can't be evaded
+// by switching from ESM import to CommonJS require.
+onlyIn('posthog',
+  /from\s+['"]posthog-js['"]|require\s*\(\s*['"]posthog-js['"]\s*\)|posthog\.(capture|identify|init|reset)/,
   ['src/utils/analytics.js'], srcFiles,
   'components call track()/identify() from src/utils/analytics.js instead');
 
@@ -79,10 +93,17 @@ for (const f of srcFiles) {
 }
 
 // ── 7. Git hygiene: no .env tracked, no uppercase paths in public/ ──────
+// CA-053: widened from /(^|\/)\.env(\.|$)/ to also catch backup/old names
+// like .env_backup, .env-old, env.bak — any path segment starting with
+// ".env" followed by a non-lowercase-letter (covers dots, underscores,
+// hyphens, digits, and end-of-string). The (?!.*\.example$) guard keeps
+// the .env.example allowance. Note: the rule scans `git ls-files` output
+// (tracked-file paths), not file contents, so .gitignore's own text
+// mentioning ".env" does not false-positive here.
 const tracked = execSync('git ls-files', { cwd: ROOT, encoding: 'utf8' }).split('\n');
 for (const f of tracked) {
-  if (/(^|\/)\.env(\.|$)/.test(f) && !f.endsWith('.example'))
-    flag('ERROR', 'env-tracked', `${f} is tracked by git — .env must never be committed`);
+  if (/(^|\/)\.env([^a-z]|$)/i.test(f) && !f.endsWith('.example'))
+    flag('ERROR', 'env-tracked', `${f} is tracked by git — .env must never be committed (caught by widened pattern: .env_backup/.env-old style names also flagged)`);
   if (f.startsWith('public/') && /[A-Z]/.test(f))
     flag('ERROR', 'case-sensitivity', `${f} has uppercase in its path — Vercel is case-sensitive and macOS hides case-only renames (icon 404 bug, July 2026); use lowercase and verify with git ls-files`);
 }
@@ -116,7 +137,14 @@ for (const t of tables) {
 }
 
 // ── 10. Sentry touched only by src/utils/sentry.js ──────────────────────
-onlyIn('sentry', /from\s+['"]@sentry|Sentry\.(init|captureException|setUser)/,
+// CA-051: primary trigger is now the IMPORT (ESM or CJS) — a file cannot
+// call any Sentry method without first importing the package, so the import
+// check is the load-bearing gate. The per-method pattern is kept as a
+// belt-and-suspenders catch for any Sentry global that slips in without an
+// import (e.g. via a CDN window.Sentry shim), but the import trigger alone
+// closes the captureMessage/addBreadcrumb/configureScope bypass.
+onlyIn('sentry',
+  /from\s+['"]@sentry\/|require\s*\(\s*['"]@sentry\/|Sentry\.[a-zA-Z]+\(/,
   ['src/utils/sentry.js'], srcFiles,
   'components call setSentryUser()/clearSentryUser() from src/utils/sentry.js instead');
 
