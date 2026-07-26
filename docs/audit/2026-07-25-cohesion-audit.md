@@ -241,7 +241,7 @@ Numbered globally as CA-001…CA-056, ordered by severity within each axis (P1 f
 
 ---
 
-### 3.3 Code Quality & Modularity (14 CAs — one three-way merge)
+### 3.3 Code Quality & Modularity (16 CAs — one three-way merge)
 
 #### CA-023 · P1 · MOD-001 · `userStorage.js` is an 8-concern monolith (672 lines)
 
