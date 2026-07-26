@@ -191,7 +191,7 @@ export async function createRemoteProfile(username, localUser) {
     initials: username.slice(0, 2).toUpperCase(),
     streak: base.streak ?? 0,
     last_session_date: base.lastSessionDate ?? null,
-    rebuys: base.rebuys ?? 0,
+    ...(Number.isFinite(base.rebuys) ? { rebuys: base.rebuys } : {}),
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone ?? null,
     sessions_completed: base.sessionsCompleted ?? 0,
     poker_score: base.pokerScore ?? null,
@@ -228,7 +228,7 @@ export async function saveRemoteUser(user) {
   const { error } = await supabase.from('profiles').update({
     streak: user.streak,
     last_session_date: user.lastSessionDate,
-    rebuys: user.rebuys ?? 0,
+    ...(Number.isFinite(user.rebuys) ? { rebuys: user.rebuys } : {}),
     sessions_completed: user.sessionsCompleted,
     poker_score: user.pokerScore,
     coach_note_body: user.coachNote?.body ?? null,

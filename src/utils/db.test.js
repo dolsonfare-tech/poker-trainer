@@ -417,3 +417,91 @@ test('CA-048: createRemoteProfile calls profiles upsert with ignoreDuplicates:tr
   // Third element is the options object — must include ignoreDuplicates: true.
   expect(upsertCall[2]).toMatchObject({ ignoreDuplicates: true });
 });
+
+// ── CA-005: rebuys writer omission ───────────────────────────────────────────
+// createRemoteProfile and saveRemoteUser must OMIT the rebuys key from their
+// payload when user.rebuys is not a finite number — never coerce undefined/null → 0.
+
+test('CA-005: createRemoteProfile omits rebuys when user.rebuys is undefined', async () => {
+  const profileBuilder = makeBuilder({ data: null, error: null });
+  const skillsBuilder = makeBuilder({ data: MOCK_SKILL_ROWS, error: null });
+  profileBuilder.maybeSingle = () => Promise.resolve({ data: MOCK_PROFILE, error: null });
+
+  let sessionsCallCount = 0;
+  mockFrom.mockImplementation((table) => {
+    if (table === 'profiles') return profileBuilder;
+    if (table === 'skills') return skillsBuilder;
+    if (table === 'sessions') {
+      sessionsCallCount += 1;
+      return makeBuilder({ data: [], error: null });
+    }
+    return makeBuilder({ data: null, error: null });
+  });
+
+  const userWithoutRebuys = { ...MOCK_PROFILE, rebuys: undefined };
+  await createRemoteProfile('Alice', userWithoutRebuys);
+
+  const upsertCall = profileBuilder._calls.find(c => c[0] === 'upsert');
+  const payload = upsertCall[1];
+  expect(payload).not.toHaveProperty('rebuys');
+});
+
+test('CA-005: createRemoteProfile includes rebuys when user.rebuys is a finite number', async () => {
+  const profileBuilder = makeBuilder({ data: null, error: null });
+  const skillsBuilder = makeBuilder({ data: MOCK_SKILL_ROWS, error: null });
+  profileBuilder.maybeSingle = () => Promise.resolve({ data: MOCK_PROFILE, error: null });
+
+  let sessionsCallCount = 0;
+  mockFrom.mockImplementation((table) => {
+    if (table === 'profiles') return profileBuilder;
+    if (table === 'skills') return skillsBuilder;
+    if (table === 'sessions') {
+      sessionsCallCount += 1;
+      return makeBuilder({ data: [], error: null });
+    }
+    return makeBuilder({ data: null, error: null });
+  });
+
+  const userWithRebuys = { ...MOCK_PROFILE, rebuys: 2 };
+  await createRemoteProfile('Alice', userWithRebuys);
+
+  const upsertCall = profileBuilder._calls.find(c => c[0] === 'upsert');
+  const payload = upsertCall[1];
+  expect(payload).toHaveProperty('rebuys', 2);
+});
+
+test('CA-005: saveRemoteUser omits rebuys when user.rebuys is undefined', async () => {
+  const profileBuilder = makeBuilder({ data: null, error: null });
+  const skillsBuilder = makeBuilder({ data: MOCK_SKILL_ROWS, error: null });
+
+  mockFrom.mockImplementation((table) => {
+    if (table === 'profiles') return profileBuilder;
+    if (table === 'skills') return skillsBuilder;
+    return makeBuilder({ data: null, error: null });
+  });
+
+  const userWithoutRebuys = { ...MOCK_PROFILE, rebuys: undefined, skills: DEFAULT_SKILLS };
+  await require('./db').saveRemoteUser(userWithoutRebuys);
+
+  const updateCall = profileBuilder._calls.find(c => c[0] === 'update');
+  const payload = updateCall[1];
+  expect(payload).not.toHaveProperty('rebuys');
+});
+
+test('CA-005: saveRemoteUser includes rebuys when user.rebuys is a finite number', async () => {
+  const profileBuilder = makeBuilder({ data: null, error: null });
+  const skillsBuilder = makeBuilder({ data: MOCK_SKILL_ROWS, error: null });
+
+  mockFrom.mockImplementation((table) => {
+    if (table === 'profiles') return profileBuilder;
+    if (table === 'skills') return skillsBuilder;
+    return makeBuilder({ data: null, error: null });
+  });
+
+  const userWithRebuys = { ...MOCK_PROFILE, rebuys: 2, skills: DEFAULT_SKILLS };
+  await require('./db').saveRemoteUser(userWithRebuys);
+
+  const updateCall = profileBuilder._calls.find(c => c[0] === 'update');
+  const payload = updateCall[1];
+  expect(payload).toHaveProperty('rebuys', 2);
+});
