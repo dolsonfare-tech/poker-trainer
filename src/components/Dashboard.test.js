@@ -283,3 +283,22 @@ describe('StreakWarning + stats-chip honesty (CA-039, CA-045)', () => {
     expect(screen.queryByText(/on the line/)).not.toBeInTheDocument();
   });
 });
+
+// ── CA-042: locked-schema countdown clamp ────────────────────────────────────
+test('locked-schema card clamps countdown at zero when sessionsCompleted exceeds SCHEMA_UNLOCK_SESSIONS', () => {
+  // CA-042: when a user's sessionsCompleted (12) exceeds SCHEMA_UNLOCK_SESSIONS (5),
+  // the countdown was showing "Play -7 more sessions" — should show refresh copy instead.
+  const u = {
+    ...createUser('Exceeded'),
+    sessionsCompleted: 12,
+    schema: null, // locked state
+  };
+  dash({ user: u });
+
+  const lockedCard = document.querySelector('.db-schema-locked-text');
+  expect(lockedCard).toBeInTheDocument();
+  // Must NOT contain "-7"
+  expect(lockedCard).not.toHaveTextContent(/-7/);
+  // Should show the refresh message
+  expect(lockedCard).toHaveTextContent(/Play a session to refresh your profile/);
+});

@@ -634,7 +634,12 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
                       word (Table Reads, the guide); the player-side diagnosis
                       must not borrow it. */}
                   <div className="db-schema-locked-text">
-                    {`Play ${SCHEMA_UNLOCK_SESSIONS - sessionsCompleted} more session${SCHEMA_UNLOCK_SESSIONS - sessionsCompleted !== 1 ? 's' : ''} to unlock your player profile`}
+                    {(() => {
+                      const left = Math.max(0, SCHEMA_UNLOCK_SESSIONS - sessionsCompleted);
+                      return left > 0
+                        ? `Play ${left} more session${left !== 1 ? 's' : ''} to unlock your player profile`
+                        : 'Play a session to refresh your profile';
+                    })()}
                   </div>
                 </div>
               )}
