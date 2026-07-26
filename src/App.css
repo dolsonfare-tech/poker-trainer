@@ -3411,19 +3411,40 @@ body {
   .sc2-btn.act-btn { transition: none; }
 }
 
-/* Mobile: portrait table, strip instead of bubble, stacked thumb-zone actions */
+/* Mobile: portrait table, strip instead of bubble, stacked thumb-zone actions.
+   CA-038 (July 2026): at 390×844 the action buttons all sat below the fold and
+   the ticker was off-screen while the 60s clock ran — vertical chrome is
+   compressed here AND the action row is a sticky bottom bar (ticker height is
+   content-variable per hand, so compression alone can never guarantee the
+   fold invariant; e2e/mobilefold.spec.mjs is the guard). */
 @media (max-width: 700px) {
-  .sc2 { padding: 16px 12px 18px; }
+  /* overflow:visible (not hidden) — position:sticky is inert inside an
+     overflow:hidden ancestor; the card's children don't overflow it anyway */
+  .sc2 { padding: 14px 12px 0; overflow: visible; }
   /* Long skill tags + timer + hand count can't share one line on phones —
      stack them: tag on top, timer + count centered beneath */
-  .sc2-chrome { display: flex; flex-direction: column; gap: 7px; min-height: 0; margin-bottom: 10px; }
+  .sc2-chrome { display: flex; flex-direction: column; gap: 5px; min-height: 0; margin-bottom: 8px; }
   .sc2-chrome-right { justify-self: auto; }
-  .sc2-table { height: 430px; }
+  .street-bar { margin-bottom: 8px; padding-bottom: 8px; }
+  .sc2-table { height: 315px; }
   .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
   .sc2-bubble { display: none; }
-  .sc2-villain-mobile { display: block; }
+  .sc2-villain-mobile { display: block; margin-top: 10px; }
+  .sc2-history { margin: 12px auto 10px; }
   .sc2-board .playing-card, .sc2-board .blank-card { width: 40px; height: 56px; }
-  .sc2-actions { grid-template-columns: 1fr; max-width: none; }
+  /* Thumb-zone action bar: sticks to the viewport bottom while the card
+     extends past the fold, un-sticks at scroll bottom. Buttons stay ≥44px
+     tall (CA-040). Negative side margins bleed the backdrop over the card's
+     12px gutters so scrolled content can't peek around the bar. */
+  .sc2-actions {
+    grid-template-columns: 1fr; max-width: none; gap: 8px;
+    position: sticky; bottom: 0; z-index: 6;
+    margin: 0 -12px;
+    padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+    background: rgba(10,21,15,0.97);
+    border-top: 1px solid rgba(200,168,75,0.18);
+  }
+  .sc2-btn.act-btn { padding: 9px 13px; }
   /* Type floor (July 2026): the desktop fine-print tier (0.5–0.58rem ≈
      8–9px) is illegible at phone size and made the type scale feel chaotic
      next to 13–16px content text — raise the floor, keep the hierarchy */
@@ -3436,6 +3457,28 @@ body {
   .sc2-strip-pos { font-size: 0.58rem; }
   .sc2-strip-text { font-size: 0.88rem; }
   .sc2-replay-line { font-size: 0.66rem; }
+}
+
+/* ── CA-038: mobile fold — shared chrome + dashboard CTA ──
+   The header/logo block cost ~130px of every phone screen; compressed here.
+   The dashboard CTA becomes a sticky bottom bar for the same reason as the
+   action row above: the Player Profile card's height is content-variable
+   (evidence rows, notebook, streak lines), so no fixed compression can
+   guarantee the CTA lands above an 844px fold. Desktop (>700px) untouched. */
+@media (max-width: 700px) {
+  .app { padding: 14px 18px 48px; }
+  .header { padding: 12px 0 14px; }
+  .logo { font-size: 1.8rem; }
+  .tagline { font-size: 0.62rem; margin-top: 4px; }
+  .info-btn { top: 12px; }
+  .db-cta-block {
+    position: sticky; bottom: 0; z-index: 6;
+    margin: 0 -18px;
+    padding: 10px 18px calc(10px + env(safe-area-inset-bottom));
+    background: var(--felt-dark);
+    border-top: 1px solid rgba(200,168,75,0.12);
+    box-shadow: 0 -14px 26px rgba(10,21,15,0.55);
+  }
 }
 
 /* ── Sign-in screen additions ── */
