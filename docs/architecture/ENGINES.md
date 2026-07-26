@@ -228,7 +228,7 @@ Two independent limits bound spend:
 
 Mechanical checks in the harness flag structural issues (parses, three fields, evidence count 1–3, headline word count, confident-misser headline mentions the fast/confident pattern, soft-flag on verdict phrasing `you are a/an/the/too`, `you always/never`, `your game`, `as a player`). Judgment against the F5 bar is still human.
 
-**Live re-run status (as of 2026-07-26): PENDING.** The voice reframe landed with a dry-mode verification only. Before the next deploy that includes `api/coach-read.js` changes, run `CLAUDE_API_KEY=... npm run eval:coach` and judge the 9 reads against the F5 bar. The key is Vercel-Sensitive by design — never commit it, never put it in `.env`; use a short-lived console key.
+**Live re-run status: VERIFIED July 26, 2026.** The July 22 voice reframe passed its live run — 9/9 personas pass the F5 bar, zero trait verdicts, the honest-mixed and confident-miss-lead rules both confirmed working live. Accepted residuals from that run: one garbled evidence action-verb (1 of 27 lines) and the Positional persona's thread read as villain-exploitation rather than position (mixed-direction session, same class as the accepted F2b residual). The law stands for FUTURE changes: run `CLAUDE_API_KEY=... npm run eval:coach` live after any prompt/model change; the key is Vercel-Sensitive by design — never commit it, never put it in `.env`; use a short-lived console key and delete it after.
 
 ### Enforced/tested by
 

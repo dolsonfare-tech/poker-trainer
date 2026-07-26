@@ -88,9 +88,10 @@ an invariants rule.
   `CLAUDE_API_KEY=sk-... npm run eval:coach` — Vercel-Sensitive keys are write-only,
   so the founder uses a short-lived console key. `npm run eval:coach -- --dry` prints
   prompts without calling. Output → gitignored `coach-eval-output.md`.
-  **THE LAW: re-run LIVE after ANY prompt or model change.** As of this writing the
-  July 22 voice reframe (session-scoped field notes) has passed `--dry` but still
-  awaits its live re-run — run it before the next deploy touching `api/coach-read.js`.
+  **THE LAW: re-run LIVE after ANY prompt or model change**, and judge the 9 reads
+  against the F5 bar before deploying. Last live run: July 26, 2026 — the July 22
+  voice reframe verified (9/9 pass, zero trait verdicts; residuals logged in
+  `docs/architecture/ENGINES.md` §coach pipeline).
 
 ## Gate 6 — e2e suite (`npm run e2e`, ~30s)
 

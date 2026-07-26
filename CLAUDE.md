@@ -25,7 +25,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 | 6 | `npm run e2e` | gameplay/dashboard components, App.css, session flow | geometry guards, streak transitions, notebook, mobile fold, tap targets. **Requires `npm run e2e:build` first** — plain build bakes in Supabase keys and boots to SignIn where specs can't seed a user |
 | 7 | *process* | any bug fixed or load-bearing decision made | **the ratchet law** — encode as a mechanical check the same session: invariants rule, audit rule, jest pin, e2e guard, or harness invariant. Prose rules drift; exit codes don't. A bug fixed without leaving a permanent check behind is a triage failure, not a fix |
 
-**The eval:coach law:** re-run `CLAUDE_API_KEY=... npm run eval:coach` LIVE after ANY prompt or model change to `api/coach-read.js`. The July 22, 2026 voice reframe (session-scoped field notes) has passed `--dry` but its **live re-run is STILL PENDING** — run it before the next deploy touching that file.
+**The eval:coach law:** re-run `CLAUDE_API_KEY=... npm run eval:coach` LIVE after ANY prompt or model change to `api/coach-read.js`, and judge the 9 reads against the F5 bar before deploying. Last live run: July 26, 2026 (voice reframe verified — 9/9 pass, zero trait verdicts).
 
 ---
 
