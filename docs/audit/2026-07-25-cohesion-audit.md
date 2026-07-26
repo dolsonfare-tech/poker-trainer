@@ -733,9 +733,22 @@ Six bundles, each run as a separate gate-green session (all Definition-of-Done g
    **CONTENT FINDING (from the widened CA-052 rule):** `sc_004`'s body reads "he has been sitting for 3 hours and this is only his second raise" — a decision-driving session-history read with no `tableContext`; the read never renders at decision time (C1 failure mode). Founder to-do: author a `tableContext` for `sc_004` per the C1 convention (body = review-time narrative, `tableContext` = decision-time read).
 
    **CA-002 proof:** confirm the next push's CI run is green (token now `contents: read`).
-4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress).
-5. **Dedup micro-pass:** CA-028 (`toLocalDateString`), CA-030 (`DIFFICULTY_LABELS`), CA-031 (guest CTA constant), CA-003 (redirect origin).
+4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress). — DONE 2026-07-26 (commits 836dd65..0817207)
+   - CA-027 → `dead-layout` invariant rule 13 (`check-invariants.mjs`): any reference to `USE_SINGLE_CANVAS`, `LegacyLayout`, `DecisionPanel`, or `TableVisual` is an ERROR — confirmed present and firing correctly.
+   - CA-026 → dead JS path deleted alongside CA-027 (same rule covers both).
+   - CA-018 → dead CSS deleted; `dead-layout` rule also covers CSS files.
+   - CA-019 → `asset-budget` invariant rule 14: `favicon.ico` ≤ 60 000 B, `icon-512.png` ≤ 150 000 B — confirmed present; both files now under threshold.
+   - **Founder to-do (c):** after the next deploy, hard-refresh and re-add to a phone home screen to sanity-check the recompressed icons render correctly.
+5. **Dedup micro-pass:** CA-028 (`toLocalDateString`), CA-030 (`DIFFICULTY_LABELS`), CA-031 (guest CTA constant), CA-003 (redirect origin). — DONE 2026-07-26 (commits 7d68183..4524dfe)
+   - CA-028 → `dates.js` extracted; source-pin tests in `src/utils/dates.test.js` confirm neither `userStorage.js` nor `spacedrep.js` defines `toLocalDateString` or `localDateFrom` anymore.
+   - CA-030 → `DIFFICULTY_LABELS` single-source pin in `SessionSummary.test.js` (CA-030): no inline map in `SessionSummary.jsx`.
+   - CA-031 → `GUEST_GATE_CTA` single-source pin in `SessionSummary.test.js` (CA-031): no hard-coded guest CTA string in `SessionSummary.jsx`.
+   - CA-003 → `SignIn.test.js` pins both call sites (`signInWithOAuth` + `signInWithOtp`) to read the same `SITE_URL` constant; env-set and fallback branches both exercised.
+   - **Founder to-do (a):** set `REACT_APP_SITE_URL=https://checkraise.ai` in Vercel (plain env, Production at minimum — previews can omit it). Until set, redirect behavior is unchanged by design (falls back to `window.location.origin`).
+   - **Founder to-do (b):** confirm Supabase Auth → URL Configuration lists `https://checkraise.ai` in Site URL / Additional Redirect URLs.
 6. **CA-035 (CLAUDE.md drift)** folds into the Phase 2 docs restructure instead of a standalone fix.
+
+**All 28 fix-now findings are now complete except CA-035**, which lands inside Phase 2's docs restructure by design.
 
 ### Queue disposition
 
