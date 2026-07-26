@@ -7,6 +7,13 @@ import { track } from '../utils/analytics';
 // any error can surface in-app, so an unconfigured provider = raw 400 page.
 const GOOGLE_ENABLED = process.env.REACT_APP_GOOGLE_AUTH === '1';
 
+// CA-003: pin auth redirects to the configured site URL instead of trusting
+// whatever host the page is served from. CRA inlines the env var at build
+// time, so a module-scope const is correct. Without REACT_APP_SITE_URL the
+// behavior is byte-identical to before (local dev + preview builds keep
+// working); set REACT_APP_SITE_URL=https://checkraise.ai in Vercel to harden prod.
+const SITE_URL = process.env.REACT_APP_SITE_URL || window.location.origin;
+
 // onGuestPlay: renders the "try a free session" path (guest flow, July 2026).
 // guestUsed: the device already played its free guest session — show the
 // carry-over reassurance instead of the CTA.
@@ -26,7 +33,7 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
     setError('');
     const { error: err } = await supabase.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: SITE_URL },
     });
     setBusy(false);
     if (err) {
@@ -43,7 +50,7 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
     track('google_sign_in_clicked');
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin },
+      options: { redirectTo: SITE_URL },
     });
     if (err) {
       setError(/not enabled|unsupported/i.test(err.message)
