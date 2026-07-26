@@ -706,7 +706,14 @@ One row per CA finding. `VERDICT` filled during founder triage.
 
 Six bundles, each run as a separate gate-green session (all Definition-of-Done gates pass before the bundle's commit lands):
 
-1. **Mobile & trust (playtest-critical):** CA-038 (mobile fold), CA-039 (stale-streak lie), CA-040 (tap targets), CA-041 (Escape), CA-045 (0-session nag), CA-042 (negative countdown), CA-013 (render-blocking fonts).
+1. **Mobile & trust (playtest-critical):** CA-038 (mobile fold), CA-039 (stale-streak lie), CA-040 (tap targets), CA-041 (Escape), CA-045 (0-session nag), CA-042 (negative countdown), CA-013 (render-blocking fonts). — DONE 2026-07-26 (commits 89178e0..f1b8b07)
+   - CA-039 → `streakAlive` unit tests in `userStorage.test.js`; `StreakWarning + stats-chip honesty` describe block in `Dashboard.test.js`
+   - CA-045 → same `StreakWarning + stats-chip honesty` describe block (`zero-session account` + `existing user streak 0` cases)
+   - CA-042 → `locked-schema countdown clamp` describe block in `Dashboard.test.js`
+   - CA-041 → `closes on Escape` test in `VillainGuide.test.js`
+   - CA-013 → `fonts-async` rule in `scripts/check-invariants.mjs` (rule 11)
+   - CA-040 → `e2e/taptargets.spec.mjs` (7 element × min-44px geometry guards)
+   - CA-038 → `e2e/mobilefold.spec.mjs` (390×844 viewport fold guards)
 2. **Data integrity:** CA-015 + CA-048 in one session (bound the sessions fetch AND put `assembleUser` under test in the same pass), CA-005 (rebuys backfill audit + jest pin), CA-020 (`Math.max` spread), CA-055 (`claude.js` error paths).
 3. **Gate widenings:** CA-046, CA-047, CA-051, CA-052, CA-053, CA-057, CA-002 (CI `permissions:`).
 4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress).
