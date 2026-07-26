@@ -714,7 +714,13 @@ Six bundles, each run as a separate gate-green session (all Definition-of-Done g
    - CA-013 → `fonts-async` rule in `scripts/check-invariants.mjs` (rule 11)
    - CA-040 → `e2e/taptargets.spec.mjs` (7 element × min-44px geometry guards)
    - CA-038 → `e2e/mobilefold.spec.mjs` (390×844 viewport fold guards)
-2. **Data integrity:** CA-015 + CA-048 in one session (bound the sessions fetch AND put `assembleUser` under test in the same pass), CA-005 (rebuys backfill audit + jest pin), CA-020 (`Math.max` spread), CA-055 (`claude.js` error paths).
+2. **Data integrity:** CA-015 + CA-048 in one session (bound the sessions fetch AND put `assembleUser` under test in the same pass), CA-005 (rebuys backfill audit + jest pin), CA-020 (`Math.max` spread), CA-055 (`claude.js` error paths). — DONE 2026-07-26 (commits 54eaac0..4b5e1d0)
+   - CA-015 → `CA-015: bounded sessions fetch` describe block in `db.test.js` (range/limit query-bound pin, in-memory re-sort correctness, bestSessionCorrect aggregation); `CA-015: in-memory re-sort correctness` suite
+   - CA-048 → `CA-048: assembleUser field-mapping coverage` describe block in `db.test.js` (required fields present, poker_score derived fresh, createRemoteProfile ignoreDuplicates call-shape)
+   - CA-020 → `CA-020: no Math.max spread footgun` describe block in `db.test.js` (source pin + reduce-based max on 15k-element array)
+   - CA-005 → `CA-005: rebuys writer omission` describe block in `db.test.js` (createRemoteProfile omits/includes rebuys, saveRemoteUser omits/includes rebuys — 4 cases)
+   - CA-055 → `claude.test.js` — 14 branch pins covering happy path, !res.ok (HTTP error + status in payload, 503 variant), missing/empty data.text, network rejection (throws + tracks + same error instance), 429 daily-limit (throws + err.code + tracking + distinguished from silent-return)
+   - SQL editor (read-only, non-blocking): `select count(*) from public.profiles where rebuys is null;` — expected 0; if non-zero those rows predate the rebuys alter and need a backfill decision.
 3. **Gate widenings:** CA-046, CA-047, CA-051, CA-052, CA-053, CA-057, CA-002 (CI `permissions:`).
 4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress).
 5. **Dedup micro-pass:** CA-028 (`toLocalDateString`), CA-030 (`DIFFICULTY_LABELS`), CA-031 (guest CTA constant), CA-003 (redirect origin).
