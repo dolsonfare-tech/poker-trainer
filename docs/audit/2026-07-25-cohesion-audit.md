@@ -746,9 +746,9 @@ Six bundles, each run as a separate gate-green session (all Definition-of-Done g
    - CA-003 → `SignIn.test.js` pins both call sites (`signInWithOAuth` + `signInWithOtp`) to read the same `SITE_URL` constant; env-set and fallback branches both exercised.
    - **Founder to-do (a):** set `REACT_APP_SITE_URL=https://checkraise.ai` in Vercel (plain env, Production at minimum — previews can omit it). Until set, redirect behavior is unchanged by design (falls back to `window.location.origin`).
    - **Founder to-do (b):** confirm Supabase Auth → URL Configuration lists `https://checkraise.ai` in Site URL / Additional Redirect URLs.
-6. **CA-035 (CLAUDE.md drift)** folds into the Phase 2 docs restructure instead of a standalone fix.
+6. **CA-035 (CLAUDE.md drift)** folds into the Phase 2 docs restructure instead of a standalone fix. — DONE 2026-07-26 (Phase 2 commits 800d9ae..3cc26af: lean 153-line CLAUDE.md, case-normalized, drift rules 15+16, migration verified 0 orphans)
 
-**All 28 fix-now findings are now complete except CA-035**, which lands inside Phase 2's docs restructure by design.
+**All 28 fix-now findings are complete.**
 
 ### Queue disposition
 
