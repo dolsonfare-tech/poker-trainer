@@ -156,6 +156,12 @@ export default function VillainGuide({ onClose, focus, initialTab }) {
     }
   }, [focus]);
 
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
   const items = activeTab === 'players' ? VILLAINS
     : activeTab === 'schemas' ? SCHEMAS
     : activeTab === 'skills' ? SKILLS
