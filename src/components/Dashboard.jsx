@@ -1,6 +1,6 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { SKILL_NAMES } from '../data/constants';
-import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead, SCHEMA_UNLOCK_SESSIONS } from '../utils/userStorage';
+import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead, SCHEMA_UNLOCK_SESSIONS, streakAlive } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
@@ -13,9 +13,11 @@ function StreakWarning({ user }) {
   const now = new Date();
   const playedToday = user.lastSessionDate === toLocalDateString(now);
   if (playedToday || now.getHours() < 18) return null;
+  if (!user.sessionsCompleted) return null;                     // CA-045: no nag for brand-new accounts
+  const alive = streakAlive(user, now);
   return (
     <div className="db-streak-warning">
-      {user.streak > 0
+      {alive && user.streak > 0
         ? <>🔥 Your <b>{user.streak}-day streak</b> is on the line — play one session before midnight.</>
         : <>🃏 You haven't played today — one session keeps the reads sharp.</>}
     </div>
@@ -44,7 +46,10 @@ function StreakStatus({ user, sessionDelta }) {
       </div>
     );
   }
-  const prox = milestoneProximity(streak);
+  // CA-039: a dead streak must not show proximity ("2 more to a full week") —
+  // the count is stale and playing today would start a fresh run at 1, not
+  // continue toward the milestone.
+  const prox = streakAlive(user) ? milestoneProximity(streak) : null;
   if (prox) {
     // The stats chip directly above already shows the streak count — never
     // repeat info; this line carries only the proximity.
@@ -469,10 +474,18 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   const streakFrom   = sessionDelta ? (sessionDelta.streakBroken ? 0 : sessionDelta.prevStreak) : streak;
   const sessionsFrom = sessionDelta?.prevSessions ?? sessionsCompleted;
   const sessionsTo   = sessionDelta ? sessionsFrom + 1 : sessionsCompleted;
+  // CA-039: a lapsed streak (beyond Rebuy coverage) shows 0, not the stale
+  // stored value — playing today would start a new run, not extend the old one.
+  // When no sessionDelta is present there is no animation: from === to.
+  const effectiveStreak = streakAlive(user) ? streak : 0;
+  // Preserve the M2 "count up from 0" animation for a just-broken streak, but
+  // for a statically displayed lapsed streak start the animation from 0 too so
+  // the initial (synchronous) render already shows the honest value.
+  const streakAnimFrom  = sessionDelta ? streakFrom : effectiveStreak;
 
-  const displayIQ       = useCountUp(iqTo,         iqFrom,       900, 300);
-  const displayStreak   = useCountUp(streak,        streakFrom,   700, 150);
-  const displaySessions = useCountUp(sessionsTo,    sessionsFrom, 700, 500);
+  const displayIQ       = useCountUp(iqTo,               iqFrom,           900, 300);
+  const displayStreak   = useCountUp(effectiveStreak,     streakAnimFrom,   700, 150);
+  const displaySessions = useCountUp(sessionsTo,          sessionsFrom,     700, 500);
 
   // Pro tier doesn't exist yet — the button measures demand (PostHog) and is
   // honest about it. Wire real upgrade flow here when the tier ships.

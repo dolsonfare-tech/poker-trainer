@@ -614,6 +614,22 @@ export function calcStreak(user) {
   return { streak: 1, lastSessionDate: today, rebuys: 0, rebuyUsed: false };
 }
 
+// Returns true iff playing today would CONTINUE the stored streak — i.e. the
+// streak is still "alive" and should display at face value. False when the
+// stored streak is already dead (lapsed beyond Rebuy coverage) or zero.
+// Used by Dashboard to suppress the stale "on the line" banner (CA-039) and
+// to show an honest streak count in the stats chip.
+// `now` defaults to new Date() and is injectable for tests.
+export function streakAlive(user, now = new Date()) {
+  if (!user.streak || !user.lastSessionDate) return false;
+  const rebuys = user.rebuys ?? 0;
+  const todayStr = toLocalDateString(now);
+  const gap = daysBetween(user.lastSessionDate, todayStr);
+  if (gap <= 1) return true;                   // today or yesterday — alive
+  const missedDays = gap - 1;
+  return missedDays <= rebuys;                 // Rebuy-covered gap → still alive
+}
+
 // ── Apply session ─────────────────────────────────────────────────────────────
 // `hands` is one entry per hand played: [{ scenarioId, skill, result }] —
 // every hand counts toward that skill's accuracy, including duplicates

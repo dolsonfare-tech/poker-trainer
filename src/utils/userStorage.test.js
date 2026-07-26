@@ -2,7 +2,7 @@
 // the Rebuy earn/consume/cap ladder, the streak-break reset, and milestone
 // proximity. calcStreak reads new Date() at call time, so fixtures set
 // lastSessionDate relative to today rather than mocking the clock.
-import { calcStreak, createUser, toLocalDateString, milestoneProximity, REBUY_CAP, parseCoachRead, derivePokerScore, applySessionResults, RECENT_HANDS_CAP, RECENT_WINDOW, COACH_READS_CAP, classifyDirection, directionOfHand, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY, deriveSchema } from './userStorage';
+import { calcStreak, createUser, toLocalDateString, milestoneProximity, REBUY_CAP, parseCoachRead, derivePokerScore, applySessionResults, RECENT_HANDS_CAP, RECENT_WINDOW, COACH_READS_CAP, classifyDirection, directionOfHand, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY, deriveSchema, streakAlive } from './userStorage';
 
 const daysAgo = (n) => {
   const d = new Date();
@@ -404,4 +404,24 @@ test('applySessionResults maintains the lifetime direction tally', () => {
   // Next session accumulates onto it (lifetime, not per-session).
   const out2 = applySessionResults(out, [{ scenarioId: 1, skill: 'preflop', result: 'incorrect', choiceVal: 'fold' }], null);
   expect(out2.directionTally).toEqual({ under: 2, over: 0.5, loose: 0, evidence: 2.5, hands: 3 });
+});
+
+// ── streakAlive (CA-039) ────────────────────────────────────────────────────
+// True iff playing today would CONTINUE the stored streak.
+describe('streakAlive', () => {
+  const now = new Date('2026-07-26T20:00:00');
+  it('true when last session was today', () =>
+    expect(streakAlive({ streak: 3, lastSessionDate: '2026-07-26', rebuys: 0 }, now)).toBe(true));
+  it('true when last session was yesterday', () =>
+    expect(streakAlive({ streak: 3, lastSessionDate: '2026-07-25', rebuys: 0 }, now)).toBe(true));
+  it('true when gap is covered by rebuys (2-day gap, 1 rebuy)', () =>
+    expect(streakAlive({ streak: 7, lastSessionDate: '2026-07-24', rebuys: 1 }, now)).toBe(true));
+  it('false when gap exceeds rebuys (2-day gap, 0 rebuys)', () =>
+    expect(streakAlive({ streak: 7, lastSessionDate: '2026-07-24', rebuys: 0 }, now)).toBe(false));
+  it('false for a 205-day-stale streak', () =>
+    expect(streakAlive({ streak: 3, lastSessionDate: '2026-01-01', rebuys: 2 }, now)).toBe(false));
+  it('false when streak is 0 or lastSessionDate missing', () => {
+    expect(streakAlive({ streak: 0, lastSessionDate: '2026-07-25' }, now)).toBe(false);
+    expect(streakAlive({ streak: 3 }, now)).toBe(false);
+  });
 });

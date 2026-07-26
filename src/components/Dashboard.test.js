@@ -29,7 +29,9 @@ const dash = (props) => render(
 );
 
 test('milestone proximity shows under the stats row when within reach (M3)', () => {
-  dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5 } });
+  // lastSessionDate must be set (yesterday) so streakAlive returns true and the
+  // proximity line is not suppressed — an incoherent streak>0 + no date is dead.
+  dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5, lastSessionDate: '2026-07-25' } });
   expect(screen.getByText(/2 more to a full week ★/)).toBeInTheDocument();
 });
 
@@ -208,4 +210,76 @@ test('gated guest sees the sign-in CTA instead of Deal Me In', () => {
   expect(screen.queryByLabelText('Edit username')).not.toBeInTheDocument();
   fireEvent.click(screen.getByText(/Sign In Free to Keep Playing/));
   expect(onGuestSignIn).toHaveBeenCalledWith('dashboard');
+});
+
+// ── CA-039 + CA-045 — honest streak display for lapsed users ────────────────
+// All tests fix the clock to after-6pm so StreakWarning's time gate is open.
+describe('StreakWarning + stats-chip honesty (CA-039, CA-045)', () => {
+  const AFTER_6PM = new Date('2026-07-26T20:00:00');
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(AFTER_6PM);
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('stale streak: no "on the line" banner and stats chip shows 0 (CA-039)', () => {
+    // lastSessionDate 205 days ago — streak is dead, rebuys can't cover
+    const u = {
+      ...createUser('Lapsed'),
+      streak: 3,
+      rebuys: 2,
+      lastSessionDate: '2026-01-01',
+      sessionsCompleted: 10,
+    };
+    dash({ user: u });
+    // Banner must NOT say "on the line"
+    expect(screen.queryByText(/on the line/)).not.toBeInTheDocument();
+    // Stats chip must show 0, not 3
+    const chip = document.querySelector('.db-stat-num:not(.db-stat-cream)');
+    expect(chip).toHaveTextContent('0');
+  });
+
+  it('live streak (yesterday): banner shows with the count (CA-039)', () => {
+    const u = {
+      ...createUser('Active'),
+      streak: 5,
+      rebuys: 0,
+      lastSessionDate: '2026-07-25',
+      sessionsCompleted: 5,
+    };
+    dash({ user: u });
+    expect(screen.getByText(/5-day streak/)).toBeInTheDocument();
+    expect(screen.getByText(/on the line/)).toBeInTheDocument();
+  });
+
+  it('zero-session account: no db-streak-warning at all, even after 6pm (CA-045)', () => {
+    const u = {
+      ...createUser('NewUser'),
+      streak: 0,
+      rebuys: 0,
+      lastSessionDate: null,
+      sessionsCompleted: 0,
+    };
+    dash({ user: u });
+    expect(document.querySelector('.db-streak-warning')).toBeNull();
+  });
+
+  it('existing user with streak 0 still sees the no-play-today nudge (CA-045 pin)', () => {
+    // streak 0 but sessionsCompleted > 0 — must show the plain nudge, not the
+    // "on the line" banner, and must NOT be suppressed by the CA-045 guard.
+    const u = {
+      ...createUser('Dormant'),
+      streak: 0,
+      rebuys: 0,
+      lastSessionDate: '2026-07-24',
+      sessionsCompleted: 5,
+    };
+    dash({ user: u });
+    expect(document.querySelector('.db-streak-warning')).not.toBeNull();
+    expect(screen.getByText(/You haven't played today/)).toBeInTheDocument();
+    expect(screen.queryByText(/on the line/)).not.toBeInTheDocument();
+  });
 });
