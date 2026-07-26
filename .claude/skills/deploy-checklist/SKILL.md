@@ -18,8 +18,10 @@ legacy `builds`/`routes` format was removed July 2026 after it silently broke
 
 If yes, ALL of the following must happen BEFORE the push:
 
-1. The block is in `supabase/schema.sql` with `ENABLE ROW LEVEL SECURITY` and
-   explicit policies (invariants rule 8 exits 1 otherwise).
+1. The block is in `supabase/schema.sql` with `ENABLE ROW LEVEL SECURITY`
+   (invariants rule 8 exits 1 if missing) and explicit policies (WARN only if
+   RLS is enabled but zero policies exist — a green gate does not by itself
+   prove policies are in place; confirm the policy block is really there).
 2. The founder has run that block in the Supabase SQL editor.
 3. The founder has confirmed the column/table is live.
 

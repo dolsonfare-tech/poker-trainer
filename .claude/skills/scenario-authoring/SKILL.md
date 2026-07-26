@@ -42,9 +42,10 @@ this for observations; the scenario auditor enforces it via card-pattern checks.
 effectiveStacks: 200,  // house default ($200 = 100bb at $1/$2) — omitting is an ERROR
 ```
 
-Override only when the scenario's lesson depends on a specific depth. The
-auditor rule R10 (`stacks`) exits 1 if the field is absent, and warns if any
-option bet or `toCall` exceeds the stack.
+Must be a number **≥ 40**. Override only when the scenario's lesson depends on
+a specific depth. The auditor rule R10 (`stacks`) exits 1 if the field is
+absent or below the floor, and warns if any option bet or `toCall` exceeds the
+stack.
 
 **All-in convention (sc_172 precedent):** use an amount-free seat action
 (`'All-In'`) and the committed-pot convention (pot includes both live bets).
@@ -85,6 +86,11 @@ body: "He's folded top pair to two check-raises tonight, so fold.",
 
 The `potpre` auditor rule recomputes the preflop pot from seat actions. Every
 WARN must be reviewed manually — do not silence it without understanding it.
+**It is WARN, not ERROR, because R2-flagged scenarios carry stale action
+strings.** It also **silently skips** any scenario whose seat-action string it
+doesn't recognize (anything outside Raises/3-Bets/4-Bets/Bets/Calls/Limps/
+Folds/Active/???) — no warning fires on those, so hand-check the pot yourself
+whenever you introduce a novel action string. No WARN does not mean "verified."
 
 ---
 
@@ -137,7 +143,10 @@ actionHistory: [
 Rules enforced by `hist`:
 - Streets in order: PRE → FLOP → TURN → RIVER.
 - No row beyond the current board length.
+- Every row must have at least one segment with non-empty `text`.
 - Final row must be on the current street.
+- The live bet amount (`toCall`) should appear in the final row's text (WARN
+  if missing and the call label does not say "more").
 - Hero-first-to-act postflop: final segment must be `{ text: "you're first to act", you: true }`.
 - Never describe villain as "out of position" or "OOP" — the `position` rule
   reads it as a hero claim and exits 1 if seats contradict it.

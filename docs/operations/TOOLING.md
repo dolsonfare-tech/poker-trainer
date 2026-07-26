@@ -14,7 +14,7 @@ session default. Sub-agent tasks named here are dispatched via the Agent tool.
 | Task type | Agent | Model | Notes |
 |-----------|-------|-------|-------|
 | Scenario authoring / editing | executor | sonnet | Use `/scenario-authoring` skill first |
-| Observation authoring (Table Reads) | executor | sonnet | Use `/observation-authoring` skill when built |
+| Observation authoring (Table Reads) | executor | sonnet | Use `/scenario-authoring` skill — it covers observations too |
 | Bug investigation / root-cause | debugger or systematic-debugging skill | opus | Find root cause before proposing any fix (ratchet law: fix must leave a permanent check) |
 | Broad codebase search | Explore | — | Quick / medium / very-thorough breadth parameter |
 | Architecture & design decisions | architect | opus | Read-only; produces a proposal for founder approval |
@@ -40,8 +40,8 @@ session default. Sub-agent tasks named here are dispatched via the Agent tool.
 
 ## Skill catalog
 
-Project-scoped skills live in `.claude/skills/` and are committed. Invoke with
-`/<name>` in the prompt.
+Project-scoped skills live in `.claude/skills/<name>/SKILL.md` and are
+committed. Invoke with `/<name>` in the prompt.
 
 ### Built now — invoke these
 
@@ -106,7 +106,7 @@ Only fires on `Edit`/`Write` tool calls, not on Bash edits.
         "hooks": [
           {
             "type": "command",
-            "command": "grep -q 'sc2-stage\\|sc2-table' \"$CLAUDE_TOOL_INPUT_FILE_PATH\" 2>/dev/null && echo 'REMINDER: screenshot the gameplay canvas after .sc2-stage/.sc2-table CSS changes (functional e2e passes while the table is invisible — see the July 18 table-collapse incident)'"
+            "command": "FILE=$(cat | jq -r '.tool_input.file_path // empty'); grep -q 'sc2-stage\\|sc2-table' \"$FILE\" 2>/dev/null && echo 'REMINDER: screenshot the gameplay canvas after .sc2-stage/.sc2-table CSS changes (functional e2e passes while the table is invisible — see the July 18 table-collapse incident)'"
           }
         ]
       }
