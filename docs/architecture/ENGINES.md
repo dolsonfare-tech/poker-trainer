@@ -55,7 +55,7 @@ Each section ends with "enforced/tested by" pointers.
 
 ### Enforced/tested by
 
-- `src/utils/spacedrep.test.js` — 36 cases: ladder progression/reset, expanding interval, graded FIRST/REPEAT targets, `misses` rebuild, same-day suppression under fake timers, confident-miss ordering, surge behavior at and above threshold, R4 pairing (adjacency, cap, replay-slot integrity, per-skill cap).
+- `src/utils/spacedrep.test.js` — the spacedrep.test.js suite: ladder progression/reset, expanding interval, graded FIRST/REPEAT targets, `misses` rebuild, same-day suppression under fake timers, confident-miss ordering, surge behavior at and above threshold, R4 pairing (adjacency, cap, replay-slot integrity, per-skill cap).
 - `src/App.twooption.test.js` — chaining integration; proves `applyHandsToHistory` merges the just-played hands so chained sessions can't repeat.
 - `scripts/playtest-personas.mjs` (`npm run playtest:personas`) — 8 personas × 40 sessions × 10 trials; the "all mechanical invariants held" line covers session shape, replay integrity, calendar floor, ≤2 replays, and the surge legality condition.
 - `scripts/check-invariants.mjs` (`npm run check:invariants`) — single-file ownership for the session builder.

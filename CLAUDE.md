@@ -16,7 +16,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 
 | # | Command | When | Enforces |
 |---|---|---|---|
-| 1 | `npm run check:invariants` | after EVERY code change | 14 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog) |
+| 1 | `npm run check:invariants` | after EVERY code change | 16 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, root-doc allowlist, CLAUDE.md line budget) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
 | 3b | `npm run audit:observations` | `observations.js` touched | Table Reads content (rules O1–O6) |
@@ -47,7 +47,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 
 ## Single-file ownership map
 
-Mechanically enforced by `npm run check:invariants` (rules 1–14). Violations are build errors.
+Mechanically enforced by `npm run check:invariants` (rules 1–16). Violations are build errors.
 
 | What | Owned by | Rule |
 |---|---|---|
@@ -150,4 +150,4 @@ Full ledger of every decision + when to revisit → `docs/architecture/DECISIONS
 | `docs/audit/` | 2026-07-25 cohesion audit + lane reports (CA-001…CA-058) |
 | `docs/superpowers/` | Plans + specs (immutable historical record of completed sessions) |
 
-Root allowlist: `CLAUDE.md`, `README.md`, `FOUNDER_BRIEFING.md`, `PLAYTEST_BRIEF.md`. Any other tracked `*.md` at the repo root is a drift violation (enforced by invariants rule 15 once Task 8 lands).
+Root allowlist: `CLAUDE.md`, `README.md`, `FOUNDER_BRIEFING.md`, `PLAYTEST_BRIEF.md`. Any other tracked `*.md` at the repo root is a drift violation (enforced by invariants rule 15).

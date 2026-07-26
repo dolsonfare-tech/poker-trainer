@@ -11,7 +11,7 @@ gate, say so explicitly — never weaken or skip a check to get green.
 
 | # | Command | When | Enforces |
 |---|---------|------|----------|
-| 1 | `npm run check:invariants` | after EVERY code change | architecture rules 1–14 (below) |
+| 1 | `npm run check:invariants` | after EVERY code change | architecture rules 1–16 (below) |
 | 2 | `CI=true npm test` | after every code change | jest unit + integration suite |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content consistency |
 | 3b | `npm run audit:observations` | `observations.js` touched | Table Reads content (O1–O6) |
@@ -40,6 +40,8 @@ Exit 1 on any ERROR. The rules, read from the script:
 | 12 | `ci-status` | WARN | latest completed CI run on main isn't `success` (best-effort GitHub API fetch, 2.5s timeout, skipped inside CI and when offline) — the local watchdog for a silently dead bug net |
 | 13 | `dead-layout` | ERROR | `USE_SINGLE_CANVAS` / `LegacyLayout` / `DecisionPanel` / `TableVisual` reappearing in src/ — the legacy two-column layout was DELETED July 2026; CanvasLayout is the only render path (git history has the code) |
 | 14 | `asset-budget` | ERROR | `public/favicon.ico` > 60,000 B or `public/icons/icon-512.png` > 150,000 B (favicon was 279 KB pre-fix; fetched every page load) |
+| 15 | `root-docs` | ERROR | any tracked `*.md` at the repo root outside the allowlist {CLAUDE.md, README.md, FOUNDER_BRIEFING.md, PLAYTEST_BRIEF.md, decision-log.md} — new docs live in `docs/` |
+| 16 | `claude-md-budget` | ERROR | `CLAUDE.md` exceeds 400 lines — depth lives in `docs/`; the per-session law file must stay skimmable |
 
 Adding a rule: state WHICH CLAUDE.md rule it enforces, prefer patterns that can't
 false-positive (the script's own header documents this).
