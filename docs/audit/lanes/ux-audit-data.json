@@ -1,0 +1,45 @@
+{
+  "findings": [
+    {
+      "id": "UX-01",
+      "severity": "P0",
+      "evidence": "Gameplay hand 1, mobile 390×844 — action buttons not fully visible without scrolling",
+      "finding": "Decision buttons require scrolling to reach on mobile — users may not realize they need to scroll",
+      "why": "Core gameplay mechanic is hidden; users may time out without deciding",
+      "fix": "Reduce vertical spacing in the session layout; ensure buttons fit in viewport",
+      "effort": "M"
+    },
+    {
+      "id": "UX-02",
+      "severity": "P2",
+      "evidence": "Dashboard, desktop — account menu button height 30.0px",
+      "finding": "Account menu button below 44px tap target",
+      "why": "Sign-out path becomes hard to tap on mobile",
+      "fix": "Ensure min 44px hit area",
+      "effort": "S"
+    },
+    {
+      "id": "UX-03",
+      "severity": "P2",
+      "evidence": "[static review] SignIn.jsx lines 84-86 — once showSignIn=true, the si-guest-btn disappears; no \"Back\" or \"Never mind\" link rendered",
+      "finding": "No way back to the guest CTA once the user taps \"Already have an account? Sign in\"",
+      "why": "A curious user who taps the sign-in reveal cannot return to the \"Play a Free Session\" primary path — they are stuck in the sign-in form",
+      "fix": "Add a \"← Back\" or \"Continue as guest\" link when showSignIn=true and onGuestPlay is set",
+      "effort": "S"
+    },
+    {
+      "id": "UX-04",
+      "severity": "P3",
+      "evidence": "[static review] SignIn.jsx line 109 — submit button disabled without explanation when email field is empty",
+      "finding": "Email submit button is disabled with no affordance explaining why — new users may not understand it requires a valid email",
+      "why": "Disabled state without explanation leaves users confused about what to do",
+      "fix": "Add placeholder/hint text or enable the button and validate on submit instead",
+      "effort": "S"
+    }
+  ],
+  "clean": [
+    "Dashboard stats row present",
+    "Chained session starts successfully (found by text)",
+    "prefers-reduced-motion: session loads and renders"
+  ]
+}
