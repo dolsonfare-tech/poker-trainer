@@ -238,7 +238,8 @@ July 2026. Screenshot diffing is flaky and rots; geometry assertions catch the c
 - Never call the Claude API from any file except `api/coach-read.js` — client code goes through `src/utils/claude.js` — **invariant rule 4 (`secrets`)**
 - Never expose the API key to the browser (no `REACT_APP_`-prefixed key variables) — **invariant rule 4 (`secrets`)**
 - Never add `tag` or `villain.label` fields back to scenario objects — they're derived at runtime — **prose-only**
-- Never use shorthand card notation (KQs, 98d) — always use suit symbols — **prose-only** (audit:scenarios catches shorthand in authored content; not enforced in src/)
+- Never use shorthand card notation (KQs, 98d) — always use suit symbols — **prose-only**
+  - *Mapping note: `audit:scenarios` catches shorthand in authored content; nothing enforces this in `src/` — still a ratchet candidate.*
 - Never add Tailwind to existing Phase 1 CSS — only on new screens if adopted — **prose-only**
 - Never modify `scenarios.js` for UI work — it's content, not layout — **prose-only**
 - Never commit `.env` to GitHub — **invariant rule 7 (`env-tracked`)**
