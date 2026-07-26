@@ -721,7 +721,18 @@ Six bundles, each run as a separate gate-green session (all Definition-of-Done g
    - CA-005 → `CA-005: rebuys writer omission` describe block in `db.test.js` (createRemoteProfile omits/includes rebuys, saveRemoteUser omits/includes rebuys — 4 cases)
    - CA-055 → `claude.test.js` — 14 branch pins covering happy path, !res.ok (HTTP error + status in payload, 503 variant), missing/empty data.text, network rejection (throws + tracks + same error instance), 429 daily-limit (throws + err.code + tracking + distinguished from silent-return)
    - SQL editor (read-only, non-blocking): `select count(*) from public.profiles where rebuys is null;` — expected 0; if non-zero those rows predate the rebuys alter and need a backfill decision.
-3. **Gate widenings:** CA-046, CA-047, CA-051, CA-052, CA-053, CA-057, CA-002 (CI `permissions:`).
+3. **Gate widenings:** CA-046, CA-047, CA-051, CA-052, CA-053, CA-057, CA-002 (CI `permissions:`). — DONE 2026-07-26 (commits c6c4c31..c243290)
+   - CA-046 → rule 3 `posthog` pattern extended to match `require('posthog-js')`
+   - CA-047 → rule 2 `db-access` second phase: db.js itself checked for dynamic `.from(` (non-string-literal)
+   - CA-051 → rule 10 `sentry` pattern extended to ESM/CJS import trigger + `Sentry.[a-zA-Z]+(`
+   - CA-052 → `READ_MARKERS` in `audit-scenarios.mjs` extended with `all evening`, `recently`, `in recent hands`, `he(?:'s| has) been`, `past (?:few|several|couple)`
+   - CA-053 → rule 7 `env-tracked` pattern extended to `/(^|\/)\.env([^a-z]|$)/i` (catches `.env_backup`, `.env-old`, etc.)
+   - CA-057 → stacks loop and context loop in `audit-scenarios.mjs` now normalise raw ids to `sc_NNN` form before `flag()` calls
+   - CA-002 → `permissions: contents: read` added at workflow top level in `.github/workflows/ci.yml`
+
+   **CONTENT FINDING (from the widened CA-052 rule):** `sc_004`'s body reads "he has been sitting for 3 hours and this is only his second raise" — a decision-driving session-history read with no `tableContext`; the read never renders at decision time (C1 failure mode). Founder to-do: author a `tableContext` for `sc_004` per the C1 convention (body = review-time narrative, `tableContext` = decision-time read).
+
+   **CA-002 proof:** confirm the next push's CI run is green (token now `contents: read`).
 4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress).
 5. **Dedup micro-pass:** CA-028 (`toLocalDateString`), CA-030 (`DIFFICULTY_LABELS`), CA-031 (guest CTA constant), CA-003 (redirect origin).
 6. **CA-035 (CLAUDE.md drift)** folds into the Phase 2 docs restructure instead of a standalone fix.
