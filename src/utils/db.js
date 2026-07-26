@@ -66,7 +66,7 @@ export function coachReadsFromSessions(sessionRows) {
   return out.length > COACH_READS_CAP ? out.slice(0, COACH_READS_CAP) : out;
 }
 
-function assembleUser(profile, skillRows, sessionRows) {
+function assembleUser(profile, skillRows, sessionRows, bestSessionCorrect = null) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
       const row = skillRows.find((r) => r.skill === k);
@@ -110,11 +110,10 @@ function assembleUser(profile, skillRows, sessionRows) {
     // Derived from the append-only session log — feeds the session builder
     // (no repeats, comeback hands) and follows the account across devices.
     scenarioHistory: historyFromSessions(sessionRows, profile.sessions_completed),
-    // Personal best, also derived (sessions store correct_count); null until
-    // a session row exists so a first result is never celebrated as a "best".
-    bestSessionCorrect: sessionRows?.length
-      ? Math.max(...sessionRows.map(r => r.correct_count ?? 0))
-      : null,
+    // Personal best: passed in from the caller's separate MAX aggregation query
+    // (lifetime-true, not bounded by the 1000-row window). Null until a session
+    // row exists so a first result is never celebrated as a "best".
+    bestSessionCorrect,
     leaderboard: null,
   };
 }
@@ -139,12 +138,35 @@ export async function fetchRemoteUser() {
   const { data: skillRows, error: skillsErr } = await supabase
     .from('skills').select('*').eq('user_id', uid);
   if (skillsErr) throw skillsErr;
-  const { data: sessionRows, error: sessionsErr } = await supabase
+  // Bounded fetch: newest 1000 sessions, descending. Derived history is bounded
+  // to the most recent 1000 sessions by design (>1000-session-old ladder state
+  // is stale anyway); directionTally becomes window-scoped at that extreme —
+  // accepted. Re-sorted to ascending in-memory before calling derivation helpers
+  // (historyFromSessions, recentHandsFromSessions, coachReadsFromSessions all
+  // assume chronological / oldest-first input).
+  const { data: sessionRowsDesc, error: sessionsErr } = await supabase
     .from('sessions').select('hands, correct_count, created_at, coach_read')
     .eq('user_id', uid)
-    .order('created_at', { ascending: true });
+    .order('created_at', { ascending: false })
+    .range(0, 999);
   if (sessionsErr) throw sessionsErr;
-  return assembleUser(profile, skillRows ?? [], sessionRows ?? []);
+  const sessionRows = (sessionRowsDesc ?? []).slice().reverse(); // ascending for derivations
+
+  // bestSessionCorrect: lifetime-true via a separate MAX aggregation so it stays
+  // accurate even beyond the 1000-row window. Null when no rows exist (a first
+  // session should never be celebrated as a "best").
+  let bestSessionCorrect = null;
+  if (sessionRows.length > 0) {
+    const { data: bestRows, error: bestErr } = await supabase
+      .from('sessions').select('correct_count')
+      .eq('user_id', uid)
+      .order('correct_count', { ascending: false })
+      .limit(1);
+    if (bestErr) throw bestErr;
+    bestSessionCorrect = bestRows?.[0]?.correct_count ?? null;
+  }
+
+  return assembleUser(profile, skillRows ?? [], sessionRows, bestSessionCorrect);
 }
 
 /**
