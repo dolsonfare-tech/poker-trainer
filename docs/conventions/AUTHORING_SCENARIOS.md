@@ -81,7 +81,11 @@ Street-dependent — follow the convention for each street, consistently:
 
 The auditor rule `potpre` recomputes the preflop pot from seat actions and
 exits with a WARN on mismatch. It is WARN not ERROR because R2-flagged
-scenarios carry stale action strings — review every hit manually.
+scenarios carry stale action strings — review every hit manually. Note:
+`potpre` **silently skips** any scenario containing a seat-action string it
+doesn't recognise (anything outside Raises/3-Bets/4-Bets/Bets/Calls/Limps/
+Folds/Active/???) — no warning on those, so hand-check the pot yourself when
+using a novel action string.
 
 The rule `pot` exits 1 if the body text states a dollar pot amount that
 disagrees with the `pot` field.
@@ -126,8 +130,17 @@ review**.
 
 Rule: any session-history read that influences the correct decision must live
 in `tableContext`, not in `body`. The auditor rule `context` issues a WARN
-when `body` contains session-history phrases (`tonight`, `this session`,
-`he's been`, `his file`, `lately`, etc.) and `tableContext` is absent.
+when `body` contains any of these session-history phrases and `tableContext`
+is absent (case-insensitive):
+
+> `tonight` · `this session` · `all session` · `already shown` ·
+> `been caught` · `his notes` · `his file` · `playbook` · `on sight` ·
+> `lately` · `all evening` · `recently` · `in recent hands` ·
+> `he's been` / `he has been` · `past few` / `past several` / `past couple`
+
+The source of truth is the `READ_MARKERS` regex in
+`scripts/audit-scenarios.mjs` — if the pattern list is widened there, update
+this enumeration in the same session.
 
 ```js
 // CORRECT — the read is visible when the player must decide
