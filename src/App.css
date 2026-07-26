@@ -151,13 +151,6 @@ body {
   overflow: hidden;
 }
 
-.card-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-}
-
 .skill-tag {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.74rem;
@@ -177,102 +170,14 @@ body {
   letter-spacing: 0.08em;
 }
 
-/* ── Poker Table ── */
-.table-wrap {
-  background: var(--felt-mid);
-  border: 1.5px solid rgba(200,168,75,0.12);
-  border-radius: var(--radius-md);
-  padding: 16px 14px 14px;
-  margin-bottom: 18px;
-  position: relative;
-  overflow: hidden;
-}
-
-.table-wrap::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 40%, rgba(27,61,42,0.6) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-.positions-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 6px;
-  position: relative;
-  z-index: 1;
-}
-
-.pos {
-  background: rgba(0,0,0,0.22);
-  border: 1px solid rgba(255,255,255,0.06);
-  border-radius: var(--radius-sm);
-  padding: 7px 4px;
-  text-align: center;
-  transition: all 0.25s;
-}
-
-.pos.hero   { background: rgba(200,168,75,0.12); border-color: rgba(200,168,75,0.3); }
-.pos.folded { opacity: 0.28; }
-.pos.active { background: rgba(46,204,113,0.1);  border-color: rgba(46,204,113,0.28); }
-
-.pos-name {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(242,237,227,0.55);
-  margin-bottom: 3px;
-}
-
-.pos.hero .pos-name { color: var(--gold-light); }
-
-.pos-action {
-  font-size: 0.72rem;
-  color: var(--cream);
-  font-weight: 600;
-}
-
-/* ── Oval table ── */
-.table-oval {
-  width: 100%;
-  max-width: 310px;
-  display: block;
-  margin: 0 auto 4px;
-  position: relative;
-  z-index: 1;
-}
-
 /* ── Mobile: give the table section more breathing room ── */
 @media (max-width: 600px) {
   .scenario-card { padding-left: 12px; padding-right: 12px; }
-  .decision-panel { margin-left: -12px; margin-right: -12px; }
-  .table-wrap { padding-left: 6px; padding-right: 6px; }
   .playing-card { width: 52px; height: 72px; }
   .board-row { gap: 4px; }
 }
 
-/* ── Desktop side-by-side: don't clip board cards below the oval ── */
-@media (min-width: 768px) {
-  .scenario-card-body .table-wrap {
-    overflow: visible;
-  }
-}
-
 /* ── Board ── */
-.board-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--cream-faint);
-  text-align: center;
-  margin: 10px 0 5px;
-  position: relative;
-  z-index: 1;
-}
-
 .board-row {
   display: flex;
   justify-content: center;
@@ -346,20 +251,6 @@ body {
 .playing-card.red   { color: #c0392b; }
 .playing-card.black { color: #1a1a1a; }
 
-/* ── Pot Info ── */
-.pot-info {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.76rem;
-  letter-spacing: 0.1em;
-  color: var(--cream-faint);
-  text-align: center;
-  margin-top: 11px;
-  position: relative;
-  z-index: 1;
-}
-
-.pot-info span { color: var(--gold); font-weight: 600; }
-
 /* ── Street indicator bar ── */
 .street-bar {
   display: flex;
@@ -410,11 +301,9 @@ body {
 }
 
 
-/* ── Scenario Text ── */
-/* scenario text styles moved to .decision-panel */
-
 /* ── Action Buttons ── */
-/* .actions-panel removed — actions now live inside .decision-panel */
+/* .act-btn base styles are shared by the live sc2 buttons (act-btn sc2-btn);
+   the legacy decision-panel children (.act-icon etc.) were deleted July 2026 */
 .actions { display: grid; gap: 8px; }
 
 .act-btn {
@@ -443,196 +332,6 @@ body {
 }
 
 .act-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.act-btn-content { flex: 1; }
-.act-btn-label { font-size: 0.88rem; font-weight: 600; color: #1a1a1a; }
-.act-btn-sublabel {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  margin-top: 2px;
-}
-
-.act-btn.fold  .act-btn-sublabel { color: #c0392b; }
-.act-btn.call  .act-btn-sublabel { color: #8a6a1a; }
-.act-btn.raise .act-btn-sublabel { color: #1e7a3e; }
-
-.act-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.act-btn.fold  .act-icon { background: rgba(192,57,43,0.1); }
-.act-btn.call  .act-icon { background: rgba(240,165,0,0.12); }
-.act-btn.raise .act-icon { background: rgba(46,204,113,0.12); }
-
-
-/* ── Side-by-side game layout (tablet/desktop) ── */
-@media (min-width: 768px) {
-  .scenario-card-body {
-    display: grid;
-    grid-template-columns: 1fr 1.15fr;
-    align-items: stretch;
-    /* No negative bottom margin — with overflow:hidden on .scenario-card it
-       shaves 22px off the taller column (was amputating the board cards) */
-    margin: 0 -22px 0;
-  }
-
-  .scenario-card-body .table-wrap {
-    margin-bottom: 0;
-    border: none;
-    border-right: 1px solid rgba(200,168,75,0.15);
-    border-radius: 0;
-    padding-left: 22px;
-    padding-bottom: 20px;
-  }
-
-  .scenario-card-body .decision-panel {
-    margin: 0;
-    border-radius: 0;
-  }
-}
-
-/* ── Decision Panel (cream section below table) ── */
-.decision-panel {
-  background-color: #f2ede3;
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      rgba(110, 82, 42, 0.055) 0px,
-      rgba(110, 82, 42, 0.055) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    repeating-linear-gradient(
-      -45deg,
-      rgba(110, 82, 42, 0.038) 0px,
-      rgba(110, 82, 42, 0.038) 1px,
-      transparent 1px,
-      transparent 5px
-    );
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  padding: 22px 26px 48px;
-  margin: 0 -22px -22px;
-}
-
-/* dp-header / dp-street / dp-pot removed — redundant with board */
-
-.dp-question {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  line-height: 1.3;
-  margin-bottom: 14px;
-  letter-spacing: -0.01em;
-  font-family: Georgia, serif;
-}
-
-/* You Hold */
-.dp-you-hold {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.08);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 10px;
-}
-
-.dp-you-hold-cards {
-  display: flex;
-  gap: 5px;
-  flex-shrink: 0;
-}
-
-.dp-mini-card {
-  width: 36px;
-  height: 50px;
-  background: var(--card-bg);
-  border-radius: 5px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  border: 1px solid rgba(0,0,0,0.08);
-  gap: 1px;
-}
-
-.dp-mc-rank { font-size: 0.95rem; font-weight: 700; line-height: 1; }
-.dp-mc-suit { font-size: 0.7rem; line-height: 1; }
-.dp-mini-card.red  { color: #c0392b; }
-.dp-mini-card.black { color: #1a1a1a; }
-
-.dp-you-hold-info { flex: 1; }
-.dp-you-hold-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(30,30,30,0.4);
-  margin-bottom: 3px;
-}
-
-.dp-you-hold-name {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #1a1a1a;
-  font-family: Georgia, serif;
-}
-
-/* Villain Read */
-.dp-villain-read {
-  background: #fff;
-  border: 1px solid rgba(0,0,0,0.08);
-  border-radius: var(--radius-md);
-  padding: 10px 12px;
-  margin-bottom: 12px;
-}
-
-.dp-vr-header {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-bottom: 4px;
-}
-
-.dp-vr-icon {
-  font-size: 0.7rem;
-  color: rgba(30,30,30,0.35);
-}
-
-.dp-vr-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(30,30,30,0.4);
-}
-
-.dp-vr-name {
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  font-family: Georgia, serif;
-  margin-bottom: 4px;
-}
-
-.dp-vr-notes {
-  font-size: 0.78rem;
-  color: rgba(30,30,30,0.55);
-  font-style: italic;
-  font-family: Georgia, serif;
-  line-height: 1.4;
-}
 
 /* ── Situation ticker (felt, under street bar) ──
    Replaces the old "Action to you" trail in the decision panel. */
@@ -684,21 +383,6 @@ body {
 .st-you { color: var(--green); }
 
 .st-sep { color: var(--cream-faint); }
-
-/* Action header divider inside decision panel */
-.dp-action-header {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: rgba(30,30,30,0.35);
-  border-top: 1px solid rgba(0,0,0,0.09);
-  padding-top: 14px;
-  margin: 8px 0 10px;
-}
-
-/* Actions inside decision panel */
-.dp-actions { display: grid; gap: 8px; }
 
 /* ── Feedback Panel ── */
 .feedback {
@@ -1139,23 +823,6 @@ body {
   box-shadow: none !important;
 }
 
-/* ─── Position info in decision panel ────────────────────────────────────── */
-.dp-name-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 8px;
-}
-
-.dp-position-info {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(30,30,30,0.4);
-  text-align: right;
-}
 /* ═══════════════════════════════════════════════════════════════════════════
    DASHBOARD — Phase 1.5
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -1187,18 +854,6 @@ body {
   .session-container {
     max-width: 960px;
     margin: 0 auto;
-  }
-  .scenario-card-body {
-    grid-template-columns: 1.25fr 1fr;
-  }
-  .positions-grid .pos {
-    padding: 10px 6px;
-  }
-  .pos-name {
-    font-size: 0.78rem;
-  }
-  .pos-action {
-    font-size: 0.78rem;
   }
 }
 
@@ -3184,7 +2839,8 @@ body {
 
 /* ═══ Single-canvas gameplay layout (sc2) ═══════════════════════════════════
    One table, one column. Everything lives where it lives in a real game.
-   Flag: USE_SINGLE_CANVAS in ScenarioCard.jsx. */
+   This is the ONLY gameplay layout — the legacy two-column felt/cream layout
+   (and its flag) was deleted July 2026; the dead-layout invariant guards it. */
 
 .sc2 {
   padding: 20px 22px 22px; max-width: 780px; margin-left: auto; margin-right: auto;

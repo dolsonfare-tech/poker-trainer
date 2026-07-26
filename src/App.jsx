@@ -8,8 +8,7 @@ import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
 import { setSentryUser, clearSentryUser } from './utils/sentry';
-import ScenarioCard, { USE_SINGLE_CANVAS } from './components/ScenarioCard';
-import FeedbackPanel from './components/FeedbackPanel';
+import ScenarioCard from './components/ScenarioCard';
 import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
@@ -205,8 +204,8 @@ export default function App() {
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct, choice: null });
-    // Canvas layout: feedback overlays the table at the top; legacy: it appears below
-    setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
+    // Feedback overlays the table at the top of the canvas — scroll to it
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   }, [scenario, decided, currentIndex, appendHistory]);
 
   const handleStartSession = () => {
@@ -347,7 +346,7 @@ export default function App() {
     }
     const feedbackText = scenario.feedback[gr.g];
     setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText, choice });
-    setTimeout(() => window.scrollTo({ top: USE_SINGLE_CANVAS ? 0 : document.body.scrollHeight, behavior: 'smooth' }), 50);
+    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   }, [decided, scenario, currentIndex, appendHistory]);
 
   const handleNext = () => {
@@ -626,24 +625,6 @@ export default function App() {
                   setGuide({ focus: label });
                 }}
               />
-              {!USE_SINGLE_CANVAS && feedback && (
-                <>
-                  <FeedbackPanel
-                    grade={feedback.grade}
-                    loading={feedback.loading}
-                    feedbackText={feedback.text}
-                    correctAnswer={scenario.options.find(o => o.val === scenario.correct)?.label ?? scenario.correct}
-                    timedOut={timedOut}
-                    scenarioId={scenario.id}
-                    choice={feedback.choice}
-                  />
-                  {!feedback.loading && (
-                    <button className="next-btn" onClick={handleNext}>
-                      {currentIndex < shuffledScenarios.length - 1 ? 'Next Hand →' : 'See My Results →'}
-                    </button>
-                  )}
-                </>
-              )}
             </>
           )}
         </div>

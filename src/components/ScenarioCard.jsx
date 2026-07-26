@@ -4,20 +4,6 @@ import FeedbackPanel from './FeedbackPanel';
 import { buildTicker, villainSummary } from '../utils/ticker';
 import { track } from '../utils/analytics';
 
-// ─── Feature flags ─────────────────────────────────────────────────────────
-// USE_SINGLE_CANVAS: one-table layout (July 2026 design review) — everything
-// lives where it lives in a real game. Set false to revert to the two-column
-// felt/cream layout. USE_OVAL_TABLE only applies to the legacy layout.
-export const USE_SINGLE_CANVAS = true;
-const USE_OVAL_TABLE = true;
-
-// Grid fallback: CO | HJ | UTG (far) / BTN | BB | SB (near, hero centered)
-const TABLE_DISPLAY_ORDER = [2, 1, 0, 3, 5, 4];
-
-// Oval table: natural clockwise seat angles; hero is rotated to always sit at the bottom.
-// Positions array = [UTG(0), HJ(1), CO(2), BTN(3), SB(4), BB(5)]
-const BASE_SEAT_ANGLES = [180, 240, 300, 0, 60, 120];
-
 // ─── Hand name derivation ──────────────────────────────────────────────────
 
 const RANK_NAMES = {
@@ -33,15 +19,6 @@ function getHandName(hand) {
   if (r1 === r2) return `Pocket ${RANK_NAMES[r1]}s`;
   return `${RANK_NAMES[r1]}-${RANK_NAMES[r2]} ${suited ? 'Suited' : 'Offsuit'}`;
 }
-
-const POSITION_INFO = {
-  'UTG': 'Under the Gun · First to act',
-  'HJ':  'Hijack · Middle position',
-  'CO':  'Cutoff · Strong position',
-  'BTN': 'Button · Best position',
-  'SB':  'Small Blind · Out of position',
-  'BB':  'Big Blind · Closes preflop action',
-};
 
 // ─── Timer Ring ────────────────────────────────────────────────────────────
 // Owns its own countdown so the 1-second tick re-renders only the ring, not
@@ -150,158 +127,12 @@ export function SituationTicker({ scenario }) {
 }
 
 
-// ─── Oval table ───────────────────────────────────────────────────────────
-
-function TableOval({ scenario, pot }) {
-  const heroIdx = scenario.positions.findIndex(p => p.state === 'hero');
-  const heroBase = BASE_SEAT_ANGLES[heroIdx] ?? 120;
-  const offset = (180 - heroBase + 360) % 360;
-
-  const cx = 150, cy = 110;
-  const tableRx = 76, tableRy = 52;
-  const orbitRx = 112, orbitRy = 78;
-
-  const seats = scenario.positions.map((p, i) => {
-    const angleDeg = ((BASE_SEAT_ANGLES[i] + offset) % 360 + 360) % 360;
-    const rad = (angleDeg - 90) * (Math.PI / 180);
-    const x = cx + orbitRx * Math.cos(rad);
-    const y = cy + orbitRy * Math.sin(rad);
-    const mag = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2) || 1;
-    return {
-      pos: p.label.split(' ')[0],
-      action: p.action,
-      state: p.state,
-      x, y,
-      dirX: (x - cx) / mag,
-      dirY: (y - cy) / mag,
-    };
-  });
-
-  return (
-    <svg viewBox="0 0 300 232" className="table-oval" aria-hidden="true">
-      {/* Outer rail */}
-      <ellipse cx={cx} cy={cy} rx={tableRx + 7} ry={tableRy + 7}
-        fill="rgba(8,18,12,0.7)" stroke="rgba(160,120,40,0.45)" strokeWidth="3.5" />
-      {/* Felt */}
-      <ellipse cx={cx} cy={cy} rx={tableRx} ry={tableRy}
-        fill="#163222" stroke="rgba(200,168,75,0.18)" strokeWidth="1" />
-      {/* Inner subtle highlight */}
-      <ellipse cx={cx} cy={cy - 3} rx={tableRx - 10} ry={tableRy - 8}
-        fill="none" stroke="rgba(255,255,255,0.035)" strokeWidth="1" />
-
-      {/* Pot info centered on felt */}
-      <text x={cx} y={cy - 6} textAnchor="middle"
-        fontSize="7" fill="rgba(242,237,227,0.25)"
-        fontFamily="JetBrains Mono, monospace" letterSpacing="1.5">
-        POT
-      </text>
-      <text x={cx} y={cy + 14} textAnchor="middle"
-        fontSize="20" fill="rgba(200,168,75,0.92)"
-        fontFamily="JetBrains Mono, monospace" fontWeight="700">
-        {pot}
-      </text>
-
-      {seats.map((s, i) => {
-        const isHero   = s.state === 'hero';
-        const isActive = s.state === 'active';
-        const isFolded = s.state === 'folded';
-
-        const circleFill   = isHero ? 'rgba(200,168,75,0.22)' : isActive ? 'rgba(46,204,113,0.16)' : 'rgba(12,26,18,0.95)';
-        const circleStroke = isHero ? 'rgba(200,168,75,0.88)' : isActive ? 'rgba(46,204,113,0.65)' : 'rgba(255,255,255,0.13)';
-        const strokeW      = isHero || isActive ? 1.8 : 1.1;
-        const labelColor   = isHero ? '#e2c97e' : isActive ? '#2ecc71' : isFolded ? 'rgba(242,237,227,0.18)' : 'rgba(242,237,227,0.5)';
-
-        // action text position: push away from center along the seat's direction
-        const tx = s.x + s.dirX * 24;
-        const ty = s.y + s.dirY * 24;
-
-        return (
-          <g key={i}>
-            {/* Seat circle */}
-            <circle cx={s.x} cy={s.y} r="18"
-              fill={circleFill} stroke={circleStroke} strokeWidth={strokeW} />
-
-            {/* Position label inside circle */}
-            <text x={s.x} y={s.y + 4} textAnchor="middle"
-              fontSize={s.pos.length > 2 ? '7.5' : '9.5'}
-              fill={labelColor}
-              fontFamily="JetBrains Mono, monospace" fontWeight="700" letterSpacing="0.3">
-              {s.pos}
-            </text>
-
-            {/* Hero label */}
-            {isHero && (
-              <text x={tx} y={ty + 3} textAnchor="middle"
-                fontSize="7" fill="rgba(226,198,106,0.6)"
-                fontFamily="JetBrains Mono, monospace" letterSpacing="0.5">
-                YOU
-              </text>
-            )}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
-
 // ─── Blank card placeholder ────────────────────────────────────────────────
 
 function BlankCard({ small }) {
   return (
     <div className={`playing-card blank-card ${small ? 'sm' : ''}`}>
       <span className="c-rank" style={{ opacity: 0.18, fontSize: small ? '0.7rem' : '0.9rem' }}>—</span>
-    </div>
-  );
-}
-
-// ─── Table Visual (dark felt section) ─────────────────────────────────────
-
-function TableVisual({ scenario }) {
-  const isRed = (str) => str.includes('♥') || str.includes('♦');
-  const boardCount = scenario.board ? scenario.board.length : 0;
-  const blankCount = Math.max(0, 5 - boardCount);
-
-  return (
-    <div className="table-wrap">
-      <StreetBar boardLength={boardCount} />
-      <SituationTicker scenario={scenario} />
-
-      {USE_OVAL_TABLE ? (
-        <TableOval scenario={scenario} pot={scenario.pot} />
-      ) : (
-        <div className="positions-grid">
-          {TABLE_DISPLAY_ORDER.map(idx => {
-            const p = scenario.positions[idx];
-            return (
-              <div key={idx} className={`pos ${p.state}`}>
-                <div className="pos-name">{p.label}</div>
-                <div className="pos-action">{p.action}</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Board — always show all 5 slots */}
-      <div className="board-label">Board</div>
-      <div className="board-row">
-        {scenario.board && scenario.board.map((card, i) => (
-          <PlayingCard key={i} rank={card.slice(0, -1)} suit={card.slice(-1)}
-            color={isRed(card) ? 'red' : 'black'} animDelay={`${i * 0.12}s`} />
-        ))}
-        {Array.from({ length: blankCount }, (_, i) => (
-          <BlankCard key={`blank-${i}`} />
-        ))}
-      </div>
-
-      {/* Pot info — shown below table only in grid mode */}
-      {!USE_OVAL_TABLE && (
-        <div className="pot-info" style={{ fontSize: '0.85rem', letterSpacing: '0.08em', marginTop: '14px' }}>
-          Pot: <span>{scenario.pot}</span>
-          {scenario.toCall && <> &nbsp;·&nbsp; To call: <span>{scenario.toCall}</span></>}
-        </div>
-      )}
-
     </div>
   );
 }
@@ -317,81 +148,6 @@ function SessionProgress({ currentIndex, total, correctCount }) {
           ("Recommended Play", never "Correct Play") applies to per-hand
           grading claims, not to the running tally. */}
       <span><strong className="correct-count">{correctCount}</strong> correct</span>
-    </div>
-  );
-}
-
-// ─── Decision Panel (cream section) ───────────────────────────────────────
-
-function DecisionPanel({ scenario, options, onDecision, decided }) {
-  const heroPos = scenario.positions.find(p => p.state === 'hero')?.label?.split(' ')[0];
-  const villainPos = scenario.positions.find(p => p.state === 'active')?.label?.split(' ')[0];
-
-  return (
-    <div className="decision-panel">
-
-      {/* You Hold */}
-      <div className="dp-you-hold">
-        <div className="dp-you-hold-cards">
-          {scenario.hand.map((card, i) => (
-            <div key={i} className={`dp-mini-card ${card.c}`}>
-              <span className="dp-mc-rank">{card.r}</span>
-              <span className="dp-mc-suit">{card.s}</span>
-            </div>
-          ))}
-        </div>
-        <div className="dp-you-hold-info">
-          <div className="dp-you-hold-label">You Hold</div>
-          <div className="dp-name-row">
-            <div className="dp-you-hold-name">{getHandName(scenario.hand)}</div>
-            {POSITION_INFO[heroPos] && (
-              <div className="dp-position-info">{POSITION_INFO[heroPos]}</div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Villain Read */}
-      <div className="dp-villain-read">
-        <div className="dp-vr-header">
-          <span className="dp-vr-icon">⚑</span>
-          <span className="dp-vr-label">Villain Read</span>
-        </div>
-        <div className="dp-name-row">
-          <div className="dp-vr-name">{scenario.villain.label}</div>
-          {POSITION_INFO[villainPos] && (
-            <div className="dp-position-info">{POSITION_INFO[villainPos]}</div>
-          )}
-        </div>
-      </div>
-
-      {/* Action header divider */}
-      <div className="dp-action-header">Your Move</div>
-
-      {/* Action buttons */}
-      <div className="dp-actions">
-        {options.map((opt) => (
-          <button
-            key={opt.val}
-            className={`act-btn ${opt.cls}`}
-            onClick={() => onDecision(opt.val)}
-            disabled={decided}
-          >
-            <div className="act-icon">{opt.icon}</div>
-            <div className="act-btn-content">
-              <div className="act-btn-label">
-                {opt.label.includes('(') ? opt.label.slice(0, opt.label.indexOf('(')).trim() : opt.label}
-              </div>
-              {opt.label.includes('(') && (
-                <div className="act-btn-sublabel" style={{ color: '#1a1a1a' }}>
-                  {opt.label.slice(opt.label.indexOf('(') + 1, opt.label.lastIndexOf(')'))}
-                </div>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
-
     </div>
   );
 }
@@ -640,46 +396,10 @@ function CanvasLayout({
 }
 
 // ─── Scenario Card ─────────────────────────────────────────────────────────
+// The single-canvas layout is the ONLY render path — the legacy two-column
+// felt/cream layout was deleted July 2026 (recoverable from git history; the
+// dead-layout invariant blocks resurrection by stale revert).
 
 export default function ScenarioCard(props) {
-  if (USE_SINGLE_CANVAS) return <CanvasLayout {...props} />;
-  return <LegacyLayout {...props} />;
-}
-
-function LegacyLayout({
-  scenario, currentIndex, total,
-  totalSeconds, correctCount,
-  options, onDecision, decided,
-  showTimer, onTimeout,
-}) {
-  return (
-    <div className="scenario-card">
-      {/* Dark header: skill tag + timer + progress */}
-      <div className="card-meta">
-        <div className="skill-tag">{scenario.tag}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {showTimer && (
-            <TimerRing
-              key={currentIndex}
-              totalSeconds={totalSeconds}
-              paused={decided}
-              onTimeout={onTimeout}
-            />
-          )}
-          <SessionProgress currentIndex={currentIndex} total={total} correctCount={correctCount} />
-        </div>
-      </div>
-
-      {/* Dark felt (left) + cream Q&A (right) — side by side on tablet/desktop */}
-      <div className="scenario-card-body">
-        <TableVisual scenario={scenario} key={currentIndex} />
-        <DecisionPanel
-          scenario={scenario}
-          options={options}
-          onDecision={onDecision}
-          decided={decided}
-        />
-      </div>
-    </div>
-  );
+  return <CanvasLayout {...props} />;
 }

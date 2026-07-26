@@ -201,6 +201,22 @@ if (!process.env.CI) {
   } catch { /* offline / rate-limited — skip silently, never block local work */ }
 }
 
+// ── 13. Dead legacy layout stays dead (CA-027/CA-026/CA-018, July 2026) ──
+// The two-column felt/cream gameplay layout (LegacyLayout + DecisionPanel +
+// TableVisual behind the USE_SINGLE_CANVAS flag) was DELETED — CanvasLayout
+// is the only render path. These identifiers reappearing in src/ means a
+// stale revert or copy-paste resurrection; the code lives in git history if
+// ever genuinely needed. (This rule file itself is outside src/, so naming
+// the identifiers here can't self-trip.)
+{
+  const deadLayout = /\b(USE_SINGLE_CANVAS|LegacyLayout|DecisionPanel|TableVisual)\b/;
+  for (const f of srcFiles) {
+    const m = read(f).match(deadLayout);
+    if (m)
+      flag('ERROR', 'dead-layout', `${rel(f)} references '${m[1]}' — the legacy two-column layout was deleted July 2026; CanvasLayout is the only gameplay layout. Do not resurrect via stale revert (git history has the code).`);
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
