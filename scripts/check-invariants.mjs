@@ -241,6 +241,39 @@ if (!process.env.CI) {
   } catch { /* file missing */ }
 }
 
+// ── 15. No new root-level docs (CA-035, July 2026) ──────────────────────
+// The Phase 2 docs restructure moved everything into docs/ — the repo root
+// carries exactly the allowlisted files below. Any other tracked *.md at the
+// root is drift back toward the 19k-word-constitution era. The allowlist
+// match is case-insensitive: decision-log.md is deliberately tracked
+// non-CAPS at root, and the CLAUDE.md case normalization (git tracked
+// `Claude.md` until the Task 8 rename) must not red-flag itself here —
+// the rule's spirit is no NEW root docs, not case enforcement (rule 7's
+// case-sensitivity check owns public/ paths, where case actually 404s).
+{
+  const rootDocAllowlist = ['claude.md', 'readme.md', 'founder_briefing.md', 'playtest_brief.md', 'decision-log.md'];
+  for (const f of tracked) {
+    if (!f || f.includes('/') || !f.toLowerCase().endsWith('.md')) continue;
+    if (!rootDocAllowlist.includes(f.toLowerCase()))
+      flag('ERROR', 'root-docs', `${f} is a tracked root-level doc outside the allowlist {CLAUDE.md, README.md, FOUNDER_BRIEFING.md, PLAYTEST_BRIEF.md, decision-log.md} — new docs live in docs/ (see docs/INDEX.md for where)`);
+  }
+}
+
+// ── 16. CLAUDE.md stays lean (CA-035, July 2026) ────────────────────────
+// CLAUDE.md is the per-session law, budgeted at ≤400 lines; depth lives in
+// the docs/ tree. Without a mechanical ceiling the file regrows one "just
+// this once" paragraph at a time (it hit ~19k words before the restructure).
+{
+  try {
+    const claudeMd = read(join(ROOT, 'CLAUDE.md'));
+    const lineCount = claudeMd.split('\n').length;
+    if (lineCount > 400)
+      flag('ERROR', 'claude-md-budget', `CLAUDE.md is ${lineCount} lines (budget 400) — move the excess into the docs/ tree (docs/INDEX.md is the map) and leave a pointer`);
+  } catch {
+    flag('ERROR', 'claude-md-budget', 'CLAUDE.md not found at repo root — the per-session law file is missing');
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
