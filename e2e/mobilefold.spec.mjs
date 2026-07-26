@@ -66,6 +66,22 @@ export default async function run({ browser, baseURL, check }) {
     const hist = await page.locator('.sc2-history').boundingBox();
     check(`[${difficulty}] ticker top inside the fold`, !!hist && hist.y < VIEW.height,
       hist ? `top=${Math.round(hist.y)}` : 'missing');
+
+    // Hero cluster containment (July 26 regression: the 315px felt compression
+    // left the fixed-size hero cluster anchored at bottom:-8px, putting the
+    // cards on the felt border and the YOU chip outside the table box).
+    // Founder-approved contract at phone width: cards inside the felt oval,
+    // label/chip inside the table box. Desktop deliberately straddles the rail
+    // (original canvas design) — this guard is mobile-only.
+    const felt = await page.locator('.sc2-felt').boundingBox();
+    const cards = await page.locator('.sc2-hero-cards').boundingBox();
+    const chip = await page.locator('.sc2-you-chip').boundingBox();
+    check(`[${difficulty}] hero cards inside the felt oval`,
+      !!cards && !!felt && cards.y + cards.height <= felt.y + felt.height,
+      cards && felt ? `cards bottom=${Math.round(cards.y + cards.height)} felt bottom=${Math.round(felt.y + felt.height)}` : 'missing');
+    check(`[${difficulty}] YOU chip inside the table box`,
+      !!chip && !!table && chip.y + chip.height <= table.y + table.height + 0.5,
+      chip && table ? `chip bottom=${Math.round(chip.y + chip.height)} table bottom=${Math.round(table.y + table.height)}` : 'missing');
   };
 
   await guardHand('intermediate');

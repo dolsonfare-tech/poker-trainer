@@ -3084,6 +3084,11 @@ body {
   .street-bar { margin-bottom: 8px; padding-bottom: 8px; }
   .sc2-table { height: 315px; }
   .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
+  /* The 315px felt can't absorb the desktop rail-straddle (bottom:-8px) —
+     the fixed-size hero cluster ends up with cards on the border ring and
+     the YOU chip outside the table box. Lift the anchor so cards sit inside
+     the felt; label/chip land on the rim band (guarded in mobilefold.spec). */
+  .sc2-hero { bottom: 0; }
   .sc2-bubble { display: none; }
   .sc2-villain-mobile { display: block; margin-top: 10px; }
   .sc2-history { margin: 12px auto 10px; }
