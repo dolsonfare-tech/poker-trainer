@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { DIFFICULTY_LABELS } from '../data/constants';
 
 const DIFFICULTIES = [
   {
     key: 'beginner',
-    label: 'Beginner',
+    label: DIFFICULTY_LABELS.beginner,
     sublabel: 'Learning the game',
     desc: 'Starting hands, clear prices, honest opponents',
     icon: '♣',
@@ -11,7 +12,7 @@ const DIFFICULTIES = [
   },
   {
     key: 'intermediate',
-    label: 'Intermediate',
+    label: DIFFICULTY_LABELS.intermediate,
     sublabel: 'Solid foundation',
     desc: 'Line-reading, sizing tells, tougher prices — on the clock',
     icon: '♠',
@@ -19,7 +20,7 @@ const DIFFICULTIES = [
   },
   {
     key: 'expert',
-    label: 'Expert',
+    label: DIFFICULTY_LABELS.expert,
     // Availability lives in the badge — the sublabel keeps the player-identity
     // register of its siblings.
     sublabel: 'Playing for a living',

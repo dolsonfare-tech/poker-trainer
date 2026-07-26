@@ -2,6 +2,23 @@
 // Single source of truth used by Dashboard, SessionSummary, and any future
 // screen that needs skill names, descriptions, or rating labels.
 
+// ─── Difficulty labels (CA-030) ──────────────────────────────────────────────
+// Single source for the three difficulty display names — same pattern as
+// SKILL_NAMES. DifficultySelector derives each card's label from this map;
+// SessionSummary imports this instead of maintaining its own private copy.
+export const DIFFICULTY_LABELS = {
+  beginner:     'Beginner',
+  intermediate: 'Intermediate',
+  expert:       'Expert',
+};
+
+// ─── Guest gate CTA (CA-031) ─────────────────────────────────────────────────
+// The call-to-action shown to a guest who has used their free session.
+// Dashboard renders it alone; SessionSummary appends ' →'.
+// GUEST_FREE_SESSIONS and the 'Guest' display name stay in App.jsx (config,
+// not display copy).
+export const GUEST_GATE_CTA = 'Sign In Free to Keep Playing';
+
 export const SKILL_NAMES = {
   preflop:    'Preflop',
   position:   'Position',

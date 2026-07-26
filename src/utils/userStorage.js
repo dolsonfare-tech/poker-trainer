@@ -1,6 +1,7 @@
 import { deriveRating, applyHandToSkill, RESULT_CREDIT, PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
 import { applyHandsToHistory } from './spacedrep';
 import SCENARIOS from '../data/scenarios';
+import { toLocalDateString } from './dates';
 
 const USER_KEY = 'cr_user';
 
@@ -529,13 +530,9 @@ export function parseCoachRead(raw) {
 }
 
 // ── Streak ────────────────────────────────────────────────────────────────────
-// Local time, not UTC — a day rolls over at the player's midnight.
-export function toLocalDateString(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+// Re-exported from dates.js so all existing importers (db.js, Dashboard.jsx,
+// tests) are untouched. The definition lives in dates.js (CA-028).
+export { toLocalDateString } from './dates';
 
 // ── Streak mechanics (M1–M3, July 2026 — RESEARCH_LEARNING_SCIENCE.md Piece 3) ─
 // Streak Rebuys (M1): a poker-named streak freeze — the genre's most validated

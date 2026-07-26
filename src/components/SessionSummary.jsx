@@ -1,12 +1,6 @@
-import { SKILL_NAMES, RATING_ORDER, applyHandToSkill } from '../data/constants';
+import { SKILL_NAMES, RATING_ORDER, applyHandToSkill, DIFFICULTY_LABELS, GUEST_GATE_CTA } from '../data/constants';
 import { derivePokerScore, milestoneProximity, parseCoachRead, MILESTONE_NAMES } from '../utils/userStorage';
 import AdSlot from './AdSlot';
-
-const DIFFICULTY_LABELS = {
-  beginner:     'Beginner',
-  intermediate: 'Intermediate',
-  expert:       'Expert',
-};
 
 const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e25555' };
 
@@ -275,7 +269,7 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
           gate here instead: sign in (free) to keep playing. */}
       {guest ? (
         <button className="restart-btn" onClick={() => onGuestSignIn('summary')}>
-          Sign In Free to Keep Playing →
+          {GUEST_GATE_CTA} →
         </button>
       ) : (
         <button className="restart-btn" onClick={onPlayAgain}>Deal Next Session →</button>

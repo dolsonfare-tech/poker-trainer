@@ -302,3 +302,15 @@ test('locked-schema card clamps countdown at zero when sessionsCompleted exceeds
   // Should show the refresh message
   expect(lockedCard).toHaveTextContent(/Play a session to refresh your profile/);
 });
+
+// ── CA-031: GUEST_GATE_CTA single-source pin ──────────────────────────────────
+test('CA-031: Dashboard.jsx does not hard-code the guest CTA string', () => {
+  const fs = require('fs');
+  const src = fs.readFileSync(
+    require.resolve('./Dashboard'),
+    'utf8'
+  );
+  // The literal must not appear in Dashboard.jsx — it should come from the constant
+  expect(src).not.toMatch(/'Sign In Free to Keep Playing'/);
+  expect(src).not.toMatch(/"Sign In Free to Keep Playing"/);
+});

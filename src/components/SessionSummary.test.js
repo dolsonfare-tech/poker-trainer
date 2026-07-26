@@ -224,3 +224,25 @@ test('guest summary: coach teaser + sign-in gate instead of chaining', () => {
   screen.getByText(/Sign In Free to Keep Playing/).click();
   expect(onGuestSignIn).toHaveBeenCalledWith('summary');
 });
+
+// ── CA-030: no inline DIFFICULTY_LABELS map in SessionSummary.jsx ─────────────
+test('CA-030: SessionSummary.jsx does not define an inline difficulty label map', () => {
+  const fs = require('fs');
+  const src = fs.readFileSync(
+    require.resolve('./SessionSummary'),
+    'utf8'
+  );
+  // The inline `beginner:` entry inside a local DIFFICULTY_LABELS object must be gone
+  expect(src).not.toMatch(/beginner:\s*['"]Beginner['"]/);
+});
+
+// ── CA-031: GUEST_GATE_CTA single-source pin ──────────────────────────────────
+test('CA-031: SessionSummary.jsx does not hard-code the guest CTA string', () => {
+  const fs = require('fs');
+  const src = fs.readFileSync(
+    require.resolve('./SessionSummary'),
+    'utf8'
+  );
+  expect(src).not.toMatch(/'Sign In Free to Keep Playing'/);
+  expect(src).not.toMatch(/"Sign In Free to Keep Playing"/);
+});

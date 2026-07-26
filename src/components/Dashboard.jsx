@@ -1,5 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react';
-import { SKILL_NAMES } from '../data/constants';
+import { SKILL_NAMES, GUEST_GATE_CTA } from '../data/constants';
 import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRead, SCHEMA_UNLOCK_SESSIONS, streakAlive } from '../utils/userStorage';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
@@ -709,7 +709,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           className={`db-cta-btn ${pulse ? 'db-cta-visible' : ''}`}
           onClick={guestGated ? () => onGuestSignIn('dashboard') : onStartSession}
         >
-          {guestGated ? 'Sign In Free to Keep Playing' : 'Deal Me In'}
+          {guestGated ? GUEST_GATE_CTA : 'Deal Me In'}
           <span className="db-cta-arrow">→</span>
         </button>
         {guestGated && (

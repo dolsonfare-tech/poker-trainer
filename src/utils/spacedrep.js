@@ -1,4 +1,5 @@
 import { CONTRAST_PAIRS } from '../data/scenarios';
+import { localDateFrom } from './dates';
 
 // Spaced repetition v2 — the session builder.
 //
@@ -298,18 +299,9 @@ export function buildSession(pool, { history = {}, skills = {}, sessionsComplete
 const isConfidentMiss = (decisionMs) =>
   typeof decisionMs === 'number' && decisionMs > 0 && decisionMs <= CONFIDENT_MISS_MS;
 
-// ISO timestamp → local YYYY-MM-DD (mirrors userStorage.toLocalDateString, but
-// kept local to avoid a circular import). A day rolls over at the player's
-// midnight, consistent with the live currentDate the caller passes.
-function localDateFrom(value) {
-  if (!value) return null;
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return null;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
+// localDateFrom imported from dates.js at the top of this file (CA-028).
+// Previously kept a local copy here to avoid the userStorage→spacedrep
+// circular import; dates.js has no such dependency.
 
 /**
  * Fold one session's hands into a history map (pure — returns a new map).
