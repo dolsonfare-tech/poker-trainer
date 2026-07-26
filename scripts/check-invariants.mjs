@@ -177,6 +177,30 @@ onlyIn('sentry',
   }
 }
 
+// ── 12. CI on main must actually be green (July 26, 2026) ───────────────
+// The CI workflow failed silently on every push from July 19–26 (lockfile
+// out of sync under npm 10) and nobody noticed — the "bug net" layer was
+// dead for a week. Best-effort check of the latest completed run on main;
+// WARN (not ERROR) so offline work and in-flight fixes aren't blocked, but
+// the red status is shouted on every local gate run. Skipped inside CI
+// itself (the run in progress can't see its own conclusion).
+if (!process.env.CI) {
+  try {
+    const ctl = new AbortController();
+    const t = setTimeout(() => ctl.abort(), 2500);
+    const res = await fetch(
+      'https://api.github.com/repos/dolsonfare-tech/poker-trainer/actions/runs?branch=main&status=completed&per_page=1',
+      { signal: ctl.signal, headers: { accept: 'application/vnd.github+json' } });
+    clearTimeout(t);
+    if (res.ok) {
+      const { workflow_runs: runs } = await res.json();
+      if (runs?.[0] && runs[0].conclusion !== 'success')
+        flag('WARN', 'ci-status',
+          `latest completed CI run on main is ${runs[0].conclusion.toUpperCase()} (run #${runs[0].run_number}, '${runs[0].display_title.slice(0, 50)}') — the push-time bug net is down; fix CI before relying on it`);
+    }
+  } catch { /* offline / rate-limited — skip silently, never block local work */ }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
