@@ -27,3 +27,8 @@ yarn-debug.log*
 yarn-error.log*
 coach-eval-output.md
 persona-playtest-raw.json
+
+# operational artifacts (never commit)
+.omc/
+.superpowers/
+docs/audit/lanes/ux-shots/
