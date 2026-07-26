@@ -8,25 +8,27 @@
 
 ## Summary counts
 
-- **MIGRATED:** ~72 load-bearing items
+- **MIGRATED:** ~79 load-bearing items (72 original + 7 orphans fixed 2026-07-26)
 - **HISTORY:** ~35 items (session-log build chronology in the "In flight / next", "Live in production now", scenario-batch, and Founder-direction blocks — preserved in git, intentionally not restated)
-- **ORPHANED:** **7** — listed below with severity
+- **ORPHANED:** **0** — all 7 original orphans resolved; see disposition table below
 
-## Orphaned items (load-bearing, no new home)
+## Previously-orphaned items (now migrated)
+
+All 7 items were migrated in commit `docs(phase2): migrate the 7 orphaned rules to their tree homes` (2026-07-26).
 
 Severity key: **LAW** = a rule/gotcha that will bite the next contributor · **SPEC** = a durable value or convention that a future engineer will need to look up · **CONTEXT** = background reasoning that grounds a future decision.
 
-| # | Item | Old location | Severity | Why it matters |
-|---|---|---|---|---|
-| O-1 | **`$50/mo Anthropic monthly cap`** on the Coach's Read (set at the Anthropic dashboard, paired with the 5 calls/user/day server cap) | Old line 75 ("$50/mo Anthropic cap set") | **LAW** | This is the actual dollar ceiling for a runaway loop. `docs/architecture/ENGINES.md` §4 and DECISIONS.md capture the 5-calls/day cap but the monthly $50 ceiling is nowhere. Losing it removes the last line of defense against a prompt-injection or client bug that bypasses the per-user counter. |
-| O-2 | **`ads.txt` publisher line format:** `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0` — the exact string to author when AdSense approves | Old NEXT-SESSION line, item 1 | **SPEC** | ROADMAP.md item 8 says "author `public/ads.txt`" but drops the format. When AdSense finally lands the founder will search CLAUDE.md for this string and it will be gone; the AdSense certification magic hash (`f08c47fec0942fa0`) is Google-specific boilerplate that a future agent will not reinvent. |
-| O-3 | **`TICKER_STAKES` is hardcoded to `$1/$2 CASH · 6-MAX`** — hands authored at other stakes must scale to house $1/$2 (sc_172 scaling precedent: founder-spec'd $1/$3 was rescaled to $1/$2 as 12/40/70/160 to preserve every ratio) | Old sc_172 authoring bullet | **LAW** | An authoring rule: the ticker will silently mislabel any hand authored at other stakes. Authoring convention doc (`docs/conventions/AUTHORING_SCENARIOS.md`) doesn't state it; the flag "always scale to $1/$2, flag the founder if the numbers change" is gone. This is exactly the kind of buried gotcha the prompt warned about. |
-| O-4 | **Data-cleanup SQL for the cross-account stats-leak:** `delete from public.profiles where id = '<account-B-uuid>';` (cascades skills/sessions/coach_usage; auth user survives; the leaked-into account permanently carries the other account's stats even after the July 6 code fix) | Old bug-history bullet | **LAW** | The fix code is in place, but any account created on a leak-affected device still needs manual cleanup. Not captured in DEPLOY.md or TRIAGE.md. If a user reports "my stats look weird" this is the runbook — and it's gone. |
-| O-5 | **The three long-lived Claude artifact URLs** (30-day launch playbook, gameplay-layout design-review history, Founder's briefing artifact mirror) | Old "Artifacts (persistent links for future sessions)" block | **CONTEXT** | Two are historical (playbook, layout iterations) but the FOUNDER_BRIEFING artifact URL is documented as "republish on doc changes" — a standing maintenance obligation. That obligation and its target URL are lost. The briefing itself lives at repo root but the requirement to republish the artifact is orphaned. |
-| O-6 | **`$6 standard open` at $1/$2** (pool-wide convention: any opening raise defaults to $6; deviations must be justified in body or grading; sc_011 was resized from $15→$6 per this rule) | Old scenario batch bullets | **SPEC** | AUTHORING_SCENARIOS.md §"Sizes" mentions sc_011 resizing but the "$6 = pool standard, always default here, justify deviations" LAW is not stated as a first-class rule. When Expert-tier authoring begins this will be re-derived from scratch. |
-| O-7 | **Phase 2 tech-stack table for when a developer is engaged:** State = **Zustand or React Context** · Animations = **Framer Motion (establish in Phase 1.5)** · Estimate = 6–8 weeks | Old "Phase 2 Tech Stack (when developer is engaged)" section | **CONTEXT** | These are pre-decided defaults for the next tech-stack expansion (a Zustand/Framer choice was locked). ROADMAP.md's Phase 3 section doesn't carry these forward. When Pro-tier scoping begins the founder wants to say "we already picked Framer Motion" and the receipt is gone. |
+| # | Item | Severity | New home |
+|---|---|---|---|
+| O-1 | **`$50/mo Anthropic monthly cap`** on the Coach's Read (set at the Anthropic dashboard, paired with the 5 calls/user/day server cap) | **LAW** | `docs/architecture/ENGINES.md` §4 "Cost rails" block (above the Constants table) — MIGRATED |
+| O-2 | **`ads.txt` publisher line format:** `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0` — the exact string to author when AdSense approves; plus the two-stage env flip (CLIENT var = site review, SLOT vars = live ads) | **SPEC** | `docs/operations/DEPLOY.md` §"AdSense (ON HOLD)" block — MIGRATED |
+| O-3 | **`TICKER_STAKES` is hardcoded to `$1/$2 CASH · 6-MAX`** — hands authored at other stakes must scale to house $1/$2 (sc_172 scaling precedent: $1/$3 spec → 12/40/70/160) | **LAW** | `docs/conventions/AUTHORING_SCENARIOS.md` §"Stakes scaling — always $1/$2" (adjacent to Standard open size) — MIGRATED |
+| O-4 | **Data-cleanup SQL for the cross-account stats-leak:** `delete from public.profiles where id = '<account-uuid>';` (cascades skills/sessions/coach_usage; auth user survives; next sign-in re-onboards fresh) | **LAW** | `docs/operations/TRIAGE.md` §"Runbooks — Cross-account stats-leak cleanup" — MIGRATED |
+| O-5 | **The three long-lived Claude artifact URLs** (30-day launch playbook, gameplay-layout design-review history, Founder's briefing) plus the standing obligation to republish the briefing artifact whenever `FOUNDER_BRIEFING.md` changes | **CONTEXT** | `docs/product/ROADMAP.md` §"Standing artifacts" table — MIGRATED |
+| O-6 | **`$6 standard open` at $1/$2** — pool-wide convention; deviations must be justified in body or grading | **SPEC** | `docs/conventions/AUTHORING_SCENARIOS.md` §"Standard open size" (strengthened to "pool-wide default") — MIGRATED |
+| O-7 | **Phase 3 tech-stack pre-decisions:** State = Zustand or React Context · Animations = Framer Motion · Estimate = 6–8 weeks with a developer | **CONTEXT** | `docs/product/ROADMAP.md` §"Phase 3" bullet list — MIGRATED |
 
-**None of the seven are launch-blockers.** All seven are the "subtle mid-paragraph gotcha" class the prompt warned about — the migration authors clearly kept every explicit "law" but let a handful of durable-but-embedded specs and operational SQL slip.
+**All seven are now in their routed homes.** The orphan class was mid-paragraph gotchas buried in build-log bullets or a table with no `docs/` home; the fix adds focused paragraphs in the four target files.
 
 ---
 
@@ -107,7 +109,7 @@ Grouped by old-file section for auditability. `L###` = line in `OLD_CLAUDE.md`.
 | Old item | Disposition | New location |
 |---|---|---|
 | AdSense on-hold status + LLC blocker | MIGRATED | ROADMAP.md item 8; DECISIONS.md §Monetization |
-| **AdSense `ads.txt` line format `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0`** | **ORPHANED (O-2)** | — |
+| **AdSense `ads.txt` line format `google.com, pub-XXXX, DIRECT, f08c47fec0942fa0`** | MIGRATED (O-2) | `docs/operations/DEPLOY.md` §AdSense (ON HOLD) |
 | Google brand verification APPROVED | MIGRATED | DEPLOY.md §Live-in-prod row (Google OAuth) |
 | pot/bet-size pass DONE + `potpre` audit rule | MIGRATED | AUTHORING_SCENARIOS.md pot conventions; GATES.md §Gate 3 |
 | **sc_012 tournament-regrade lesson + sc_011 $15→$6 resize** | MIGRATED (partial) | SCENARIO_GRADING_FINDINGS.md L94 mentions sc_012; AUTHORING_SCENARIOS.md L99 mentions sc_011. **Standalone "check undisplayed `question` field" law survives** in the same authoring doc. |
@@ -129,7 +131,7 @@ Grouped by old-file section for auditability. `L###` = line in `OLD_CLAUDE.md`.
 | Supabase auth (email magic link + Google) | MIGRATED | ARCHITECTURE.md; DEPLOY.md |
 | profiles/skills/sessions/coach_usage tables + RLS | MIGRATED | ARCHITECTURE.md; DECISIONS.md §RLS |
 | Coach endpoint locked — 5 calls/user/day cap | MIGRATED | ENGINES.md §4; DECISIONS.md §5 calls/day |
-| **`$50/mo Anthropic cap set`** | **ORPHANED (O-1)** | — |
+| **`$50/mo Anthropic cap set`** | MIGRATED (O-1) | `docs/architecture/ENGINES.md` §4 Cost rails |
 | Streak warning banner (dashboard, after 6pm local) | HISTORY | Feature exists; not restated as durable spec |
 | Privacy + Terms, Cloudflare Email Routing "silently DISABLED until July 5" | MIGRATED | DEPLOY.md L76–L78 |
 | PostHog live in prod + `REACT_APP_*` public-by-definition note | MIGRATED | DEPLOY.md env-var map; ARCHITECTURE.md |
@@ -142,7 +144,7 @@ Grouped by old-file section for auditability. `L###` = line in `OLD_CLAUDE.md`.
 ### Artifacts block (L85–L88)
 | Old item | Disposition | New location |
 |---|---|---|
-| **3 Claude artifact URLs — 30-day playbook, layout history, Founder's briefing (with republish obligation)** | **ORPHANED (O-5)** | — |
+| **3 Claude artifact URLs — 30-day playbook, layout history, Founder's briefing (with republish obligation)** | MIGRATED (O-5) | `docs/product/ROADMAP.md` §Standing artifacts |
 
 ### In-flight / next narration (L90–L124)
 This block is 30+ bullets of build-log narration (guest-first SignIn July 25, FOUNDER_BRIEFING structure, Villain-types research, Schema-taxonomy research, UX/consistency sweep, guest-flow + earned moments, spaced-rep v0, stale-session fix, Sentry live, auth-flow hardening, cross-account leak fix, honest-labeling pass, sc_172, scenario batches 3/4/5, TableReads design, batch sc_084–sc_107, editable usernames, beta feedback, PostHog, Google sign-in, Resend, vercel.json fix, Week 3 pot pass, founder-direction queue).
@@ -155,13 +157,13 @@ Notable single-line rules threaded through this block:
 | **`COACH_DAILY_LIMIT` in SessionSummary.jsx mirrors server's `DAILY_LIMIT` — keep them in sync** | MIGRATED | ENGINES.md §4 constants table + rule text ("COACH_DAILY_LIMIT must mirror DAILY_LIMIT") |
 | Verification recipe: stub-Supabase Playwright + forged-JWT + prod-bundle grep + `sb-*` unblock | MIGRATED | GATES.md §Verification recipes |
 | Data-loss chain root cause + `ignoreDuplicates: true` (invariant rule 9 `create-no-clobber`) | MIGRATED | DECISIONS.md; GATES.md rule 9 |
-| **Cross-account leak: `delete from public.profiles where id = '<uuid>';` runbook for stuck accounts** | **ORPHANED (O-4)** | — |
+| **Cross-account leak: `delete from public.profiles where id = '<uuid>';` runbook for stuck accounts** | MIGRATED (O-4) | `docs/operations/TRIAGE.md` §Runbooks |
 | `SIGNED_OUT` clears only owner-tagged caches; `INITIAL_SESSION`-no-session doesn't clear | MIGRATED | ARCHITECTURE.md auth flow |
 | Honest-labeling copy pass (Recommended Play; Hand Analysis not AI Analysis; option label not raw val; tagline) | MIGRATED | DECISIONS.md §Content/Copy Voice (four bullets, verbatim rationale) |
 | sc_172 = first 2-option scenario + first all-in scenario (all-in expressed WITHOUT stacks field; amount-free `'All-In'` seat action; committed-pot convention) | MIGRATED | AUTHORING_SCENARIOS.md L119 (amount-free label + committed pot); L212 (Check-Raises pattern) |
-| **TICKER_STAKES hardcodes "$1/$2 CASH · 6-MAX"; hands authored at other stakes must scale to $1/$2 — flag founder if numbers changed** | **ORPHANED (O-3)** | — |
+| **TICKER_STAKES hardcodes "$1/$2 CASH · 6-MAX"; hands authored at other stakes must scale to $1/$2 — flag founder if numbers changed** | MIGRATED (O-3) | `docs/conventions/AUTHORING_SCENARIOS.md` §Stakes scaling |
 | Scenario batch coverage-audit findings (per-skill counts, position gaps, street gaps, deliberate pair links) | HISTORY | Git commits + scenario-audit tooling |
-| **`$6 standard open` at $1/$2 (pool-wide convention; deviations justified in body)** | **ORPHANED (O-6)** | AUTHORING_SCENARIOS.md mentions sc_011 resizing but not the rule itself |
+| **`$6 standard open` at $1/$2 (pool-wide convention; deviations justified in body)** | MIGRATED (O-6) | `docs/conventions/AUTHORING_SCENARIOS.md` §Standard open size (strengthened to "pool-wide default") |
 | `question` field never displayed; check it in every review | MIGRATED | DECISIONS.md; SCENARIO_GRADING_FINDINGS.md L94 |
 | Displayed feedback is grade-level, last-write-wins (`scenario.feedback[gr.g]`) — when two options share a grade, combined fb must read for either | MIGRATED | AUTHORING_SCENARIOS.md L223–L225 |
 | Hero-first-to-act postflop needs authored `actionHistory` ending in `{ text: "you're first to act", you: true }` | MIGRATED | AUTHORING_SCENARIOS.md L176, L190–L191 |
@@ -273,9 +275,9 @@ Notable single-line rules threaded through this block:
 | Old item | Disposition | New location |
 |---|---|---|
 | Backend Supabase / DB PostgreSQL / Auth Supabase Auth | MIGRATED | ARCHITECTURE.md + DECISIONS.md |
-| **State: Zustand or React Context — pre-decided default** | **ORPHANED (O-7)** | — |
-| **Animations: Framer Motion (establish in Phase 1.5) — pre-decided default** | **ORPHANED (O-7)** | — |
-| **6–8 week Phase 2 timeline estimate with a developer** | **ORPHANED (O-7)** | — |
+| **State: Zustand or React Context — pre-decided default** | MIGRATED (O-7) | `docs/product/ROADMAP.md` §Phase 3 |
+| **Animations: Framer Motion (establish in Phase 1.5) — pre-decided default** | MIGRATED (O-7) | `docs/product/ROADMAP.md` §Phase 3 |
+| **6–8 week Phase 2 timeline estimate with a developer** | MIGRATED (O-7) | `docs/product/ROADMAP.md` §Phase 3 |
 
 ### Phase 1.6 — Scenario Scale & Expert (L320–L330)
 | Old item | Disposition | New location |

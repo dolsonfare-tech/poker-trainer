@@ -171,6 +171,13 @@ Calibrate against real per-skill distributions once PostHog/Supabase sessions ac
 
 **What it does.** One live Claude call per completed session, from the ONLY file that talks to Anthropic. Session decisions are shaped by the client, sent to a Vercel serverless function that requires a signed-in Supabase user, enforces a per-user daily cap, calls `claude-sonnet-5` with a structured-output schema, and returns `{ text: <JSON string> }`. The client parses at render time and gracefully renders legacy prose reads (pre-restructure) or the model's raw text if JSON validation fails.
 
+### Cost rails
+
+Two independent limits bound spend:
+
+- **`DAILY_LIMIT` = 5 calls/user/day** — enforced server-side in `api/coach-read.js` via the `coach_usage` table. A per-user counter that 429s on the 6th call each UTC day.
+- **$50/mo Anthropic console spending cap** — set in the Anthropic dashboard (not in code). This is the last-line dollar ceiling: even if the per-user counter were bypassed by a bug or prompt-injection, the monthly cap is the hard stop that prevents runaway cost. Do not remove it from the Anthropic dashboard.
+
 ### Constants
 
 | Constant | Value | Source |

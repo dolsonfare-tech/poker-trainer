@@ -90,3 +90,21 @@ Funnel order: `sign_in_link_sent` → `signed_in` → `profile_created` →
 
 Adding an event: call `track()` from `src/utils/analytics.js` (never posthog-js
 directly — invariants rule 3), then add the row here.
+
+## Runbooks
+
+### Cross-account stats-leak cleanup
+
+**Background:** a code bug (fixed July 6, 2026) allowed a sign-in on a device that had another account's localStorage cache to create the new account's `profiles` row pre-populated with the old account's stats. The code fix is in place, but any account created on a leak-affected device **permanently carries the other account's stats** in Supabase — the code fix does not retroactively clean them.
+
+**Symptom:** a user reports "my stats look wrong / too high" and the account was created before July 7, 2026, on a shared or previously-used device.
+
+**Fix (run in the Supabase SQL editor — founder/service-role access required):**
+
+```sql
+delete from public.profiles where id = '<account-uuid>';
+```
+
+This cascades to `skills`, `sessions`, and `coach_usage` rows for that uid. The Supabase **auth user** survives — the player's login is unaffected. On next sign-in the app re-onboards fresh (UsernameEntry), and the account starts clean.
+
+To find the uuid: ask the user for the email they signed up with, then look it up in the Supabase Auth dashboard or via `select id from auth.users where email = '...'`.

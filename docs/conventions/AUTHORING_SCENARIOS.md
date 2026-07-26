@@ -94,10 +94,11 @@ disagrees with the `pot` field.
 
 ## Standard open size
 
-`$6` is the house standard preflop open at $1/$2 6-max. Use it unless the
-scenario's lesson explicitly requires a different sizing (the first deviation
-must be justified in the body or grading explanation). sc_011 was resized from
-$15 to $6 for exactly this reason.
+`$6` is the **pool-wide default** preflop open at $1/$2 6-max. Every new scenario should use $6 unless the lesson explicitly depends on a different sizing. When you deviate, justify it in the body or grading explanation. sc_011 was resized from $15 to $6 for exactly this reason.
+
+## Stakes scaling — always $1/$2
+
+`TICKER_STAKES` is hardcoded to `$1/$2 CASH · 6-MAX`. If a hand is conceived or received at different stakes (e.g. a $1/$3 spec), **scale every dollar amount to $1/$2 preserving all ratios**, then flag the founder so the changed numbers can be verified. The sc_172 precedent: a founder-specced $1/$3 hand (18/55/100/225) was scaled to $1/$2 as 12/40/70/160 — every open-to-3bet-to-jam ratio held. A hand authored at other stakes without scaling will be silently mislabelled in the ticker.
 
 ---
 

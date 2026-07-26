@@ -69,6 +69,20 @@ icons for weeks because git tracked `Icons/Icon-*.png` while the code asked for
 lowercase. **After any rename under `public/`, verify with `git ls-files`.**
 Invariants rule 7 (`case-sensitivity`) enforces the lowercase rule mechanically.
 
+## AdSense (ON HOLD)
+
+AdSense is ON HOLD until the product has real users (July 18, 2026 founder decision). The code scaffolding (`src/utils/ads.js`, `src/components/AdSlot.jsx`) is dormant and a total no-op without `REACT_APP_ADSENSE_CLIENT`. Do not set those env vars yet.
+
+**When the account exists, complete these steps in order:**
+
+1. Set `REACT_APP_ADSENSE_CLIENT` in Vercel (plain, not Sensitive). This alone submits the site for AdSense review — no visible ads render yet (the two-stage flip: client var = site review, slot vars = live ads).
+2. Author `public/ads.txt` at repo root with exactly this line (replace `pub-XXXX` with the real publisher ID):
+   ```
+   google.com, pub-XXXX, DIRECT, f08c47fec0942fa0
+   ```
+   The hash `f08c47fec0942fa0` is Google's authorisation token — it must be exactly this string.
+3. After AdSense approves the site and ad units are created, set `REACT_APP_ADSENSE_SLOT_DASHBOARD` and `REACT_APP_ADSENSE_SLOT_SUMMARY` (the ad-unit IDs) in Vercel. Each slot var turns its placement on independently (dashboard-bottom and summary-bottom are the only two placements — never the decision screen).
+
 ## DNS / email facts
 
 | Concern | Fact |

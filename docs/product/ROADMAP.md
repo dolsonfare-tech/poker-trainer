@@ -43,6 +43,10 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
 
 ### Phase 3 — iOS via Capacitor (post-web traction)
 - $99 Apple dev account required; deferred until web traction established
+- **Pre-decided tech-stack defaults (lock these in before scoping begins):**
+  - State management: **Zustand or React Context** (already the pre-approved choice)
+  - Animations: **Framer Motion** (establish in Phase 1.5 — already the pre-approved choice)
+  - Developer estimate: **6–8 weeks** with a dedicated developer
 
 ---
 
@@ -103,6 +107,18 @@ P1 security items before Pro/leaderboard: CA-001 (client-writable integrity fiel
 - **Skill-side schema v2** — re-anchor Results Thinker on observable signature (remediation-resistance or confident-miss density); extend `classifyDirection` with bet-sizing sub-axis; score skills relative to player's own mean. Spec inputs: `docs/research/RESEARCH_SCHEMA_TAXONOMY.md` + `docs/findings/PERSONA_PLAYTEST_FINDINGS.md` F2b. Requires real per-skill distributions (post-launch Supabase data).
 
 ---
+
+## Standing artifacts
+
+Long-lived Claude artifact URLs. These are not auto-updated — when the underlying document changes, the artifact must be manually republished.
+
+| Artifact | URL | Republish trigger |
+|---|---|---|
+| 30-day launch playbook (checklist, owner tags, revenue math) | https://claude.ai/code/artifact/95b9614a-3b88-4dcc-882f-b6d7da35615a | If the launch timeline or revenue model changes significantly |
+| Gameplay layout design-review history (iterations 1–4) | https://claude.ai/code/artifact/fb6322e6-ca47-4eee-b1f4-85a6a453962c | Historical reference; republish not required |
+| Founder's briefing (depth dossier — mirrors `FOUNDER_BRIEFING.md`) | https://claude.ai/code/artifact/e8b83615-4edd-472e-81e7-d238befcf0d5 | **Republish whenever `FOUNDER_BRIEFING.md` changes** — this is a standing maintenance obligation |
+
+The founder's briefing artifact is the one with an active obligation: it is used for Q&A rehearsal and investor/mentor prep, so it must stay current with the repo-root `FOUNDER_BRIEFING.md`.
 
 ## Monetization (current decision)
 
