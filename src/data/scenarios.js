@@ -222,6 +222,7 @@ const SCENARIOS = [
     skill: 'opponent',
     difficulty: 'beginner',
     weight: 1.0,
+    tableContext: 'Three hours at the table — this is only his second raise.',
     villain: {
       type: 'nit',
       notes: 'Only plays premium hands, folds to any aggression without top pair or better, almost never bluffs',
