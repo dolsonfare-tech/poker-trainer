@@ -216,19 +216,20 @@ for (const s of SCENARIOS) {
 //    can't exceed what two stacks plus dead money could build. This is the
 //    Expert-tier / all-in enabling field (sc_172, M10). ─────────────────────
 for (const s2 of SCENARIOS) {
+  const sid2 = String(s2.id).startsWith('sc_') ? String(s2.id) : `sc_${String(s2.id).padStart(3, '0')}`;
   const es = s2.effectiveStacks;
   if (typeof es !== 'number' || !(es >= 40)) {
-    flag('ERROR', s2.id, 'stacks', `effectiveStacks missing or implausible (${JSON.stringify(es)}) — every scenario states its depth; house default 200`);
+    flag('ERROR', sid2, 'stacks', `effectiveStacks missing or implausible (${JSON.stringify(es)}) — every scenario states its depth; house default 200`);
     continue;
   }
   const toCall = Number(String(s2.toCall ?? '').replace(/[^0-9]/g, '')) || 0;
-  if (toCall > es) flag('ERROR', s2.id, 'stacks', `toCall $${toCall} exceeds effective stack $${es}`);
+  if (toCall > es) flag('ERROR', sid2, 'stacks', `toCall $${toCall} exceeds effective stack $${es}`);
   for (const o of s2.options ?? []) {
     const amt = Number((String(o.label).match(/\$(\d+)/) || [])[1]) || 0;
-    if (amt > es) flag('ERROR', s2.id, 'stacks', `option "${o.label}" exceeds effective stack $${es}`);
+    if (amt > es) flag('ERROR', sid2, 'stacks', `option "${o.label}" exceeds effective stack $${es}`);
   }
   const pot = Number(String(s2.pot ?? '').replace(/[^0-9]/g, '')) || 0;
-  if (pot > 2 * es + 15) flag('WARN', s2.id, 'stacks', `pot $${pot} exceeds two effective stacks ($${es}) + dead money — check the depth`);
+  if (pot > 2 * es + 15) flag('WARN', sid2, 'stacks', `pot $${pot} exceeds two effective stacks ($${es}) + dead money — check the depth`);
 }
 
 // ── Comprehension audit C1 (July 19, 2026): session-level reads must be ON
@@ -238,11 +239,12 @@ for (const s2 of SCENARIOS) {
 //    failure mode C1 documented (sc_167's fold-looked-correct case). WARN, not
 //    ERROR: the phrase list is heuristic — judge each hit, don't silence it. ─
 {
-  const READ_MARKERS = /(tonight|this session|all session|already shown|been caught|his (notes|file)|playbook|on sight|lately)/i;
+  const READ_MARKERS = /(tonight|this session|all session|already shown|been caught|his (notes|file)|playbook|on sight|lately|all evening|recently|in recent hands|he(?:'s| has) been|past (?:few|several|couple))/i;
   for (const s2 of SCENARIOS) {
     if (s2.tableContext) continue;
+    const sid2 = String(s2.id).startsWith('sc_') ? String(s2.id) : `sc_${String(s2.id).padStart(3, '0')}`;
     const m = (s2.body || '').match(READ_MARKERS);
-    if (m) flag('WARN', s2.id, 'context', `body references table history ("${m[0]}") but scenario has no tableContext — the read never renders at decision time`);
+    if (m) flag('WARN', sid2, 'context', `body references table history ("${m[0]}") but scenario has no tableContext — the read never renders at decision time`);
   }
 }
 
