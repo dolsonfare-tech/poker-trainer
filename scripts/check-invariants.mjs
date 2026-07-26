@@ -120,6 +120,35 @@ onlyIn('sentry', /from\s+['"]@sentry|Sentry\.(init|captureException|setUser)/,
   ['src/utils/sentry.js'], srcFiles,
   'components call setSentryUser()/clearSentryUser() from src/utils/sentry.js instead');
 
+// ── 11. Google Fonts must load asynchronously (CA-013, July 2026) ────────
+// A blocking <link rel="stylesheet" href="fonts.googleapis.com/css2..."> adds
+// ~790ms to mobile first paint. Enforce the media-print swap pattern.
+// Every fonts.googleapis.com/css2 stylesheet link must either have
+// media="print" (the async pattern) or be inside a <noscript> block.
+// Note: noscript may be inline (open+close on one line) — check each line
+// for a self-contained <noscript>...</noscript> span before using the
+// multi-line state machine.
+{
+  const indexHtml = read(join(ROOT, 'public/index.html'));
+  const lines = indexHtml.split('\n');
+  let insideNoscript = false;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Inline noscript: <noscript>...</noscript> on one line — skip entirely.
+    if (/<noscript[^>]*>.*<\/noscript>/i.test(line)) continue;
+    // Multi-line noscript: track open/close across lines.
+    if (/<noscript/i.test(line)) insideNoscript = true;
+    if (/<\/noscript>/i.test(line)) insideNoscript = false;
+    if (!insideNoscript &&
+        /fonts\.googleapis\.com\/css2/.test(line) &&
+        /rel=["']stylesheet["']/.test(line) &&
+        !/media=["']print["']/.test(line)) {
+      flag('ERROR', 'fonts-async',
+        `public/index.html line ${i + 1}: fonts.googleapis.com stylesheet link is render-blocking — use media="print" onload="this.media='all'" (async swap pattern) or place inside <noscript>`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
