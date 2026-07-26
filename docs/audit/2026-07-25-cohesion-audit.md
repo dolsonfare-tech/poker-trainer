@@ -566,66 +566,66 @@ One row per CA finding. `VERDICT` filled during founder triage.
 
 | id | severity | effort | one-line finding | recommendation | VERDICT |
 |----|----------|--------|------------------|----------------|---------|
-| CA-001 | P1 | L | Client-writable `streak`/`rebuys`/`poker_score`/`sessions` under RLS | queue — blocks leaderboard/Pro | — |
-| CA-002 | P1 | S | CI workflow missing `permissions: contents: read` | fix-now — one-line defense-in-depth | — |
-| CA-003 | P2 | S | Magic-link/OAuth trust `window.location.origin` | fix-now — cheap auth hardening | — |
-| CA-004 | P2 | M | Clamped user fields still interpolated raw into prompt | queue — bounded self-only risk today | — |
-| CA-005 | P2 | S | `rebuys` clobber vector on legacy NULL rows | fix-now — data-loss on the just-shipped feature | — |
-| CA-006 | P2 | M | `migrateUser` accepts unbounded localStorage seed | queue — pair with CA-012 | — |
-| CA-007 | P2 | S | Feedback tables have no rate limit; `updated_at` client-supplied | queue — founder-pain, not exploit | — |
-| CA-008 | P2 | S | Insert-only tables lack self-documenting read policy | reject — doc debt, not defect | — |
-| CA-009 | P3 | S | Coach daily cap resets at UTC midnight, not local | reject — accept as minor free bonus | — |
-| CA-010 | P3 | M | CRA transitive dev CVEs (react-scripts EOL) | queue — pre-Pro-tier dep touch | — |
-| CA-011 | P3 | S | `profiles.timezone` unvalidated, currently unread | queue — drop col or add check | — |
-| CA-012 | P3 | S | `createRemoteProfile` upsert trusts localUser verbatim | queue — pair with CA-006 | — |
-| CA-013 | P1 | S | Google Fonts blocks first paint ~790 ms mobile | fix-now — biggest mobile perf win | — |
-| CA-014 | P1 | M | `scenarios.js` 438 KB eager-loaded at cold start | queue — pair with CA-034 refactor | — |
-| CA-015 | P1 | M | `fetchRemoteUser` unbounded; 1000-row Supabase silent truncation | fix-now — silent-truncation is the worst-mode | — |
-| CA-016 | P2 | S | Three live `backdrop-filter` layers | queue — mobile-polish sweep | — |
-| CA-017 | P2 | S | Five infinite CSS animations simultaneously | queue — mobile-polish sweep | — |
-| CA-018 | P2 | S | ~14 KB dead CSS from `LegacyLayout` | fix-now — bundled with CA-027 delete | — |
-| CA-019 | P2 | S | 279 KB favicon, 392 KB PWA icon | fix-now — asset recompress | — |
-| CA-020 | P3 | S | `Math.max` spread RangeError at ~10k sessions | fix-now — one-line JS footgun | — |
-| CA-021 | P3 | S | `SCENARIO_BY_ID` Map built at module load | reject — moot if CA-014 lands | — |
-| CA-022 | P3 | M | Single 1.1 MB main chunk, no route splitting | queue — post-launch bundle work | — |
-| CA-023 | P1 | L | `userStorage.js` 8-concern monolith (672 lines) | queue — pre-Pro-tier refactor | — |
-| CA-024 | P1 | L | `App.jsx` owns auth/coach/guest/session (not routing) | queue — pre-iOS/Pro-tier refactor | — |
-| CA-025 | P1 | M | `Dashboard.jsx` 7 sibling components (717 lines) | queue — pre-Pro-tier refactor | — |
-| CA-026 | P1 | M | `ScenarioCard.jsx` 13 fns across dead-vs-live layouts | fix-now — pairs with CA-027 delete | — |
-| CA-027 | P2 | S | `USE_SINGLE_CANVAS=true` guards dead code | fix-now — unblocks CA-026/018 | — |
-| CA-028 | P2 | S | Two `toLocalDateString` implementations | fix-now — prerequisite for CA-023 | — |
-| CA-029 | P2 | S | Two byte-identical `shuffle()` implementations | queue — extract during next refactor | — |
-| CA-030 | P2 | S | Two `DIFFICULTY_LABELS` maps drift-eligible | fix-now — Expert-tier drift trap | — |
-| CA-031 | P2 | S | Guest gate CTA hard-coded in 2 components | fix-now — one exported constant | — |
-| CA-032 | P2 | S | M2 consistency-record copy split across 2 surfaces | queue — bundle with copy pass | — |
-| CA-033 | P2 | M | No PostHog event registry — 32 inline call sites | queue — funnel-safety refactor | — |
-| CA-034 | P2 | M | `scenarios.js` 7,690-line authoring monolith | queue — pair with CA-014 lazy-load | — |
-| CA-035 | P2 | S | CLAUDE.md drift (phantom files + wrong App path) | fix-now — load-bearing context file | — |
-| CA-036 | P3 | M | Prop-drilling ≥3 levels; 10-prop Dashboard | queue — bundle with CA-025 split | — |
-| CA-037 | P3 | S | Two date-formatters in Dashboard.jsx | queue — bundle with CA-025 split | — |
-| CA-038 | P1 | M | Mobile: decision buttons + ticker below fold | fix-now — playtest depends on it | — |
-| CA-039 | P1 | S/M | Stale-streak lie to lapsed users | fix-now — brand-pillar trust damage | — |
-| CA-040 | P2 | S | Sub-44px tap targets on disagree/dispute UI | fix-now — playtest capture mechanism | — |
-| CA-041 | P2 | S | VillainGuide modal ignores Escape | fix-now — a11y + trapping over gameplay | — |
-| CA-042 | P3 | S | Locked-schema countdown can show negative number | fix-now — one-line `Math.max(0, ...)` | — |
-| CA-043 | P3 | S | UNVERIFIED — focus drops to `<body>` on feedback overlay | queue — verify live then fix | — |
-| CA-044 | P3 | S | SignIn submit dead without affordance on typo | queue — SignIn polish pass | — |
-| CA-045 | P3 | S | Evening no-play nag shows to 0-session users | fix-now — one-line guard | — |
-| CA-046 | P1 | S | PostHog invariant misses `require('posthog-js')` | fix-now — one-line pattern extension | — |
-| CA-047 | P1 | S | `db-access` rule misses dynamic table names | fix-now — one comment + one test | — |
-| CA-048 | P1 | M | `db.js` 16.5% coverage — `assembleUser` untested | fix-now — the app's data-assembly path | — |
-| CA-049 | P1 | M | VillainGuide + DisagreeBox coverage holes (35/33%) | queue — bundle with CA-050 e2e | — |
-| CA-050 | P1 | M | Zero e2e for TableReads/VillainGuide/DisagreeBox/SignIn | queue — pre-launch e2e batch | — |
-| CA-051 | P2 | S | Sentry invariant misses `captureMessage` etc. | fix-now — one-line pattern extension | — |
-| CA-052 | P2 | S | READ_MARKERS misses "all evening"/"recently"/etc. | fix-now — one-line pattern extension | — |
-| CA-053 | P2 | S | Git-hygiene rule misses `.env_backup` | fix-now — one-line pattern extension | — |
-| CA-054 | P2 | S | O3 seat-check only on replay rows | queue — bundle with next audit pass | — |
-| CA-055 | P2 | S | `claude.js` HTTP-error + empty-response untested | fix-now — repeat-incident exposure | — |
-| CA-056 | P3 | S | Secrets rule filter excludes `.mjs` in `public/` | queue — no `.mjs` under public today | — |
-| CA-057 | P2 | S | Stacks-loop reports raw id vs zero-padded | fix-now — DX for future audit hits | — |
-| CA-058 | P3 | S | Cycle-avoidance duplication (userStorage ↔ spacedrep) | queue — prerequisite for CA-023 | — |
+| CA-001 | P1 | L | Client-writable `streak`/`rebuys`/`poker_score`/`sessions` under RLS | queue — blocks leaderboard/Pro | queue |
+| CA-002 | P1 | S | CI workflow missing `permissions: contents: read` | fix-now — one-line defense-in-depth | fix-now |
+| CA-003 | P2 | S | Magic-link/OAuth trust `window.location.origin` | fix-now — cheap auth hardening | fix-now |
+| CA-004 | P2 | M | Clamped user fields still interpolated raw into prompt | queue — bounded self-only risk today | queue |
+| CA-005 | P2 | S | `rebuys` clobber vector on legacy NULL rows | fix-now — data-loss on the just-shipped feature | fix-now |
+| CA-006 | P2 | M | `migrateUser` accepts unbounded localStorage seed | queue — pair with CA-012 | queue |
+| CA-007 | P2 | S | Feedback tables have no rate limit; `updated_at` client-supplied | queue — founder-pain, not exploit | queue |
+| CA-008 | P2 | S | Insert-only tables lack self-documenting read policy | reject — doc debt, not defect | reject |
+| CA-009 | P3 | S | Coach daily cap resets at UTC midnight, not local | reject — accept as minor free bonus | reject |
+| CA-010 | P3 | M | CRA transitive dev CVEs (react-scripts EOL) | queue — pre-Pro-tier dep touch | queue |
+| CA-011 | P3 | S | `profiles.timezone` unvalidated, currently unread | queue — drop col or add check | queue |
+| CA-012 | P3 | S | `createRemoteProfile` upsert trusts localUser verbatim | queue — pair with CA-006 | queue |
+| CA-013 | P1 | S | Google Fonts blocks first paint ~790 ms mobile | fix-now — biggest mobile perf win | fix-now |
+| CA-014 | P1 | M | `scenarios.js` 438 KB eager-loaded at cold start | queue — pair with CA-034 refactor | queue |
+| CA-015 | P1 | M | `fetchRemoteUser` unbounded; 1000-row Supabase silent truncation | fix-now — silent-truncation is the worst-mode | fix-now |
+| CA-016 | P2 | S | Three live `backdrop-filter` layers | queue — mobile-polish sweep | queue |
+| CA-017 | P2 | S | Five infinite CSS animations simultaneously | queue — mobile-polish sweep | queue |
+| CA-018 | P2 | S | ~14 KB dead CSS from `LegacyLayout` | fix-now — bundled with CA-027 delete | fix-now |
+| CA-019 | P2 | S | 279 KB favicon, 392 KB PWA icon | fix-now — asset recompress | fix-now |
+| CA-020 | P3 | S | `Math.max` spread RangeError at ~10k sessions | fix-now — one-line JS footgun | fix-now |
+| CA-021 | P3 | S | `SCENARIO_BY_ID` Map built at module load | reject — moot if CA-014 lands | reject |
+| CA-022 | P3 | M | Single 1.1 MB main chunk, no route splitting | queue — post-launch bundle work | queue |
+| CA-023 | P1 | L | `userStorage.js` 8-concern monolith (672 lines) | queue — pre-Pro-tier refactor | queue |
+| CA-024 | P1 | L | `App.jsx` owns auth/coach/guest/session (not routing) | queue — pre-iOS/Pro-tier refactor | queue |
+| CA-025 | P1 | M | `Dashboard.jsx` 7 sibling components (717 lines) | queue — pre-Pro-tier refactor | queue |
+| CA-026 | P1 | M | `ScenarioCard.jsx` 13 fns across dead-vs-live layouts | fix-now — pairs with CA-027 delete | fix-now |
+| CA-027 | P2 | S | `USE_SINGLE_CANVAS=true` guards dead code | fix-now — unblocks CA-026/018 | fix-now |
+| CA-028 | P2 | S | Two `toLocalDateString` implementations | fix-now — prerequisite for CA-023 | fix-now |
+| CA-029 | P2 | S | Two byte-identical `shuffle()` implementations | queue — extract during next refactor | queue |
+| CA-030 | P2 | S | Two `DIFFICULTY_LABELS` maps drift-eligible | fix-now — Expert-tier drift trap | fix-now |
+| CA-031 | P2 | S | Guest gate CTA hard-coded in 2 components | fix-now — one exported constant | fix-now |
+| CA-032 | P2 | S | M2 consistency-record copy split across 2 surfaces | queue — bundle with copy pass | queue |
+| CA-033 | P2 | M | No PostHog event registry — 32 inline call sites | queue — funnel-safety refactor | queue |
+| CA-034 | P2 | M | `scenarios.js` 7,690-line authoring monolith | queue — pair with CA-014 lazy-load | queue |
+| CA-035 | P2 | S | CLAUDE.md drift (phantom files + wrong App path) | fix-now — load-bearing context file | fix-now |
+| CA-036 | P3 | M | Prop-drilling ≥3 levels; 10-prop Dashboard | queue — bundle with CA-025 split | queue |
+| CA-037 | P3 | S | Two date-formatters in Dashboard.jsx | queue — bundle with CA-025 split | queue |
+| CA-038 | P1 | M | Mobile: decision buttons + ticker below fold | fix-now — playtest depends on it | fix-now |
+| CA-039 | P1 | S/M | Stale-streak lie to lapsed users | fix-now — brand-pillar trust damage | fix-now |
+| CA-040 | P2 | S | Sub-44px tap targets on disagree/dispute UI | fix-now — playtest capture mechanism | fix-now |
+| CA-041 | P2 | S | VillainGuide modal ignores Escape | fix-now — a11y + trapping over gameplay | fix-now |
+| CA-042 | P3 | S | Locked-schema countdown can show negative number | fix-now — one-line `Math.max(0, ...)` | fix-now |
+| CA-043 | P3 | S | UNVERIFIED — focus drops to `<body>` on feedback overlay | queue — verify live then fix | queue |
+| CA-044 | P3 | S | SignIn submit dead without affordance on typo | queue — SignIn polish pass | queue |
+| CA-045 | P3 | S | Evening no-play nag shows to 0-session users | fix-now — one-line guard | fix-now |
+| CA-046 | P1 | S | PostHog invariant misses `require('posthog-js')` | fix-now — one-line pattern extension | fix-now |
+| CA-047 | P1 | S | `db-access` rule misses dynamic table names | fix-now — one comment + one test | fix-now |
+| CA-048 | P1 | M | `db.js` 16.5% coverage — `assembleUser` untested | fix-now — the app's data-assembly path | fix-now |
+| CA-049 | P1 | M | VillainGuide + DisagreeBox coverage holes (35/33%) | queue — bundle with CA-050 e2e | queue |
+| CA-050 | P1 | M | Zero e2e for TableReads/VillainGuide/DisagreeBox/SignIn | queue — pre-launch e2e batch | queue |
+| CA-051 | P2 | S | Sentry invariant misses `captureMessage` etc. | fix-now — one-line pattern extension | fix-now |
+| CA-052 | P2 | S | READ_MARKERS misses "all evening"/"recently"/etc. | fix-now — one-line pattern extension | fix-now |
+| CA-053 | P2 | S | Git-hygiene rule misses `.env_backup` | fix-now — one-line pattern extension | fix-now |
+| CA-054 | P2 | S | O3 seat-check only on replay rows | queue — bundle with next audit pass | queue |
+| CA-055 | P2 | S | `claude.js` HTTP-error + empty-response untested | fix-now — repeat-incident exposure | fix-now |
+| CA-056 | P3 | S | Secrets rule filter excludes `.mjs` in `public/` | queue — no `.mjs` under public today | queue |
+| CA-057 | P2 | S | Stacks-loop reports raw id vs zero-padded | fix-now — DX for future audit hits | fix-now |
+| CA-058 | P3 | S | Cycle-avoidance duplication (userStorage ↔ spacedrep) | queue — prerequisite for CA-023 | queue |
 
-**Recommendation totals:** fix-now = 28 · queue = 27 · reject = 3 · (UNVERIFIED CA-043 = 1 marked queue pending live repro).
+**Recommendation totals:** fix-now = 28 · queue = 27 · reject = 3 · (UNVERIFIED CA-043 = 1 marked queue pending live repro). **Founder triage complete — every recommendation accepted as-is; see Section 7.**
 
 ---
 
@@ -695,3 +695,39 @@ One row per CA finding. `VERDICT` filled during founder triage.
 - Test co-location: `*.test.js` next to their subjects — good jest hygiene.
 - `spacedrep.js` at 96.4% coverage; `userStorage.js` at 92.4%; `ticker.js` at 85% — core logic well tested.
 - CLAUDE.md factual claims verified correct: pool size 172 (81 beginner / 91 intermediate), observation count 22, `DAILY_LIMIT=5` in both api and summary, `LADDER_SESSIONS=[2,5,13]`, `GRADUATION_TARGET_FIRST=2`/`_REPEAT=3`, `CONFIDENT_MISS_MS=15000`, model `claude-sonnet-5`, `CONTRAST_PAIRS`/`VILLAIN_LABELS` exports.
+
+---
+
+## 7. Triage Outcomes
+
+**Founder triage complete.** Verdict totals: **28 fix-now · 27 queue · 3 reject** (rejects: CA-008, CA-009, CA-021). Every consolidator recommendation was accepted as-is — the VERDICT column in Section 5 mirrors the recommendation column verbatim.
+
+### Fix-now execution order (founder-approved)
+
+Six bundles, each run as a separate gate-green session (all Definition-of-Done gates pass before the bundle's commit lands):
+
+1. **Mobile & trust (playtest-critical):** CA-038 (mobile fold), CA-039 (stale-streak lie), CA-040 (tap targets), CA-041 (Escape), CA-045 (0-session nag), CA-042 (negative countdown), CA-013 (render-blocking fonts).
+2. **Data integrity:** CA-015 + CA-048 in one session (bound the sessions fetch AND put `assembleUser` under test in the same pass), CA-005 (rebuys backfill audit + jest pin), CA-020 (`Math.max` spread), CA-055 (`claude.js` error paths).
+3. **Gate widenings:** CA-046, CA-047, CA-051, CA-052, CA-053, CA-057, CA-002 (CI `permissions:`).
+4. **Dead-code deletion:** CA-027 (`USE_SINGLE_CANVAS` branch), CA-026 (ScenarioCard split), CA-018 (dead CSS), CA-019 (asset recompress).
+5. **Dedup micro-pass:** CA-028 (`toLocalDateString`), CA-030 (`DIFFICULTY_LABELS`), CA-031 (guest CTA constant), CA-003 (redirect origin).
+6. **CA-035 (CLAUDE.md drift)** folds into the Phase 2 docs restructure instead of a standalone fix.
+
+### Queue disposition
+
+Queue items enter the roadmap work queue. Notable clusters:
+
+- **Trust-boundary design** (CA-001 + CA-006 + CA-012 + CA-004) — one design session, pre-Pro/leaderboard; the client-computed-fields model must be settled before anything reads cross-user.
+- **Modularity refactor wave** (CA-023 / CA-024 / CA-025 + CA-029 / CA-032 / CA-033 / CA-036 / CA-037 / CA-058) — steered by Phase 2's TARGET_ARCHITECTURE.md rather than piecemeal.
+- **Bundle work** (CA-014 + CA-022 + CA-034) — lazy-load, route splitting, and the scenarios file split travel together.
+- **Test expansion** (CA-049 + CA-050) — pre-launch e2e batch (TableReads, VillainGuide, DisagreeBox, SignIn).
+- **Mobile CSS polish** (CA-016 + CA-017) — backdrop-filter and infinite-animation sweep.
+- **Singles:** CA-007 (feedback rate limit), CA-010 (CRA EOL ADR), CA-011 (timezone column), CA-043 (verify live first — UNVERIFIED), CA-044 (SignIn affordance), CA-054 (O3 seat check), CA-056 (`.mjs` filter).
+
+### The ratchet law (restated, binding on every fix session)
+
+Every fix session must leave a **permanent mechanical check** behind — an invariants rule, an audit rule, a jest pin, or an e2e guard. A fix without a check is a triage failure, not a fix. This is gate 7 of the Definition of Done applied to audit remediation: prose findings drift, exit codes don't.
+
+### Pre-fix safety tag
+
+`git tag pre-audit-fixes` will be created before fix bundle 1 begins, so the entire remediation wave has a single known-green rollback point.
