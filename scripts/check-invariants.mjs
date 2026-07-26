@@ -217,6 +217,30 @@ if (!process.env.CI) {
   }
 }
 
+// ── 14. Asset byte-budget (CA-019, July 2026) ───────────────────────────
+// favicon.ico is fetched on every page load; a bloated ICO (~279 KB pre-fix)
+// was the top CA-019 finding. The regenerated multi-res 16/32/48 ICO weighs
+// ~9 KB. icon-512.png is the PWA splash/homescreen icon. Hard ceilings leave
+// headroom for a legitimate re-export without silently regressing to the old
+// sizes. Thresholds: favicon ≤ 60 000 B (6× the target), icon-512 ≤ 150 000 B
+// (~30% above the 116 KB 256-colour re-encode).
+{
+  const faviconPath = join(ROOT, 'public', 'favicon.ico');
+  const icon512Path = join(ROOT, 'public', 'icons', 'icon-512.png');
+  try {
+    const faviconSize = statSync(faviconPath).size;
+    if (faviconSize > 60_000)
+      flag('ERROR', 'asset-budget',
+        `public/favicon.ico is ${faviconSize} bytes (limit 60 000) — regenerate as a 16/32/48 multi-res ICO from public/icons/icon-512.png (see CA-019)`);
+  } catch { /* file missing — caught by other checks or not yet created */ }
+  try {
+    const icon512Size = statSync(icon512Path).size;
+    if (icon512Size > 150_000)
+      flag('ERROR', 'asset-budget',
+        `public/icons/icon-512.png is ${icon512Size} bytes (limit 150 000) — recompress with sharp/palette reduction (see CA-019)`);
+  } catch { /* file missing */ }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
