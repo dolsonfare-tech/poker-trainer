@@ -76,7 +76,7 @@ Each wave ships independently with all Definition-of-Done gates green before the
 - `dates.js` formatter addition (`formatShortDate`): unit + source-pin tests in `dates.test.js`; neither `fmtReadDate` nor inline `fmtDate` remain in `Dashboard.jsx`.
 - `dummyUser.js` delete: invariant rule 18 asserting `src/data/dummyUser.js` does not exist.
 
-### Wave 2 — Component Splits — ✅ DONE 2026-07-26
+### Wave 2 — Component Splits — ✅ DONE 2026-07-26 (commit `fcca8ce`)
 
 **Items:** MOD-003 (`Dashboard.jsx` → `src/components/dashboard/` + `useCountUp`), MOD-004 (`ScenarioCard.jsx` → `src/components/scenario/`, `handName.js`).
 
@@ -162,9 +162,9 @@ Each wave ships independently with all Definition-of-Done gates green before the
 
 | MOD id | CA id | What landed | Commit |
 |---|---|---|---|
-| MOD-003 ✅ | CA-024 | `Dashboard.jsx` 727 → 219 lines. Eight modules under `src/components/dashboard/` (`StreakWarning`, `StreakStatus`, `SchemaPanel`, `SkillLedger`, `LastSessionRead`, `CoachNotebook`, `BetaFeedback`, `UsernameEditor`) plus `src/hooks/useCountUp.js`, each with a co-located test. CA-032/CA-037 source pins widened to sweep the directory. | Wave 2 |
-| MOD-004 ✅ | CA-026 | `ScenarioCard.jsx` 404 → 14 lines (thin wrapper + one-release `SituationTicker` shim). Seven modules under `src/components/scenario/`, plus `src/utils/handName.js` and `relationLine` into `src/utils/ticker.js`. `SituationTicker.test.js` split: component half → `scenario/`, `villainSummary` half → new `utils/ticker.test.js`. | Wave 2 |
-| — | — | **Bug caught in-wave:** CI had been red on `main` since run #17 while the suite passed locally. `Dashboard.test.js`'s M3 proximity test hard-coded `lastSessionDate: '2026-07-25'` but let `streakAlive` read the real clock — "yesterday" in the founder's EDT is two days ago in CI's UTC, so the streak read as dead and the line never rendered. Clock frozen; **invariants rule 23 (`frozen-clock`)** now fails any test file that pins a session date without either `jest.setSystemTime` or an injected fixed `now`. | Wave 2 |
+| MOD-003 ✅ | CA-024 | `Dashboard.jsx` 727 → 219 lines. Eight modules under `src/components/dashboard/` (`StreakWarning`, `StreakStatus`, `SchemaPanel`, `SkillLedger`, `LastSessionRead`, `CoachNotebook`, `BetaFeedback`, `UsernameEditor`) plus `src/hooks/useCountUp.js`, each with a co-located test. CA-032/CA-037 source pins widened to sweep the directory. | `fcca8ce` |
+| MOD-004 ✅ | CA-026 | `ScenarioCard.jsx` 404 → 14 lines (thin wrapper + one-release `SituationTicker` shim). Seven modules under `src/components/scenario/`, plus `src/utils/handName.js` and `relationLine` into `src/utils/ticker.js`. `SituationTicker.test.js` split: component half → `scenario/`, `villainSummary` half → new `utils/ticker.test.js`. | `fcca8ce` |
+| — | — | **Bug caught in-wave:** CI had been red on `main` since run #17 while the suite passed locally. `Dashboard.test.js`'s M3 proximity test hard-coded `lastSessionDate: '2026-07-25'` but let `streakAlive` read the real clock — "yesterday" in the founder's EDT is two days ago in CI's UTC, so the streak read as dead and the line never rendered. Clock frozen; **invariants rule 23 (`frozen-clock`)** now fails any test file that pins a session date without either `jest.setSystemTime` or an injected fixed `now`. | `fcca8ce` |
 
 Jest suite: 206 → 337 tests. Invariants: 18 → 23 rules.
 
