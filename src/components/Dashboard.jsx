@@ -4,6 +4,8 @@ import { toLocalDateString, RENAME_COOLDOWN_MS, milestoneProximity, parseCoachRe
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import { submitFeedback } from '../utils/db';
+import { activeDaysLine } from '../copy';
+import { formatShortDate } from '../utils/dates';
 import AdSlot from './AdSlot';
 
 // ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
@@ -40,9 +42,7 @@ function StreakStatus({ user, sessionDelta }) {
     const n = sessionDelta.activeDaysLast30;
     return (
       <div className="db-streak-status db-streak-broken-line">
-        {n != null
-          ? `New run — you've played ${n} of the last 30 days.`
-          : 'New run — every session rebuilds the streak.'}
+        {activeDaysLine(n, { surface: 'dashboard' })}
       </div>
     );
   }
@@ -301,13 +301,6 @@ function BetaFeedback() {
 // Hidden when there are fewer than two reads total (the strip already shows the
 // only one) and for guests (the caller gates that).
 
-// 'YYYY-MM-DD' → compact "Jul 18" without a UTC shift (local constructor).
-function fmtReadDate(iso) {
-  const [y, m, d] = (iso ?? '').split('-').map(Number);
-  if (!y || !m || !d) return iso ?? '';
-  return new Date(y, m - 1, d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 function CoachNotebook({ reads, includeLatest = false }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(null); // index of the expanded row
@@ -342,7 +335,7 @@ function CoachNotebook({ reads, includeLatest = false }) {
                   aria-expanded={isOpen}
                   onClick={() => setExpanded(isOpen ? null : i)}
                 >
-                  <span className="db-notebook-date">{fmtReadDate(r.date)}</span>
+                  <span className="db-notebook-date">{formatShortDate(r.date)}</span>
                   <span className={`db-notebook-headline${isOpen ? '' : ' db-notebook-clamp'}`}>
                     {headline}
                   </span>
@@ -390,13 +383,12 @@ function UsernameEditor({ user, onRename, onClose }) {
     ? new Date(new Date(user.usernameChangedAt).getTime() + RENAME_COOLDOWN_MS)
     : null;
   const onCooldown = nextChangeAt && nextChangeAt > new Date();
-  const fmtDate = (d) => d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
   if (onCooldown) {
     return (
       <div className="db-rename">
         <span className="db-rename-note">
-          Name changes are limited to once a week — you can change yours again on {fmtDate(nextChangeAt)}.
+          Name changes are limited to once a week — you can change yours again on {formatShortDate(nextChangeAt)}.
         </span>
         <button type="button" className="db-rename-cancel" onClick={onClose}>OK</button>
       </div>

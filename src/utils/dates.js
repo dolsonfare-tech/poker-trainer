@@ -29,3 +29,21 @@ export function localDateFrom(value) {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 }
+
+/**
+ * Date object or 'YYYY-MM-DD' string → compact "Jul 18" (local time, no UTC
+ * shift for string input). Accepts either shape so both former call sites
+ * (Dashboard.jsx's `fmtReadDate` for strings, `fmtDate` for Date objects)
+ * collapse into one function (CA-037).
+ */
+export function formatShortDate(dateOrString) {
+  let d;
+  if (dateOrString instanceof Date) {
+    d = dateOrString;
+  } else {
+    const [y, m, day] = String(dateOrString ?? '').split('-').map(Number);
+    if (!y || !m || !day) return dateOrString ?? '';
+    d = new Date(y, m - 1, day);
+  }
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}

@@ -1,5 +1,6 @@
 import { CONTRAST_PAIRS } from '../data/scenarios';
 import { localDateFrom } from './dates';
+import { shuffle } from './random';
 
 // Spaced repetition v2 — the session builder.
 //
@@ -90,15 +91,6 @@ const MAX_CONTRAST_PAIRS_PER_SESSION = 1;
 // uncapped. Soft: yields when the pool leaves no choice.
 const preflopCap = (length) => Math.max(1, Math.floor(length * 0.4));
 const isPreflop = (s) => !s.board;
-
-function shuffle(arr) {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
 
 // id → [partner ids] from the flat list of 2-item contrast groups. A scenario
 // may sit in several groups (so it can have several partners); ids match

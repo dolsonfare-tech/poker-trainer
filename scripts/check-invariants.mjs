@@ -274,6 +274,23 @@ if (!process.env.CI) {
   }
 }
 
+// ── 17. shuffle() touched only by src/utils/random.js (CA-029, Wave 1) ──
+onlyIn('shuffle', /function\s+shuffle\s*\(/, ['src/utils/random.js'], srcFiles,
+  'the shuffle primitive is single-sourced in src/utils/random.js — import it instead of redefining');
+
+// ── 18. dummyUser.js stays deleted (CA-035/MOD-012, Wave 1) ─────────────
+// Legacy shape reference, unimported everywhere; the July 2026 audit found it
+// dead. A regenerated copy (e.g. from an old branch merge) is drift.
+{
+  const dummyUserPath = join(ROOT, 'src/data/dummyUser.js');
+  try {
+    statSync(dummyUserPath);
+    flag('ERROR', 'dummy-user-deleted', 'src/data/dummyUser.js exists — it was deleted as unused legacy content (CA-035); delete it again rather than reintroducing it');
+  } catch {
+    // absent, as expected
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

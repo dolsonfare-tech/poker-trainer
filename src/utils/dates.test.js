@@ -1,5 +1,5 @@
 // ── CA-028: dates.js unit tests + source pins ─────────────────────────────────
-import { toLocalDateString, localDateFrom } from './dates';
+import { toLocalDateString, localDateFrom, formatShortDate } from './dates';
 const fs = require('fs');
 
 // ── toLocalDateString ─────────────────────────────────────────────────────────
@@ -38,6 +38,26 @@ test('localDateFrom accepts a Date object directly', () => {
   expect(localDateFrom(d)).toBe('2026-12-01');
 });
 
+// ── formatShortDate ────────────────────────────────────────────────────────────
+
+test('formatShortDate formats a YYYY-MM-DD string without a UTC shift', () => {
+  expect(formatShortDate('2026-07-18')).toBe(
+    new Date(2026, 6, 18).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  );
+});
+
+test('formatShortDate formats a Date object', () => {
+  const d = new Date(2026, 6, 18);
+  expect(formatShortDate(d)).toBe(
+    d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+  );
+});
+
+test('formatShortDate returns the input unchanged for an unparseable string', () => {
+  expect(formatShortDate('not-a-date')).toBe('not-a-date');
+  expect(formatShortDate('')).toBe('');
+});
+
 // ── CA-028 source pins: neither source file defines the function anymore ───────
 
 test('CA-028: userStorage.js does not define toLocalDateString (re-export only)', () => {
@@ -52,4 +72,12 @@ test('CA-028: spacedrep.js does not define localDateFrom (imports from dates.js)
   const src = fs.readFileSync(require.resolve('./spacedrep'), 'utf8');
   expect(src).not.toMatch(/function\s+localDateFrom\b/);
   expect(src).not.toMatch(/const\s+localDateFrom\s*=/);
+});
+
+// ── CA-037 source pin: Dashboard.jsx's two inline formatters are gone ──────────
+
+test('CA-037: Dashboard.jsx does not define fmtReadDate or an inline fmtDate (imports formatShortDate)', () => {
+  const src = fs.readFileSync(require.resolve('../components/Dashboard'), 'utf8');
+  expect(src).not.toMatch(/function\s+fmtReadDate\b/);
+  expect(src).not.toMatch(/const\s+fmtDate\s*=/);
 });

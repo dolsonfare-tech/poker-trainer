@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import OBSERVATIONS, { ARCHETYPE_LABELS } from '../data/observations';
 import { loadTableReadsStats, saveTableReadsStats } from '../utils/userStorage';
 import { track } from '../utils/analytics';
+import { shuffle } from '../utils/random';
 
 // Table Reads — the inverse trainer: watch the hand, name the player.
 // Design + authored content in docs/findings/TABLE_READS_DESIGN.md. Mode-local scoring
@@ -13,15 +14,6 @@ const REVEAL_MS = 1100; // street-by-street cadence; tap skips
 // lifetime attempts; after that the whole pool shuffles together. Lowered
 // 10 → 4 (July 20, 2026) so a second session stops re-dealing the 4 beginners.
 const BEGINNER_FIRST_ATTEMPTS = 4;
-
-function shuffle(arr) {
-  const out = [...arr];
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
-}
 
 // Deal a session honoring, in order: the difficulty policy (beginner-first
 // until BEGINNER_FIRST_ATTEMPTS lifetime attempts, then the whole pool),

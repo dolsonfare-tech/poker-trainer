@@ -1,5 +1,6 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill, DIFFICULTY_LABELS, GUEST_GATE_CTA } from '../data/constants';
 import { derivePokerScore, milestoneProximity, parseCoachRead, MILESTONE_NAMES } from '../utils/userStorage';
+import { activeDaysLine } from '../copy';
 import AdSlot from './AdSlot';
 
 const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e25555' };
@@ -168,9 +169,7 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
         <div className="ss-streak-broken">
           <div className="ss-streak-broken-title">Streak reset — start a new run</div>
           <div className="ss-streak-broken-note">
-            {activeDaysLast30 != null
-              ? `You've played ${activeDaysLast30} of the last 30 days. One session starts the next run.`
-              : `You keep showing up — that's what builds the read. One session starts the next run.`}
+            {activeDaysLine(activeDaysLast30, { surface: 'summary' })}
           </div>
         </div>
       ) : streakSecured != null && (
