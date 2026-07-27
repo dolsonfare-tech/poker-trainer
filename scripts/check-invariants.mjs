@@ -485,6 +485,75 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
   }
 }
 
+// ── 24. The triage drill must actually run (July 27, 2026) ──────────────
+// docs/operations/TRIAGE.md is the front line for real user bugs — it is the
+// FIRST thing read in a session, and its snippets get pasted straight into the
+// Supabase SQL editor. Two defects were found in it on July 27:
+//   * the `feedback` query selected a column named `message`; the table has
+//     `body`. It would have errored at the exact moment someone reached for it.
+//   * seven rows of the event catalog still pointed at pre-Wave-2 files, though
+//     the doc claimed to be grep-verified.
+// A runbook that is wrong when you need it is worse than no runbook, so the
+// three things that can silently rot are checked here.
+{
+  const triagePath = join(ROOT, 'docs/operations/TRIAGE.md');
+  let triage = null;
+  try { triage = read(triagePath); } catch {
+    flag('ERROR', 'triage-doc', 'docs/operations/TRIAGE.md is missing — the session-start drill has no source');
+  }
+
+  if (triage) {
+    // (a) SQL columns in the drill must exist on the table they select from.
+    const schemaSrc = read(join(ROOT, 'supabase/schema.sql'));
+    const columnsOf = (table) => {
+      const m = schemaSrc.match(new RegExp(`create table (?:if not exists )?(?:public\\.)?${table}\\s*\\(([\\s\\S]*?)\\n\\);`, 'i'));
+      if (!m) return null;
+      return m[1].split('\n')
+        .map(l => l.trim().match(/^([a-z_]+)\s+/i)?.[1])
+        .filter(Boolean).map(c => c.toLowerCase());
+    };
+    for (const q of triage.matchAll(/select\s+([\s\S]*?)\s+from\s+public\.(\w+)/gi)) {
+      const cols = columnsOf(q[2]);
+      if (!cols) { flag('ERROR', 'triage-doc', `TRIAGE.md queries public.${q[2]}, which is not in supabase/schema.sql`); continue; }
+      for (const raw of q[1].split(',')) {
+        const col = raw.trim().toLowerCase();
+        if (!/^[a-z_]+$/.test(col)) continue;         // skip count(*), aliases, numbers
+        if (!cols.includes(col))
+          flag('ERROR', 'triage-doc',
+            `TRIAGE.md selects '${col}' from public.${q[2]}, which has no such column (${cols.join(', ')}) — the drill's own query would error`);
+      }
+    }
+
+    // (b) + (c) The event catalog must list exactly the events that exist, and
+    // point at the file each one actually fires from.
+    const codeEvents = new Map();
+    for (const f of srcNonTest) {
+      for (const m of read(f).matchAll(/track\(\s*'([a-z_]+)'/g)) {
+        if (!codeEvents.has(m[1])) codeEvents.set(m[1], []);
+        codeEvents.get(m[1]).push(rel(f).replace(/^src\//, ''));
+      }
+    }
+    const docRows = [...triage.matchAll(/^\| `([a-z_]+)` \| (.*?) \| (.*?) \|\s*$/gm)];
+    const docEvents = new Set(docRows.map(r => r[1]));
+
+    for (const ev of codeEvents.keys())
+      if (!docEvents.has(ev))
+        flag('ERROR', 'triage-doc', `PostHog event '${ev}' fires in src but is absent from the TRIAGE.md catalog — the catalog is meant to be the complete event surface`);
+    for (const ev of docEvents)
+      if (!codeEvents.has(ev))
+        flag('ERROR', 'triage-doc', `TRIAGE.md documents event '${ev}', which no longer fires anywhere in src`);
+
+    for (const [, ev, , where] of docRows) {
+      const files = codeEvents.get(ev);
+      if (!files) continue;                            // already reported above
+      const path = where.replace(/\s*\([^)]*\)\s*/g, '').trim();
+      if (!files.some(f => f.endsWith(path)))
+        flag('ERROR', 'triage-doc',
+          `TRIAGE.md says '${ev}' fires from ${path}, but it actually fires from ${files.join(', ')} — stale after a file move`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

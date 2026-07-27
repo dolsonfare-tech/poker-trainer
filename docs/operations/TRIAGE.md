@@ -32,7 +32,7 @@ own; this drill is what routes them into the ratchet.
 4. **`feedback`** (SQL editor):
 
    ```sql
-   select category, message, created_at from public.feedback
+   select category, body, created_at from public.feedback
    order by created_at desc limit 30;
    ```
 
@@ -46,7 +46,8 @@ check behind is a triage failure, not a fix.
 
 ## PostHog event catalog
 
-Every `track(` call in src, verified by grep (July 26, 2026). `track`/`identify`/
+Every `track(` call in src, verified by grep (July 27, 2026 — file paths
+re-checked after the Wave 2 component splits moved seven of them). `track`/`identify`/
 `resetAnalytics` live ONLY in `src/utils/analytics.js` (invariants rule 3);
 autocapture is off — this catalog is the complete event surface. **32 events.**
 
@@ -72,18 +73,18 @@ Funnel order: `sign_in_link_sent` → `signed_in` → `profile_created` →
 | `coach_read_failed` | `reason` (network\|daily_limit\|http\|empty_response), `status` (http only) | utils/claude.js |
 | `schema_guide_opened` | `schema` | App.jsx |
 | `villain_guide_opened` | `from` ('tablereads' \| 'table' + `scenario_id`) | App.jsx (two call sites) |
-| `table_peeked` | `scenario_id` | ScenarioCard.jsx |
+| `table_peeked` | `scenario_id` | scenario/CanvasLayout.jsx |
 | `scenario_disagree_opened` | `scenario_id`, `result` | FeedbackPanel.jsx |
 | `scenario_disagree_submitted` | `scenario_id`, `reason`, `result` | FeedbackPanel.jsx |
 | `scenario_disagree_failed` | `scenario_id` | FeedbackPanel.jsx |
-| `feedback_opened` | — | Dashboard.jsx |
-| `feedback_submitted` | `category`, `length` | Dashboard.jsx |
-| `feedback_submit_failed` | — | Dashboard.jsx |
-| `coach_notebook_opened` | `reads` | Dashboard.jsx |
+| `feedback_opened` | — | dashboard/BetaFeedback.jsx |
+| `feedback_submitted` | `category`, `length` | dashboard/BetaFeedback.jsx |
+| `feedback_submit_failed` | — | dashboard/BetaFeedback.jsx |
+| `coach_notebook_opened` | `reads` | dashboard/CoachNotebook.jsx |
 | `go_pro_clicked` | — | Dashboard.jsx |
 | `username_edit_opened` | — | Dashboard.jsx |
-| `username_changed` | — | Dashboard.jsx |
-| `username_change_failed` | `reason` (rate_limited\|error) | Dashboard.jsx |
+| `username_changed` | — | dashboard/UsernameEditor.jsx |
+| `username_change_failed` | `reason` (rate_limited\|error) | dashboard/UsernameEditor.jsx |
 | `table_reads_started` | `lifetime_attempts`; + `again:true` on re-deal | TableReads.jsx (two call sites) |
 | `table_reads_answered` | `observation_id`, `picked`, `correct` | TableReads.jsx |
 | `table_reads_completed` | `correct`, `total` | TableReads.jsx |
