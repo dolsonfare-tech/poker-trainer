@@ -74,7 +74,7 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
 
 Sequenced in `docs/architecture/TARGET_ARCHITECTURE.md`. High-level order:
 
-- **Wave 1 (unblocked now):** `shuffle` → `random.js`, M2 copy → `copy.js`, Dashboard date formatters → `dates.js` (✅ done), `dummyUser.js` delete + CLAUDE.md drift fixes (CA-035).
+- **Wave 1 — ✅ DONE 2026-07-26 (`3dac2c4`):** `shuffle` → `random.js`, M2 copy → `copy.js`, Dashboard date formatters → `dates.js`, `dummyUser.js` delete + CLAUDE.md drift fixes (CA-035).
 - **Wave 2 (after Wave 1):** Dashboard.jsx split → `src/components/dashboard/`; ScenarioCard.jsx split → `src/components/scenario/`.
 - **Wave 3 (after Wave 2):** App hooks extraction (`useAuthSession`, `useGuest`, `useSessionRun`); `userStorage.js` split into six modules; prop-drilling contexts.
 - **Wave 4 (after Wave 3):** `events.js` typed emitters; scenarios batch split + lazy-load; trust-boundary Postgres functions (required before leaderboard or purchasable Rebuys); test expansion (VillainGuide, DisagreeBox, TableReads e2e).

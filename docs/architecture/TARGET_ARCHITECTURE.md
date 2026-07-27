@@ -59,19 +59,19 @@
 
 Each wave ships independently with all Definition-of-Done gates green before the next wave begins.
 
-### Wave 1 — Zero-Risk Extractions (unblocked now)
+### Wave 1 — Zero-Risk Extractions — ✅ DONE 2026-07-26 (commit `3dac2c4`)
 
 **Items:** MOD-007 (`shuffle` → `random.js`), MOD-010 (M2 copy → `copy.js`), MOD-015 (Dashboard date formatters → `dates.js`), MOD-016 / CA-058 cycle-break completion, MOD-012 (`dummyUser.js` delete + CLAUDE.md cleanup).
 
 **What unblocks it:** nothing — these are mechanical moves with no structural dependencies.
 
-**What it unblocks:** Wave 2 (component splits that will import from `random.js` and `dates.js`); clears CLAUDE.md drift (CA-035, the only remaining fix-now item).
+**What it unblocks:** Wave 2 (component splits that will import from `random.js` and `dates.js`) — now unblocked.
 
 **Ratchet each item leaves:**
-- `random.js`: invariant rule asserting `function shuffle` appears only in `src/utils/random.js` (mirrors the posthog/sentry pattern).
-- `copy.js`: `activeDaysLine` source-pin test in `Dashboard.test.js` + `SessionSummary.test.js` (no inline consistency-record string in either file).
-- `dates.js` formatter addition (`formatShortDate`): source-pin test in `dates.test.js`; neither `fmtReadDate` nor inline `fmtDate` in `Dashboard.jsx`.
-- `dummyUser.js` delete: invariant rule asserting `src/data/dummyUser.js` does not exist (or that every file under `src/` is imported by something).
+- `random.js`: invariant rule 17 asserting `function shuffle` appears only in `src/utils/random.js` (mirrors the posthog/sentry pattern).
+- `copy.js`: `activeDaysLine` source-pin test in `src/copy.test.js` (co-located with the module, not `Dashboard.test.js`/`SessionSummary.test.js` as originally sketched here) — asserts neither component hard-codes the consistency-record line.
+- `dates.js` formatter addition (`formatShortDate`): unit + source-pin tests in `dates.test.js`; neither `fmtReadDate` nor inline `fmtDate` remain in `Dashboard.jsx`.
+- `dummyUser.js` delete: invariant rule 18 asserting `src/data/dummyUser.js` does not exist.
 
 ### Wave 2 — Component Splits (unblocked after Wave 1)
 
@@ -140,7 +140,10 @@ Each wave ships independently with all Definition-of-Done gates green before the
 | MOD-008 ✅ | CA-030 | `DIFFICULTY_LABELS` single-sourced in `src/data/constants.js`; `SessionSummary.jsx` imports from constants. Source-pin test in `SessionSummary.test.js`. | `7d68183` |
 | MOD-009 ✅ | CA-031 | `GUEST_GATE_CTA` exported from `src/data/constants.js`; both `Dashboard.jsx` and `SessionSummary.jsx` import it. Source-pin tests confirm no inline string in either file. | `7d68183` |
 | MOD-016 (partial) ✅ | CA-058 | Cycle-break prerequisite done: `spacedrep.js` imports `localDateFrom` from `dates.js` (no longer duplicates). The `userStorage → spacedrep` dependency remains; resolved fully by Wave 3's `session.js` extraction. | `7d68183` |
-| MOD-012 (partial) | CA-035 | Three phantom files (`gamification.js`, `skillrating.js`, `SkillTracker.jsx`) confirmed absent on disk. `dummyUser.js` confirmed unimported. CLAUDE.md update and `dummyUser.js` deletion fold into CA-035 / Task 8 (docs restructure). | — |
+| MOD-012 ✅ | CA-035 | Three phantom files (`gamification.js`, `skillrating.js`, `SkillTracker.jsx`) confirmed absent on disk (Task 8, Phase 2). `dummyUser.js` deleted; invariant rule 18 pins it can't silently reappear. | `3dac2c4` |
+| MOD-007 ✅ | CA-029 | `shuffle()` deduped from `spacedrep.js` + `TableReads.jsx` into `src/utils/random.js`. Invariant rule 17 pins it single-file. | `3dac2c4` |
+| MOD-010 ✅ | CA-032 | M2 "consistency record" line deduped from `Dashboard.jsx` + `SessionSummary.jsx` into `src/copy.js:activeDaysLine(n, {surface})`. Source-pin tests in `copy.test.js`. | `3dac2c4` |
+| MOD-015 ✅ | CA-037 | Dashboard's two inline date formatters (`fmtReadDate`, `fmtDate`) merged into `src/utils/dates.js:formatShortDate` (accepts either a `Date` or a `'YYYY-MM-DD'` string). Source-pin test in `dates.test.js`. | `3dac2c4` |
 
 ---
 

@@ -755,7 +755,7 @@ Six bundles, each run as a separate gate-green session (all Definition-of-Done g
 Queue items enter the roadmap work queue. Notable clusters:
 
 - **Trust-boundary design** (CA-001 + CA-006 + CA-012 + CA-004) — one design session, pre-Pro/leaderboard; the client-computed-fields model must be settled before anything reads cross-user.
-- **Modularity refactor wave** (CA-023 / CA-024 / CA-025 + CA-029 / CA-032 / CA-033 / CA-036 / CA-037 / CA-058) — steered by Phase 2's TARGET_ARCHITECTURE.md rather than piecemeal.
+- **Modularity refactor wave** (CA-023 / CA-024 / CA-025 + CA-029 / CA-032 / CA-033 / CA-036 / CA-037 / CA-058) — steered by Phase 2's TARGET_ARCHITECTURE.md rather than piecemeal. Wave 1 — DONE 2026-07-26 (commit `3dac2c4`): CA-029 (`shuffle` → `random.js`), CA-032 (M2 copy → `copy.js`), CA-037 (date formatters → `dates.js`), and the CA-035 remainder (`dummyUser.js` deletion). CA-023/024/025/033/036/058 remain queued for Wave 2+.
 - **Bundle work** (CA-014 + CA-022 + CA-034) — lazy-load, route splitting, and the scenarios file split travel together.
 - **Test expansion** (CA-049 + CA-050) — pre-launch e2e batch (TableReads, VillainGuide, DisagreeBox, SignIn).
 - **Mobile CSS polish** (CA-016 + CA-017) — backdrop-filter and infinite-animation sweep.
