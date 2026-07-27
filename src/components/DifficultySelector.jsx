@@ -7,7 +7,10 @@ const DIFFICULTIES = [
     label: DIFFICULTY_LABELS.beginner,
     sublabel: 'Learning the game',
     desc: 'Starting hands, clear prices, honest opponents',
-    icon: '♣',
+    // U+FE0E (VARIATION SELECTOR-15) forces TEXT presentation, so the glyph can
+    // never be substituted with a colour emoji on platforms whose emoji font
+    // claims it (see .ds-card-icon in App.css).
+    icon: '♣\uFE0E',
     disabled: false,
   },
   {
@@ -15,7 +18,7 @@ const DIFFICULTIES = [
     label: DIFFICULTY_LABELS.intermediate,
     sublabel: 'Solid foundation',
     desc: 'Line-reading, sizing tells, tougher prices — on the clock',
-    icon: '♠',
+    icon: '♠\uFE0E',
     disabled: false,
   },
   {

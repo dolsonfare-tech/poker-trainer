@@ -2225,7 +2225,26 @@ body {
   line-height: 1;
   margin-top: 2px;
   flex-shrink: 0;
+  /* ── Founder report, July 27 2026: "the logos are blue-ish now" ──
+     This rule never declared a font-family or a colour, so the suit glyphs
+     were rendered entirely at the platform's discretion. Chromium resolved
+     them through Arial and painted them near-black on a dark card (all but
+     invisible); Apple platforms found no suit glyph in the inherited stack,
+     fell back to Apple Color Emoji, and painted them blue-grey. Nothing in the
+     repo changed — the whole .ds-* block is byte-identical to pre-audit — but
+     unspecified rendering drifts with OS emoji updates, so it was always going
+     to diverge. Both are now pinned.
+
+     The font stack is ordered so a monochrome suit glyph is always found
+     before an emoji font can be reached. The JSX also appends U+FE0E
+     (VARIATION SELECTOR-15) to request text presentation explicitly — belt and
+     braces, since the font stack alone already resolves it. */
+  font-family: 'JetBrains Mono', 'Helvetica Neue', 'Segoe UI Symbol', Arial, sans-serif;
+  color: var(--cream);
+  transition: color 0.2s;
 }
+/* Follows its label, which is already cream -> gold on selection. */
+.ds-card.selected .ds-card-icon { color: var(--gold); }
 
 .ds-card-label {
   font-family: 'Playfair Display', Georgia, serif;
