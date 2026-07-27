@@ -27,6 +27,10 @@ const walk = (dir, out = []) => {
   return out;
 };
 const srcFiles = walk(join(ROOT, 'src')).filter(f => /\.(js|jsx)$/.test(f));
+// Single-file-OWNERSHIP rules describe production code. Tests legitimately mock
+// or alias the owned symbols (`const getHandName = jest.fn()`), so scanning them
+// would turn a normal Wave 3 mock into an ERROR-level build failure.
+const srcNonTest = srcFiles.filter(f => !/\.test\.jsx?$/.test(f));
 const rel = (f) => relative(ROOT, f);
 const read = (f) => readFileSync(f, 'utf8');
 
@@ -275,7 +279,7 @@ if (!process.env.CI) {
 }
 
 // ── 17. shuffle() touched only by src/utils/random.js (CA-029, Wave 1) ──
-onlyIn('shuffle', /(?:function\s+shuffle\s*\(|const\s+shuffle\s*=)/, ['src/utils/random.js'], srcFiles,
+onlyIn('shuffle', /(?:function\s+shuffle\s*\(|const\s+shuffle\s*=)/, ['src/utils/random.js'], srcNonTest,
   'the shuffle primitive is single-sourced in src/utils/random.js — import it instead of redefining');
 
 // ── 18. dummyUser.js stays deleted (CA-035/MOD-012, Wave 1) ─────────────
@@ -297,15 +301,15 @@ onlyIn('shuffle', /(?:function\s+shuffle\s*\(|const\s+shuffle\s*=)/, ['src/utils
 // owner — a second definition anywhere means the two surfaces can disagree
 // about what the player is looking at.
 onlyIn('hand-name', /(?:function\s+getHandName\s*\(|const\s+getHandName\s*=)/,
-  ['src/utils/handName.js'], srcFiles,
+  ['src/utils/handName.js'], srcNonTest,
   'the spoken hand name is single-sourced in src/utils/handName.js — import it instead of redefining');
 onlyIn('relation-line', /(?:function\s+relationLine\s*\(|const\s+relationLine\s*=)/,
-  ['src/utils/ticker.js'], srcFiles,
+  ['src/utils/ticker.js'], srcNonTest,
   'the villain relation line lives beside villainSummary in src/utils/ticker.js — TableCanvas and CanvasLayout both import it');
 
 // ── 20. useCountUp lives in the hooks tree (MOD-003) ────────────────────
 onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
-  ['src/hooks/useCountUp.js'], srcFiles,
+  ['src/hooks/useCountUp.js'], srcNonTest,
   'the count-up animation is single-sourced in src/hooks/useCountUp.js');
 
 // ── 21. Split components do not re-monolithize (MOD-003/MOD-004, Wave 2) ─
@@ -334,7 +338,11 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
   }
   for (const f of srcFiles) {
     const r = rel(f);
-    if (!/^src\/components\/(dashboard|scenario)\/.*\.jsx$/.test(r)) continue;
+    // .jsx? and hooks/ included: CRA compiles JSX in .js files just fine, so an
+    // extension switch must not buy an unbudgeted file, and src/hooks/ grows four
+    // more modules in Wave 3.
+    if (!/^src\/(components\/(dashboard|scenario)|hooks)\/.*\.(js|jsx)$/.test(r)) continue;
+    if (/\.test\.jsx?$/.test(r)) continue;
     const n = read(f).split('\n').length;
     if (n > DIR_BUDGET)
       flag('ERROR', 'component-budget',
@@ -349,13 +357,19 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
 // below the coverage the monolith had.
 {
   const needsTest = srcFiles.filter(f =>
-    /^src\/(components\/(dashboard|scenario)|hooks)\/[^/]+\.(js|jsx)$/.test(rel(f)) &&
+    /^src\/(components\/(dashboard|scenario)|hooks)\/.+\.(js|jsx)$/.test(rel(f)) &&
     !/\.test\.jsx?$/.test(rel(f)));
   for (const f of needsTest) {
-    const expected = f.replace(/\.jsx?$/, '.test.js');
-    try {
-      statSync(expected);
-    } catch {
+    // Either extension satisfies co-location, and the file must actually contain
+    // cases — `touch Foo.test.js` passed the original existence-only check.
+    const candidates = [f.replace(/\.jsx?$/, '.test.js'), f.replace(/\.jsx?$/, '.test.jsx')];
+    const found = candidates.find(c => { try { statSync(c); return true; } catch { return false; } });
+    const expected = candidates[0];
+    if (found && /\b(test|it)\s*\(/.test(read(found))) continue;
+    if (found) {
+      flag('ERROR', 'test-colocation',
+        `${rel(found)} exists but declares no test()/it() cases — an empty file satisfies co-location on paper only`);
+    } else {
       flag('ERROR', 'test-colocation',
         `${rel(f)} has no co-located ${rel(expected)} — every module in the Wave 2 split trees carries its own test (docs/architecture/TARGET_ARCHITECTURE.md §4)`);
     }
@@ -378,15 +392,96 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
 //      streakAlive block).
 // A shared beforeEach counts for (1). Anything else means the real clock leaks
 // into the assertion.
+//
+// SCOPE MATTERS — this rule's first draft checked the two regexes against the
+// WHOLE FILE, which made it green on the very commit that caused the incident:
+// the buggy test sat at line 31 while an unrelated describe's beforeEach called
+// setSystemTime at line 222, so "controlled" was true file-wide and the unfrozen
+// test sailed through. A ratchet that cannot fail on its own motivating bug is
+// decorative, so coverage is resolved PER BLOCK below.
+//
+// Scoping is derived from INDENTATION, not brace matching. A hand-rolled brace
+// scanner was tried first and silently mis-parsed on a single stray token,
+// which resolved an inner describe's beforeEach to file scope and blanket-
+// covered every test — the same class of failure this rule exists to stop. A
+// linter that needs a JS parser to be correct is a liability; indentation is
+// checkable at a glance and this repo's tests are uniformly formatted.
 {
-  const CLOCK_SENSITIVE = /(lastSessionDate|usernameChangedAt):\s*['"]\d{4}-\d{2}-\d{2}/;
-  const CLOCK_CONTROLLED = /setSystemTime|const\s+now\s*=\s*new Date\(\s*['"]/;
+  // Capture the value, then classify it in CODE. Doing the null/relative filter
+  // inside the regex looked right and was not: `\s*` backtracks, so the negative
+  // lookahead slid past the space and `lastSessionDate: null` matched anyway.
+  const SENSITIVE = /(lastSessionDate|usernameChangedAt)\s*:\s*([^,}\n]*)/g;
+  const INJECTED_NOW = /const\s+now\s*=\s*new Date\(\s*['"]/;
+  // A value derived from the CURRENT clock (Date.now() - 24h) is relative: it
+  // means the same thing in every timezone. Only a FIXED date is dangerous.
+  const RELATIVE = /Date\.now\(\)|new Date\(\s*\)/;
+  const FIXED_DATE = /\d{4}-\d{2}-\d{2}|new Date\(\s*['"]/;
+
   for (const f of srcFiles) {
     if (!/\.test\.jsx?$/.test(rel(f))) continue;
     const text = read(f);
-    if (CLOCK_SENSITIVE.test(text) && !CLOCK_CONTROLLED.test(text))
+    if (INJECTED_NOW.test(text)) continue;          // fixed `now` threaded in explicitly
+    const lines = text.split('\n');
+
+    // Block markers, with their indent. body = [line, nextMarkerAtIndent<=own).
+    const markers = [];
+    lines.forEach((l, i) => {
+      const m = l.match(/^(\s*)(describe|test|it|beforeEach|beforeAll)\s*\(/);
+      if (m) markers.push({ line: i, indent: m[1].length, kind: m[2] });
+    });
+    const bodyEnd = (idx) => {
+      for (let j = idx + 1; j < markers.length; j++)
+        if (markers[j].indent <= markers[idx].indent) return markers[j].line;
+      return lines.length;
+    };
+    const contains = (idx, line) => markers[idx].line <= line && line < bodyEnd(idx);
+    const innermost = (line, kinds) => {
+      let best = -1;
+      markers.forEach((mk, i) => {
+        if (kinds.includes(mk.kind) && contains(i, line) &&
+            (best === -1 || mk.indent > markers[best].indent)) best = i;
+      });
+      return best;
+    };
+    const bodyText = (idx) => lines.slice(markers[idx].line, bodyEnd(idx)).join('\n');
+
+    // Helpers whose own definition freezes the clock count as control when called.
+    const controls = ['setSystemTime'];
+    // The helper body may span statements (`const at = (w) => { useFakeTimers();
+    // setSystemTime(w); }`), so scan forward without crossing the next declaration.
+    for (const m of text.matchAll(
+      /\bconst\s+(\w+)\s*=(?:(?!\n\s*(?:const|test|it|describe)\b)[\s\S]){0,300}?setSystemTime/g))
+      controls.push(m[1]);
+    const controlled = (s) => controls.some(t => new RegExp(`\\b${t}\\b`).test(s));
+
+    // beforeEach/beforeAll hooks that freeze the clock, and the scope they apply
+    // to: the block that ENCLOSES the hook (file scope when nothing encloses it).
+    const guards = [];
+    markers.forEach((mk, i) => {
+      if (mk.kind !== 'beforeEach' && mk.kind !== 'beforeAll') return;
+      if (!controlled(bodyText(i))) return;
+      guards.push(innermost(mk.line, ['describe']));   // -1 === file scope
+    });
+
+    for (const hit of text.matchAll(SENSITIVE)) {
+      const raw = (hit[2] ?? '').trim();
+      if (!raw || /^(null|undefined)\b/.test(raw)) continue;   // genuinely clock-free
+      // Resolve a bare identifier to its definition before classifying.
+      let expr = raw;
+      const ident = raw.match(/^([A-Za-z_$][\w$]*)$/);
+      if (ident) {
+        const def = text.match(new RegExp(`\\b(?:const|let|var)\\s+${ident[1]}\\s*=([^;\\n]*)`));
+        if (def) expr = def[1];
+      }
+      if (RELATIVE.test(expr)) continue;        // relative to now — timezone-safe
+      if (!FIXED_DATE.test(expr)) continue;     // no fixed date visible — nothing to pin
+      const line = text.slice(0, hit.index).split('\n').length - 1;
+      if (guards.some(g => g === -1 || contains(g, line))) continue;
+      const owner = innermost(line, ['test', 'it']);
+      if (owner !== -1 && controlled(bodyText(owner))) continue;
       flag('ERROR', 'frozen-clock',
-        `${rel(f)} hard-codes a session date but never controls its clock — streakAlive compares it against the real Date, so the test passes in one timezone and fails in another (CI run #17, July 2026). Freeze it with jest.useFakeTimers() + jest.setSystemTime(), or inject a fixed \`now\`.`);
+        `${rel(f)}:${line + 1} pins ${hit[1]} to a fixed date with no clock control in scope — streakAlive compares it against the real Date, so this passes in one timezone and fails in another (CI run #17, July 2026). Freeze it in this test or an enclosing beforeEach with jest.useFakeTimers() + jest.setSystemTime(), or inject a fixed \`now\`.`);
+    }
   }
 }
 

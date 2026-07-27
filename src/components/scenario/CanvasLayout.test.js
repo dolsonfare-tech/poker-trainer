@@ -78,26 +78,40 @@ test('the skill tag and progress live in the chrome, above the stage', () => {
 
 // ── Chrome behaviour ───────────────────────────────────────────────────────
 
-test('the combo pill only appears from two in a row, and stays inside the chrome', () => {
+// NOTE: one render per test. RTL's cleanup runs BETWEEN tests, not within one,
+// so two renders in a single test leave both containers mounted and every
+// document.querySelector / screen.getByText searches across the pair. These
+// passed only because each queried string happened to be unique to the second
+// render — a latent "found multiple elements" failure.
+test('a single streak does not show the combo pill', () => {
   layout({ combo: 1 });
   expect(document.querySelector('.sc2-combo')).toBeNull();
+});
+
+test('two in a row shows the combo pill inside the chrome', () => {
   layout({ combo: 3 });
   expect(document.querySelector('.sc2-chrome .sc2-combo')).toHaveTextContent('3 in a row');
 });
 
-test('the timer renders only when the caller asks for it', () => {
+test('the timer is absent unless the caller asks for it', () => {
   layout();
   expect(document.querySelector('svg')).toBeNull();
+});
+
+test('the timer renders when showTimer is set', () => {
   layout({ showTimer: true });
   expect(screen.getByText('60')).toBeInTheDocument();
 });
 
-test('a resurfaced miss is labelled honestly, and a confident miss gets its own line', () => {
+test('a resurfaced miss is labelled honestly', () => {
   layout({ scenario: scenario({ replay: true }) });
   expect(screen.getByText(/You missed this one before/)).toBeInTheDocument();
+});
 
+test('a confident miss gets its own slow-down line (F2 hypercorrection)', () => {
   layout({ scenario: scenario({ replay: true, confidentMiss: true }) });
   expect(screen.getByText(/You answered this fast last time/)).toBeInTheDocument();
+  expect(screen.queryByText(/You missed this one before/)).not.toBeInTheDocument();
 });
 
 // ── Feedback overlay + peek ────────────────────────────────────────────────
@@ -127,9 +141,12 @@ test('peeking lifts the overlay, hides it from assistive tech, and tracks the ev
   expect(document.querySelector('.sc2-overlay')).not.toHaveClass('sc2-overlay-peek');
 });
 
-test('the Next button waits for the coach text to finish loading', () => {
+test('the Next button is withheld while the coach text is still loading', () => {
   layout({ feedback: { grade: 'correct', loading: true, text: '', choice: 'call' }, decided: true });
   expect(document.querySelector('.next-btn')).toBeNull();
+});
+
+test('the Next button appears once the coach text has loaded', () => {
   layout({ feedback: { grade: 'correct', loading: false, text: 'Right price.', choice: 'call' }, decided: true });
   expect(screen.getByText('Next hand')).toBeInTheDocument();
 });
@@ -143,10 +160,13 @@ test('the mobile villain strip carries the same read as the felt bubble', () => 
   expect(strip).toHaveTextContent('acts after you, every street');
 });
 
-test('the strip becomes tappable only when a guide handler exists', () => {
+test('without a guide handler the strip is inert', () => {
   layout();
   expect(document.querySelector('.sc2-strip')).not.toHaveClass('sc2-strip-tappable');
+  expect(document.querySelector('.sc2-strip')).not.toHaveAttribute('role', 'button');
+});
 
+test('with a guide handler the strip reports the villain label', () => {
   const onVillainInfo = jest.fn();
   layout({ onVillainInfo });
   fireEvent.click(document.querySelector('.sc2-strip-tappable'));
