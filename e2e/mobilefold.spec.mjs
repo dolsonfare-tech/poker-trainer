@@ -29,6 +29,30 @@ export default async function run({ browser, baseURL, check }) {
   check('dashboard CTA fully above the fold', !!cta && cta.y + cta.height <= VIEW.height,
     cta ? `bottom=${Math.round(cta.y + cta.height)}` : 'missing');
 
+  // ── Chrome must NOT be re-compressed (founder report, July 27 2026) ──
+  // CA-038 originally shrank the header to 26px and the logo to 1.8rem to buy
+  // fold height. It bought none: the CTA is position:sticky, so it pins to the
+  // viewport bottom no matter how tall the content above it is — the CTA's
+  // bottom edge measures 759px with the compression and 759px without it. The
+  // squeeze was pure cost, and the founder reported the result as "all squished
+  // together". This guard stops a future fold optimisation from re-taking it.
+  const header = await page.locator('.header').boundingBox();
+  check('mobile chrome is not compressed (header keeps its desktop size)',
+    !!header && header.height >= 120, header ? `h=${Math.round(header.height)}` : 'missing');
+  const logoPx = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.querySelector('.logo')).fontSize));
+  check('logo keeps its full size on mobile', logoPx >= 38, `${logoPx}px`);
+
+  // The sticky bar must fade its scroll edge. With a hard opaque edge, content
+  // scrolling under it was sliced mid-sentence (the Coach's Read was visibly
+  // guillotined), which reads as broken rather than as "there is more below".
+  const fade = await page.evaluate(() => {
+    const cs = getComputedStyle(document.querySelector('.db-cta-block'), '::before');
+    return { content: cs.content, bg: cs.backgroundImage };
+  });
+  check('sticky CTA fades the scroll edge instead of cutting it',
+    fade.content !== 'none' && /gradient/.test(fade.bg), fade.bg.slice(0, 40));
+
   // ── Gameplay: hand 1 at each difficulty, measured from scrollTop 0 ──
   const guardHand = async (difficulty) => {
     await page.evaluate((d) => localStorage.setItem('cr_last_difficulty', d), difficulty);

@@ -502,7 +502,7 @@ body {
   background: rgba(255,255,255,0.04); color: var(--cream-dim);
   border: 1px solid rgba(255,255,255,0.14); border-radius: 999px;
   padding: 6px 12px; cursor: pointer;
-  min-height: 44px; /* CA-040 tap target */
+  min-height: 45px; /* CA-040 tap target — 45px, not 44: exactly 44 sits on the e2e guard boundary where sub-pixel rounding flakes it (see taptargets.spec.mjs) */
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .fb-disagree-chip:hover:not(:disabled) { border-color: rgba(200,168,75,0.5); color: var(--cream); }
@@ -2376,8 +2376,12 @@ body {
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 50%;
-  width: 44px;  /* CA-040 tap target (was 34px) */
-  height: 44px;
+  /* CA-040 tap target (was 34px). 45px, not 44px: sitting exactly ON the e2e
+     guard's `>= 44` boundary made the check flake — sub-pixel rounding decided
+     it. Same fix already applied to .db-account-btn in ea857ae; .vg-close was
+     missed at the time and flaked roughly 1 run in 4. */
+  width: 45px;
+  height: 45px;
   color: rgba(242,237,227,0.6);
   cursor: pointer;
   font-size: 1rem;
@@ -2394,7 +2398,7 @@ body {
 
 .vg-tab {
   flex: 1;
-  min-height: 44px; /* CA-040 tap target */
+  min-height: 45px; /* CA-040 tap target — 45px, not 44: exactly 44 sits on the e2e guard boundary where sub-pixel rounding flakes it (see taptargets.spec.mjs) */
   padding: 10px 4px;
   background: transparent;
   border: none;
@@ -3152,18 +3156,34 @@ body {
   .sc2-replay-line { font-size: 0.66rem; }
 }
 
-/* ── CA-038: mobile fold — shared chrome + dashboard CTA ──
-   The header/logo block cost ~130px of every phone screen; compressed here.
-   The dashboard CTA becomes a sticky bottom bar for the same reason as the
-   action row above: the Player Profile card's height is content-variable
-   (evidence rows, notebook, streak lines), so no fixed compression can
-   guarantee the CTA lands above an 844px fold. Desktop (>700px) untouched. */
+/* ── CA-038: mobile fold — dashboard CTA ──
+   The Player Profile card's height is content-variable (evidence rows,
+   notebook, streak lines), so no fixed compression can guarantee the CTA lands
+   above an 844px fold. A sticky bottom bar can, unconditionally.
+
+   ── July 27 2026 correction: the header compression is GONE. ──
+   CA-038 originally ALSO compressed the shared chrome (header 68px -> 26px,
+   logo 2.6rem -> 1.8rem, app padding 28px -> 14px), on the theory that every
+   pixel above the fold counted. Measurement says it bought nothing: because
+   this bar is `position: sticky`, it pins to the viewport bottom regardless of
+   how tall the content above it is. The CTA's bottom edge measures 759px at
+   390x844 with the compression and 759px without it — identical. The same
+   holds on the gameplay screen, where `.sc2-actions` is sticky for the same
+   reason (all three action buttons stay above the fold at 708/770/832).
+
+   So the compression was pure aesthetic cost for zero fold benefit, and the
+   founder reported the result as "all squished together". The overrides are
+   deleted rather than re-stated — mobile now simply inherits the base chrome,
+   which is exactly what it did before CA-038 introduced them.
+
+   The fade below is the other half of the fix: content scrolling under a bar
+   with a hard opaque edge was being sliced mid-sentence (the Coach's Read
+   visibly guillotined), which read as broken rather than as "there is more
+   below". Desktop (>700px) untouched throughout. */
 @media (max-width: 700px) {
-  .app { padding: 14px 18px 48px; }
-  .header { padding: 12px 0 14px; }
-  .logo { font-size: 1.8rem; }
-  .tagline { font-size: 0.62rem; margin-top: 4px; }
-  .info-btn { top: 12px; }
+  /* Only the bottom padding differs from the base: the sticky bar already
+     occupies that space, so the base 80px would leave a dead gap under it. */
+  .app { padding-bottom: 48px; }
   .db-cta-block {
     position: sticky; bottom: 0; z-index: 6;
     margin: 0 -18px;
@@ -3171,6 +3191,12 @@ body {
     background: var(--felt-dark);
     border-top: 1px solid rgba(200,168,75,0.12);
     box-shadow: 0 -14px 26px rgba(10,21,15,0.55);
+  }
+  /* Fade the scroll edge so content ends rather than being cut. */
+  .db-cta-block::before {
+    content: ''; position: absolute; left: 0; right: 0; top: -30px; height: 30px;
+    background: linear-gradient(to bottom, rgba(10, 21, 15, 0), var(--felt-dark));
+    pointer-events: none;
   }
 }
 
@@ -3518,7 +3544,7 @@ body {
 .tr-whynot { font-size: 0.88rem; line-height: 1.55; color: rgba(242,237,227,0.85); margin-bottom: 10px; }
 .tr-tell { font-size: 0.88rem; line-height: 1.55; color: rgba(242,237,227,0.85); }
 .tr-tell-label { color: var(--gold, #c8a84b); font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; margin-right: 4px; }
-.tr-next-btn { display: block; width: 100%; min-height: 44px; /* CA-040 */ margin-top: 14px; padding: 13px; border-radius: var(--radius-md, 10px); border: none; background: linear-gradient(180deg, var(--gold-light, #ddc06a), var(--gold, #c8a84b)); color: #1a1208; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
+.tr-next-btn { display: block; width: 100%; min-height: 45px; /* CA-040 — 45px clears the guard boundary */ margin-top: 14px; padding: 13px; border-radius: var(--radius-md, 10px); border: none; background: linear-gradient(180deg, var(--gold-light, #ddc06a), var(--gold, #c8a84b)); color: #1a1208; font-weight: 700; font-size: 0.95rem; cursor: pointer; }
 .tr-summary { text-align: center; padding: 28px 0; }
 .tr-score { font-size: 1.1rem; margin-bottom: 6px; }
 .tr-score-num { font-family: 'Playfair Display', Georgia, serif; font-size: 2rem; color: var(--gold, #c8a84b); }
