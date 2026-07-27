@@ -1,8 +1,8 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import './App.css';
 import SCENARIOS from './data/scenarios';
-import { fetchCoachRead } from './utils/claude';
-import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, applySessionResults, calcStreak, toLocalDateString, RENAME_COOLDOWN_MS, loadLastDifficulty, saveLastDifficulty } from './utils/userStorage';
+import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, calcStreak, toLocalDateString, RENAME_COOLDOWN_MS, loadLastDifficulty, saveLastDifficulty } from './utils/userStorage';
+import { submitSession } from './utils/session';
 import { buildSession, applyHandsToHistory } from './utils/spacedrep';
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
@@ -283,6 +283,10 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // The pipeline itself lives in utils/session.js (MOD-002) — this keeps only
+  // the React state around it. `remote` is injected there rather than imported,
+  // which breaks a session -> db -> userStorage cycle and doubles as the
+  // localStorage-only signal.
   const handleFetchCoachRead = async () => {
     const prevUser = sessionUserRef.current;
     // Every hand played counts toward accuracy — not the per-skill deduped
@@ -292,37 +296,15 @@ export default function App() {
       scenarioId: h.scenario.id, skill: h.scenario.skill,
       result: h.result, choiceVal: h.choiceVal, decisionMs: h.decisionMs ?? null,
     }));
-    const persist = (updated, coachText) => {
-      setUser(updated);
-      saveUser(updated); // localStorage cache always
-      if (hasSupabase && !isGuest) {
-        saveRemoteUser(updated).catch(err => console.error('Profile save failed', err));
-        recordSession({
-          difficulty,
-          hands,
-          correctCount: hands.filter(h => h.result === 'correct').length,
-          coachRead: coachText,
-        }).catch(err => console.error('Session log failed', err));
-      }
-    };
-    // Guests get no coach read (the endpoint requires a signed-in user — it's
-    // the sign-in carrot, and the summary says so honestly). Results still
-    // persist locally so they migrate into the account later.
-    if (isGuest) {
-      if (prevUser) persist(applySessionResults(prevUser, hands, null), null);
-      return;
-    }
-    setCoachLoading(true);
-    try {
-      const text = await fetchCoachRead(sessionHistory);
-      setCoachRead(text);
-      if (prevUser) persist(applySessionResults(prevUser, hands, text), text);
-    } catch (err) {
-      if (err?.code === 'daily_limit') setCoachLimited(true);
-      setCoachRead('');
-      if (prevUser) persist(applySessionResults(prevUser, hands, null), null);
-    }
-    setCoachLoading(false);
+    if (!isGuest) setCoachLoading(true);
+    const { user: updated, coachText, limited } = await submitSession({
+      user: prevUser, hands, sessionHistory, difficulty, isGuest,
+      remote: hasSupabase ? { saveRemoteUser, recordSession } : null,
+    });
+    if (updated) setUser(updated);
+    setCoachRead(coachText);
+    if (limited) setCoachLimited(true);
+    if (!isGuest) setCoachLoading(false);
   };
 
   const handleDecision = useCallback((choice) => {

@@ -11,6 +11,8 @@ import { calcStreak } from './streak';
 import { addHandsToDirectionTally, deriveSchema, EMPTY_DIRECTION_TALLY } from './schema';
 import { appendRecentHands, derivePokerScore } from './iq';
 import { COACH_READS_CAP } from './coachRead';
+import { saveUser } from './persistence';
+import { fetchCoachRead } from './claude';
 
 export const RENAME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -102,4 +104,64 @@ export function applySessionResults(user, hands, coachRead) {
     : (user.coachReads ?? []);
 
   return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, directionTally, bestSessionCorrect };
+}
+
+// ── submitSession (MOD-002, Wave 3) ────────────────────────────────────────
+// The end-of-session pipeline, lifted verbatim out of App.jsx's
+// handleFetchCoachRead: fetch the Coach's Read, fold the results into the user
+// record, and persist locally plus remotely.
+//
+// It is extracted for two reasons beyond shrinking App.jsx. First, this is the
+// ONE place a session's outcome becomes durable, which makes it the seam Wave 4
+// needs: the trust-boundary work (CA-001/006/012) has to move streak, rebuys
+// and poker_score to server-computed columns, and it needs a single choke point
+// to do that in. Second, the ordering here is load-bearing and was previously
+// only assertable by driving the whole app.
+//
+// Ordering that must not drift:
+//   * a guest NEVER calls the coach endpoint (it requires a signed-in user —
+//     the read is the sign-in carrot, and the summary says so honestly), but
+//     their results still persist locally so the account migration picks them up
+//   * a failed or rate-limited read must STILL persist the session. Losing a
+//     player's hands because the coach was down would be the worse bug, so the
+//     catch path applies results with a null read rather than bailing
+//   * the local save happens for everyone; the remote writes are fire-and-
+//     forget so a slow network cannot block the summary from rendering
+//
+// React state stays with the caller: this returns what changed and performs
+// only persistence, so it can be tested without rendering anything.
+//
+// `remote` is INJECTED rather than imported. db.js imports createUser and
+// DEFAULT_SKILLS from this module, so importing db.js back would close a
+// session -> db -> userStorage-barrel -> session cycle. Injection breaks it,
+// and its absence doubles as the localStorage-only signal — one condition
+// instead of a `hasSupabase` flag that could disagree with reality.
+export async function submitSession({ user, hands, sessionHistory, difficulty, isGuest, remote }) {
+  const persist = (updated, coachText) => {
+    saveUser(updated);                       // localStorage cache always
+    if (remote && !isGuest) {
+      remote.saveRemoteUser(updated).catch(err => console.error('Profile save failed', err));
+      remote.recordSession({
+        difficulty,
+        hands,
+        correctCount: hands.filter(h => h.result === 'correct').length,
+        coachRead: coachText,
+      }).catch(err => console.error('Session log failed', err));
+    }
+    return updated;
+  };
+
+  if (isGuest) {
+    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
+    return { user: updated, coachText: '', limited: false };
+  }
+
+  try {
+    const coachText = await fetchCoachRead(sessionHistory);
+    const updated = user ? persist(applySessionResults(user, hands, coachText), coachText) : null;
+    return { user: updated, coachText, limited: false };
+  } catch (err) {
+    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
+    return { user: updated, coachText: '', limited: err?.code === 'daily_limit' };
+  }
 }

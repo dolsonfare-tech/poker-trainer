@@ -60,3 +60,103 @@ test('applySessionResults maintains the lifetime direction tally', () => {
   const out2 = applySessionResults(out, [{ scenarioId: 1, skill: 'preflop', result: 'incorrect', choiceVal: 'fold' }], null);
   expect(out2.directionTally).toEqual({ under: 2, over: 0.5, loose: 0, evidence: 2.5, hands: 3 });
 });
+
+// ── submitSession (MOD-002, Wave 3) ─────────────────────────────────────────
+// The end-of-session pipeline, lifted out of App.jsx. Its ordering rules were
+// previously only assertable by driving the whole app, which is why they were
+// never asserted at all. Each one below protects a decision that would be
+// silently expensive to lose.
+jest.mock('./claude', () => ({ fetchCoachRead: jest.fn() }));
+jest.mock('./persistence', () => ({ saveUser: jest.fn() }));
+
+const { fetchCoachRead } = require('./claude');
+const { saveUser } = require('./persistence');
+const { submitSession } = require('./session');
+
+const hands = [
+  { scenarioId: 'sc_001', skill: 'preflop', result: 'correct', choiceVal: 'fold', decisionMs: 900 },
+  { scenarioId: 'sc_002', skill: 'potodds', result: 'incorrect', choiceVal: 'call', decisionMs: 400 },
+];
+const remoteStub = () => ({
+  saveRemoteUser: jest.fn().mockResolvedValue(undefined),
+  recordSession: jest.fn().mockResolvedValue(undefined),
+});
+
+beforeEach(() => { jest.clearAllMocks(); });
+
+test('a guest never calls the coach endpoint, but their session still persists', async () => {
+  const remote = remoteStub();
+  const res = await submitSession({
+    user: createUser('Guest'), hands, sessionHistory: [], difficulty: 'beginner',
+    isGuest: true, remote,
+  });
+  expect(fetchCoachRead).not.toHaveBeenCalled();
+  expect(saveUser).toHaveBeenCalledTimes(1);          // local cache still written
+  expect(remote.saveRemoteUser).not.toHaveBeenCalled();
+  expect(remote.recordSession).not.toHaveBeenCalled();
+  expect(res.user.sessionsCompleted).toBe(1);
+  expect(res.coachText).toBe('');
+});
+
+test('a signed-in session fetches the read and writes it through', async () => {
+  fetchCoachRead.mockResolvedValue('You over-fold rivers.');
+  const remote = remoteStub();
+  const res = await submitSession({
+    user: createUser('Reader'), hands, sessionHistory: [{}], difficulty: 'intermediate',
+    isGuest: false, remote,
+  });
+  expect(res.coachText).toBe('You over-fold rivers.');
+  expect(res.user.coachNote.body).toBe('You over-fold rivers.');
+  expect(saveUser).toHaveBeenCalledTimes(1);
+  expect(remote.saveRemoteUser).toHaveBeenCalledTimes(1);
+  expect(remote.recordSession).toHaveBeenCalledWith(
+    expect.objectContaining({ difficulty: 'intermediate', correctCount: 1 }));
+});
+
+test('a FAILED coach read still persists the session — losing the hands is the worse bug', async () => {
+  fetchCoachRead.mockRejectedValue(new Error('network'));
+  const remote = remoteStub();
+  const res = await submitSession({
+    user: createUser('Unlucky'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    isGuest: false, remote,
+  });
+  expect(res.user.sessionsCompleted).toBe(1);         // the session counted
+  expect(res.coachText).toBe('');
+  expect(res.limited).toBe(false);
+  expect(saveUser).toHaveBeenCalledTimes(1);
+  expect(remote.recordSession).toHaveBeenCalledTimes(1);
+});
+
+test('the daily cap is reported as limited, not as a generic failure', async () => {
+  const err = new Error('cap'); err.code = 'daily_limit';
+  fetchCoachRead.mockRejectedValue(err);
+  const res = await submitSession({
+    user: createUser('Capped'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    isGuest: false, remote: remoteStub(),
+  });
+  expect(res.limited).toBe(true);
+  expect(res.user.sessionsCompleted).toBe(1);
+});
+
+test('no remote object means localStorage-only — no remote writes attempted', async () => {
+  fetchCoachRead.mockResolvedValue('read');
+  await submitSession({
+    user: createUser('Local'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    isGuest: false, remote: null,
+  });
+  expect(saveUser).toHaveBeenCalledTimes(1);          // local still written
+});
+
+test('a rejected remote write does not reject the caller — the summary must render', async () => {
+  fetchCoachRead.mockResolvedValue('read');
+  const remote = {
+    saveRemoteUser: jest.fn().mockRejectedValue(new Error('500')),
+    recordSession: jest.fn().mockRejectedValue(new Error('500')),
+  };
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  await expect(submitSession({
+    user: createUser('Offline'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    isGuest: false, remote,
+  })).resolves.toMatchObject({ coachText: 'read' });
+  console.error.mockRestore();
+});
