@@ -98,11 +98,24 @@ export default async function run({ browser, baseURL, check }) {
     // label/chip inside the table box. Desktop deliberately straddles the rail
     // (original canvas design) — this guard is mobile-only.
     const felt = await page.locator('.sc2-felt').boundingBox();
-    const cards = await page.locator('.sc2-hero-cards').boundingBox();
     const chip = await page.locator('.sc2-you-chip').boundingBox();
-    check(`[${difficulty}] hero cards inside the felt oval`,
-      !!cards && !!felt && cards.y + cards.height <= felt.y + felt.height,
-      cards && felt ? `cards bottom=${Math.round(cards.y + cards.height)} felt bottom=${Math.round(felt.y + felt.height)}` : 'missing');
+
+    // The felt is an ELLIPSE, so comparing bounding-box bottoms is not enough:
+    // the hero cards are ~86px wide, and at that horizontal offset the curve
+    // sits well above the bbox bottom. The old bbox form of this check passed
+    // (cards bottom 559 vs felt bottom 561) while the card corners were
+    // measurably outside the oval at 1.041 — the founder saw the overlap on a
+    // real device that the guard called clean. Corners against the real curve.
+    const cardCorners = await page.evaluate(() => {
+      const c = document.querySelector('.sc2-hero-cards').getBoundingClientRect();
+      const f = document.querySelector('.sc2-felt').getBoundingClientRect();
+      const cx = f.left + f.width / 2, cy = f.top + f.height / 2;
+      const rx = f.width / 2, ry = f.height / 2;
+      const n = (x, y) => ((x - cx) ** 2) / (rx * rx) + ((y - cy) ** 2) / (ry * ry);
+      return Math.max(n(c.left, c.bottom), n(c.right, c.bottom));
+    });
+    check(`[${difficulty}] hero cards inside the felt OVAL (corner test, not bbox)`,
+      cardCorners <= 0.99, `worst corner=${cardCorners.toFixed(3)} (>1 = outside the curve)`);
     check(`[${difficulty}] YOU chip inside the table box`,
       !!chip && !!table && chip.y + chip.height <= table.y + table.height + 0.5,
       chip && table ? `chip bottom=${Math.round(chip.y + chip.height)} table bottom=${Math.round(table.y + table.height)}` : 'missing');

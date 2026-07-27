@@ -3163,7 +3163,22 @@ body {
      ellipsises it ("QUEEN-SEVEN OFF…"). The widest name in the pool is 154px
      against a 296px felt. The pill backdrop is belt-and-braces legibility if a
      future felt tweak moves the rim back underneath the text. */
-  .sc2-hero-cards { margin-bottom: 5px; }
+  /* ── Founder report, July 27 2026, from a real device ──
+     "The pot and cards should be higher up so there is more room for YOUR
+     cards", and "the very bottom [of your cards] overlaps with the table
+     border". Both fixed here; the seat ring is fixed in TableCanvas.jsx.
+
+     Raising .sc2-center frees vertical room at the bottom of the felt. The
+     hero cards then move up into it via margin-bottom — .sc2-hero is
+     bottom-anchored, so adding space BELOW the cards is what lifts them while
+     leaving the hand name and YOU chip exactly where they are (both are
+     pinned: the name must clear the rim, the chip must stay in the table box).
+
+     Measured at 390x844: hero cards' worst bottom corner moves 1.041 -> 0.923
+     against the true felt ELLIPSE, i.e. from overlapping the rim to clear of
+     it, with a 19px gap left between the board and the cards. */
+  .sc2-center { top: 40%; }
+  .sc2-hero-cards { margin-bottom: 13px; }
   .sc2-hand-name {
     background: rgba(10, 21, 15, 0.86);
     padding: 1px 9px; border-radius: 999px; z-index: 4;

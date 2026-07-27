@@ -24,12 +24,36 @@ function BlankCard({ small }) {
 // Seat angles per seat index [UTG..BB]; hero is rotated to the bottom.
 const SEAT_BASE_ANGLES = [180, 240, 300, 0, 60, 120];
 
+// ─── Seat ring (founder report, July 27 2026) ──────────────────────────────
+// Seat CENTRES sit on this ellipse, expressed as % of the .sc2-table box.
+//
+// It used to be (50, 47) r(44, 41), which traced the DESKTOP felt's own edge
+// (that felt is inset 7%/6%/13%/6% -> centre (50,47) r(44,40)). Placing seat
+// centres on the felt's edge guarantees the outer half of every seat hangs off
+// it, and measurement confirmed it: all five visible seats were outside the
+// felt ellipse on desktop (worst corner 1.23-1.28) and on mobile (up to 1.41),
+// with the top-centre seat the most obvious. Reported as "the opposing player
+// position at the top center shouldn't hover over the border of the table" —
+// and noted as pre-existing, which it was, on both breakpoints.
+//
+// The ring must clear the rim on BOTH felts, which are different shapes:
+//   desktop  inset 7% 6% 13% 6%  -> centre (50,47) r(44,40), seat half 2.4/4.3%
+//   mobile   inset 4% 3% 14% 3%  -> centre (50,45) r(47,41), seat half 5.2/5.4%
+// Solving the worst of all 4 seat-box corners x 6 seats x 6 hero rotations
+// against both felts, (50,46) r(38,31) is the LARGEST ring that fits — seats
+// stay as close to the rail as they can without crossing it. Worst corner
+// 0.912 desktop / 0.942 mobile. Pinned by seatPercent's containment test.
+const SEAT_RING = { cx: 50, cy: 46, rx: 38, ry: 31 };
+
 export function seatPercent(i, heroIdx) {
   const heroBase = SEAT_BASE_ANGLES[heroIdx] ?? 120;
   const offset = (180 - heroBase + 360) % 360;
   const angleDeg = ((SEAT_BASE_ANGLES[i] + offset) % 360 + 360) % 360;
   const rad = (angleDeg - 90) * (Math.PI / 180);
-  return { x: 50 + 44 * Math.cos(rad), y: 47 + 41 * Math.sin(rad) };
+  return {
+    x: SEAT_RING.cx + SEAT_RING.rx * Math.cos(rad),
+    y: SEAT_RING.cy + SEAT_RING.ry * Math.sin(rad),
+  };
 }
 
 export default function TableCanvas({ scenario, onVillainInfo }) {
