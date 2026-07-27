@@ -59,11 +59,21 @@ test('confirming reports the selected key, not the label', () => {
 // and painted them blue-grey. Unspecified rendering drifts with OS emoji
 // updates, so these pin the two declarations that make it deterministic.
 
-test('the suit glyphs request TEXT presentation so no emoji font can claim them', () => {
+test('every level icon is a suit requesting TEXT presentation', () => {
   const src = fs.readFileSync(require.resolve('./DifficultySelector'), 'utf8');
-  // U+FE0E must follow each suit character.
-  expect(src).toMatch(/♣\\uFE0E|♣︎/);
-  expect(src).toMatch(/♠\\uFE0E|♠︎/);
+  // ♣ / ♠ / ♦ — the Expert card's lightning bolt (U+26A1) was swapped for a
+  // diamond on July 27 2026: it is emoji-by-default, so it rendered in colour
+  // on Apple platforms no matter what the CSS said, and clashed with its
+  // monochrome siblings. A suit also completes the set.
+  // The source writes the selector as the escape text `︎`, so match the
+  // literal characters rather than fighting regex escaping.
+  for (const suit of ['♣', '♠', '♦']) {
+    expect(src).toContain(`${suit}\\uFE0E`);
+  }
+  // No emoji-presentation codepoint may be used as a level icon again.
+  const icons = [...src.matchAll(/icon: '([^']*)'/g)].map(m => m[1]);
+  expect(icons).toHaveLength(3);
+  for (const icon of icons) expect(icon).not.toMatch(/\p{Emoji_Presentation}/u);
 });
 
 test('.ds-card-icon declares an explicit font-family and colour', () => {

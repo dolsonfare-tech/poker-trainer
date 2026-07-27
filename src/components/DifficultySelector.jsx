@@ -28,7 +28,7 @@ const DIFFICULTIES = [
     // register of its siblings.
     sublabel: 'Playing for a living',
     desc: 'Deep stacks, multi-street plans, villains who adjust',
-    icon: '⚡',
+    icon: '♦\uFE0E',
     disabled: true,
   },
 ];
