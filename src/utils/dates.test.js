@@ -74,10 +74,23 @@ test('CA-028: spacedrep.js does not define localDateFrom (imports from dates.js)
   expect(src).not.toMatch(/const\s+localDateFrom\s*=/);
 });
 
-// ── CA-037 source pin: Dashboard.jsx's two inline formatters are gone ──────────
+// ── CA-037 source pin: Dashboard's two inline formatters are gone ─────────────
+// Wave 2 (MOD-003) moved both call sites into dashboard/CoachNotebook.jsx and
+// dashboard/UsernameEditor.jsx. The pin sweeps the whole dashboard directory so
+// it can't be satisfied by an empty Dashboard.jsx, and so new files added there
+// inherit the rule automatically.
 
-test('CA-037: Dashboard.jsx does not define fmtReadDate or an inline fmtDate (imports formatShortDate)', () => {
-  const src = fs.readFileSync(require.resolve('../components/Dashboard'), 'utf8');
-  expect(src).not.toMatch(/function\s+fmtReadDate\b/);
-  expect(src).not.toMatch(/const\s+fmtDate\s*=/);
+test('CA-037: no dashboard surface defines fmtReadDate or an inline fmtDate (they import formatShortDate)', () => {
+  const path = require('path');
+  const dir = path.join(__dirname, '..', 'components', 'dashboard');
+  const files = [
+    require.resolve('../components/Dashboard'),
+    ...fs.readdirSync(dir).filter(f => /\.jsx$/.test(f)).map(f => path.join(dir, f)),
+  ];
+  expect(files.length).toBeGreaterThan(1);   // the sweep actually found the split modules
+  for (const f of files) {
+    const src = `${path.basename(f)}: ${fs.readFileSync(f, 'utf8')}`;
+    expect(src).not.toMatch(/function\s+fmtReadDate\b/);
+    expect(src).not.toMatch(/const\s+fmtDate\s*=/);
+  }
 });

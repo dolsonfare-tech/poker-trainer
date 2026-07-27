@@ -31,8 +31,21 @@ const dash = (props) => render(
 test('milestone proximity shows under the stats row when within reach (M3)', () => {
   // lastSessionDate must be set (yesterday) so streakAlive returns true and the
   // proximity line is not suppressed — an incoherent streak>0 + no date is dead.
-  dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5, lastSessionDate: '2026-07-25' } });
-  expect(screen.getByText(/2 more to a full week ★/)).toBeInTheDocument();
+  //
+  // The clock MUST be frozen. streakAlive compares the stored date against the
+  // real `new Date()`, so with a hard-coded lastSessionDate this test's result
+  // depends on the machine's timezone: "yesterday" in EDT is already two days
+  // ago in UTC, where the streak reads as dead and the line never renders. That
+  // is what turned CI red on every push (run #17, July 26 2026) while the same
+  // suite stayed green locally. Invariants rule 23 now pins the pairing.
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-07-26T12:00:00'));
+  try {
+    dash({ user: { ...createUser('Climber'), streak: 5, sessionsCompleted: 5, lastSessionDate: '2026-07-25' } });
+    expect(screen.getByText(/2 more to a full week ★/)).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
 });
 
 test('a used Rebuy states it plainly after the session (M1)', () => {

@@ -291,6 +291,105 @@ onlyIn('shuffle', /(?:function\s+shuffle\s*\(|const\s+shuffle\s*=)/, ['src/utils
   }
 }
 
+// ── 19. Wave 2 dedup targets stay single-sourced (MOD-004) ──────────────
+// getHandName was inlined in ScenarioCard.jsx; relationLine was rendered by
+// both the felt bubble and the mobile villain strip. The split gave each one
+// owner — a second definition anywhere means the two surfaces can disagree
+// about what the player is looking at.
+onlyIn('hand-name', /(?:function\s+getHandName\s*\(|const\s+getHandName\s*=)/,
+  ['src/utils/handName.js'], srcFiles,
+  'the spoken hand name is single-sourced in src/utils/handName.js — import it instead of redefining');
+onlyIn('relation-line', /(?:function\s+relationLine\s*\(|const\s+relationLine\s*=)/,
+  ['src/utils/ticker.js'], srcFiles,
+  'the villain relation line lives beside villainSummary in src/utils/ticker.js — TableCanvas and CanvasLayout both import it');
+
+// ── 20. useCountUp lives in the hooks tree (MOD-003) ────────────────────
+onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
+  ['src/hooks/useCountUp.js'], srcFiles,
+  'the count-up animation is single-sourced in src/hooks/useCountUp.js');
+
+// ── 21. Split components do not re-monolithize (MOD-003/MOD-004, Wave 2) ─
+// Wave 2 cut Dashboard.jsx (727 lines) and ScenarioCard.jsx (404) into
+// src/components/dashboard/ and src/components/scenario/. Without a ceiling
+// the residuals regrow one "just this once" block at a time — exactly how
+// they got to 727 in the first place. Budgets sit ~25% above the shipped
+// sizes: room for a real feature, not room for a second monolith. Raising a
+// number here is a deliberate act that shows up in review; drifting past one
+// silently is what this rule prevents.
+{
+  const BUDGETS = [
+    ['src/components/Dashboard.jsx', 250],
+    ['src/components/ScenarioCard.jsx', 40],
+  ];
+  const DIR_BUDGET = 160;   // any single split module under dashboard/ or scenario/
+  for (const [file, limit] of BUDGETS) {
+    try {
+      const n = read(join(ROOT, file)).split('\n').length;
+      if (n > limit)
+        flag('ERROR', 'component-budget',
+          `${file} is ${n} lines (budget ${limit}) — extract the new block into src/components/${file.includes('Dashboard') ? 'dashboard' : 'scenario'}/ with a co-located test (docs/architecture/TARGET_ARCHITECTURE.md §1)`);
+    } catch {
+      flag('ERROR', 'component-budget', `${file} not found — Wave 2 split entry point is missing`);
+    }
+  }
+  for (const f of srcFiles) {
+    const r = rel(f);
+    if (!/^src\/components\/(dashboard|scenario)\/.*\.jsx$/.test(r)) continue;
+    const n = read(f).split('\n').length;
+    if (n > DIR_BUDGET)
+      flag('ERROR', 'component-budget',
+        `${r} is ${n} lines (budget ${DIR_BUDGET}) — a split module that grows this far is a new monolith; split it again`);
+  }
+}
+
+// ── 22. Test co-location for the Wave 2 split trees ─────────────────────
+// TARGET_ARCHITECTURE §4: "every new file under src/components/dashboard/,
+// src/components/scenario/, and src/hooks/ gets a co-located *.test.js. The
+// split does not reduce coverage." A module added without one silently drops
+// below the coverage the monolith had.
+{
+  const needsTest = srcFiles.filter(f =>
+    /^src\/(components\/(dashboard|scenario)|hooks)\/[^/]+\.(js|jsx)$/.test(rel(f)) &&
+    !/\.test\.jsx?$/.test(rel(f)));
+  for (const f of needsTest) {
+    const expected = f.replace(/\.jsx?$/, '.test.js');
+    try {
+      statSync(expected);
+    } catch {
+      flag('ERROR', 'test-colocation',
+        `${rel(f)} has no co-located ${rel(expected)} — every module in the Wave 2 split trees carries its own test (docs/architecture/TARGET_ARCHITECTURE.md §4)`);
+    }
+  }
+}
+
+// ── 23. Date-sensitive tests must freeze the clock (July 26, 2026) ──────
+// CI run #17 was red on every push while the same suite passed locally. Cause:
+// Dashboard.test.js's M3 proximity test hard-coded lastSessionDate:'2026-07-25'
+// but let streakAlive read the REAL clock — "yesterday" in the founder's EDT is
+// already two days ago in CI's UTC, so the streak read as dead and the line
+// never rendered. Any test that pins a session date must also pin the clock.
+// The pairing is what's enforced, not the specific date: a file with hard-coded
+// lastSessionDate/usernameChangedAt literals must ALSO control its clock, by
+// either of the two legitimate means —
+//   1. jest.setSystemTime(...)      — required for components, which call
+//                                     new Date() internally (no seam to inject).
+//   2. a fixed `const now = new Date('…')` threaded in as an argument — the
+//      better pattern where the unit accepts one (see userStorage.test.js's
+//      streakAlive block).
+// A shared beforeEach counts for (1). Anything else means the real clock leaks
+// into the assertion.
+{
+  const CLOCK_SENSITIVE = /(lastSessionDate|usernameChangedAt):\s*['"]\d{4}-\d{2}-\d{2}/;
+  const CLOCK_CONTROLLED = /setSystemTime|const\s+now\s*=\s*new Date\(\s*['"]/;
+  for (const f of srcFiles) {
+    if (!/\.test\.jsx?$/.test(rel(f))) continue;
+    const text = read(f);
+    if (CLOCK_SENSITIVE.test(text) && !CLOCK_CONTROLLED.test(text))
+      flag('ERROR', 'frozen-clock',
+        `${rel(f)} hard-codes a session date but never controls its clock — streakAlive compares it against the real Date, so the test passes in one timezone and fails in another (CI run #17, July 2026). Freeze it with jest.useFakeTimers() + jest.setSystemTime(), or inject a fixed \`now\`.`);
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

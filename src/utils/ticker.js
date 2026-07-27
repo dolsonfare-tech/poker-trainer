@@ -84,6 +84,25 @@ export function villainSummary(scenario) {
   };
 }
 
+/**
+ * One-line rendering of a villainSummary's positional relation, for the table
+ * bubble and the mobile villain strip. Lives beside villainSummary (its only
+ * input) rather than in either component — Wave 2 split TableCanvas and
+ * CanvasLayout apart and both render this line, so a component-owned copy
+ * would have to be imported sideways.
+ */
+export function relationLine(v) {
+  const now = v.actsAfter ? 'after' : 'before';
+  // Postflop the relation holds for every remaining street; preflop it can
+  // flip once the flop comes (blinds act last pre, first post) — only claim
+  // "every street" when it's actually true.
+  if (v.isPostflop || v.actsAfter === v.actsAfterPost) {
+    return `${v.posName} · acts ${now} you, every street`;
+  }
+  const post = v.actsAfterPost ? 'after' : 'before';
+  return `${v.posName} · acts ${now} you now, ${post} you postflop`;
+}
+
 export function buildTicker(scenario) {
   if (Array.isArray(scenario.actionHistory)) {
     return { stakes: stakesFor(scenario), rows: scenario.actionHistory };

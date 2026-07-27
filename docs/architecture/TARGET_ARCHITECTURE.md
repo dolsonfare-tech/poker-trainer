@@ -23,23 +23,26 @@
 | | `src/hooks/useSessionRun.js` | `{ scenario, feedback, decided, timedOut, combo, handleDecision, handleTimeout, handleNext, sessionDelta, showSummary }` |
 | | `src/utils/session.js:submitSession` | `submitSession(user, hands, { isGuest, hasSupabase })` — coach-read fetch + persist pipeline |
 | | `src/App.jsx` (residual) | `<Screen>` render tree only; delegates props to hooks |
-| `src/components/Dashboard.jsx` | `src/components/dashboard/StreakWarning.jsx` | `StreakWarning({ user, today })` |
-| | `src/components/dashboard/StreakStatus.jsx` | `StreakStatus({ user })` |
+| `src/components/Dashboard.jsx` ✅ DONE | `src/components/dashboard/StreakWarning.jsx` | `StreakWarning({ user })` |
+| | `src/components/dashboard/StreakStatus.jsx` | `StreakStatus({ user, sessionDelta })` |
+| | `src/components/dashboard/SchemaPanel.jsx` | `SchemaPanel({ schema, sessionsCompleted, onSchemaInfo })` — added during Wave 2 (see note below) |
 | | `src/components/dashboard/SkillLedger.jsx` | `SkillLedger({ skills, prevSkills })` — co-locates FLIP animation |
-| | `src/components/dashboard/BetaFeedback.jsx` | `BetaFeedback({ hasSupabase, user })` |
-| | `src/components/dashboard/CoachNotebook.jsx` | `CoachNotebook({ coachReads })` |
-| | `src/components/dashboard/UsernameEditor.jsx` | `UsernameEditor({ user, hasSupabase, onRename })` |
-| | `src/hooks/useCountUp.js` | `useCountUp(target, duration)` — extracted from Dashboard inline hook |
-| | `src/components/Dashboard.jsx` (residual) | Layout skeleton composing the above; ≤250 lines |
-| `src/components/ScenarioCard.jsx` | `src/components/scenario/TimerRing.jsx` | `TimerRing({ secondsLeft, total })` |
-| (dead LegacyLayout deleted ✅) | `src/components/scenario/StreetBar.jsx` | `StreetBar({ streets })` |
-| | `src/components/scenario/SituationTicker.jsx` | `SituationTicker({ scenario, villain })` — already exported; move to own file |
-| | `src/components/scenario/TableCanvas.jsx` | `TableCanvas(...)` — absorbs `TableOval`, `BlankCard`, `seatPercent`, `relationLine` helpers |
-| | `src/components/scenario/SessionProgress.jsx` | `SessionProgress({ handNum, total })` |
-| | `src/components/scenario/ActionButtons.jsx` | `ActionButtons({ options, onDecide })` |
+| | `src/components/dashboard/LastSessionRead.jsx` | `LastSessionRead({ coachNote, coachReads, guest })` — added during Wave 2; owns `parseCoachRead` + composes `CoachNotebook` |
+| | `src/components/dashboard/BetaFeedback.jsx` | `BetaFeedback()` — reads `hasSupabase` directly, as the monolith did |
+| | `src/components/dashboard/CoachNotebook.jsx` | `CoachNotebook({ reads, includeLatest })` |
+| | `src/components/dashboard/UsernameEditor.jsx` | `UsernameEditor({ user, onRename, onClose })` |
+| | `src/hooks/useCountUp.js` | `useCountUp(to, from, duration, delay)` — extracted from Dashboard inline hook |
+| | `src/components/Dashboard.jsx` (residual) | Layout skeleton composing the above; ≤250 lines (shipped at 219, pinned by invariants rule 21) |
+| `src/components/ScenarioCard.jsx` ✅ DONE | `src/components/scenario/TimerRing.jsx` | `TimerRing({ totalSeconds, paused, onTimeout })` |
+| (dead LegacyLayout deleted ✅) | `src/components/scenario/StreetBar.jsx` | `StreetBar({ boardLength })` |
+| | `src/components/scenario/SituationTicker.jsx` | `SituationTicker({ scenario })` — moved to own file; default export |
+| | `src/components/scenario/TableCanvas.jsx` | `TableCanvas({ scenario, onVillainInfo })` + named `seatPercent` — absorbs `BlankCard`, `seatPercent` (`TableOval` did not exist; `relationLine` went to `ticker.js`, see note below) |
+| | `src/components/scenario/SessionProgress.jsx` | `SessionProgress({ currentIndex, total, correctCount })` |
+| | `src/components/scenario/ActionButtons.jsx` | `ActionButtons({ options, onDecision, decided })` |
 | | `src/components/scenario/CanvasLayout.jsx` | `CanvasLayout(...)` — top-level layout compositor for the gameplay canvas |
-| | `src/utils/handName.js` | `getHandName(hand)` — used by ScenarioCard + SessionSummary |
-| | `src/components/ScenarioCard.jsx` (residual) | Thin wrapper / entry point; delegates to `CanvasLayout` |
+| | `src/utils/handName.js` | `getHandName(hand)` — default export; used by `TableCanvas` (`SessionSummary` never derived hand names, so there was no second caller to converge) |
+| | `src/utils/ticker.js` (existing) | gains `relationLine(v)` — both `TableCanvas` and `CanvasLayout` render it, and its only input is `villainSummary`'s output, so it belongs beside it rather than inside either component |
+| | `src/components/ScenarioCard.jsx` (residual) | Thin wrapper delegating to `CanvasLayout`, plus a one-release `SituationTicker` re-export shim; ≤40 lines (shipped at 14) |
 | `src/utils/events.js` (new) | `src/utils/events.js` | `emitDecisionMade({scenarioId, skill, result, timedOut, replay, decisionMs})`, `emitSessionStarted({difficulty, chained, guest})`, `emitGuestGateSignIn(from)`, `emitVillainGuideOpened({from, scenarioId})`, `emitCoachReadOk()`, `emitCoachReadFailed(reason)`, plus one emitter per named PostHog event; callers import emitters, never construct prop bags inline |
 | `src/data/scenarios.js` | `src/data/scenarios/_helpers.js` | `mkHand`, `mkPositions`, `mkScenario` |
 | | `src/data/scenarios/batch1.js` | sc_001–sc_083 |
@@ -73,22 +76,32 @@ Each wave ships independently with all Definition-of-Done gates green before the
 - `dates.js` formatter addition (`formatShortDate`): unit + source-pin tests in `dates.test.js`; neither `fmtReadDate` nor inline `fmtDate` remain in `Dashboard.jsx`.
 - `dummyUser.js` delete: invariant rule 18 asserting `src/data/dummyUser.js` does not exist.
 
-### Wave 2 — Component Splits (unblocked after Wave 1)
+### Wave 2 — Component Splits — ✅ DONE 2026-07-26
 
 **Items:** MOD-003 (`Dashboard.jsx` → `src/components/dashboard/` + `useCountUp`), MOD-004 (`ScenarioCard.jsx` → `src/components/scenario/`, `handName.js`).
 
-**What unblocks it:** Wave 1 complete (date formatters and `shuffle` extracted so no import duplication is created mid-split).
+**What unblocked it:** Wave 1 complete (date formatters and `shuffle` extracted so no import duplication is created mid-split).
 
-**What it unblocks:** Wave 3 (prop-drilling contexts can't be introduced cleanly while the component graph is still monolithic); Wave 4 (`SituationTicker` moves to its final path, enabling the scenarios lazy-load without import chain breakage).
+**What it unblocks:** Wave 3 (prop-drilling contexts can't be introduced cleanly while the component graph is still monolithic) — now unblocked, and `src/hooks/` now exists; Wave 4 (`SituationTicker` sits at its final path, enabling the scenarios lazy-load without import chain breakage).
 
 **Prerequisites within wave:**
-- Dashboard split first (simpler; no cross-component imports); ScenarioCard second.
-- `SituationTicker` already exported — its test (`SituationTicker.test.js`) updates its import path; a re-export shim in `ScenarioCard.jsx` keeps any existing direct importers green for one release.
+- Dashboard split first (simpler; no cross-component imports); ScenarioCard second. ✅ done in that order.
+- `SituationTicker` already exported — its test moved to `scenario/SituationTicker.test.js`; a re-export shim in `ScenarioCard.jsx` keeps any existing direct importers green for one release.
 
-**Ratchet each item leaves:**
-- Each new file in `dashboard/` and `scenario/` has a co-located `*.test.js` covering its primary behavior (jest co-location rule — inherited, not new).
-- Dashboard: `SkillLedger` FLIP logic has a jest test for the RAF measurement path (currently untested inside the monolith).
-- ScenarioCard: `CanvasLayout` has a geometry smoke test (at minimum: renders without crashing; extends to the geometry guards already in `e2e/` for the table dimensions).
+**Deviations from the sketch above (all deliberate):**
+1. **Two extra dashboard modules.** `SchemaPanel` and `LastSessionRead` were not in the original list, but the residual `Dashboard.jsx` landed at 296 lines — over its own ≤250 budget. Those two blocks were the cohesive ones left; extracting them brought it to 219.
+2. **`relationLine` went to `utils/ticker.js`, not `TableCanvas.jsx`.** Both `TableCanvas` and `CanvasLayout` render it. Owning it in one component would force the other to import a text helper sideways out of a component file; `villainSummary` (its only input) already lives in `ticker.js`.
+3. **Prop signatures preserved verbatim.** The sketch proposed reshaped props (`StreakWarning({ user, today })`, `BetaFeedback({ hasSupabase, user })`). Wave 2 shipped as a pure move — same props, same behaviour — so any regression is provably a move error, not a redesign. Reshaping these for testability is a fine follow-up; it is not a component-split concern.
+4. **`SessionSummary` never used `getHandName`.** The sketch listed two callers; there was only ever one. `handName.js` still earns its own file (invariants rule 19 keeps it single-sourced), but it deduplicated nothing.
+
+**Ratchets left behind:**
+- Every file in `dashboard/`, `scenario/`, and `hooks/` has a co-located `*.test.js` — and **invariants rule 22** now fails the build for any module in those trees that lacks one, so the convention is mechanical rather than remembered.
+- **Invariants rule 21 (`component-budget`)**: `Dashboard.jsx` ≤ 250 lines, `ScenarioCard.jsx` ≤ 40, and no single module under `dashboard/` or `scenario/` over 160. This is the anti-re-monolithization ratchet — 727 lines was reached one "just this once" block at a time.
+- **Invariants rule 19/20**: `getHandName` only in `utils/handName.js`, `relationLine` only in `utils/ticker.js`, `useCountUp` only in `hooks/useCountUp.js`.
+- `SkillLedger` FLIP logic has a jest test for the RAF measurement path (untested inside the monolith — jsdom reports every rect as 0×0, so the measurement branch silently short-circuited; the test stubs `getBoundingClientRect` to hand back a real before/after pair).
+- `CanvasLayout` has a geometry smoke test pinning the `.sc2-stage > .sc2-table` nesting the width law depends on, plus `TableCanvas`'s `seatPercent` checked as arithmetic (all seats inside the felt, hero always at the near rail).
+- The existing CA-032 and CA-037 source pins were **widened from `Dashboard.jsx` to the whole dashboard directory** — scanning only the residual would have left both passing while guarding nothing.
+- **Invariants rule 23 (`frozen-clock`)**: see the CI note in the DONE ledger below.
 
 ### Wave 3 — Hooks + Contexts (unblocked after Wave 2)
 
@@ -145,20 +158,37 @@ Each wave ships independently with all Definition-of-Done gates green before the
 | MOD-010 ✅ | CA-032 | M2 "consistency record" line deduped from `Dashboard.jsx` + `SessionSummary.jsx` into `src/copy.js:activeDaysLine(n, {surface})`. Source-pin tests in `copy.test.js`. | `3dac2c4` |
 | MOD-015 ✅ | CA-037 | Dashboard's two inline date formatters (`fmtReadDate`, `fmtDate`) merged into `src/utils/dates.js:formatShortDate` (accepts either a `Date` or a `'YYYY-MM-DD'` string). Source-pin test in `dates.test.js`. | `3dac2c4` |
 
+## 3b. DONE Ledger (July 26, 2026 — Wave 2)
+
+| MOD id | CA id | What landed | Commit |
+|---|---|---|---|
+| MOD-003 ✅ | CA-024 | `Dashboard.jsx` 727 → 219 lines. Eight modules under `src/components/dashboard/` (`StreakWarning`, `StreakStatus`, `SchemaPanel`, `SkillLedger`, `LastSessionRead`, `CoachNotebook`, `BetaFeedback`, `UsernameEditor`) plus `src/hooks/useCountUp.js`, each with a co-located test. CA-032/CA-037 source pins widened to sweep the directory. | Wave 2 |
+| MOD-004 ✅ | CA-026 | `ScenarioCard.jsx` 404 → 14 lines (thin wrapper + one-release `SituationTicker` shim). Seven modules under `src/components/scenario/`, plus `src/utils/handName.js` and `relationLine` into `src/utils/ticker.js`. `SituationTicker.test.js` split: component half → `scenario/`, `villainSummary` half → new `utils/ticker.test.js`. | Wave 2 |
+| — | — | **Bug caught in-wave:** CI had been red on `main` since run #17 while the suite passed locally. `Dashboard.test.js`'s M3 proximity test hard-coded `lastSessionDate: '2026-07-25'` but let `streakAlive` read the real clock — "yesterday" in the founder's EDT is two days ago in CI's UTC, so the streak read as dead and the line never rendered. Clock frozen; **invariants rule 23 (`frozen-clock`)** now fails any test file that pins a session date without either `jest.setSystemTime` or an injected fixed `now`. | Wave 2 |
+
+Jest suite: 206 → 337 tests. Invariants: 18 → 23 rules.
+
 ---
 
 ## 4. Binding Constraints
 
 **Single-file-ownership law extends to new modules.** Every split module that takes ownership of a responsibility must be encoded in `scripts/check-invariants.mjs` on the same day it ships:
 
-| Module | Invariant rule to add |
+| Module | Invariant rule |
 |---|---|
-| `src/utils/schema.js` | `deriveSchema` must only be defined in `src/utils/schema.js` |
-| `src/utils/events.js` | Event-name string literals (`session_started`, `decision_made`, etc.) only in `src/utils/events.js` |
-| `src/utils/random.js` | `function shuffle` only in `src/utils/random.js` |
-| `src/utils/persistence.js` | `loadUser`/`saveUser`/`clearUser` only in `src/utils/persistence.js` (extends the existing cache pattern) |
+| `src/utils/random.js` ✅ | `function shuffle` only in `src/utils/random.js` (rule 17) |
+| `src/utils/handName.js` ✅ | `getHandName` only in `src/utils/handName.js` (rule 19) |
+| `src/utils/ticker.js` ✅ | `relationLine` only in `src/utils/ticker.js` (rule 19) |
+| `src/hooks/useCountUp.js` ✅ | `useCountUp` only in `src/hooks/useCountUp.js` (rule 20) |
+| `src/utils/schema.js` | `deriveSchema` must only be defined in `src/utils/schema.js` — Wave 3 |
+| `src/utils/events.js` | Event-name string literals (`session_started`, `decision_made`, etc.) only in `src/utils/events.js` — Wave 4 |
+| `src/utils/persistence.js` | `loadUser`/`saveUser`/`clearUser` only in `src/utils/persistence.js` (extends the existing cache pattern) — Wave 3 |
 
-**Test co-location:** every new file under `src/components/dashboard/`, `src/components/scenario/`, and `src/hooks/` gets a co-located `*.test.js`. The split does not reduce coverage — each new file inherits its portion of the parent's test suite.
+**Test co-location:** every new file under `src/components/dashboard/`, `src/components/scenario/`, and `src/hooks/` gets a co-located `*.test.js`. The split does not reduce coverage — each new file inherits its portion of the parent's test suite. ✅ Mechanically enforced since Wave 2 by **invariants rule 22**; a module added to those trees without a test is a build error, not a review catch.
+
+**Component budgets (rule 21).** `Dashboard.jsx` ≤ 250, `ScenarioCard.jsx` ≤ 40, any single module under `dashboard/`/`scenario/` ≤ 160. Raising a number is a deliberate act visible in review; drifting past one silently is what the rule prevents. When a residual approaches its ceiling, extract — don't raise.
+
+**Clock discipline (rule 23).** Any test pinning `lastSessionDate`/`usernameChangedAt` to a literal date must control its clock: `jest.useFakeTimers()` + `jest.setSystemTime()` for components (which call `new Date()` internally and offer no seam), or a fixed injected `now` for utils that accept one. Without it the test asserts against the machine's timezone.
 
 **"App is routing only":** the CLAUDE.md claim is false today. It becomes true only after Wave 3 (hooks + contexts) lands. Task 8 (lean CLAUDE.md) must not assert it until then.
 

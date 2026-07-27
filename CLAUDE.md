@@ -16,7 +16,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 
 | # | Command | When | Enforces |
 |---|---|---|---|
-| 1 | `npm run check:invariants` | after EVERY code change | 16 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, root-doc allowlist, CLAUDE.md line budget) |
+| 1 | `npm run check:invariants` | after EVERY code change | 23 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, root-doc allowlist, CLAUDE.md line budget, component line budgets, test co-location, frozen-clock) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
 | 3b | `npm run audit:observations` | `observations.js` touched | Table Reads content (rules O1–O6) |
@@ -77,25 +77,33 @@ poker-trainer/
 │   ├── copy.js                ← Shared UI strings that must move together across surfaces.
 │   ├── components/
 │   │   ├── AdSlot.jsx         ← Ad placement (dormant without REACT_APP_ADSENSE_CLIENT).
-│   │   ├── Dashboard.jsx      ← Entry screen: stats, Player Profile, CTA, feedback, notebook.
+│   │   ├── Dashboard.jsx      ← Entry screen SKELETON only (≤250 lines, rule 21). Sections live in dashboard/.
+│   │   ├── dashboard/         ← StreakWarning, StreakStatus, SchemaPanel, SkillLedger,
+│   │   │                        LastSessionRead, CoachNotebook, BetaFeedback, UsernameEditor.
 │   │   ├── DifficultySelector.jsx
 │   │   ├── FeedbackPanel.jsx  ← Post-decision feedback overlay.
 │   │   ├── PlayingCard.jsx
-│   │   ├── ScenarioCard.jsx   ← Gameplay: table, board, decision panel, timer.
+│   │   ├── ScenarioCard.jsx   ← Thin gameplay entry point (≤40 lines) → scenario/CanvasLayout.
+│   │   ├── scenario/          ← CanvasLayout, TableCanvas, TimerRing, StreetBar,
+│   │   │                        SituationTicker, SessionProgress, ActionButtons.
 │   │   ├── SessionSummary.jsx ← End-of-session results + Coach's Read.
 │   │   ├── SignIn.jsx         ← Auth screen: guest CTA + magic-link + Google.
 │   │   ├── TableReads.jsx     ← Villain-identification mode (mode-local scoring).
 │   │   ├── UsernameEntry.jsx  ← First-run profile creation.
 │   │   └── VillainGuide.jsx   ← Info modal: villain types, positions, glossary, schemas.
+│   ├── hooks/
+│   │   └── useCountUp.js      ← Stat count-up animation (CA-024). Wave 3 adds the session/auth hooks.
 │   ├── data/
 │   │   ├── constants.js       ← Skill names, PLAYER_SCHEMAS, rating engine.
 │   │   ├── observations.js    ← Table Reads observation hands.
 │   │   └── scenarios.js       ← Scenario content. Never edit for UI work.
 │   └── utils/
 │       ├── ads.js analytics.js claude.js dates.js db.js sentry.js
+│       ├── handName.js        ← getHandName() — single-sourced (rule 19).
 │       ├── random.js          ← shuffle() — single-sourced (CA-029).
 │       ├── spacedrep.js       ← Session builder v2: dealing, graduation ladder, history rebuild.
-│       ├── supabase.js ticker.js
+│       ├── supabase.js
+│       ├── ticker.js          ← buildTicker, villainSummary, relationLine (rule 19).
 │       └── userStorage.js     ← localStorage cache + pure logic: schemas, ratings, streaks, IQ, coach reads.
 ├── e2e/                       ← 5 Playwright specs (smoke, streaks, context, taptargets, mobilefold).
 ├── scripts/                   ← check-invariants, audit-scenarios, audit-observations, simulate-schemas,
@@ -105,7 +113,11 @@ poker-trainer/
 └── vercel.json                ← Zero-config: { "framework": "create-react-app" }. api/ auto-mounted.
 ```
 
-`src/hooks/` does not exist yet — created by TARGET_ARCHITECTURE Wave 3 (`useAuthSession`, `useGuest`, `useSessionRun`, `useCountUp`).
+`src/hooks/` exists as of Wave 2 (`useCountUp`); Wave 3 adds `useAuthSession`, `useGuest`, `useSessionRun`.
+
+**Split-tree laws (Wave 2, enforced by invariants 21–22):** `Dashboard.jsx` ≤ 250 lines, `ScenarioCard.jsx` ≤ 40, any module under `dashboard/`/`scenario/` ≤ 160 — when a residual nears its ceiling, extract rather than raise the number. Every module in `dashboard/`, `scenario/`, and `hooks/` needs a co-located `*.test.js` or the build fails.
+
+**Clock law (invariants rule 23):** a test that pins `lastSessionDate`/`usernameChangedAt` to a literal date MUST freeze the clock (`jest.useFakeTimers()` + `jest.setSystemTime()`) or inject a fixed `now`. `streakAlive` reads the real `Date`, so an unfrozen test asserts against the machine's timezone — that is what kept CI red on `main` while the suite passed locally (run #17, July 2026).
 
 **The `.sc2-table` width law:** `.sc2-table` needs its explicit `width:100%`. `.sc2-stage` is a single-cell grid, and a grid item with `margin:0 auto` and only absolutely-positioned children collapses to 0px wide without an explicit width — the table renders as a vertical line while functional tests stay green. **Screenshot the gameplay canvas after any `.sc2-stage` or `.sc2-table` CSS change.**
 
