@@ -92,3 +92,66 @@ BTN Q♠J♠ vs a nit's UTG open ($6 into $9 — the price needs ~28.6%, QJs has
 - **River feedback text** is the second cluster (H3, M9, L6, L8): street confusion and impossible-hand claims.
 - **Villain note vs grading contradictions** (H4, M3, M4): three scenarios where the printed read argues against the graded answer.
 - **The `question` field** (undisplayed) hid the sc_012 tournament context; this pass found two more question/body mismatches (H3, L4) — keep checking it in review.
+
+---
+
+## Live disputes from the disagree box — July 27, 2026
+
+First intake triage against real `scenario_feedback` rows. Two disputes, both
+single reports. Low absolute volume is itself a signal: the box is reachable
+(CA-040 fixed its tap target) and players are using it sparingly rather than
+reflexively.
+
+| Scenario | Reason given | Verdict | Action |
+|---|---|---|---|
+| `sc_098` | `grading_wrong` | **Half right** — grading sound, explanation false | Feedback text rewritten; grading untouched |
+| `28` | `deserves_credit` | **No change** — the disputed line already scores `partial` | Logged, closed |
+
+### sc_098 — the explanation was wrong, the answer was not
+
+QJ♠ on the BTN vs a Nit's UTG open. Fold is correct and stays correct. The
+`correct` feedback claimed:
+
+> "A nit's UTG range is AA–QQ and AK: your queen is dominated by three of those
+> hands and your jack by the fourth."
+
+Three of those four claims are false. Domination requires a shared card with a
+worse kicker: **QQ** does dominate the queen, but **AA** and **KK** simply beat
+you, and **AK** shares no card with QJ at all — it is a live coinflip, and the
+best case in his range rather than the worst. Rewritten to say that plainly.
+
+**Open question, deliberately not actioned:** `call` is graded `incorrect`.
+With position and 100bb, calling QJs is defensible enough that `partial` may
+fit better. Not changed, for two reasons — ROADMAP item 2 forbids mid-test
+regrades while a tester cohort is active, and grading is founder/SME territory.
+Note this is the **same pattern as L2 above** (`sc_009`, "defensible fold
+graded flatly incorrect — consider partial"). Two independent instances make it
+a candidate policy question for the SME: *when is a defensible-but-inferior
+line `partial` rather than `incorrect`?*
+
+### 28 — reviewed, no change
+
+TT on 7♣5♦2♠3♦J♥ facing a passive player's first river bet. TT is an underpair
+to the jack; folding is right, the evidence rows check out (the 4♠6♠ turned
+straight is real), and `call` already earns `partial`. Upgrading it to
+`correct` would weaken the read-the-pattern lesson the hand exists to teach.
+
+### Ratchet + a review queue this opened
+
+`audit:scenarios` now surfaces domination claims (rule `domination`). Truth
+cannot be decided mechanically — that needs the villain's range parsed out of
+prose — so it is a review queue, not a correctness check: the 18 claims that
+existed on July 27 are grandfathered by content hash, and only a **new or
+edited** claim warns. Steady state is silent, which is what keeps it worth
+reading.
+
+**Unverified backlog (18 claims, 14 scenarios)** — nobody has checked these
+against their villain ranges; sc_098 shows the failure is real, not theoretical:
+
+`sc_004` (×2), `sc_009`, `sc_035` (×2), `sc_076`, `sc_096` (×2), `sc_107`,
+`sc_108` (×2), `sc_110`, `sc_125`, `sc_127`, `sc_131`, `sc_141`, `sc_152`,
+`sc_156`
+
+Clearing one means verifying the claim shares a rank with the named range, then
+deleting its hash from `REVIEWED` in `scripts/audit-scenarios.mjs` — or fixing
+the text, which changes the hash and re-raises it automatically.

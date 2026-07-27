@@ -4322,7 +4322,7 @@ const SCENARIOS = [
       {
         val: 'fold', label: 'Fold', icon: '🃏', cls: 'fold',
         grade: 'correct', title: 'The Seat He Opened From IS the Information', emoji: '✅',
-        fb: "Fold. Position adjustments cut both ways — you widen up against late-position opens, and you tighten hard against early ones. A nit's UTG range is AA–QQ and AK: your queen is dominated by three of those hands and your jack by the fourth. QJs is a fine hand against a Cutoff open; against this seat, it's a trap.",
+        fb: "Fold. Position adjustments cut both ways — you widen up against late-position opens, and you tighten hard against early ones. A nit's UTG range is AA–QQ and AK, and QJs is behind every hand in it: QQ has your queen dominated, AA and KK simply crush you, and AK — the one hand you are not dominated against — still has you as the underdog. Being on the Button gets you a better seat in a pot you are already losing. QJs is a fine hand against a Cutoff open; against this seat, it's a trap.",
       },
       {
         val: 'call', label: 'Call $6', icon: '📞', cls: 'call',

@@ -554,6 +554,35 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
   }
 }
 
+// ── 25. Local runs must never write to production analytics (July 27) ───
+// Found during intake triage. `hasAnalytics` gated on the KEY alone, and
+// e2e:build blanked only the Supabase vars — so any build made with .env
+// present carried the production PostHog key, and every local e2e run and dev
+// session wrote synthetic events into the real project. Two `coach_read_failed`
+// events traced to a local static server answering POST /api/coach-read with
+// 501, plus a burst of `decision_made` from the same afternoon's testing.
+//
+// It corrupts a real decision: ROADMAP item 6 resizes the session unit from
+// `session_started.chained` and `decision_made` counts, and item 2 requires
+// tester data to stay separable from organic users.
+//
+// Both layers are pinned because either alone can be undone by accident.
+{
+  const pkg = JSON.parse(read(join(ROOT, 'package.json')));
+  const e2eBuild = pkg.scripts?.['e2e:build'] ?? '';
+  if (!/REACT_APP_POSTHOG_KEY=/.test(e2eBuild))
+    flag('ERROR', 'local-analytics',
+      'package.json e2e:build does not blank REACT_APP_POSTHOG_KEY — the build the e2e suite drives would carry the production key and write synthetic events into the real project');
+
+  const analytics = read(join(ROOT, 'src/utils/analytics.js'));
+  if (!/hostname/.test(analytics) || !/localhost/.test(analytics))
+    flag('ERROR', 'local-analytics',
+      'src/utils/analytics.js no longer guards against local hosts — a build made with .env present would report from a developer machine');
+  if (!/hasAnalytics\s*=\s*Boolean\(KEY\)\s*&&/.test(analytics))
+    flag('ERROR', 'local-analytics',
+      'src/utils/analytics.js gates hasAnalytics on the key alone — the host guard must also apply, or dev/e2e traffic reaches production PostHog');
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

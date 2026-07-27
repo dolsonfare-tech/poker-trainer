@@ -5,6 +5,7 @@
 // Exit code 1 if any ERROR-level findings (safe for CI).
 
 import SCENARIOS, { CONTRAST_PAIRS } from '../src/data/scenarios.js';
+import { createHash } from 'node:crypto';
 
 const findings = [];
 const flag = (sev, id, rule, msg) => findings.push({ sev, id, rule, msg });
@@ -265,6 +266,54 @@ for (const s2 of SCENARIOS) {
     if (scs[0] && scs[1] && scs[0].difficulty !== scs[1].difficulty)
       flag('ERROR', 'CONTRAST', 'pairs', `${label} spans difficulties (${scs[0].difficulty} vs ${scs[1].difficulty}) — only same-difficulty pairs can co-deal`);
   });
+}
+
+// ── domination claims (July 27, 2026 — tester dispute on sc_098) ─────────
+// A tester flagged sc_098 `grading_wrong`. The GRADING was right (fold vs a
+// nit's UTG open); the EXPLANATION was not. It claimed "your queen is
+// dominated by three of those hands and your jack by the fourth" against a
+// range of AA–QQ and AK. Only QQ dominates the queen; AA and KK simply beat
+// you, and AK shares no card with QJ at all — three of four claims false.
+//
+// Domination is the most-abused precise term in poker writing, and CLAUDE.md
+// makes explanation quality the highest-effect-size lever in the product (F1):
+// a confidently wrong explanation is worse than a vague one, because the
+// players sharp enough to notice are the ones whose trust is worth most.
+//
+// Truth cannot be decided mechanically — that needs the villain's range parsed
+// out of prose. So this is a REVIEW QUEUE, not a correctness check. The 19
+// claims that existed on July 27 are grandfathered by content hash: steady
+// state is silent, but a NEW claim, or an EDIT to a grandfathered one, warns.
+// A rule that permanently prints 19 warnings is one people learn to scroll
+// past — which is how the CI-red-for-a-week failure happened.
+//
+// The grandfathered backlog is listed in docs/findings/SCENARIO_GRADING_FINDINGS.md
+// for human verification; clearing an entry there means deleting its hash here.
+{
+  const DOMINATION = /\bdominat(e|es|ed|ing|ion)\b/i;
+  const REVIEWED = new Set([
+    'sc_004:correct:461d6809', 'sc_004:incorrect:6dc248be', 'sc_009:partial:84718854',
+    'sc_035:correct:7bb5415c', 'sc_035:incorrect:c89c56eb', 'sc_076:partial:2f1fd951',
+    'sc_096:correct:994d1614', 'sc_096:partial:c22663d3', 'sc_107:incorrect:9ef543e4',
+    'sc_108:correct:d1cd5a93', 'sc_108:incorrect:1b7a84b4', 'sc_110:partial:2648afa2',
+    'sc_125:incorrect:d8f8adaf', 'sc_127:incorrect:b2d94fc9', 'sc_131:correct:5515d693',
+    'sc_141:correct:35d565df', 'sc_152:correct:6e931e1f', 'sc_156:incorrect:59638587',
+    // sc_098 is the one that was found FALSE and rewritten. The rewrite keeps a
+    // single domination claim — "QQ has your queen dominated" — which is the one
+    // that was actually true (QQ shares the queen). Verified July 27 2026, so it
+    // is listed rather than grandfathered; the false AA/KK/AK claims are gone.
+    'sc_098:correct:94d4cc54',
+  ]);
+  for (const s of SCENARIOS) {
+    const id = String(s.id).startsWith('sc_') ? String(s.id) : `sc_${String(s.id).padStart(3, '0')}`;
+    for (const [grade, text] of Object.entries(s.feedback ?? {})) {
+      if (typeof text !== 'string' || !DOMINATION.test(text)) continue;
+      const key = `${id}:${grade}:${createHash('sha1').update(text).digest('hex').slice(0, 8)}`;
+      if (REVIEWED.has(key)) continue;
+      flag('WARN', id, 'domination',
+        `${grade} feedback makes a NEW or EDITED domination claim — verify the named hand actually shares a rank (sc_098 got this wrong, July 2026), then add ${key} to REVIEWED`);
+    }
+  }
 }
 
 // ── Report ──────────────────────────────────────────────────────────────

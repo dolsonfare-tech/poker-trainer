@@ -15,7 +15,8 @@ own; this drill is what routes them into the ratchet.
    action, **still open:** enable Sentry's new-issue EMAIL alerts so this channel
    pushes instead of waiting to be read. (An empty dashboard = no crashes, not a
    dead integration — the pipeline was verified end-to-end July 7.)
-2. **PostHog failure events** — `coach_read_failed` (should be zero),
+2. **PostHog failure events** — `coach_read_failed` (see the reason breakdown
+   below; **not** simply "should be zero"),
    `profile_load_failed`, `profile_create_failed`, `scenario_disagree_failed`,
    `username_change_failed`, `stale_session_cleared` (a spike = sessions being
    revoked somewhere). Plus the **comprehension heatmap**: `decision_made.decision_ms`
