@@ -273,7 +273,22 @@ These were considered, debated, and explicitly rejected. Record them so future s
 
 **A seventh "Tilt" schema** (standing rule). Reason: tilt is diagnosed by self-report in the literature; the engine only claims what decisions can show. The tilt-signature instrument (behavioral, feeding the coach) is the roadmap-honest version, not a schema label.
 
-**Leaderboard (public / global)** (deferred to post-launch). Not rejected, but explicitly excluded from Phase 2 scope. Friends-only variant + `isUser` row highlight is the intended shape; data structure preserved in `dummyUser.js`.
+**Leaderboard (public / global)** (deferred to post-launch). Not rejected, but explicitly excluded from Phase 2 scope. Friends-only variant + `isUser` row highlight is the intended shape:
+
+```js
+leaderboard: {
+  yourRank: 3,
+  total: 4,
+  top: [
+    { rank: 1, name: 'Dave245',         streak: 41, isUser: false },
+    { rank: 2, name: 'HinduHustler420',  streak: 38, isUser: false },
+    { rank: 3, name: 'RiverRat72',       streak: 8,  isUser: true  },
+    { rank: 4, name: 'TickBite69',       streak: 5,  isUser: false },
+  ],
+},
+```
+
+(Inlined here after the original reference file, `src/data/dummyUser.js`, was deleted as unused legacy content — Wave 1, commit `3dac2c4`. Full original file: `git show 3dac2c4^:src/data/dummyUser.js`.)
 
 ---
 

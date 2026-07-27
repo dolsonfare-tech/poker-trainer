@@ -58,7 +58,7 @@ Mechanically enforced by `npm run check:invariants` (rules 1–16). Violations a
 | AdSense (adsbygoogle) | `src/utils/ads.js` + `src/components/AdSlot.jsx` | 5 |
 | Claude API calls | `api/coach-read.js` | 4 |
 | Client → coach-read fetch | `src/utils/claude.js` | 4 |
-| Local date formatting (`toLocalDateString`, `localDateFrom`) | `src/utils/dates.js` | CA-028 |
+| Local date formatting (`toLocalDateString`, `localDateFrom`, `formatShortDate`) | `src/utils/dates.js` | CA-028 / CA-037 |
 
 `CLAUDE_API_KEY` and `SUPABASE_SECRET_KEY` are Vercel Sensitive vars (server-only). `REACT_APP_*` vars are public by definition — anything prefixed that way ships to the browser.
 
@@ -74,6 +74,7 @@ poker-trainer/
 │   ├── index.js               ← Entry. Imports sentry.js FIRST (before any crash can occur).
 │   ├── App.jsx                ← Screen router + auth/session orchestration (see Key Decisions).
 │   ├── App.css                ← All layout including sc2-* canvas classes.
+│   ├── copy.js                ← Shared UI strings that must move together across surfaces.
 │   ├── components/
 │   │   ├── AdSlot.jsx         ← Ad placement (dormant without REACT_APP_ADSENSE_CLIENT).
 │   │   ├── Dashboard.jsx      ← Entry screen: stats, Player Profile, CTA, feedback, notebook.
@@ -89,10 +90,10 @@ poker-trainer/
 │   ├── data/
 │   │   ├── constants.js       ← Skill names, PLAYER_SCHEMAS, rating engine.
 │   │   ├── observations.js    ← Table Reads observation hands.
-│   │   ├── scenarios.js       ← Scenario content. Never edit for UI work.
-│   │   └── dummyUser.js       ← Legacy shape reference. NOT imported (deletion owned by TARGET_ARCHITECTURE Wave 1).
+│   │   └── scenarios.js       ← Scenario content. Never edit for UI work.
 │   └── utils/
 │       ├── ads.js analytics.js claude.js dates.js db.js sentry.js
+│       ├── random.js          ← shuffle() — single-sourced (CA-029).
 │       ├── spacedrep.js       ← Session builder v2: dealing, graduation ladder, history rebuild.
 │       ├── supabase.js ticker.js
 │       └── userStorage.js     ← localStorage cache + pure logic: schemas, ratings, streaks, IQ, coach reads.

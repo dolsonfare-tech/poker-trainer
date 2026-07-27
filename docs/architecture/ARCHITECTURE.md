@@ -30,17 +30,18 @@ poker-trainer/
 │   │   ├── TableReads.jsx     ← Villain-identification mode (mode-local scoring).
 │   │   ├── UsernameEntry.jsx  ← First-run profile creation.
 │   │   └── VillainGuide.jsx   ← Info modal: villain types, positions, glossary, schemas.
+│   ├── copy.js                ← Shared UI strings that must move together across surfaces (CA-032).
 │   ├── data/
 │   │   ├── constants.js       ← Skill names/descriptions, PLAYER_SCHEMAS, rating engine.
 │   │   ├── observations.js    ← Table Reads observation hands (22 hands).
-│   │   ├── scenarios.js       ← 172 scenarios. Content file — never edit for UI work.
-│   │   └── dummyUser.js       ← Legacy shape reference. Not imported by app code.
+│   │   └── scenarios.js       ← 172 scenarios. Content file — never edit for UI work.
 │   └── utils/
 │       ├── ads.js             ← Only AdSense file. No-op without REACT_APP_ADSENSE_CLIENT.
 │       ├── analytics.js       ← Only PostHog file. No-op without REACT_APP_POSTHOG_KEY.
 │       ├── claude.js          ← Client fetch to /api/coach-read. Never calls Anthropic directly.
-│       ├── dates.js           ← toLocalDateString / localDateFrom. Single source (CA-028).
+│       ├── dates.js           ← toLocalDateString / localDateFrom / formatShortDate. Single source (CA-028/CA-037).
 │       ├── db.js              ← Only Supabase read/write file.
+│       ├── random.js          ← shuffle(). Single source (CA-029).
 │       ├── sentry.js          ← Only Sentry file. No-op without REACT_APP_SENTRY_DSN.
 │       ├── spacedrep.js       ← Session builder (v2): dealing, graduation ladder, history.
 │       ├── supabase.js        ← Only file that creates the Supabase client.
@@ -72,7 +73,8 @@ These invariants are mechanically checked by `npm run check:invariants` (rules 1
 | Sentry (@sentry/react) | `src/utils/sentry.js` | 10 |
 | AdSense (adsbygoogle) | `src/utils/ads.js` + `src/components/AdSlot.jsx` | 5 |
 | Claude API calls | `api/coach-read.js` | 4 (secrets never reach browser) |
-| Local date formatting | `src/utils/dates.js` | CA-028 |
+| Local date formatting | `src/utils/dates.js` | CA-028 / CA-037 |
+| `shuffle()` | `src/utils/random.js` | CA-029 |
 
 `CLAUDE_API_KEY` and `SUPABASE_SECRET_KEY` are Vercel Sensitive vars — server-only. `REACT_APP_*` vars are public by definition (bundled into the client).
 

@@ -89,7 +89,7 @@ P1 security items before Pro/leaderboard: CA-001 (client-writable integrity fiel
 - **Roulette mode** — two variants considered (pure spinner / variance teacher); both backlogged July 20.
 - **"Train on your own hands"** — hand-ingestion pipeline; internal authoring tool first, then Pro differentiator.
 - **Periodic meta-read** — synthesized "recurring patterns" read across last N Coach's Reads; one extra model call, Pro-tier post-launch.
-- **Leaderboard** — friends-only; data shape preserved in `src/data/dummyUser.js`.
+- **Leaderboard** — friends-only; data shape preserved in `docs/architecture/DECISIONS.md`'s leaderboard entry (the reference file, `src/data/dummyUser.js`, was deleted as unused legacy content — recover via `git show 3dac2c4^:src/data/dummyUser.js` if needed).
 - **Scenario generation tooling** — for Phase 1.6 pool scale-up; generation automates the cheap part, judgment-dense authoring stays manual.
 - **Stripe / payment rails** — needed before Pro tier ships; no rails exist yet.
 - **iOS Capacitor** — Phase 3; requires Apple dev account + web traction first.
