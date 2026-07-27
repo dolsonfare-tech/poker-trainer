@@ -583,6 +583,33 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
       'src/utils/analytics.js gates hasAnalytics on the key alone — the host guard must also apply, or dev/e2e traffic reaches production PostHog');
 }
 
+// ── 26. Wave 3 module ownership (MOD-001) ───────────────────────────────
+// TARGET_ARCHITECTURE §4 requires each split module to be pinned on the day it
+// ships. `deriveSchema` is the diagnosis the whole product stands on — a second
+// definition could silently disagree with the engine that renders it — and the
+// localStorage accessors are the single seam where the user record is read and
+// written. Same pattern as the posthog/sentry/db ownership rules.
+onlyIn('schema-owner', /(?:function\s+deriveSchema\s*\(|const\s+deriveSchema\s*=)/,
+  ['src/utils/schema.js'], srcNonTest,
+  'the schema diagnosis is single-sourced in src/utils/schema.js — import it instead of redefining');
+onlyIn('persistence-owner',
+  /(?:function\s+(?:loadUser|saveUser|clearUser)\s*\(|const\s+(?:loadUser|saveUser|clearUser)\s*=)/,
+  ['src/utils/persistence.js'], srcNonTest,
+  'the user record is read/written only in src/utils/persistence.js');
+
+// The barrel must stay a BARREL. Its whole justification is that the split
+// landed as a pure move; if logic creeps back in, the six modules stop being
+// the single source and the next wave inherits a seventh place to look.
+{
+  const barrel = read(join(ROOT, 'src/utils/userStorage.js'));
+  const code = barrel.split('\n')
+    .filter(l => !/^\s*\/\//.test(l) && l.trim())
+    .join('\n');
+  if (/^(?!export \{)[^\n]*\b(function|=>|const\s+\w+\s*=\s*[^{])/m.test(code))
+    flag('ERROR', 'barrel-only',
+      'src/utils/userStorage.js contains logic — it is a re-export barrel for one release (TARGET_ARCHITECTURE §4); put new code in the module that owns the responsibility');
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

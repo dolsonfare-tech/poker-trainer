@@ -1,0 +1,286 @@
+// Player-schema derivation + the direction-of-error tally it reads.
+//
+// MOD-001 (Wave 3): split out of userStorage.js. `deriveSchema` is pinned to
+// this file by invariants rule 26 — it is the diagnosis the whole product
+// stands on, and a second copy could silently disagree with the engine.
+import { PLAYER_SCHEMAS, SKILL_NAMES } from '../data/constants';
+import SCENARIOS from '../data/scenarios';
+
+// ── Direction-of-error classification (schema v2, July 18, 2026) ────────────────
+// The three DIRECTION schemas (Conflict Avoider / Gambler / Overaggressor) are
+// diagnosed from HOW a player errs on the fold(0) < call(1) < raise(2) axis, not
+// from per-skill accuracy — because those three differ by DIRECTION, not
+// magnitude (a passive player and an aggressive one can post identical accuracy
+// while making opposite mistakes; accuracy alone even manufactures the wrong
+// label — see the v2 note in constants.js). Only mistakes carry direction; a
+// correct answer and a timeout carry none.
+const CLS_ORDINAL = { fold: 0, call: 1, raise: 2 };
+
+// Classify one non-correct decision into a direction cell, or null when it
+// carries no directional signal (same-cls mistake, or an unknown cls).
+//   under: chose more passive than correct       → The Conflict Avoider
+//   loose: chose CALL when FOLD was correct       → The Gambler
+//   over:  chose RAISE when call/fold was correct → The Overaggressor
+// 'loose' is carved out of the +1 (too-loose) delta BEFORE 'over': a
+// call-when-fold is Gambler evidence, not Overaggressor evidence.
+export function classifyDirection(chosenCls, correctCls) {
+  const c = CLS_ORDINAL[chosenCls];
+  const k = CLS_ORDINAL[correctCls];
+  if (c == null || k == null) return null;   // unknown/missing cls — skip defensively
+  if (c < k) return 'under';                 // fold-when-call, fold-when-raise, call-when-raise
+  if (c === 1 && k === 0) return 'loose';    // call-when-fold
+  if (c === 2 && k < 2) return 'over';       // raise-when-call, raise-when-fold
+  return null;                               // c === k (same-cls mistake, e.g. wrong bet size)
+}
+
+// id → scenario, built once. Scenario ids are heterogeneous (legacy scenarios
+// are NUMERIC, batch scenarios are STRINGS); key on the raw id so the hands
+// payload's scenarioId (stored verbatim as s.id) matches without normalization.
+const SCENARIO_BY_ID = new Map(SCENARIOS.map((s) => [s.id, s]));
+const clsOfVal = (scenario, val) => scenario.options.find((o) => o.val === val)?.cls;
+
+// The direction cell for one played hand, or null when it carries no signal:
+// a correct result, a timeout (choiceVal null — the freeze signal, never
+// directional), an unknown scenario id, or an unresolvable/same cls.
+export function directionOfHand(hand) {
+  if (!hand || hand.result === 'correct') return null;
+  if (hand.choiceVal == null) return null;
+  const scenario = SCENARIO_BY_ID.get(hand.scenarioId);
+  if (!scenario) return null;
+  return classifyDirection(clsOfVal(scenario, hand.choiceVal), clsOfVal(scenario, scenario.correct));
+}
+
+// Neutral direction baseline: the share of each cell a UNIFORM-RANDOM mistaker
+// would produce on the pool. This is not flat — 'under' absorbs 3 of the 6
+// ordered mispairs (fold-when-call, fold-when-raise, call-when-raise) while
+// 'loose' captures only 1 (call-when-fold), so even a perfectly balanced player
+// sits near under≈0.53 / over≈0.33 / loose≈0.14. Scoring raw shares against a
+// flat threshold would therefore brand any uniform-mistaking player — including
+// a strong one — a Conflict Avoider (an 85%-flat persona measured under≈0.63,
+// ABOVE a true Gambler's loose≈0.62 — a flat threshold literally cannot separate
+// them). Direction severity is instead each cell's EXCESS over its own neutral
+// baseline. Computed once from every scenario's wrong options, so it
+// self-maintains as content grows and stays correct per the live pool mix.
+function computeDirectionBaseline() {
+  const cell = { under: 0, over: 0, loose: 0 };
+  for (const s of SCENARIOS) {
+    const correctCls = clsOfVal(s, s.correct);
+    for (const o of s.options) {
+      if (o.val === s.correct) continue;
+      const d = classifyDirection(o.cls, correctCls);
+      if (d) cell[d] += 1;
+    }
+  }
+  const total = cell.under + cell.over + cell.loose || 1;
+  return { under: cell.under / total, over: cell.over / total, loose: cell.loose / total };
+}
+const DIRECTION_BASELINE = computeDirectionBaseline();
+
+// A fresh direction tally: weighted counts per cell plus their sum (`evidence`).
+export const EMPTY_DIRECTION_TALLY = { under: 0, over: 0, loose: 0, evidence: 0, hands: 0 };
+
+// Mistake weight into the tally: an incorrect answer is full evidence, a partial
+// (acceptable-but-not-optimal) is half — mirrors RESULT_CREDIT's partial=0.5
+// (founder call #2). A correct answer contributes nothing (directionOfHand
+// already returns null for it).
+const DIRECTION_WEIGHT = { incorrect: 1.0, partial: 0.5 };
+
+// Fold a session's hands into a direction tally (LIFETIME — the schema
+// deliberately measures the whole record, like the skill ledger). Pure; returns
+// a new tally. Hands with no directional signal (timeouts, correct, unknown) are
+// skipped, so rows lacking choiceVal degrade gracefully.
+export function addHandsToDirectionTally(tally, hands) {
+  const next = {
+    under: tally?.under ?? 0,
+    over: tally?.over ?? 0,
+    loose: tally?.loose ?? 0,
+    evidence: tally?.evidence ?? 0,
+    hands: tally?.hands ?? 0,
+  };
+  for (const hand of hands ?? []) {
+    next.hands += 1;  // every played hand, correct or not — the materiality denominator
+    const cell = directionOfHand(hand);
+    if (!cell) continue;
+    const w = DIRECTION_WEIGHT[hand.result] ?? 0;
+    if (w === 0) continue;
+    next[cell] += w;
+    next.evidence += w;
+  }
+  return next;
+}
+
+// ── Schema derivation ──────────────────────────────────────────────────────────
+// Definitions live in constants.js (PLAYER_SCHEMAS) — shared with the
+// reference guide so the two can't drift. Index is display-only, from order.
+const SCHEMAS = PLAYER_SCHEMAS.map((s, i) => ({ ...s, index: String(i + 1).padStart(2, '0') }));
+
+// Returned when there's enough data but no single leak dominates. Positive
+// framing, not a "we couldn't tell" — a genuinely balanced player and a
+// random-testing player both correctly land here rather than being forced
+// into whichever schema the formula happens to favor.
+export const BALANCED_SCHEMA = {
+  name: 'The Balanced Player',
+  quote: 'No single leak dominates your game',
+  index: '—',
+  total: '06',
+  affected: [],
+  balanced: true,
+};
+
+// The level-aware sibling of BALANCED_SCHEMA (founder, July 19, 2026): "no
+// dominant leak" is true of two very different players — the solid all-rounder
+// and the uniformly-developing one. Calling the second "Balanced" reads as
+// reassurance ("no single leak dominates your game" at 52 IQ), when the honest
+// message is that the whole skillset is the opportunity. Same diagnosis, two
+// voices: the fallback picks by ledger level (majority of rated skills green →
+// Balanced, else Student). Diagnostic logic and severity bars are untouched.
+export const STUDENT_SCHEMA = {
+  name: 'The Student of the Game',
+  quote: 'Every part of my game is still sharpening',
+  index: '—',
+  total: '06',
+  affected: [],
+};
+
+// Majority-green gate for the fallback voice (founder call: simple,
+// ledger-consistent, no new thresholds). No rated skills yet → Student.
+function balancedFallback(skills) {
+  const rated = Object.values(skills).filter(d => d.attempts >= 5 && d.rating !== 'gray');
+  const green = rated.filter(d => d.rating === 'green').length;
+  return rated.length > 0 && green * 2 > rated.length ? BALANCED_SCHEMA : STUDENT_SCHEMA;
+}
+
+// Minimum normalized severity for a schema to count as your leak: its measured
+// primary skills must average ABOVE yellow-level — i.e., at least one
+// contributing skill genuinely red. Raised 1.0 → 1.25 July 2026 after
+// simulation (npm run simulate:schemas) showed the yellow-level bar handed
+// leaky players the WRONG schema 15% of the time and balanced players a false
+// one 39% of the time at 10 sessions; the red requirement cuts those to 5%/27%.
+// Cost: yellow-only mild leaks read as Balanced (still visible in the skill
+// ledger as "Work On"). Revisit against real distributions at v2 calibration.
+const SCHEMA_MIN_SEVERITY = 1.25;
+
+// ── Schema v2 direction knobs (calibrated July 18, 2026) ────────────────────────
+// A DIRECTION schema fires only when the tally holds enough evidence, one cell is
+// a plurality (DIRECTION_DOMINANCE pre-filter), and that cell's EXCESS over its
+// neutral baseline (see DIRECTION_BASELINE) is large. Severity =
+// DIRECTION_SEV_SCALE × excess (capped at 2) so it competes on the same 0–2
+// scale as skill scores against SCHEMA_MIN_SEVERITY. Using excess-over-baseline
+// rather than raw share is what lets one threshold separate a true Gambler
+// (loose 0.62, baseline 0.14 → excess 0.56) from a strong uniform player
+// (under 0.63, baseline 0.53 → excess 0.22) even though their raw shares are
+// nearly equal.
+//
+// Calibrated against `npm run playtest:personas -- --trials=10/20` (8 directional
+// personas × 40 sessions, real loop). Per-persona mean cell shares (trials=8):
+//   conflict-avoider under 0.91 · overaggressor over 0.77 · gambler loose 0.62
+//   steady-strong under 0.63 · improver under 0.49 · villain-blind under≈0.50.
+// Excess maps those to severities ~2.0 / 1.64 / 1.39 for the true directional
+// leaks and ~0.5 / 0 / ~0.1 for the neutral players — cleanly across the 1.25
+// bar. Sweep:
+//   • DIRECTION_SEV_SCALE 2.0 left the Gambler (loose excess 0.56 → 1.11) below
+//     the bar; 2.5 lifts it to 1.39 while keeping steady-strong (0.54) and the
+//     villain-blind personas (<0.3) well under it. 3.0 started catching
+//     steady-strong's high-variance trials.
+//   • MIN_DIRECTION_EVIDENCE 6 keeps a 2–3-mistake early streak from naming a
+//     schema; strong players clear it (~24 lifetime by s40) yet still score far
+//     below the bar via low excess, so the floor guards early sessions, not
+//     steady state.
+//   • DIRECTION_DOMINANCE 0.4 is a cheap plurality sanity floor; the excess
+//     severity gate is the binding constraint (a 0.4 under-share is below its
+//     0.53 baseline → excess 0 anyway).
+//   • TRANSIENT-MISLABEL FIX (post-calibration adversarial sweep, July 18):
+//     final-session bars hid that cumulative shares are NOISY at low evidence —
+//     a steady 85% player wore "The Conflict Avoider" for sessions ~9-20 in
+//     4/10 trials (his rare misses genuinely skew passive, and at 8-15 weighted
+//     misses the share random-walks above the bar before converging). Two
+//     guards: the floor rose 6 → 10, and severity ramps linearly with evidence
+//     up to DIRECTION_FULL_EVIDENCE — early spikes are discounted exactly when
+//     samples are small, true leaks (share ≥ 0.62-0.91) still clear the bar by
+//     ~s10-14 and hold. Verified: zero wrong direction labels in ANY session of
+//     any trial across all personas (the sweep in scripts/ isn't a gate — re-run
+//     the playtest + the session-level sweep after touching these knobs).
+//   • MATERIALITY GATE (second adversarial pass, July 18): even with the ramp,
+//     ONE steady-strong trial wore "The Conflict Avoider" from s19 to s40 —
+//     a strong player accrues miss-evidence so slowly (~0.5/session) that early
+//     random skew freezes into the lifetime tally. The tell: direction schemas
+//     describe LEAKY players, and his weighted-miss rate was only ~0.11 of hands
+//     played. Direction schemas now also require evidence/hands ≥
+//     DIRECTION_MISS_MATERIALITY — true directional leaks run ~0.22-0.30, strong
+//     players ~0.08-0.12; a mild lean below the floor reads Balanced, which is
+//     the honest answer (severity philosophy, July 5).
+const MIN_DIRECTION_EVIDENCE = 10;
+const DIRECTION_FULL_EVIDENCE = 20;
+const DIRECTION_MISS_MATERIALITY = 0.15;
+const DIRECTION_DOMINANCE = 0.4;
+const DIRECTION_SEV_SCALE = 2.5;
+
+// Sessions before a schema can be diagnosed — exported so the dashboard's
+// locked-card countdown can never drift from the engine's actual gate.
+export const SCHEMA_UNLOCK_SESSIONS = 5;
+
+// v2 hybrid: DIRECTION schemas score from the direction tally, SKILL schemas
+// from absolute per-skill weakness; the single highest severity across all six
+// wins (below the bar or tied → Balanced). `directionTally` is optional — when
+// missing/undefined the direction schemas simply can't qualify, so skill
+// schemas + Balanced still work (legacy callers, pre-v2 users with no tally).
+export function deriveSchema(skills, sessionsCompleted, directionTally) {
+  if (sessionsCompleted < SCHEMA_UNLOCK_SESSIONS) return null;  // locked: not enough data to diagnose
+
+  let best = null;
+  let bestScore = 0;
+  let tied = false;
+  const consider = (schema, score) => {
+    if (score > bestScore + 1e-9) { bestScore = score; best = schema; tied = false; }
+    else if (best && Math.abs(score - bestScore) < 1e-9) { tied = true; }
+  };
+
+  for (const s of SCHEMAS) {
+    if (s.direction) {
+      // Direction schema — scored from the direction-of-error tally, relative to
+      // the neutral baseline so a uniform-mistaking player can't trip it.
+      const ev = directionTally?.evidence ?? 0;
+      if (ev < MIN_DIRECTION_EVIDENCE) continue;
+      const hands = directionTally?.hands ?? 0;
+      if (hands > 0 && ev / hands < DIRECTION_MISS_MATERIALITY) continue;
+      const share = (directionTally[s.direction] ?? 0) / ev;
+      if (share < DIRECTION_DOMINANCE) continue;
+      const base = DIRECTION_BASELINE[s.direction];
+      const excess = base >= 1 ? 0 : Math.max(0, (share - base) / (1 - base));
+      // Confidence ramp: full severity only once the tally is deep enough to
+      // trust the share (see transient-mislabel fix above).
+      const confidence = Math.min(1, ev / DIRECTION_FULL_EVIDENCE);
+      consider(s, Math.min(2, DIRECTION_SEV_SCALE * excess * confidence));
+    } else {
+      // Skill schema — absolute-weakness scoring, UNCHANGED from v1.
+      let raw = 0;
+      let measured = 0;
+      for (const sk of s.primary) {
+        const d = skills[sk];
+        if (!d || d.attempts < 3) continue;
+        measured++;
+        if (d.rating === 'red')    raw += 2;
+        if (d.rating === 'yellow') raw += 1;
+      }
+      if (measured === 0) continue;
+      // Normalize by skills actually measured so multi-skill schemas aren't
+      // mechanically favored over single-skill ones.
+      consider(s, raw / measured);
+    }
+  }
+
+  // No dominant, unambiguous leak → Balanced (kills the array-order tiebreak
+  // that always crowned index 01). Requires a clear winner above the severity bar.
+  if (!best || bestScore < SCHEMA_MIN_SEVERITY || tied) return balancedFallback(skills);
+
+  // Direction schemas display no per-skill "affected" chips (the chips were
+  // removed from the card in July 2026); the return shape stays identical.
+  if (best.direction) {
+    return { name: best.name, quote: best.quote, index: best.index, total: '06', affected: [] };
+  }
+  const affected = best.primary
+    .filter(sk => skills[sk] && (skills[sk].rating === 'red' || skills[sk].rating === 'yellow'))
+    .map(sk => ({ skill: SKILL_NAMES[sk], level: skills[sk].rating }));
+
+  return { name: best.name, quote: best.quote, index: best.index, total: '06', affected };
+}
