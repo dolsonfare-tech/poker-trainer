@@ -68,6 +68,12 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
 
 8. **AdSense** — ON HOLD until real users exist. Code scaffolding dormant (no-op without `REACT_APP_ADSENSE_CLIENT`). When ready: create account, set env in Vercel, author `public/ads.txt`.
 
+9. **Tester feedback — July 27 2026** (first live tester report; both items fixed same-day, follow-ups below).
+   - ✅ **Mobile hand name printed through the felt rim.** At every width 320–414 the name rendered across the 3px gold border; the tester read "SIX-FIVE SUITED" as "Sive-five suited". Fixed by raising the felt's bottom inset 10% → 14% and giving 5px back between cards and name. Pinned by three guards in `e2e/mobilefold.spec.mjs` (clears rim / no ellipsis / within felt span) alongside the existing founder-approved hero-cluster contract.
+   - ✅ **Odds notation was undecodable.** A tester hit "3.7:1" and read the decimal point as a second colon ("3:7:1"). The `Pot Odds` glossary entry defined the concept but never decoded the notation or the break-even conversion; both added in `VillainGuide.jsx`.
+   - ⏳ **Follow-up — the glossary is a click away from the moment of confusion.** The number appears in a feedback panel mid-session; the decode lives behind the ⓘ. Options: link the first odds mention in `FeedbackPanel` to the guide's Pot Odds entry, or inline the break-even percentage next to the ratio in feedback text. The second is the higher-effect-size fix (F1: explanation quality is the top lever) but touches 100+ scenario `fb` strings — scope it deliberately rather than piecemeal.
+   - ⏳ **Follow-up — audit rule for odds notation.** No `audit:scenarios` rule checks that a ratio in `fb` text is accompanied by its plain-language meaning. Worth adding once the format above is decided, so new scenarios can't reintroduce a bare ratio.
+
 ---
 
 ## Cohesion Audit Fix Waves (audit §7)

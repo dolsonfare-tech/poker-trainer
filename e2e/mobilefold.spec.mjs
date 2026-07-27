@@ -82,6 +82,32 @@ export default async function run({ browser, baseURL, check }) {
     check(`[${difficulty}] YOU chip inside the table box`,
       !!chip && !!table && chip.y + chip.height <= table.y + table.height + 0.5,
       chip && table ? `chip bottom=${Math.round(chip.y + chip.height)} table bottom=${Math.round(table.y + table.height)}` : 'missing');
+
+    // Hand name vs the felt rim (tester report, July 27 2026). The name printed
+    // straight through the 3px gold border at every width 320-414, so a tester
+    // read "SIX-FIVE SUITED" as "Sive-five suited". The name must start BELOW
+    // the rim, on the dark band. 3px = the felt's border width.
+    const name = await page.locator('.sc2-hand-name').boundingBox();
+    check(`[${difficulty}] hand name clears the felt rim`,
+      !!name && !!felt && name.y >= felt.y + felt.height + 3,
+      name && felt ? `name top=${Math.round(name.y)} rim bottom=${Math.round(felt.y + felt.height + 3)}` : 'missing');
+
+    // ...and is never truncated. A `max-width: %` on the name resolves against
+    // the shrink-to-fit `.sc2-hero`, which silently ellipsises it — a fix for
+    // the rim collision was drafted that way and hid the player's own hand
+    // ("QUEEN-SEVEN OFF…"). Unreadable beats overlapping, so pin both.
+    const nameFits = await page.evaluate(() => {
+      const n = document.querySelector('.sc2-hand-name');
+      return !!n && n.scrollWidth <= n.clientWidth + 1;
+    });
+    check(`[${difficulty}] hand name renders in full (no ellipsis)`, nameFits);
+
+    const nameInFelt = await page.evaluate(() => {
+      const n = document.querySelector('.sc2-hand-name').getBoundingClientRect();
+      const f = document.querySelector('.sc2-felt').getBoundingClientRect();
+      return n.left >= f.left && n.right <= f.right;
+    });
+    check(`[${difficulty}] hand name within the felt's horizontal span`, nameInFelt);
   };
 
   await guardHand('intermediate');

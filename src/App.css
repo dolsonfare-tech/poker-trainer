@@ -3083,7 +3083,10 @@ body {
   .sc2-chrome-right { justify-self: auto; }
   .street-bar { margin-bottom: 8px; padding-bottom: 8px; }
   .sc2-table { height: 315px; }
-  .sc2-felt { inset: 4% 3% 10% 3%; border-radius: 46% / 34%; }
+  /* Bottom inset raised 10% -> 14% on July 27 2026 so the hand name clears the
+     felt rim instead of printing through it — see the hand-name block lower in
+     this breakpoint for the full reasoning and the three geometry constraints. */
+  .sc2-felt { inset: 4% 3% 14% 3%; border-radius: 46% / 34%; }
   /* The 315px felt can't absorb the desktop rail-straddle (bottom:-8px) —
      the fixed-size hero cluster ends up with cards on the border ring and
      the YOU chip outside the table box. Lift the anchor so cards sit inside
@@ -3114,6 +3117,35 @@ body {
   .street-pip { font-size: 0.62rem; }
   .sc2-hand-name { font-size: 0.62rem; }
   .sc2-you-chip { font-size: 0.58rem; }
+  /* ── Hand name collided with the felt rim (tester report, July 27 2026) ──
+     `.sc2-hero` is bottom-anchored to `.sc2-table`, and this breakpoint both
+     zeroes its offset (`bottom: 0`, above) and RAISES the hand-name type to
+     0.62rem. Net effect: the name rendered at 496–509px against a felt rim at
+     499 — straight through the 3px gold border, at every width 320–414. A
+     tester read "SIX-FIVE SUITED" as "Sive-five suited".
+
+     The block is bottom-anchored, so the label's distance from the table
+     bottom is fixed by what sits BELOW it; adding space inside the block moves
+     the cards up, not the name down. The rim is therefore raised to meet it
+     (10% -> 14% bottom inset), with 5px given back between cards and name so
+     the cards stay inside the shortened oval.
+
+     Three constraints hold simultaneously, all pinned in mobilefold.spec.mjs:
+       cards inside the felt oval   (2.4px clearance)
+       YOU chip inside the table box (founder-approved contract — unchanged)
+       hand name clears the rim      (4.6px clearance)
+
+     Do NOT add max-width/text-overflow to the name: `%` resolves against the
+     shrink-to-fit `.sc2-hero`, which is self-referential and silently
+     ellipsises it ("QUEEN-SEVEN OFF…"). The widest name in the pool is 154px
+     against a 296px felt. The pill backdrop is belt-and-braces legibility if a
+     future felt tweak moves the rim back underneath the text. */
+  .sc2-hero-cards { margin-bottom: 5px; }
+  .sc2-hand-name {
+    background: rgba(10, 21, 15, 0.86);
+    padding: 1px 9px; border-radius: 999px; z-index: 4;
+    white-space: nowrap;
+  }
   .sc2-strip-label, .sc2-history-label { font-size: 0.62rem; }
   .sc2-strip-pos { font-size: 0.58rem; }
   .sc2-strip-text { font-size: 0.88rem; }

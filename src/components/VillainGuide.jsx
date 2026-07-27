@@ -50,7 +50,12 @@ const GLOSSARY = [
   { label: '3-bet', desc: 'A re-raise over someone who has already raised — the third bet in the sequence.' },
   { label: '4-bet', desc: 'A re-raise over a 3-bet — the fourth bet in the sequence, usually representing a very strong hand.' },
   { label: 'Open Raise', desc: 'The first raise preflop when no one has entered the pot yet.' },
-  { label: 'Pot Odds', desc: 'The ratio of the current pot size to the cost of calling — used to decide if chasing a draw is mathematically profitable.' },
+  // Tester report (July 27 2026): a player hit "3.7:1" in a feedback panel and
+  // could not tell what it meant — they read the decimal point as a second
+  // colon ("3:7:1"). The entry defined the concept but never decoded the
+  // NOTATION or how to turn it into a number you can act on. Both now here,
+  // because every scenario's feedback text uses this format.
+  { label: 'Pot Odds', desc: 'The price you are being offered to call, written as a ratio. "3.7:1" (three-point-seven to one) means you stand to win $3.70 for every $1 you put in — it is one ratio, not three numbers. To turn it into the share of the time you need to win, divide 1 by the ratio plus 1: at 3.7:1 you need to be right about 21% of the time, at 2:1 about 33%. Win more often than that and calling makes money over the long run.' },
   { label: 'Fold Equity', desc: 'The added value of a bet or raise that comes from the chance your opponent will fold, giving you the pot without a showdown.' },
   { label: 'Range', desc: 'The full set of hands a player could have in a given situation, rather than one specific hand.' },
   { label: 'Position', desc: 'Where you sit relative to the dealer button — the later you act, the more information you have. The Positions tab maps every seat.' },
