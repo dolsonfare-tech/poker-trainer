@@ -21,9 +21,11 @@ test('shuffle does not mutate the input array', () => {
 test('CA-029: spacedrep.js does not define shuffle (imports from random.js)', () => {
   const src = fs.readFileSync(require.resolve('./spacedrep'), 'utf8');
   expect(src).not.toMatch(/function\s+shuffle\b/);
+  expect(src).not.toMatch(/const\s+shuffle\s*=/);
 });
 
 test('CA-029: TableReads.jsx does not define shuffle (imports from random.js)', () => {
   const src = fs.readFileSync(require.resolve('../components/TableReads'), 'utf8');
   expect(src).not.toMatch(/function\s+shuffle\b/);
+  expect(src).not.toMatch(/const\s+shuffle\s*=/);
 });
