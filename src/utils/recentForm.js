@@ -53,6 +53,9 @@ export function deriveRecentForm({ recentSessions, skills, scenarioHistory }) {
   for (const h of windowHands) (bySkill[h.skill] ??= []).push(h);
 
   let moved = null;
+  // Starting bestGap at 0 means a skill that clears the attempts gate with an
+  // EXACTLY zero accuracy gap (window == lifetime) is deliberately never
+  // reported: there's no movement to report, and `dir` has no "unchanged" value.
   let bestGap = 0;
   for (const key of Object.keys(bySkill).sort()) {   // alphabetical = deterministic tie-break
     const hands = bySkill[key];

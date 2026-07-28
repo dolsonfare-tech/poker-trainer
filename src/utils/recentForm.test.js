@@ -1,4 +1,4 @@
-import { RECENT_SESSIONS_CAP, appendRecentSession } from './recentForm';
+import { RECENT_SESSIONS_CAP, appendRecentSession, deriveRecentForm, RECENT_FORM_WINDOW } from './recentForm';
 
 const session = (date, correct, total = 5) => ({
   date, correct, total,
@@ -29,8 +29,6 @@ test('a missing or malformed prior list is treated as empty, not a crash', () =>
   expect(appendRecentSession(undefined, session('2026-07-02', 2))).toHaveLength(1);
   expect(appendRecentSession(null, session('2026-07-02', 2))).toHaveLength(1);
 });
-
-import { deriveRecentForm, RECENT_FORM_WINDOW } from './recentForm';
 
 // Build a session whose hands are all one skill, so attempt counts are exact.
 const skillSession = (date, skill, correct, total) => ({
@@ -97,6 +95,47 @@ test('the biggest mover wins, tie-broken by attempts then alphabetically', () =>
   };
   const out = deriveRecentForm({ recentSessions: [mixed], skills, scenarioHistory: {} });
   expect(out.moved.skill).toBe('bluffing');
+});
+
+// The "biggest mover" test above never reaches the gap === bestGap branch
+// (0.1 vs 0.8 — no tie). These two pin the tie-break levels the spec promises
+// but that test doesn't exercise: MORE window attempts wins a gap tie, and
+// alphabetical order is the final tiebreaker when attempts also tie.
+test('equal gap: the skill with MORE window attempts wins, overriding alphabetical order', () => {
+  // Both skills: lifetime 50%, window 100% → identical gap (0.5). 'alpha' sorts
+  // before 'zeta', so a naive first-wins tie-break would pick 'alpha' — the
+  // attempts tie-break must override that and pick 'zeta' (6 attempts > 5).
+  const mixed = {
+    date: '2026-07-10', correct: 11, total: 11,
+    hands: [
+      ...Array.from({ length: 5 }, () => ({ skill: 'alpha', result: 'correct' })),
+      ...Array.from({ length: 6 }, () => ({ skill: 'zeta', result: 'correct' })),
+    ],
+  };
+  const skills = {
+    alpha: { attempts: 40, correct: 20, rating: 'yellow' }, // lifetime 50%, window 100% (5 attempts) → gap 0.5
+    zeta:  { attempts: 40, correct: 20, rating: 'yellow' }, // lifetime 50%, window 100% (6 attempts) → gap 0.5
+  };
+  const out = deriveRecentForm({ recentSessions: [mixed], skills, scenarioHistory: {} });
+  expect(out.moved).toEqual({ skill: 'zeta', dir: 'up' });
+});
+
+test('equal gap, equal attempts: the alphabetically first skill wins, deterministically', () => {
+  // Both skills: lifetime 50%, window 100%, 5 attempts each — gap AND attempts
+  // tie, so only alphabetical order can decide. 'aaa' < 'bbb'.
+  const mixed = {
+    date: '2026-07-10', correct: 10, total: 10,
+    hands: [
+      ...Array.from({ length: 5 }, () => ({ skill: 'aaa', result: 'correct' })),
+      ...Array.from({ length: 5 }, () => ({ skill: 'bbb', result: 'correct' })),
+    ],
+  };
+  const skills = {
+    aaa: { attempts: 40, correct: 20, rating: 'yellow' }, // lifetime 50%, window 100% → gap 0.5
+    bbb: { attempts: 40, correct: 20, rating: 'yellow' }, // lifetime 50%, window 100% → gap 0.5, same attempts
+  };
+  const out = deriveRecentForm({ recentSessions: [mixed], skills, scenarioHistory: {} });
+  expect(out.moved).toEqual({ skill: 'aaa', dir: 'up' });
 });
 
 test('queue depth is reported straight from the ladder', () => {
