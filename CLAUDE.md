@@ -18,7 +18,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 |---|---|---|---|
 | 1 | `npm run check:invariants` | after EVERY code change | 28 architecture rules (single-file ownership incl. schema/persistence/dates/event-name owners, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, triage-doc event paths, root-doc allowlist, CLAUDE.md line budget, component + hook line budgets, test co-location, frozen-clock) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
-| 2b | **`npm run gates`** — the whole set as one command; **prefer it over running 1 and 2 individually** | after every code change | mirrors every CI step except e2e: invariants → both content audits → jest → `simulate:schemas` → `playtest:personas` → `CI=true npm run build`. Two red-CI incidents on July 27, 2026 came from running a SUBSET locally: a lint-only `exhaustive-deps` error (`CI=true` promotes warnings to errors — jest and e2e don't lint), then a deleted module still imported by `scripts/` (the harnesses import from `src/` but no `src/` test exercises them). If a gate isn't in this script, it will eventually be skipped |
+| 2b | **`npm run gates`** — the whole set as one command; **prefer it over running 1 and 2 individually** | after every code change | mirrors every CI step except e2e: invariants → both content audits (incl. the scenario-index staleness check) → jest → `simulate:schemas` → `playtest:personas` → `CI=true npm run build` → `check:bundle`. Two red-CI incidents on July 27, 2026 came from running a SUBSET locally: a lint-only `exhaustive-deps` error (`CI=true` promotes warnings to errors — jest and e2e don't lint), then a deleted module still imported by `scripts/` (the harnesses import from `src/` but no `src/` test exercises them). If a gate isn't in this script, it will eventually be skipped |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
 | 3b | `npm run audit:observations` | `observations.js` touched | Table Reads content (rules O1–O6) |
 | 4 | `npm run simulate:schemas` | `deriveSchema` or rating engine touched | exits 1 on structural diagnosis bias |
@@ -100,6 +100,9 @@ poker-trainer/
 │   │   └── useSessionRun.js   ← The deal, per-hand loop, end-of-session delta (Wave 3).
 │   ├── data/
 │   │   ├── constants.js       ← Skill names, PLAYER_SCHEMAS, rating engine.
+│   │   ├── scenario-index.js  ← GENERATED compact direction index (npm run gen:scenario-index).
+│   │   │                        Lets schema.js diagnose without the 438 KB library (CA-014).
+│   │   ├── villains.js        ← VILLAIN_LABELS — extracted so 8 strings don't pull the pool in.
 │   │   ├── observations.js    ← Table Reads observation hands.
 │   │   └── scenarios.js       ← Scenario content. Never edit for UI work.
 │   └── utils/

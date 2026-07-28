@@ -4,7 +4,16 @@
 // Run:  node scripts/audit-scenarios.mjs
 // Exit code 1 if any ERROR-level findings (safe for CI).
 
-import SCENARIOS, { CONTRAST_PAIRS } from '../src/data/scenarios.js';
+// scenarios.js gained an extensionless relative import (data/villains) when
+// VILLAIN_LABELS was extracted for CA-014, so this script needs the same
+// CRA-style resolution hook the other harnesses use.
+import { register } from 'node:module';
+register(new URL('ext-resolver.mjs', import.meta.url));
+// Dynamic, not static: ESM hoists every `import` above module body code, so a
+// static import here would resolve BEFORE register() installs the hook and fail
+// on scenarios.js's extensionless `./villains` import. Same pattern as
+// simulate-schemas.mjs and playtest-personas.mjs.
+const { default: SCENARIOS, CONTRAST_PAIRS } = await import('../src/data/scenarios.js');
 import { createHash } from 'node:crypto';
 
 const findings = [];

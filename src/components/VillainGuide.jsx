@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { SKILL_NAMES, SKILL_DESCRIPTIONS, PLAYER_SCHEMAS } from '../data/constants';
 import { BALANCED_SCHEMA, STUDENT_SCHEMA } from '../utils/schema';
-import { VILLAIN_LABELS } from '../data/scenarios';
+import { VILLAIN_LABELS } from '../data/villains';
 
 // The 8 measured skills, sourced from the shared constants so the guide can
 // never drift from what the dashboard and rating engine use.

@@ -96,7 +96,11 @@ Sequenced in `docs/architecture/TARGET_ARCHITECTURE.md`. High-level order:
 - **Wave 4 — IN PROGRESS.** Re-sequenced by what each item actually blocks rather than shipped as one wave:
   - ✅ **Test expansion (CA-049 + CA-050) — DONE 2026-07-27.** The only pre-LAUNCH item. jest 398 → 433 (FeedbackPanel 33% → 96%, VillainGuide 62% → 96%, SignIn 75% → 100%); e2e 64 → 126 checks across 3 new specs (tablereads, villainguide, disagree).
   - ✅ **`events.js` registry (MOD-011 / CA-033) — DONE 2026-07-27.** Ahead of the paid playtest: 32 events were composed inline at 38 call sites, and a typo in a name is a silently empty funnel whose data cannot be re-collected.
-  - ⏳ **Scenarios batch split + lazy-load (CA-014 / CA-034 / CA-022).** ~139 KB of unused JS at cold start; the main driver of mobile Lighthouse 63. Wanted before paid acquisition, not before launch.
+  - ✅ **Scenario lazy-load (CA-014) — DONE 2026-07-28.** main.js **353.9 → 261.7 KB gzip (−26%)**; the 172-scenario library is now a 92.6 KB chunk fetched on the first deal instead of before the sign-in screen.
+    Two extractions made it possible: `data/villains.js` (VILLAIN_LABELS — eight strings that pinned the whole pool, because VillainGuide renders eagerly) and the GENERATED `data/scenario-index.js` (23.9 KB — `schema.js` runs on the LOGIN path via db.js and needs only `correct` + each option's `val`/`cls`, not the prose where the weight is).
+    Guarded by `npm run check:bundle` on two independent signals: main.js under a 280 KB ceiling, AND a `scenarios.*.chunk.js` still existing. Reverting to a static import trips both.
+  - ⏳ **Route-level code splitting (CA-022)** — `React.lazy` for TableReads / VillainGuide / SessionSummary. Not started.
+  - ⏳ **Scenarios batch split (CA-034)** — authoring-conflict fix; do it with the next scenario batch.
   - 🅿️ **Trust boundary (CA-001 / CA-006 / CA-012) — PARKED until Pro is real.** P1, but abuse is self-only while the numbers are private; it blocks the leaderboard and purchasable Rebuys, neither of which exists.
 
 P1 security items before Pro/leaderboard: CA-001 (client-writable integrity fields), CA-002 (CI permissions stanza), CA-006 (hostile localStorage seed), CA-012 (migrateUser shape validation). See full findings in `docs/audit/2026-07-25-cohesion-audit.md`.

@@ -4,7 +4,7 @@
 // the decision panel, feedback overlay, and summary against any hidden
 // 3-option assumption creeping in later.
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Pin local (pre-Supabase) mode, same as App.integration.test.js.
 jest.mock('./utils/supabase', () => ({ supabase: null, hasSupabase: false }));
@@ -33,6 +33,13 @@ test('a 2-option (all-in) scenario plays through to the summary', async () => {
   fireEvent.click(screen.getByText('Intermediate'));
   fireEvent.click(screen.getByText(/Start Session/));
 
+  // The scenario library is fetched on the first deal (CA-014, Wave 4), so the
+  // session screen renders a microtask after this click rather than
+  // synchronously. useSessionRun sets screen='session' only AFTER the deck
+  // resolves, so waiting for the action row is waiting for the real thing —
+  // there is no intermediate empty-session state to catch.
+  await waitFor(() => expect(container.querySelector('.act-btn')).toBeInTheDocument());
+
   // Exactly two action buttons render, with the authored labels
   const btns = container.querySelectorAll('.act-btn');
   expect(btns).toHaveLength(2);
@@ -56,6 +63,7 @@ test('a 2-option (all-in) scenario plays through to the summary', async () => {
   // already-played scenario this also proves the least-recently-seen
   // fallback: the builder must serve it again rather than deal nothing.
   fireEvent.click(screen.getByText(/Deal Next Session/));
-  expect(container.querySelectorAll('.act-btn')).toHaveLength(2);
+  // Chaining re-enters startSession, so it is async for the same reason.
+  await waitFor(() => expect(container.querySelectorAll('.act-btn')).toHaveLength(2));
   expect(screen.getByText('Call $90 more')).toBeInTheDocument();
 });

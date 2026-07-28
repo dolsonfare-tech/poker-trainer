@@ -4,7 +4,6 @@
 // only because it started life in App.jsx. Moving it out is what the
 // component-budget invariant was for: the rule fired at 263/160 lines, and the
 // honest fix is to relocate what does not belong rather than raise the number.
-import SCENARIOS from '../data/scenarios';
 import { buildSession, applyHandsToHistory } from './spacedrep';
 import { toLocalDateString } from './dates';
 
@@ -12,7 +11,17 @@ import { toLocalDateString } from './dates';
 // item 6 holds the decision rule for revisiting it.
 const SESSION_LENGTH = 5;
 
-export function dealScenarios(difficulty, user, pendingHands = []) {
+// ASYNC as of CA-014 (Wave 4): the 438 KB scenario library is fetched here, on
+// the first deal, instead of at cold start. Every visitor previously parsed all
+// 172 scenarios just to reach the sign-in screen.
+//
+// The await is safe because useSessionRun.startSession sets screen='session'
+// only AFTER this resolves — there is no window where the session screen renders
+// without a deck. webpackChunkName keeps the chunk identifiable in the build
+// output so the size gate can point at it.
+export async function dealScenarios(difficulty, user, pendingHands = []) {
+  const { default: SCENARIOS, CONTRAST_PAIRS } =
+    await import(/* webpackChunkName: "scenarios" */ '../data/scenarios');
   const pool = SCENARIOS.filter(s => s.difficulty === difficulty);
   const played = user?.sessionsCompleted ?? 0;
   const priorHistory = user?.scenarioHistory ?? {};
@@ -32,5 +41,11 @@ export function dealScenarios(difficulty, user, pendingHands = []) {
     sessionsCompleted,
     length: SESSION_LENGTH,
     currentDate: today,
+    // Passed explicitly now that spacedrep.js no longer imports scenarios.js —
+    // it is on the login path (db.js, claude.js, session.js all import it), so
+    // a static import there would have pinned the library into the main bundle
+    // no matter what this function does. Pinned by a test in deal.test.js:
+    // dropping this argument would silently disable contrast pairing.
+    contrastPairs: CONTRAST_PAIRS,
   });
 }

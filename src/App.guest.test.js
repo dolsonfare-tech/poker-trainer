@@ -2,7 +2,7 @@
 // account, then hits the sign-in gate everywhere — with their progress held
 // in the untagged localStorage cache that first sign-in migrates.
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Supabase mode with no session: the auth listener must land on SignIn, and
 // the guest path must never touch the network.
@@ -37,6 +37,13 @@ test('guest plays one free session, then every path gates to sign-in with progre
   // Straight toward the cards: level pick, then deal (no username step)
   expect(await screen.findByText('Choose your level')).toBeInTheDocument();
   fireEvent.click(screen.getByText(/Start Session/));
+
+  // The scenario library is fetched on the first deal (CA-014, Wave 4), so the
+  // session screen renders a microtask after this click rather than
+  // synchronously. useSessionRun sets screen='session' only AFTER the deck
+  // resolves, so waiting for the action row is waiting for the real thing —
+  // there is no intermediate empty-session state to catch.
+  await waitFor(() => expect(container.querySelector('.act-btn')).toBeInTheDocument());
 
   for (let i = 0; i < 5; i++) {
     fireEvent.click(container.querySelector('.act-btn'));

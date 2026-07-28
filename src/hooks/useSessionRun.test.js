@@ -36,7 +36,14 @@ const setup = (over = {}) => {
 };
 
 // Deal a real session so the loop has scenarios to step through.
-const deal = (result) => act(() => { result.current.startSession('beginner'); });
+//
+// AWAITED as of CA-014: startSession now fetches the scenario chunk via a
+// dynamic import before it sets any state. Callers that do not await it observe
+// the pre-deal state, which is exactly what the session screen would render if
+// useSessionRun ever set screen='session' before the deck resolved — so a test
+// that forgot the await would be asserting the bug.
+const deal = async (result) =>
+  act(async () => { await result.current.startSession('beginner'); });
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -47,9 +54,9 @@ beforeEach(() => {
   submitSession.mockResolvedValue({ user: null, coachText: '', limited: false });
 });
 
-test('starting a session deals hands and reports it once', () => {
+test('starting a session deals hands and reports it once', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   expect(result.current.shuffledScenarios.length).toBeGreaterThan(0);
   expect(result.current.currentIndex).toBe(0);
   expect(result.current.decided).toBe(false);
@@ -57,9 +64,9 @@ test('starting a session deals hands and reports it once', () => {
     expect.objectContaining({ difficulty: 'beginner', chained: false }));
 });
 
-test('a decision grades the hand, records it, and blocks a second answer', () => {
+test('a decision grades the hand, records it, and blocks a second answer', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   const scenario = result.current.scenario;
   act(() => { result.current.handleDecision(scenario.correct); });
 
@@ -78,9 +85,9 @@ test('a decision grades the hand, records it, and blocks a second answer', () =>
   expect(result.current.correctCount).toBe(1);
 });
 
-test('a wrong answer breaks the combo but still records the hand', () => {
+test('a wrong answer breaks the combo but still records the hand', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   const scenario = result.current.scenario;
   const wrong = scenario.options.find(o => o.val !== scenario.correct).val;
   act(() => { result.current.handleDecision(wrong); });
@@ -89,9 +96,9 @@ test('a wrong answer breaks the combo but still records the hand', () => {
   expect(result.current.sessionHistory).toHaveLength(1);
 });
 
-test('a timeout scores incorrect with a NULL decisionMs — never a fast error', () => {
+test('a timeout scores incorrect with a NULL decisionMs — never a fast error', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   act(() => { result.current.handleTimeout(); });
   expect(result.current.timedOut).toBe(true);
   expect(result.current.sessionHistory[0].result).toBe('incorrect');
@@ -101,18 +108,18 @@ test('a timeout scores incorrect with a NULL decisionMs — never a fast error',
   expect(result.current.sessionHistory[0].choiceVal).toBeNull();
 });
 
-test('a timeout after a decision is ignored — one hand, one entry', () => {
+test('a timeout after a decision is ignored — one hand, one entry', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   act(() => { result.current.handleDecision(result.current.scenario.correct); });
   act(() => { result.current.handleTimeout(); });
   expect(result.current.sessionHistory).toHaveLength(1);
   expect(result.current.sessionHistory[0].result).toBe('correct');
 });
 
-test('advancing clears per-hand state so the next hand starts clean', () => {
+test('advancing clears per-hand state so the next hand starts clean', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   act(() => { result.current.handleDecision(result.current.scenario.correct); });
   act(() => { result.current.handleNext(); });
   expect(result.current.currentIndex).toBe(1);
@@ -123,7 +130,7 @@ test('advancing clears per-hand state so the next hand starts clean', () => {
 
 test('the last hand ends the session and hands off to submitSession exactly once', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   const total = result.current.shuffledScenarios.length;
   for (let i = 0; i < total; i++) {
     act(() => { result.current.handleDecision(result.current.scenario.correct); });
@@ -139,7 +146,7 @@ test('the last hand ends the session and hands off to submitSession exactly once
 test('the session delta captures the BEFORE state for the summary animation', async () => {
   const user = { ...createUser('Before'), sessionsCompleted: 7, pokerScore: 61, streak: 4 };
   const { result } = setup({ user });
-  deal(result);
+  await deal(result);
   const total = result.current.shuffledScenarios.length;
   for (let i = 0; i < total; i++) {
     act(() => { result.current.handleDecision(result.current.scenario.correct); });
@@ -153,9 +160,9 @@ test('the session delta captures the BEFORE state for the summary animation', as
   expect(result.current.sessionDelta.prevStreak).toBe(4);
 });
 
-test('restarting clears the run and returns to the dashboard', () => {
+test('restarting clears the run and returns to the dashboard', async () => {
   const { result, setScreen } = setup();
-  deal(result);
+  await deal(result);
   act(() => { result.current.handleDecision(result.current.scenario.correct); });
   act(() => { result.current.handleRestart(); });
   expect(setScreen).toHaveBeenCalledWith('dashboard');
@@ -165,11 +172,12 @@ test('restarting clears the run and returns to the dashboard', () => {
   expect(result.current.combo).toBe(0);
 });
 
-test('a chained session is reported as chained and resets the previous run', () => {
+test('a chained session is reported as chained and resets the previous run', async () => {
   const { result } = setup();
-  deal(result);
+  await deal(result);
   act(() => { result.current.handleDecision(result.current.scenario.correct); });
-  act(() => { result.current.handlePlayAgain(); });
+  // handlePlayAgain chains into startSession, which is now async.
+  await act(async () => { await result.current.handlePlayAgain(); });
   expect(track).toHaveBeenCalledWith('session_started',
     expect.objectContaining({ chained: true }));
   expect(result.current.sessionHistory).toEqual([]);

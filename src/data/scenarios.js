@@ -1,3 +1,4 @@
+import { VILLAIN_LABELS } from './villains';
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const SUIT_COLOR = { '♠': 'black', '♣': 'black', '♥': 'red', '♦': 'red' };
@@ -60,19 +61,10 @@ const mkScenario = ({ choices, ...rest }) => {
 };
 // ─── Villain label lookup ─────────────────────────────────────────────────
 
-// Exported so the VillainGuide derives its archetype list from the same map
-// the dealer uses — the guide can never drift from what the game deals
-// (same pattern as skills/schemas living in constants.js).
-export const VILLAIN_LABELS = {
-  'aggressive':      'Aggressive Regular',
-  'passive':         'Passive Player',
-  'tight':           'Tight Recreational',
-  'loose':           'Loose Recreational',
-  'calling-station': 'Calling Station',
-  'maniac':          'Maniac',
-  'nit':             'Tight Nit',
-  'unknown':         'Unknown',
-};
+// Moved to data/villains.js (CA-014): eight strings should not require the
+// whole scenario library to read. Re-exported here so existing import sites
+// keep working and the map stays single-sourced.
+export { VILLAIN_LABELS } from './villains';
 
 // ─── Skill tag lookup ─────────────────────────────────────────────────────
 

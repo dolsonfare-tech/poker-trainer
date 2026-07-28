@@ -1,4 +1,3 @@
-import { CONTRAST_PAIRS } from '../data/scenarios';
 import { localDateFrom } from './dates';
 import { shuffle } from './random';
 
@@ -157,7 +156,7 @@ function dueForResurface(h, sessionsCompleted, currentDate) {
  * Resurfaced misses are shallow copies tagged { replay: true }; everything
  * else is the pool's own object, untouched.
  */
-export function buildSession(pool, { history = {}, skills = {}, sessionsCompleted = 0, length = 5, currentDate = null, contrastPairs = CONTRAST_PAIRS } = {}) {
+export function buildSession(pool, { history = {}, skills = {}, sessionsCompleted = 0, length = 5, currentDate = null, contrastPairs = [] } = {}) {
   const picked = [];
   const pickedIds = new Set();
   const skillCount = {};

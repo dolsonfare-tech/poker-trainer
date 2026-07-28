@@ -2,7 +2,7 @@
 // must land on a rendered session summary. Guards against render crashes
 // (blank screen) anywhere in the flow.
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 // Pin local (pre-Supabase) mode: this test exercises the game flow, and CRA's
 // jest loads .env, which would otherwise flip the app into auth mode.
@@ -25,6 +25,13 @@ test('new user completes first session and sees the summary', async () => {
   fireEvent.click(screen.getByText(/Deal Me In/));
   fireEvent.click(screen.getByText('Intermediate'));
   fireEvent.click(screen.getByText(/Start Session/));
+
+  // The scenario library is fetched on the first deal (CA-014, Wave 4), so the
+  // session screen renders a microtask after this click rather than
+  // synchronously. useSessionRun sets screen='session' only AFTER the deck
+  // resolves, so waiting for the action row is waiting for the real thing —
+  // there is no intermediate empty-session state to catch.
+  await waitFor(() => expect(container.querySelector('.act-btn')).toBeInTheDocument());
 
   // Single-canvas layout: ticker, hero cards at seat, and villain read all present
   expect(container.querySelector('.st-ticker')).toBeInTheDocument();

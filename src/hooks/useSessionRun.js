@@ -76,14 +76,18 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
   }, [scenario, decided, currentIndex, appendHistory]);
 
-  const startSession = (selected, { chained = false } = {}) => {
+  const startSession = async (selected, { chained = false } = {}) => {
     decidedRef.current = false;
     setDifficulty(selected);
     saveLastDifficulty(selected);
     const pending = chained
       ? sessionHistory.map(h => ({ scenarioId: h.scenario.id, result: h.result, decisionMs: h.decisionMs ?? null }))
       : [];
-    setShuffledScenarios(dealScenarios(selected, user, pending));
+    // Awaited BEFORE any state is set: dealScenarios now fetches the scenario
+    // chunk (CA-014). Because setScreen('session') is the last line of this
+    // function, the session screen cannot render without a deck.
+    const deck = await dealScenarios(selected, user, pending);
+    setShuffledScenarios(deck);
     setCurrentIndex(0);
     setSkillResults({});
     setDecided(false);

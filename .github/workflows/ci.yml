@@ -35,6 +35,8 @@ jobs:
         run: npm run playtest:personas
       - name: Production build (localStorage mode — no env in CI)
         run: npm run build
+      - name: Bundle size + code-split guard (CA-014)
+        run: npm run check:bundle
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
       - name: Browser e2e (geometry guards, streak clock, comprehension surfaces)
