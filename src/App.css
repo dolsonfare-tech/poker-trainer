@@ -1337,6 +1337,37 @@ body {
   font-weight: 600;
 }
 
+/* Recent form — the deterministic strip that updates every session. Quiet
+   register: this reports, it never celebrates (M4 — informational, not
+   controlling). */
+.db-form { padding: 12px 0 4px; }
+.db-form-label {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+  color: var(--cream-faint); margin-bottom: 6px;
+}
+.db-form-score { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.db-form-count { font-family: Georgia, serif; font-size: 1.15rem; color: var(--cream); }
+.db-form-dir {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.08em;
+}
+.db-form-dir[data-dir="up"]   { color: #56c878; }
+.db-form-dir[data-dir="down"] { color: #e25555; }
+.db-form-dir[data-dir="flat"] { color: var(--cream-faint); }
+.db-form-moved {
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.62rem; letter-spacing: 0.06em;
+}
+.db-form-moved-skill { color: var(--gold-light); margin-right: 6px; }
+.db-form-moved-word { color: var(--cream-faint); }
+.db-form-queue {
+  margin-top: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem; letter-spacing: 0.06em; color: rgba(232,144,40,0.85);
+}
+
 /* ── Coach's Note ── */
 .db-coach-note {
   background: rgba(27,61,42,0.35);

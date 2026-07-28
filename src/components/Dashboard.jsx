@@ -9,9 +9,11 @@ import StreakStatus from './dashboard/StreakStatus';
 import SchemaPanel from './dashboard/SchemaPanel';
 import SkillLedger from './dashboard/SkillLedger';
 import LastSessionRead from './dashboard/LastSessionRead';
+import RecentForm from './dashboard/RecentForm';
 import BetaFeedback from './dashboard/BetaFeedback';
 import UsernameEditor from './dashboard/UsernameEditor';
 import { emitGoProClicked, emitUsernameEditOpened } from '../utils/events';
+import { deriveRecentForm } from '../utils/recentForm';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 // Layout skeleton only. Every self-contained section lives in
@@ -57,6 +59,14 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
     setProTeased(true);
     setTimeout(() => setProTeased(false), 2500);
   };
+
+  // Deterministic recent form — computed at render from derived state, so it
+  // costs nothing and is never stale.
+  const recentForm = guest ? null : deriveRecentForm({
+    recentSessions: user.recentSessions,
+    skills,
+    scenarioHistory: user.scenarioHistory,
+  });
 
   return (
     <div className="dashboard">
@@ -183,6 +193,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             </div>
           </div>
 
+          {recentForm && <RecentForm form={recentForm} />}
           <LastSessionRead coachNote={coachNote} coachReads={user.coachReads} guest={guest} />
         </div>
       </div>
