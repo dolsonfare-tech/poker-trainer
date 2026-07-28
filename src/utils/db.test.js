@@ -197,6 +197,14 @@ test('coachReadsFromSessions caps at COACH_READS_CAP, keeping the newest', () =>
 
 // ── recentSessionsFromSessions (dashboard recent-form strip) ─────────────────
 
+// Same local-date derivation the coachReadsFromSessions tests use just above,
+// so the expected value doesn't assume the runner's TZ matches UTC.
+const localDateOf = (iso) => {
+  const d = new Date(iso);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') +
+    '-' + String(d.getDate()).padStart(2, '0');
+};
+
 test('recentSessionsFromSessions rebuilds newest-first and caps at the window pair', () => {
   const rows = Array.from({ length: RECENT_SESSIONS_CAP + 3 }, (_, i) => ({
     created_at: `2026-07-${String(i + 1).padStart(2, '0')}T12:00:00Z`,
@@ -205,7 +213,19 @@ test('recentSessionsFromSessions rebuilds newest-first and caps at the window pa
   }));
   const out = recentSessionsFromSessions(rows);
   expect(out).toHaveLength(RECENT_SESSIONS_CAP);
-  // rows arrive created_at ASCENDING; the newest row must end up first
+  // rows arrive created_at ASCENDING; the newest row (last pushed, index 14 =
+  // 2026-07-15) must end up first, and the cap must drop from the OLD end
+  // (indices 0-2 = 07-01..07-03), keeping index 3 (07-04) as the oldest
+  // survivor. Asserting on `date` — the one field that varies uniquely per
+  // row — is what actually proves ordering + cap-boundary correctness; `total`
+  // and `correct` below are identical on every row and would pass even if
+  // `.reverse()` were removed or the slice took the wrong end.
+  expect(out[0].date).toBe(localDateOf(rows[RECENT_SESSIONS_CAP + 2].created_at));       // newest row (i=14)
+  expect(out[RECENT_SESSIONS_CAP - 1].date).toBe(localDateOf(rows[3].created_at));       // oldest survivor (i=3)
+  const dates = out.map(s => s.date);
+  expect(dates).not.toContain(localDateOf(rows[0].created_at));  // i=0, dropped
+  expect(dates).not.toContain(localDateOf(rows[1].created_at));  // i=1, dropped
+  expect(dates).not.toContain(localDateOf(rows[2].created_at));  // i=2, dropped
   expect(out[0].total).toBe(2);
   // correct is counted from the (fixed, 1-of-2) hands log, not correct_count —
   // every row's correct_count differs (i % 5) but hands never does.
