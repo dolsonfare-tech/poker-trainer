@@ -67,8 +67,13 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
             lands here — lead with what it does, not with the sign-in demand.
             Founders keep this deliberately spare (July 2026). */}
         <div className="ue-title">Find the leak in your poker game</div>
+        {/* The subtitle follows the state. Once the player has chosen the
+            account path, "no account needed" is answering a question they have
+            already moved past — and it undersells that this IS the sign-up. */}
         <div className="ue-subtitle">
-          {onGuestPlay ? 'Free to play — no account needed.' : 'Sign in and play for free.'}
+          {!onGuestPlay || showSignIn
+            ? 'Sign in or create your account — no password needed.'
+            : 'Free to play — no account needed.'}
         </div>
         {guestUsed && (
           <div className="si-guest-note">
@@ -83,14 +88,21 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
           </div>
         ) : (
           <>
-            {onGuestPlay && (
+            {/* Guest CTA disappears once the account path is open: a player who
+                tapped "sign in" has already declined it, and leaving it as the
+                loudest button on the screen competes with the choice they just
+                made (founder report, July 27 2026). */}
+            {onGuestPlay && !showSignIn && (
               <button type="button" className="si-guest-btn" onClick={onGuestPlay}>
                 Play a Free Session →
               </button>
             )}
             {onGuestPlay && !showSignIn ? (
+              // "Already have an account?" told a NEW visitor this path was not
+              // for them, while the magic link is exactly how they would sign
+              // up — the capability existed and the copy hid it.
               <button type="button" className="si-signin-link" onClick={() => setShowSignIn(true)}>
-                Already have an account? Sign in
+                Sign in or create an account →
               </button>
             ) : (
               <>

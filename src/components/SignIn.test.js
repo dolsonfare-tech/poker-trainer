@@ -40,20 +40,31 @@ test('with onGuestPlay, sign-in is hidden until the reveal link is clicked', () 
   expect(screen.getByText(/Play a Free Session/)).toBeInTheDocument();
   expect(screen.queryByPlaceholderText('you@example.com')).not.toBeInTheDocument();
 
-  // Reveal the sign-in stack
-  fireEvent.click(screen.getByText(/Already have an account\? Sign in/));
+  // The account path must read as sign-in OR sign-up: the magic link creates
+  // the account, so "Already have an account?" told a new visitor — the exact
+  // person this screen exists to convert — that the path was not for them.
+  const reveal = screen.getByText(/Sign in or create an account/);
+  expect(screen.queryByText(/Already have an account/)).not.toBeInTheDocument();
+  fireEvent.click(reveal);
 
-  // Form appears, reveal link disappears, guest button remains
+  // Form appears, reveal link disappears, and the guest CTA goes with it.
+  // This assertion was INVERTED on July 27 2026: it used to require the guest
+  // button to remain. A player who tapped sign-in has already declined the
+  // free session, so leaving it as the loudest button competes with the choice
+  // they just made (founder report).
   expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument();
-  expect(screen.queryByText(/Already have an account\? Sign in/)).not.toBeInTheDocument();
-  expect(screen.getByText(/Play a Free Session/)).toBeInTheDocument();
+  expect(screen.queryByText(/Sign in or create an account/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Play a Free Session/)).not.toBeInTheDocument();
+  // ...and the subtitle stops advertising "no account needed" once the player
+  // is on the account path.
+  expect(screen.getByText(/no password needed/)).toBeInTheDocument();
 });
 
 test('without onGuestPlay, the sign-in form renders immediately and no reveal link exists', () => {
   render(<SignIn />);
 
   expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument();
-  expect(screen.queryByText(/Already have an account\? Sign in/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Sign in or create an account/)).not.toBeInTheDocument();
   expect(screen.queryByText(/Play a Free Session/)).not.toBeInTheDocument();
 });
 
