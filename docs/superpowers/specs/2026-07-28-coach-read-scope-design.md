@@ -77,6 +77,65 @@ sessions it averages under four and usually does not.
 
 ---
 
+## The session summary page
+
+Removing the coach block is not by itself enough to fix the summary. Measured at
+390×844 with a 3-miss session:
+
+| | page height | chain button at | fold |
+|---|---|---|---|
+| today | 1814px | y=1640 | 844 |
+| coach block removed | 1549px | y=1375 | 844 |
+
+The coach block is 241px. **`Hands to Review` is 889px** — more than half the
+page. That is what buries "Deal Next Session", and removing the read alone still
+leaves it 531px below the fold. Desktop scrolls too: 1549px against a ~1000px
+viewport.
+
+### Decision: collapse Hands to Review; do NOT move the buttons to the top
+
+Each `HandReview` entry renders full-size — hand, board, skill chip, situation,
+read line, pot, played-vs-recommended. Collapse each to a one-line summary that
+expands on tap, reusing the clamp-and-expand pattern `CoachNotebook` already
+uses. ~889px becomes ~180px, the page drops to roughly 840px, and the chain
+button lands near y=666 — **above the fold, with no sticky bar and no
+reordering.**
+
+**Why this is safe for learning:** the player already received elaborated
+feedback on every one of these hands *during* the session, and the resurface
+ladder (F3/R1) is what actually drives relearning. This list is a third
+exposure and a recap, not the teaching moment. Collapsing preserves access on
+tap while removing the bulk.
+
+**Why not buttons at the top:** it would place the chain CTA above both the
+reward cluster and the review list. Players would tap it immediately and see
+neither — trading the entire reward moment and the review surface to save a
+scroll. The existing comment in `SessionSummary.jsx` is right that chaining is
+the primary action; the fix is to shorten the page, not to promote the button
+past everything the page exists to show.
+
+**Fallback if the review list is left alone:** a sticky bottom bar for the
+primary action, per the CA-038 precedent that made `.sc2-actions` sticky on
+mobile for this identical failure. It works, but it patches over a page that is
+simply too long.
+
+**Free improvement:** with the read gone, the top cluster becomes contiguous —
+score → streak → Poker IQ delta currently has the read wedged into its middle
+and reads as one coherent "how did I do" group once removed. No reordering
+required.
+
+**Ratchet:** an e2e fold guard at 390×844 asserting the chain button's top is
+above the fold on the summary, in the spirit of `mobilefold.spec.mjs`. This is
+the check that stops the page silently growing back — every future addition to
+the summary has to answer to it.
+
+`SessionSummary.jsx` is 283 lines and shrinks under this change (the coach block
+is ~40 lines; collapse state adds a few). No line budget applies to it — it is
+not under `dashboard/` or `scenario/` — but `HandReview` is a self-contained
+~55-line component inside it and is the natural extraction if it ever grows.
+
+---
+
 ## The recent-form strip
 
 ### Sample-size discipline
@@ -311,6 +370,8 @@ founder's actual complaint. Phase B carries all of it.**
 
 - Delete the coach block from `SessionSummary.jsx`; invert the
   `smoke.spec.mjs:40` assertion into the negative control.
+- Collapse `Hands to Review` to clamp-and-expand rows, so the chain button
+  clears the fold (see "The session summary page"); add the fold guard.
 - Build `utils/recentForm.js` and `dashboard/RecentForm.jsx`; derive
   `recentSessions`; render the strip.
 - **Reads keep being written exactly as they are today**, once per session, and
@@ -346,7 +407,9 @@ the product is still strictly better than it is today.
 | `src/utils/coachRead.js` | `COACH_READS_CAP` 30 → 12 |
 | `src/utils/recentForm.js` | **new** — derivation + ≥5-attempt gate |
 | `src/hooks/useSessionRun.js` | no read on the summary path |
-| `src/components/SessionSummary.jsx` | coach block removed |
+| `src/components/SessionSummary.jsx` | coach block removed; `HandReview` collapses to clamp-and-expand |
+| `src/App.css` | `ss-hr-*` clamp/expand styles |
+| `e2e/mobilefold.spec.mjs` | fold guard: summary chain button above the fold at 390×844 |
 | `src/components/dashboard/LastSessionRead.jsx` | re-scoped to the meta-read; label and focus-chip copy |
 | `src/components/dashboard/RecentForm.jsx` | **new** |
 | `src/components/Dashboard.jsx` | render the strip (~6 of 31 remaining lines) |
