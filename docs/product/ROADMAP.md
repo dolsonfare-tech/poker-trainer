@@ -143,16 +143,36 @@ Launch free, no ads. Pro tier via subscription when scope is locked. Headline fr
 Recorded here rather than lost in a chat log. Each one is blocked on a judgement
 call, not on work.
 
-1. **Collapse `UsernameEntry`?** A new signed-in user passes two screens before
-   the dashboard: SignIn, then pick-a-display-name. Guests skip the second
-   entirely. UsernameEntry is not purely decorative — it also carries the
-   pre-Supabase history migration and the "Not you?" account-switch escape
-   hatch added after a live dead-session incident (July 6).
-   **The trap:** auto-deriving a name from the email looks free because the
-   dashboard already has inline rename — but renames are capped at one per week
-   (`RENAME_COOLDOWN_MS`). Auto-assign a name someone dislikes and they get one
-   correction, then wait seven days. Collapsing the screen therefore requires
-   relaxing or waiving the first rename.
+1. ~~**Collapse `UsernameEntry`?**~~ **RESOLVED 2026-07-27 — keep the screen.**
+   A new signed-in user passes two screens before the dashboard: SignIn, then
+   pick-a-display-name. Guests skip the second entirely. Three reasons the
+   screen stays:
+   - It is not a name field, it is the only exit from `authPhase === 'noprofile'`.
+     `onSwitchAccount` (`App.jsx:256`) is the sole route back to SignIn from that
+     state, and it exists because the founder was walled in with a dead session
+     live on July 6. The screen also hosts the pre-Supabase history migration
+     hand-off (`const local = cacheOwner() ? null : loadUser()`, `App.jsx:201`).
+     Collapsing forces both to be re-homed, and the escape hatch has nowhere to go.
+   - The display name is identity-bearing (dashboard) and is the handle a
+     friends-leaderboard would use. An email-derived `dc93olson` is a worse first
+     impression than a three-second autofocused field.
+   - The cost is one field, once per account lifetime, **after** the user already
+     cleared the real funnel gate (magic link / OAuth). Sign-in is where people
+     leave; a name prompt behind an authed wall is not the leak.
+
+   **Correction to the original framing:** this entry previously claimed
+   collapsing "requires relaxing or waiving the first rename." It does not. The
+   DB trigger (`supabase/schema.sql:130–150`) leaves `username_changed_at` null
+   after INSERT and only starts the clock on the first *update*, so the first
+   correction is already free. The real trap is narrower: a **typo in that
+   correction** locks the player out for seven days. Don't re-price this option
+   as needing a schema change.
+
+   **Cheap alternative if funnel friction ever needs attacking:** prefill the
+   input with a sanitized suggestion from the email local-part, making the screen
+   one tap instead of typing. `defaultName` already exists (`App.jsx:305`) for the
+   local-cache case. No schema change, no cooldown exposure, migration and escape
+   hatch untouched. Not built — deliberately available.
 
 2. **`sc_098`: is `call` graded too harshly?** It is `incorrect`; with position
    and 100bb, calling QJs vs a nit's UTG open is defensible enough that
