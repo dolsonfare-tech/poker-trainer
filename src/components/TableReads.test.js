@@ -167,3 +167,51 @@ test('legacy stats object (no new fields) loads with safe defaults', () => {
   // And it deals a valid session without throwing
   expect(dealObservations(OBSERVATIONS, stats)).toHaveLength(5);
 });
+
+// ── Re-deal (CA-049, Wave 4) ──────────────────────────────────────────────
+// `handleAgain` was the last uncovered block in this file. It resets six pieces
+// of state at once; a missed reset is the classic chained-session bug — the
+// second read starting on hand 3, or scored against the first deck's results.
+test('“Read Another Table” fully resets the run, not just the deck', () => {
+  render(<TableReads onBack={() => {}} />);
+
+  const playThrough = () => {
+    for (let i = 0; i < 5; i++) {
+      act(() => { fireEvent.click(document.querySelectorAll('.tr-chip')[0]); });
+      act(() => { fireEvent.click(screen.getByText(i < 4 ? 'Next Hand →' : 'See My Reads →')); });
+    }
+  };
+
+  playThrough();
+  expect(screen.getByText(/All time: \d+ of 5 reads/)).toBeInTheDocument();
+
+  act(() => { fireEvent.click(screen.getByText('Read Another Table →')); });
+
+  // Back to hand 1 with a live board and no carried-over pick.
+  expect(screen.getByText('Hand 1 of 5')).toBeInTheDocument();
+  expect(document.querySelectorAll('.tr-chip')).toHaveLength(4);
+  expect(document.querySelector('.tr-tell')).not.toBeInTheDocument();
+
+  // …and the second run scores out of 5 again rather than accumulating to 10.
+  playThrough();
+  expect(screen.getByText(/All time: \d+ of 10 reads/)).toBeInTheDocument();
+  expect(screen.getByText(/players identified/).textContent).toMatch(/\d+ \/ 5/);
+});
+
+test('tapping the replay skips straight to the full hand', () => {
+  // Non-reduced-motion: the replay reveals row by row, so a player who does not
+  // want to wait can tap to see everything at once.
+  window.matchMedia = jest.fn().mockReturnValue({ matches: false });
+  render(<TableReads onBack={() => {}} />);
+
+  const before = document.querySelectorAll('.tr-row').length;
+  expect(document.querySelector('.tr-skip-hint')).toBeInTheDocument();
+
+  act(() => { fireEvent.click(document.querySelector('.tr-replay')); });
+
+  const after = document.querySelectorAll('.tr-row').length;
+  expect(after).toBeGreaterThan(before);
+  expect(document.querySelector('.tr-skip-hint')).not.toBeInTheDocument();
+  // Chips only appear once the hand is fully revealed (closed-book while it plays).
+  expect(document.querySelectorAll('.tr-chip')).toHaveLength(4);
+});

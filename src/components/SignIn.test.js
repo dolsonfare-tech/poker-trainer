@@ -22,7 +22,10 @@ jest.mock('../utils/supabase', () => ({
   },
 }));
 
+jest.mock('../utils/analytics', () => ({ track: jest.fn() }));
+
 import SignIn from './SignIn';
+import { track } from '../utils/analytics';
 
 beforeEach(() => {
   mockSignInWithOtp = jest.fn().mockResolvedValue({ error: null });
@@ -31,6 +34,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete process.env.REACT_APP_SITE_URL;
+  delete process.env.REACT_APP_GOOGLE_AUTH;
 });
 
 test('with onGuestPlay, sign-in is hidden until the reveal link is clicked', () => {
@@ -112,8 +116,11 @@ test('magic-link falls back to window.location.origin when REACT_APP_SITE_URL is
 });
 
 // CA-003 source pin: both call sites reference the same SITE_URL constant.
-// The Google OAuth path is flag-gated (REACT_APP_GOOGLE_AUTH=1) so we verify
-// the implementation by reading the source rather than driving the button.
+// This stays as a source pin even though the Google button IS now driven
+// directly (see the failure-branch tests below, which re-require the module
+// with REACT_APP_GOOGLE_AUTH=1): the behavioural tests assert what the user
+// sees on failure, while this asserts that neither call site drifts back to
+// hard-coding window.location.origin — a change no rendering test would catch.
 test('source pin: both redirect options reference SITE_URL, not window.location.origin directly', () => {
   const fs = require('fs');
   const path = require('path');
@@ -131,4 +138,82 @@ test('source pin: both redirect options reference SITE_URL, not window.location.
   const oauthMatch = src.match(/signInWithOAuth[\s\S]*?redirectTo:\s*([^\n,}]+)/);
   expect(oauthMatch).not.toBeNull();
   expect(oauthMatch[1].trim()).toBe('SITE_URL');
+});
+
+// ── Failure branches (CA-049, Wave 4) ─────────────────────────────────────
+// Lines 40-41 and 49-56 were uncovered: every path where auth says no. This is
+// the first screen a stranger sees, and a silent failure here reads as "the
+// site is broken" with nothing to act on.
+test('a rejected magic link surfaces the reason and is tracked', async () => {
+  mockSignInWithOtp = jest.fn().mockResolvedValue({
+    error: { message: 'Email rate limit exceeded' },
+  });
+  render(<SignIn />);
+  fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
+    target: { value: 'test@example.com' },
+  });
+  await act(async () => {
+    fireEvent.submit(screen.getByRole('button', { name: /Email me a sign-in link/ }));
+  });
+
+  expect(screen.getByText('Email rate limit exceeded')).toBeInTheDocument();
+  expect(track).toHaveBeenCalledWith('sign_in_link_error', { message: 'Email rate limit exceeded' });
+  // The "check your inbox" confirmation must NOT appear — nothing was sent.
+  expect(screen.queryByText(/check your (inbox|email)/i)).not.toBeInTheDocument();
+});
+
+test('the form re-enables after a failure so the player can retry', async () => {
+  mockSignInWithOtp = jest.fn().mockResolvedValue({ error: { message: 'nope' } });
+  render(<SignIn />);
+  fireEvent.change(screen.getByPlaceholderText('you@example.com'), {
+    target: { value: 'test@example.com' },
+  });
+  await act(async () => {
+    fireEvent.submit(screen.getByRole('button', { name: /Email me a sign-in link/ }));
+  });
+  expect(screen.getByRole('button', { name: /Email me a sign-in link/ })).toBeEnabled();
+});
+
+// The Google button is behind REACT_APP_GOOGLE_AUTH=1, evaluated at module
+// scope, so the module must be re-required with the flag set (same pattern the
+// SITE_URL test above uses).
+const renderWithGoogle = () => {
+  process.env.REACT_APP_GOOGLE_AUTH = '1';
+  let Fresh;
+  jest.isolateModules(() => {
+    jest.doMock('react', () => React);
+    Fresh = require('./SignIn').default;
+  });
+  jest.dontMock('react');
+  return render(<Fresh />);
+};
+
+test('a provider that is not switched on yet reads as "coming soon", not as an error', async () => {
+  // Supabase returns "Unsupported provider: provider is not enabled" when the
+  // Google provider is off in the dashboard. Showing that raw string to a
+  // player blames them for a configuration state they cannot see.
+  mockSignInWithOAuth = jest.fn().mockResolvedValue({
+    error: { message: 'Unsupported provider: provider is not enabled' },
+  });
+  renderWithGoogle();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Google/i }));
+  });
+
+  expect(screen.getByText(/Google sign-in is coming soon/)).toBeInTheDocument();
+  expect(screen.queryByText(/Unsupported provider/)).not.toBeInTheDocument();
+  expect(track).toHaveBeenCalledWith('google_sign_in_clicked');
+});
+
+test('a genuine Google failure shows the real reason rather than "coming soon"', async () => {
+  mockSignInWithOAuth = jest.fn().mockResolvedValue({
+    error: { message: 'Network request failed' },
+  });
+  renderWithGoogle();
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: /Google/i }));
+  });
+
+  expect(screen.getByText('Network request failed')).toBeInTheDocument();
+  expect(screen.queryByText(/coming soon/)).not.toBeInTheDocument();
 });

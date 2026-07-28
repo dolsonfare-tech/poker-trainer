@@ -7,7 +7,11 @@ import { track } from '../utils/analytics';
 // Quiet line under the analysis that expands into fixed-response chips —
 // testers flag a grading in one tap instead of screenshotting it for later.
 // Keys must match the check constraint on scenario_feedback in schema.sql.
-const DISAGREE_REASONS = [
+// Exported so FeedbackPanel.test.js can hold these keys against the CHECK
+// constraint in supabase/schema.sql. A chip added here without the matching
+// migration inserts a value the DB rejects — every flag of that reason 400s in
+// production while the UI still says "Logged — thanks."
+export const DISAGREE_REASONS = [
   ['grading_wrong',   'The graded answer is wrong'],
   ['deserves_credit', 'My answer deserves credit'],
   ['explanation_off', "Explanation doesn't match"],
