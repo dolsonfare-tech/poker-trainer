@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import FeedbackPanel from '../FeedbackPanel';
 import { villainSummary, relationLine } from '../../utils/ticker';
-import { track } from '../../utils/analytics';
 import TimerRing from './TimerRing';
 import StreetBar from './StreetBar';
 import SituationTicker from './SituationTicker';
 import TableCanvas from './TableCanvas';
 import SessionProgress from './SessionProgress';
 import ActionButtons from './ActionButtons';
+import { emitTablePeeked } from '../../utils/events';
 
 // ─── Canvas layout ─────────────────────────────────────────────────────────
 // Top-level compositor for the gameplay canvas — chrome, street bar, felt,
@@ -69,7 +69,7 @@ export default function CanvasLayout({
             <div className={`sc2-overlay${peek ? ' sc2-overlay-peek' : ''}`} aria-hidden={peek}>
               <button
                 className="sc2-peek-btn"
-                onClick={() => { setPeek(true); track('table_peeked', { scenario_id: scenario.id }); }}
+                onClick={() => { setPeek(true); emitTablePeeked(scenario.id); }}
               >
                 👁 Show table
               </button>

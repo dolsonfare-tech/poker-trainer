@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { parseCoachRead } from '../../utils/coachRead';
-import { track } from '../../utils/analytics';
 import { formatShortDate } from '../../utils/dates';
+import { emitCoachNotebookOpened } from '../../utils/events';
 
 // ─── Coach's Notebook ──────────────────────────────────────────────────────
 // The latest Coach's Read lives in the strip above; every prior read is kept in
@@ -22,7 +22,7 @@ export default function CoachNotebook({ reads, includeLatest = false }) {
   const toggle = () => {
     const next = !open;
     setOpen(next);
-    if (next) track('coach_notebook_opened', { reads: past.length });
+    if (next) emitCoachNotebookOpened(past.length);
   };
 
   return (

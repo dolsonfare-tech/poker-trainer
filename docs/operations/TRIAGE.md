@@ -47,7 +47,11 @@ check behind is a triage failure, not a fix.
 
 ## PostHog event catalog
 
-Every `track(` call in src, verified by grep (July 27, 2026 — file paths
+Every event in `src/utils/events.js`, which since MOD-011 (July 27, 2026) is the
+only place a name or prop shape is written. **The "Fired from" column names the
+surface that calls the EMITTER, not events.js** — invariants rule 24 resolves
+that hop and fails if this table drifts, so the column keeps meaning what it
+always meant. Verified by grep (July 27, 2026 — file paths
 re-checked after the Wave 2 component splits moved seven of them, and again
 on July 27 when Wave 3's useSessionRun took the three session events). `track`/`identify`/
 `resetAnalytics` live ONLY in `src/utils/analytics.js` (invariants rule 3);

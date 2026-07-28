@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GUEST_GATE_CTA } from '../data/constants';
 import { streakAlive } from '../utils/streak';
-import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import useCountUp from '../hooks/useCountUp';
 import AdSlot from './AdSlot';
@@ -12,6 +11,7 @@ import SkillLedger from './dashboard/SkillLedger';
 import LastSessionRead from './dashboard/LastSessionRead';
 import BetaFeedback from './dashboard/BetaFeedback';
 import UsernameEditor from './dashboard/UsernameEditor';
+import { emitGoProClicked, emitUsernameEditOpened } from '../utils/events';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 // Layout skeleton only. Every self-contained section lives in
@@ -53,7 +53,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   // honest about it. Wire real upgrade flow here when the tier ships.
   const [proTeased, setProTeased] = useState(false);
   const teasePro = () => {
-    track('go_pro_clicked');
+    emitGoProClicked();
     setProTeased(true);
     setTimeout(() => setProTeased(false), 2500);
   };
@@ -93,7 +93,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
               className="db-name-edit"
               title="Edit username"
               aria-label="Edit username"
-              onClick={() => { setEditingName(true); track('username_edit_opened'); }}
+              onClick={() => { setEditingName(true); emitUsernameEditOpened(); }}
             >
               ✎
             </button>

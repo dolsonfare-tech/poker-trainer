@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { RENAME_COOLDOWN_MS } from '../../utils/session';
-import { track } from '../../utils/analytics';
 import { formatShortDate } from '../../utils/dates';
+import { emitUsernameChangeFailed, emitUsernameChanged } from '../../utils/events';
 
 // ─── Username editor ──────────────────────────────────────────────────────
 // Inline in the topbar, opened from the ✎ next to the account pill. Same
@@ -38,12 +38,12 @@ export default function UsernameEditor({ user, onRename, onClose }) {
     setBusy(true);
     try {
       await onRename(trimmed);
-      track('username_changed');
+      emitUsernameChanged();
       onClose();
     } catch (err) {
       console.error('Username change failed', err);
       const rateLimited = err?.code === 'rate_limited';
-      track('username_change_failed', { reason: rateLimited ? 'rate_limited' : 'error' });
+      emitUsernameChangeFailed(rateLimited ? 'rate_limited' : 'error');
       setError(rateLimited
         ? 'Name changes are limited to once a week.'
         : "Couldn't save — check your connection and try again.");

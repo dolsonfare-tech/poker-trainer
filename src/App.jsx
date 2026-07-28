@@ -5,7 +5,6 @@ import { useAuthSession } from './hooks/useAuthSession';
 import { useSessionRun, TIMER_SECONDS } from './hooks/useSessionRun';
 import { useGuest, GUEST_NAME } from './hooks/useGuest';
 import { hasSupabase } from './utils/supabase';
-import { track } from './utils/analytics';
 import ScenarioCard from './components/ScenarioCard';
 import SessionSummary from './components/SessionSummary';
 import VillainGuide from './components/VillainGuide';
@@ -14,6 +13,7 @@ import Dashboard from './components/Dashboard';
 import TableReads from './components/TableReads';
 import UsernameEntry from './components/UsernameEntry';
 import SignIn from './components/SignIn';
+import { emitSchemaGuideOpened, emitVillainGuideOpened } from './utils/events';
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 // Deal via the session builder (utils/spacedrep.js): unseen scenarios first,
@@ -170,7 +170,7 @@ export default function App() {
           onGuestSignIn={handleGuestSignIn}
           onTableReads={!isGuest ? handleOpenTableReads : undefined}
           onSchemaInfo={(name) => {
-            track('schema_guide_opened', { schema: name });
+            emitSchemaGuideOpened(name);
             setGuide({ focus: name, tab: 'schemas' });
           }}
         />
@@ -180,7 +180,7 @@ export default function App() {
         <TableReads
           onBack={() => setScreen('dashboard')}
           onOpenGuide={(label) => {
-            track('villain_guide_opened', { from: 'tablereads' });
+            emitVillainGuideOpened({ from: 'tablereads' });
             setGuide({ focus: label });
           }}
         />
@@ -231,7 +231,7 @@ export default function App() {
                 onNext={handleNext}
                 nextLabel={currentIndex < shuffledScenarios.length - 1 ? 'Next Hand →' : 'See My Results →'}
                 onVillainInfo={(label) => {
-                  track('villain_guide_opened', { from: 'table', scenario_id: scenario.id });
+                  emitVillainGuideOpened({ from: 'table', scenarioId: scenario.id });
                   setGuide({ focus: label });
                 }}
               />

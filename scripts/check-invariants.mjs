@@ -549,11 +549,38 @@ onlyIn('count-up', /(?:function\s+useCountUp\s*\(|const\s+useCountUp\s*=)/,
 
     // (b) + (c) The event catalog must list exactly the events that exist, and
     // point at the file each one actually fires from.
+    //
+    // Since MOD-011 every track() literal lives in utils/events.js, so scanning
+    // for track('name') would report all 32 events as firing from events.js and
+    // collapse the catalog's most useful column to a constant. Resolve one hop
+    // further instead: events.js maps emitter -> event name, and the emitter's
+    // CALL SITES are the surfaces the triage drill actually needs to find. The
+    // column keeps meaning the same thing it always did.
+    const eventsRel = 'src/utils/events.js';
+    const eventsSrc = read(join(ROOT, eventsRel));
+    const emitterOf = new Map();                       // emitter name -> event
+    for (const chunk of eventsSrc.split(/\nexport /).slice(1)) {
+      const name = chunk.match(/^(?:const|function)\s+(emit\w+)/)?.[1];
+      const ev = chunk.match(/track\(\s*'([a-z_]+)'/)?.[1];
+      if (name && ev) emitterOf.set(name, ev);
+    }
+    // Self-check: if this parse silently stops matching (a formatting change, a
+    // renamed helper) the whole rule would pass vacuously while protecting
+    // nothing — the exact failure mode a source-scanning gate is prone to.
+    const literalCount = new Set([...eventsSrc.matchAll(/track\(\s*'([a-z_]+)'/g)]
+      .map(m => m[1])).size;
+    if (emitterOf.size !== literalCount)
+      flag('ERROR', 'triage-doc',
+        `events.js parse mismatch: ${emitterOf.size} emitters resolved but ${literalCount} distinct event literals present — the catalog check cannot be trusted until this agrees`);
+
     const codeEvents = new Map();
     for (const f of srcNonTest) {
-      for (const m of read(f).matchAll(/track\(\s*'([a-z_]+)'/g)) {
-        if (!codeEvents.has(m[1])) codeEvents.set(m[1], []);
-        codeEvents.get(m[1]).push(rel(f).replace(/^src\//, ''));
+      if (rel(f) === eventsRel) continue;              // the registry is not a caller
+      const src = read(f);
+      for (const [emitter, ev] of emitterOf) {
+        if (!new RegExp(`\\b${emitter}\\s*\\(`).test(src)) continue;
+        if (!codeEvents.has(ev)) codeEvents.set(ev, []);
+        codeEvents.get(ev).push(rel(f).replace(/^src\//, ''));
       }
     }
     const docRows = [...triage.matchAll(/^\| `([a-z_]+)` \| (.*?) \| (.*?) \|\s*$/gm)];
@@ -635,6 +662,18 @@ onlyIn('dates-owner',
   /(?:function\s+(?:toLocalDateString|localDateFrom|formatShortDate)\s*\(|const\s+(?:toLocalDateString|localDateFrom|formatShortDate)\s*=)/,
   ['src/utils/dates.js'], srcNonTest,
   'local date formatting is single-sourced in src/utils/dates.js (CA-028/CA-037) — import it instead of redefining');
+
+// ── 28. Event names live only in events.js (MOD-011 / CA-033) ───────────
+// Rule 3 already owns the posthog-js LIBRARY. This extends the same ownership
+// to the SHAPE layer: a name and its prop bag are written once, in one file.
+//
+// PostHog has no schema. A mistyped name does not error — it opens a new,
+// empty series while the funnel it was meant to feed silently flatlines, and
+// the data cannot be re-collected afterwards. That is the whole reason the
+// registry exists, so nothing outside it may name an event.
+onlyIn('event-names', /track\(\s*'[a-z_]+'/,
+  ['src/utils/events.js'], srcNonTest,
+  'PostHog event names are single-sourced in src/utils/events.js — import an emitter (emitDecisionMade, …) instead of calling track() with a literal');
 
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');

@@ -130,7 +130,9 @@ Each wave ships independently with all Definition-of-Done gates green before the
 ### Wave 4 — Platform (unblocked after Wave 3)
 
 **Items (ordered):**
-1. MOD-011 `events.js` registry (CA-033) — typed emitters; invariant rule that event-name string literals appear only in `events.js`.
+1. ✅ **DONE 2026-07-27** — MOD-011 `events.js` registry (CA-033). 32 events, 38 call sites across 14 files, one emitter each. Rule 28 (`event-names`) makes a `track('literal')` outside `events.js` a build error.
+   **The non-obvious part:** centralising `track()` would have gutted rule 24 (`triage-doc`), which finds the file each event fires from by grepping for `track('name')` — after the move every event would report `utils/events.js` and the catalog's most operationally useful column would become a constant. Rule 24 now resolves one hop further (events.js maps emitter → event; the emitter's CALL SITES are the surfaces), so TRIAGE.md needed no row changes and the column still means what it always meant. A parse self-check fails loudly if that resolution ever stops matching, rather than passing vacuously.
+   **Preserved deliberately:** `decision_made` still omits `decision_ms` on a timeout. The two call sites had drifted, which is what CA-033 found — but the fix is to state the asymmetry in one place, not to erase it. Emitting the full timer would make 'ran out of time' indistinguishable from 'answered at the buzzer' in the comprehension heatmap. Changing it is a data-semantics decision, not a refactor.
 2. MOD-013 `scenarios/` batch split (CA-034) paired with CA-014 lazy-load — `import('./data/scenarios')` behind "Start Session"; `SCENARIO_BY_ID` for the login path extracted into a companion `scenario-ids.js` in the main bundle.
 3. CA-022 route-level code splitting — `React.lazy()` + `<Suspense>` for `TableReads`, `VillainGuide`; optionally `SessionSummary`.
 4. Trust-boundary design (CA-001 + CA-006 + CA-012) — `fn_record_session` Postgres function; drop client-writable `streak`/`rebuys`/`poker_score`; validate `migrateUser` shape — required before leaderboard or purchasable Rebuys ship.

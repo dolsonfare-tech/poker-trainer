@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { track } from '../../utils/analytics';
 import { hasSupabase } from '../../utils/supabase';
 import { submitFeedback } from '../../utils/db';
+import { emitFeedbackOpened, emitFeedbackSubmitFailed, emitFeedbackSubmitted } from '../../utils/events';
 
 // ─── Beta feedback ─────────────────────────────────────────────────────────
 // Quiet one-liner at the dashboard bottom that expands into a category +
@@ -31,11 +31,11 @@ export default function BetaFeedback() {
     setError('');
     try {
       if (hasSupabase) await submitFeedback(category, text.trim());
-      track('feedback_submitted', { category, length: text.trim().length });
+      emitFeedbackSubmitted({ category, length: text.trim().length });
       setStatus('sent');
     } catch (err) {
       console.error('Feedback failed', err);
-      track('feedback_submit_failed');
+      emitFeedbackSubmitFailed();
       setError("Couldn't send — check your connection and try again.");
       setStatus('error');
     }
@@ -52,7 +52,7 @@ export default function BetaFeedback() {
   return (
     <div className="db-beta">
       {!open ? (
-        <button className="db-beta-toggle" onClick={() => { setOpen(true); track('feedback_opened'); }}>
+        <button className="db-beta-toggle" onClick={() => { setOpen(true); emitFeedbackOpened(); }}>
           <span className="db-beta-chip">Beta</span>
           Something broken, boring, or brilliant? Tell us →
         </button>

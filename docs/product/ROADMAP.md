@@ -93,7 +93,11 @@ Sequenced in `docs/architecture/TARGET_ARCHITECTURE.md`. High-level order:
   **The one shared piece:** `guestRef` is owned by `App` (the composition root), not by either hook — useGuest needs `authPhase` from useAuthSession, and useAuthSession's listener needs the ref, so either ownership creates a cycle. It also can't collapse into `authPhase === 'guest'`: the guest handlers write it synchronously, and a state read inside the listener closure lags by a render — which is the exact window the "guest stomped back to SignIn" bug lives in.
   **Ratchets left:** `useGuest.test.js` (12 cases) and `useAuthSession.test.js` (10 cases — the deferred-`setTimeout` deadlock workaround, `invalid_session` recovery, and the error-vs-noprofile split now have behavioural tests, not just the invariants pattern-match).
   **SKIPPED — MOD-014 contexts.** They existed to remove three hops of prop-drilling for `onVillainInfo`. With the real component graph in front of us, React context adds indirection and a re-render surface for no meaningful gain. Not deferred — declined.
-- **Wave 4 (after Wave 3):** `events.js` typed emitters; scenarios batch split + lazy-load; trust-boundary Postgres functions (required before leaderboard or purchasable Rebuys); test expansion (VillainGuide, DisagreeBox, TableReads e2e).
+- **Wave 4 — IN PROGRESS.** Re-sequenced by what each item actually blocks rather than shipped as one wave:
+  - ✅ **Test expansion (CA-049 + CA-050) — DONE 2026-07-27.** The only pre-LAUNCH item. jest 398 → 433 (FeedbackPanel 33% → 96%, VillainGuide 62% → 96%, SignIn 75% → 100%); e2e 64 → 126 checks across 3 new specs (tablereads, villainguide, disagree).
+  - ✅ **`events.js` registry (MOD-011 / CA-033) — DONE 2026-07-27.** Ahead of the paid playtest: 32 events were composed inline at 38 call sites, and a typo in a name is a silently empty funnel whose data cannot be re-collected.
+  - ⏳ **Scenarios batch split + lazy-load (CA-014 / CA-034 / CA-022).** ~139 KB of unused JS at cold start; the main driver of mobile Lighthouse 63. Wanted before paid acquisition, not before launch.
+  - 🅿️ **Trust boundary (CA-001 / CA-006 / CA-012) — PARKED until Pro is real.** P1, but abuse is self-only while the numbers are private; it blocks the leaderboard and purchasable Rebuys, neither of which exists.
 
 P1 security items before Pro/leaderboard: CA-001 (client-writable integrity fields), CA-002 (CI permissions stanza), CA-006 (hostile localStorage seed), CA-012 (migrateUser shape validation). See full findings in `docs/audit/2026-07-25-cohesion-audit.md`.
 

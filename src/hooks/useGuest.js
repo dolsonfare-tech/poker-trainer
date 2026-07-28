@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { loadUser, saveUser, clearUser, cacheOwner } from '../utils/persistence';
 import { createUser } from '../utils/session';
-import { track } from '../utils/analytics';
+import { emitGuestGateSignIn, emitGuestPlayClicked } from '../utils/events';
 
 // ─── useGuest (MOD-002, Wave 3) ────────────────────────────────────────────
 // The unauthenticated free session and the gate that ends it.
@@ -39,7 +39,7 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen, gu
   // "Try a free session" from SignIn: play as an untagged local profile — the
   // exact shape first sign-in already migrates (pre-Supabase tester path).
   const handleGuestPlay = useCallback(() => {
-    track('guest_play_clicked');
+    emitGuestPlayClicked();
     const existing = cacheOwner() ? null : loadUser();
     const guest = existing ?? createUser(GUEST_NAME);
     if (!existing) {
@@ -64,7 +64,7 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen, gu
   // Guest → SignIn (gate hit, or they chose to sign in). Progress stays in the
   // untagged cache and migrates on account creation.
   const handleGuestSignIn = useCallback((from) => {
-    track('guest_gate_signin', { from });
+    emitGuestGateSignIn(from);
     guestRef.current = false;
     setScreen('dashboard');
     setAuthPhase('signedout');

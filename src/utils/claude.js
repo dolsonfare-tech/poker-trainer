@@ -1,6 +1,6 @@
 import { supabase, hasSupabase } from './supabase';
-import { track } from './analytics';
 import { CONFIDENT_MISS_MS } from './spacedrep';
+import { emitCoachReadFailed, emitCoachReadOk } from './events';
 
 export async function fetchCoachRead(sessionHistory) {
   // One entry per hand actually played, with the per-hand result — NOT the
@@ -48,27 +48,27 @@ export async function fetchCoachRead(sessionHistory) {
       body: JSON.stringify({ decisionsPlayed }),
     });
   } catch (err) {
-    track('coach_read_failed', { reason: 'network' });
+    emitCoachReadFailed('network');
     throw err;
   }
 
   if (res.status === 429) {
     // Daily cap (DAILY_LIMIT in api/coach-read.js) — surfaced honestly in the
     // summary instead of the generic fallback, which reads as a broken feature.
-    track('coach_read_failed', { reason: 'daily_limit' });
+    emitCoachReadFailed('daily_limit');
     const err = new Error('Daily coach limit reached');
     err.code = 'daily_limit';
     throw err;
   }
   if (!res.ok) {
-    track('coach_read_failed', { reason: 'http', status: res.status });
+    emitCoachReadFailed('http', res.status);
     return '';
   }
   const data = await res.json();
   if (!data.text) {
-    track('coach_read_failed', { reason: 'empty_response' });
+    emitCoachReadFailed('empty_response');
     return '';
   }
-  track('coach_read_ok');
+  emitCoachReadOk();
   return data.text;
 }

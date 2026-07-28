@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { hasSupabase } from '../utils/supabase';
 import { submitScenarioFeedback } from '../utils/db';
-import { track } from '../utils/analytics';
+import { emitScenarioDisagreeFailed, emitScenarioDisagreeOpened, emitScenarioDisagreeSubmitted } from '../utils/events';
 
 // ─── Disagree box ───────────────────────────────────────────────────────────
 // Quiet line under the analysis that expands into fixed-response chips —
@@ -27,11 +27,11 @@ function DisagreeBox({ scenarioId, choice, result }) {
     setStatus('sending');
     try {
       if (hasSupabase) await submitScenarioFeedback({ scenarioId, choice, result, reason });
-      track('scenario_disagree_submitted', { scenario_id: scenarioId, reason, result });
+      emitScenarioDisagreeSubmitted({ scenarioId, reason, result });
       setStatus('sent');
     } catch (err) {
       console.error('Scenario feedback failed', err);
-      track('scenario_disagree_failed', { scenario_id: scenarioId });
+      emitScenarioDisagreeFailed(scenarioId);
       setStatus('error');
     }
   };
@@ -49,7 +49,7 @@ function DisagreeBox({ scenarioId, choice, result }) {
       {!open ? (
         <button
           className="fb-disagree-toggle"
-          onClick={() => { setOpen(true); track('scenario_disagree_opened', { scenario_id: scenarioId, result }); }}
+          onClick={() => { setOpen(true); emitScenarioDisagreeOpened({ scenarioId, result }); }}
         >
           Disagree? Let us know if we have this wrong
         </button>

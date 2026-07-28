@@ -3,8 +3,9 @@ import { supabase, hasSupabase } from '../utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, updateDisplayName } from '../utils/db';
 import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner } from '../utils/persistence';
 import { createUser, RENAME_COOLDOWN_MS } from '../utils/session';
-import { track, identify, resetAnalytics } from '../utils/analytics';
+import { identify, resetAnalytics } from '../utils/analytics';
 import { setSentryUser, clearSentryUser } from '../utils/sentry';
+import { emitProfileCreated, emitProfileLoadFailed, emitSignedIn, emitStaleSessionCleared } from '../utils/events';
 
 // ─── useAuthSession (MOD-002, Wave 3) ──────────────────────────────────────
 // Who the player is: the auth listener, the profile that follows from it, and
@@ -65,7 +66,7 @@ export function useAuthSession({ guestRef }) {
       }
       identify(session.user.id);
       setSentryUser(session.user.id);
-      if (event === 'SIGNED_IN') track('signed_in');
+      if (event === 'SIGNED_IN') emitSignedIn();
       const uid = session.user.id;
       if (loadedUidRef.current === uid) return;
       // Deferred past the callback — see note 1 in the header. Supabase docs:
@@ -89,13 +90,13 @@ export function useAuthSession({ guestRef }) {
           if (err?.code === 'invalid_session') {
             // Stale/revoked session — see note 2. Local scope: the server
             // already rejects the session, nothing to revoke there.
-            track('stale_session_cleared');
+            emitStaleSessionCleared();
             await supabase.auth.signOut({ scope: 'local' });
             if (active) setAuthPhase('signedout');
             return;
           }
           // See note 3: a generic failure is 'error', never 'noprofile'.
-          track('profile_load_failed', { message: err?.message });
+          emitProfileLoadFailed(err?.message);
           if (active) setAuthPhase('error');
         }
       }, 0);
@@ -124,7 +125,7 @@ export function useAuthSession({ guestRef }) {
       // spurious "couldn't save" error.
       if (loadedUidRef.current) setCacheOwner(loadedUidRef.current);
       setAuthPhase('ready');
-      track('profile_created');
+      emitProfileCreated();
     } else {
       const newUser = createUser(username);
       setUser(newUser);

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import OBSERVATIONS, { ARCHETYPE_LABELS } from '../data/observations';
 import { loadTableReadsStats, saveTableReadsStats } from '../utils/persistence';
-import { track } from '../utils/analytics';
 import { shuffle } from '../utils/random';
+import { emitTableReadsAnswered, emitTableReadsCompleted, emitTableReadsStarted } from '../utils/events';
 
 // Table Reads — the inverse trainer: watch the hand, name the player.
 // Design + authored content in docs/findings/TABLE_READS_DESIGN.md. Mode-local scoring
@@ -74,7 +74,7 @@ export default function TableReads({ onBack, onOpenGuide }) {
   );
 
   useEffect(() => {
-    track('table_reads_started', { lifetime_attempts: loadTableReadsStats().attempts });
+    emitTableReadsStarted({ lifetimeAttempts: loadTableReadsStats().attempts });
   }, []);
 
   // Remember the just-dealt deck so the next (chained) session avoids repeats.
@@ -110,12 +110,12 @@ export default function TableReads({ onBack, onOpenGuide }) {
     };
     setLifetime(next);
     saveTableReadsStats(next);
-    track('table_reads_answered', { observation_id: ob.id, picked: key, correct });
+    emitTableReadsAnswered({ observationId: ob.id, picked: key, correct });
   };
 
   const handleNext = () => {
     if (index + 1 >= deck.length) {
-      track('table_reads_completed', { correct: results.filter((r) => r.correct).length, total: results.length });
+      emitTableReadsCompleted({ correct: results.filter((r) => r.correct).length, total: results.length });
       setShowSummary(true);
       return;
     }
@@ -131,7 +131,7 @@ export default function TableReads({ onBack, onOpenGuide }) {
     setResults([]);
     setShowSummary(false);
     setRevealCount(reducedMotion() ? Infinity : 1);
-    track('table_reads_started', { lifetime_attempts: lifetime.attempts, again: true });
+    emitTableReadsStarted({ lifetimeAttempts: lifetime.attempts, again: true });
   };
 
   if (showSummary) {

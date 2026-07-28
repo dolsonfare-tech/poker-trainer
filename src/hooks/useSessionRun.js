@@ -4,7 +4,7 @@ import { saveLastDifficulty } from '../utils/persistence';
 import { submitSession, buildSessionDelta } from '../utils/session';
 import { hasSupabase } from '../utils/supabase';
 import { saveRemoteUser, recordSession } from '../utils/db';
-import { track } from '../utils/analytics';
+import { emitDecisionMade, emitSessionCompleted, emitSessionStarted } from '../utils/events';
 
 // ─── useSessionRun (MOD-002, Wave 3) ───────────────────────────────────────
 // Everything about ONE run of hands: the deal, the per-hand decision loop, the
@@ -68,7 +68,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     // A timeout froze on the decision — slow-wrong, the opposite of a confident
     // miss — so decisionMs is null, never counted as a fast error.
     appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect', decisionMs: null });
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true, replay: !!scenario.replay });
+    emitDecisionMade({ scenarioId: scenario.id, skill: scenario.skill, result: 'incorrect', timedOut: true, replay: !!scenario.replay });
     setCombo(0);
     const correctGrading = scenario.grading[scenario.correct];
     setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct, choice: null });
@@ -98,7 +98,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     setSessionDelta(null);
     setScreen('session');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    track('session_started', { difficulty: selected, chained, guest: isGuest });
+    emitSessionStarted({ difficulty: selected, chained, guest: isGuest });
   };
 
   const handleDifficultySelect = (selected) => startSession(selected);
@@ -143,7 +143,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     // decision_ms powers the per-scenario comprehension heatmap (July 19, 2026
     // audit): p50 decision time + timeout rate per scenario = the ranked list
     // of spots where players can't parse the situation fast enough.
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay, decision_ms: decisionMs });
+    emitDecisionMade({ scenarioId: scenario.id, skill: scenario.skill, result: gr.g, timedOut: false, replay: !!scenario.replay, decisionMs });
     if (gr.g === 'correct') {
       setCombo(prev => prev + 1);
       setCorrectCount(prev => prev + 1);
@@ -164,7 +164,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
       setSessionDelta(delta);
       const { correct, incorrect } = delta.counts;
       setShowSummary(true);
-      track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length, guest: isGuest });
+      emitSessionCompleted({ difficulty, correct, incorrect, total: sessionHistory.length, guest: isGuest });
       handleFetchCoachRead();
     } else {
       decidedRef.current = false;

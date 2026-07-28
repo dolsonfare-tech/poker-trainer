@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
+import { emitProfileCreateFailed } from '../utils/events';
 
 export default function UsernameEntry({ onSubmit, defaultName, onSwitchAccount }) {
   const [name, setName]   = useState(defaultName ?? '');
@@ -18,7 +18,7 @@ export default function UsernameEntry({ onSubmit, defaultName, onSwitchAccount }
       // Success unmounts this screen — don't touch state after it
     } catch (err) {
       console.error('Profile creation failed', err);
-      track('profile_create_failed', { message: err?.message });
+      emitProfileCreateFailed(err?.message);
       setError("Couldn't save your profile — check your connection and try again.");
       setBusy(false);
     }

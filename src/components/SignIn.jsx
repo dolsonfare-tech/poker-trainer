@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../utils/supabase';
-import { track } from '../utils/analytics';
+import { emitGoogleSignInClicked, emitSignInLinkError, emitSignInLinkSent } from '../utils/events';
 
 // Flip on by setting REACT_APP_GOOGLE_AUTH=1 (env + Vercel) once the Google
 // provider is configured in Supabase. signInWithOAuth navigates away BEFORE
@@ -38,16 +38,16 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
     setBusy(false);
     if (err) {
       setError(err.message);
-      track('sign_in_link_error', { message: err.message });
+      emitSignInLinkError(err.message);
     } else {
       setSent(true);
-      track('sign_in_link_sent');
+      emitSignInLinkSent();
     }
   };
 
   const signInWithGoogle = async () => {
     setError('');
-    track('google_sign_in_clicked');
+    emitGoogleSignInClicked();
     const { error: err } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: SITE_URL },
