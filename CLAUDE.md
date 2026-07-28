@@ -74,7 +74,8 @@ poker-trainer/
 │   └── coach-read.js          ← Vercel serverless function. ONLY code that calls Claude API.
 ├── src/
 │   ├── index.js               ← Entry. Imports sentry.js FIRST (before any crash can occur).
-│   ├── App.jsx                ← Screen router + auth/session orchestration (see Key Decisions).
+│   ├── App.jsx                ← Screen router + hook composition (see Key Decisions).
+│   │                            TableReads + VillainGuide are React.lazy routes (CA-022).
 │   ├── App.css                ← All layout including sc2-* canvas classes.
 │   ├── copy.js                ← Shared UI strings that must move together across surfaces.
 │   ├── components/

@@ -99,7 +99,9 @@ Sequenced in `docs/architecture/TARGET_ARCHITECTURE.md`. High-level order:
   - ✅ **Scenario lazy-load (CA-014) — DONE 2026-07-28.** main.js **353.9 → 261.7 KB gzip (−26%)**; the 172-scenario library is now a 92.6 KB chunk fetched on the first deal instead of before the sign-in screen.
     Two extractions made it possible: `data/villains.js` (VILLAIN_LABELS — eight strings that pinned the whole pool, because VillainGuide renders eagerly) and the GENERATED `data/scenario-index.js` (23.9 KB — `schema.js` runs on the LOGIN path via db.js and needs only `correct` + each option's `val`/`cls`, not the prose where the weight is).
     Guarded by `npm run check:bundle` on two independent signals: main.js under a 280 KB ceiling, AND a `scenarios.*.chunk.js` still existing. Reverting to a static import trips both.
-  - ⏳ **Route-level code splitting (CA-022)** — `React.lazy` for TableReads / VillainGuide / SessionSummary. Not started.
+  - ✅ **Route-level code splitting (CA-022) — DONE 2026-07-28.** main.js **261.7 → 244.9 KB gzip**. TableReads (12.4 KB chunk — the component is 9 KB but owns the 39 KB observation pool, and it is an opt-in mode) and VillainGuide (4.9 KB — a modal behind a deliberate tap).
+    **SessionSummary deliberately NOT split.** Every player who finishes a session needs it, and it renders at the results reveal; trading a stutter at that moment for ~4 KB gzip is a bad deal. Splitting by file size alone would have said otherwise.
+    **Wave 4 bundle total: 353.9 → 244.9 KB gzip (−31%).**
   - ⏳ **Scenarios batch split (CA-034)** — authoring-conflict fix; do it with the next scenario batch.
   - 🅿️ **Trust boundary (CA-001 / CA-006 / CA-012) — PARKED until Pro is real.** P1, but abuse is self-only while the numbers are private; it blocks the leaderboard and purchasable Rebuys, neither of which exists.
 

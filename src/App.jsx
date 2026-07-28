@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, lazy, Suspense } from 'react';
 import './App.css';
 import { loadUser, cacheOwner, loadLastDifficulty } from './utils/persistence';
 import { useAuthSession } from './hooks/useAuthSession';
@@ -7,13 +7,27 @@ import { useGuest, GUEST_NAME } from './hooks/useGuest';
 import { hasSupabase } from './utils/supabase';
 import ScenarioCard from './components/ScenarioCard';
 import SessionSummary from './components/SessionSummary';
-import VillainGuide from './components/VillainGuide';
 import DifficultySelector from './components/DifficultySelector';
 import Dashboard from './components/Dashboard';
-import TableReads from './components/TableReads';
 import UsernameEntry from './components/UsernameEntry';
 import SignIn from './components/SignIn';
 import { emitSchemaGuideOpened, emitVillainGuideOpened } from './utils/events';
+
+// ─── Lazy routes (CA-022, Wave 4) ──────────────────────────────────────────
+// Split by how many visitors actually reach them, not by file size.
+//
+// TableReads is the big one: the component is 9 KB but it owns observations.js
+// (39 KB), and it is an opt-in mode most visitors never open — a Pro surface
+// that is merely free during beta.
+//
+// VillainGuide is a modal behind a deliberate tap. A brief blank frame before it
+// opens costs nothing; shipping it to everyone who never taps ⓘ does.
+//
+// SessionSummary is deliberately NOT lazy. Every player who finishes a session
+// needs it, and it renders at the results reveal — trading a stutter at that
+// moment for ~4 KB gzip is a bad deal. Size alone would have said to split it.
+const TableReads   = lazy(() => import(/* webpackChunkName: "tablereads" */ './components/TableReads'));
+const VillainGuide = lazy(() => import(/* webpackChunkName: "villainguide" */ './components/VillainGuide'));
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 // Deal via the session builder (utils/spacedrep.js): unseen scenarios first,
@@ -156,7 +170,11 @@ export default function App() {
         <button className="info-btn" aria-label="Open the guide" onClick={() => setGuide({})}>i</button>
       </div>
 
-      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} initialTab={guide.tab} skills={user?.skills} />}
+      {guide && (
+        <Suspense fallback={null}>
+          <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} initialTab={guide.tab} skills={user?.skills} />
+        </Suspense>
+      )}
 
       {screen === 'dashboard' && (
         <Dashboard
@@ -177,13 +195,15 @@ export default function App() {
       )}
 
       {screen === 'tablereads' && (
-        <TableReads
-          onBack={() => setScreen('dashboard')}
-          onOpenGuide={(label) => {
-            emitVillainGuideOpened({ from: 'tablereads' });
-            setGuide({ focus: label });
-          }}
-        />
+        <Suspense fallback={<div className="tr-screen"><div className="tr-context">Shuffling up…</div></div>}>
+          <TableReads
+            onBack={() => setScreen('dashboard')}
+            onOpenGuide={(label) => {
+              emitVillainGuideOpened({ from: 'tablereads' });
+              setGuide({ focus: label });
+            }}
+          />
+        </Suspense>
       )}
 
       {screen === 'difficulty' && (

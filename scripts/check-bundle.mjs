@@ -26,11 +26,12 @@ if (!existsSync(JS_DIR)) {
   process.exit(1);
 }
 
-// Ceiling set 2026-07-28, when the split landed at 261.7 KB. Headroom is ~7%:
-// enough for ordinary feature growth, far tighter than the ~92 KB that
-// re-inlining the scenario library would add. Raising this number is a
-// deliberate decision to ship a slower first load — say so in the commit.
-const MAIN_GZIP_CEILING_KB = 280;
+// Ceiling re-set 2026-07-28 after CA-022 took main to 244.9 KB (from 353.9 at
+// the start of Wave 4). Headroom is ~6%: enough for ordinary feature growth,
+// far tighter than the ~92 KB re-inlining the scenario library would add or the
+// ~17 KB from un-splitting the routes. Raising this number is a deliberate
+// decision to ship a slower first load — say so in the commit.
+const MAIN_GZIP_CEILING_KB = 260;
 
 const files = readdirSync(JS_DIR).filter((f) => f.endsWith('.js'));
 const gzipKb = (f) => gzipSync(readFileSync(join(JS_DIR, f))).length / 1024;
@@ -42,7 +43,15 @@ if (!main) {
 }
 
 const mainKb = gzipKb(main);
-const scenariosChunk = files.find((f) => /^scenarios\.[a-f0-9]+\.chunk\.js$/.test(f));
+// Each split is asserted BY NAME. A missing chunk means that import went
+// static again — which the ceiling alone might not catch if something else
+// shrank at the same time.
+const chunk = (name) => files.find((f) => new RegExp(`^${name}\\.[a-f0-9]+\\.chunk\\.js$`).test(f));
+const SPLITS = [
+  ['scenarios', 'the 172-scenario library, fetched on the first deal (CA-014)'],
+  ['tablereads', 'Table Reads + its 39 KB observation pool, an opt-in mode (CA-022)'],
+  ['villainguide', 'the reference modal, opened by a deliberate tap (CA-022)'],
+];
 
 let failed = false;
 const ok = (msg) => console.log(`  ✓ ${msg}`);
@@ -55,12 +64,14 @@ else
     + 'if the scenario library drifted back into the entry chunk, look for a static '
     + "import of data/scenarios; if this is real growth, raise the ceiling deliberately");
 
-if (scenariosChunk)
-  ok(`scenarios split out as its own chunk (${gzipKb(scenariosChunk).toFixed(1)} KB gzip, fetched on first deal)`);
-else
-  bad('no scenarios.*.chunk.js — the scenario library is no longer code-split (CA-014). '
-    + 'utils/deal.js must load it with a dynamic import, and nothing on the login path '
-    + '(schema.js, spacedrep.js, VillainGuide) may import data/scenarios statically');
+for (const [name, why] of SPLITS) {
+  const f = chunk(name);
+  if (f) ok(`${name} chunk present — ${gzipKb(f).toFixed(1)} KB gzip (${why})`);
+  else bad(`no ${name}.*.chunk.js — that code is back in the entry bundle. ${why}. `
+    + 'For scenarios: utils/deal.js must use a dynamic import and nothing on the login path '
+    + '(schema.js, spacedrep.js, VillainGuide) may import data/scenarios statically. '
+    + 'For the routes: App.jsx must declare them with React.lazy.');
+}
 
 console.log(`\n${files.length} JS assets — ${failed ? 'BUNDLE GATE FAILED' : 'bundle gate passed'}`);
 process.exit(failed ? 1 : 0);
