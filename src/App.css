@@ -3029,7 +3029,12 @@ body {
 /* Street history below the table — same width as the action row below it,
    left-aligned, so long preflop sequences fit on one line (July 2026: the
    old 340px box clipped limp-reraise lines behind an invisible scrollbar) */
-.sc2-history { margin: 20px auto 16px; max-width: 660px; }
+/* width:100% is load-bearing here for the same reason it is on .sc2-table: this
+   moved inside .sc2-stage (a grid) on July 28, and a grid item with `margin:auto`
+   and no explicit width switches from stretch to FIT-CONTENT sizing. Without it
+   the ticker silently collapsed from 660px to 272px — wide enough to still look
+   deliberate, which is exactly how the table-collapse class of bug hides. */
+.sc2-history { margin: 20px auto 16px; max-width: 660px; width: 100%; }
 .sc2-history-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem; letter-spacing: 0.2em; color: var(--cream-faint);
@@ -3097,6 +3102,66 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .sc2-overlay { animation: none; }
   .sc2-btn.act-btn { transition: none; }
+}
+
+/* ═══ Desktop: the analysis sits BESIDE the felt, not over it ═══════════════
+   Tester feedback #1 (July 26, 2026): on desktop the Hand Analysis covered the
+   table, so the board you had just played was hidden at exactly the moment you
+   were being told what to do with it. The 👁 Show table / ← Back to analysis
+   pair exists only to work around that; here it is redundant and hidden.
+
+   Why 1280, and why the negative margins — the width arithmetic:
+     .app                max-width 1200, padding 0 40  ->  1120 of content
+     .session-container  max-width 960 (>=1100)        ->  the real constraint
+     .sc2 needs          720 table + 24 gap + 412 panel + 44 own padding = 1200
+   Going 960 -> 1200 means reclaiming 120px per side. Those 120px are real and
+   already empty: 80 of gutter inside .app's content box, plus .app's own 40 of
+   padding. Everything is border-box (App.css:2), so at a 1280 viewport
+   .sc2-analysis spans exactly .app's 1200px border box — flush, never wider,
+   so no horizontal scrollbar at any viewport >= 1280. Below 1280 none of this
+   applies and the overlay stacks over the table as before.
+
+   The felt does shift left when the panel opens: it cannot both stay centred
+   in the page and have 412px of panel appear beside it. Holding the table at
+   its full 720px was the deliberate half of that trade — a table that changed
+   SIZE between playing and reviewing would break the very comparison the panel
+   is asking you to make. e2e/desktopanalysis.spec.mjs guards both directions. */
+@media (min-width: 1280px) {
+  .sc2-analysis {
+    width: 1200px; max-width: none;
+    margin-left: -120px; margin-right: -120px;
+  }
+  /* Two tracks: the table keeps its exact playing width, the panel takes the
+     rest. minmax(0, 720px) is what stops a long unbroken line of analysis text
+     from pushing the table track past 720 (min-content defaults to auto).
+     Column 1 is the whole gameplay unit — felt, villain strip, hand-so-far —
+     so the ticker stays under the felt it describes instead of being stranded
+     mid-card when the table shifts left. Row gap stays 0: these three stacked
+     on top of each other with only their own margins before the split existed,
+     and a row gap here would space them differently than during play. */
+  .sc2-analysis .sc2-stage {
+    grid-template-columns: minmax(0, 720px) minmax(320px, 1fr);
+    grid-template-rows: auto auto 1fr;
+    gap: 0 24px;
+  }
+  .sc2-analysis .sc2-stage > .sc2-villain-mobile { grid-area: 2 / 1; }
+  /* align-self:start against a 1fr track is the whole trick. The panel spans
+     all three rows, so when it is taller than the felt the surplus lands in
+     row 3 — BELOW the ticker — instead of inflating row 1 and pushing the
+     ticker down. That is what stops the hand-so-far moving between playing and
+     reviewing: measured y=626 in both states, where it used to drop to 818. */
+  .sc2-analysis .sc2-stage > .sc2-history {
+    grid-area: 3 / 1; align-self: start;
+  }
+  .sc2-analysis .sc2-stage > .sc2-overlay {
+    grid-column: 2; grid-row: 1 / -1; align-self: start;
+  }
+  /* Peek is meaningless once the table is already in view. Neutralise the
+     peeked STATE as well as the buttons: resizing from narrow to wide while
+     peeked would otherwise strand a transparent panel whose only restore
+     control is the chip we just hid. */
+  .sc2-analysis .sc2-peek-btn, .sc2-analysis .sc2-peek-return { display: none; }
+  .sc2-analysis .sc2-overlay-peek { opacity: 1; pointer-events: auto; }
 }
 
 /* Mobile: portrait table, strip instead of bubble, stacked thumb-zone actions.

@@ -1,8 +1,86 @@
-# TOOLING — agent routing table, skill catalog, hook catalog
+# TOOLING — running locally, agent routing table, skill catalog, hook catalog
 
-> **Read this when…** you're starting a new task and need to know which agent or
-> model to use, you're looking for a project skill to invoke, or you're deciding
-> whether to install a hook.
+> **Read this when…** you want to see a change in a real browser before pushing,
+> you're starting a new task and need to know which agent or model to use, you're
+> looking for a project skill to invoke, or you're deciding whether to install a
+> hook.
+
+---
+
+## Running the app locally
+
+**Plain `npm start` is not the right command.** It reads `.env`, so it boots
+against real Supabase and lands on the sign-in screen — you cannot reach gameplay
+without completing a magic-link round trip, and anything you do there writes to
+the production database. Blank the three public env vars instead and the app runs
+in localStorage mode: same code path, no conditional trees, no account required.
+
+### Option 1 — dev server with hot reload (use this while iterating)
+
+```bash
+REACT_APP_SUPABASE_URL= REACT_APP_SUPABASE_ANON_KEY= REACT_APP_POSTHOG_KEY= npm start
+```
+
+Serves on `http://localhost:3000` and rebuilds on save. Blanking those three vars
+is the same trick `npm run e2e:build` uses (see `package.json`) — `hasSupabase` in
+`src/utils/supabase.js` goes false and the whole auth path is skipped.
+
+### Option 2 — static preview of the exact production bits (use this before pushing)
+
+```bash
+npm run e2e:build                                              # localStorage-mode production build
+node -e "import('./e2e/server.mjs').then(m => m.startServer('./build', 4173))"
+```
+
+Serves `http://localhost:4173`. This is the same static server and the same build
+the e2e suite runs against, so what you see is what the guards measured. Prefer it
+over Option 1 for a final look: only a production build exercises minification and
+the lazy-loaded chunks (`scenarios`, `tablereads`, `villainguide`).
+
+### Getting to the screen you want
+
+In localStorage mode you land on **"Create your profile"**, not the sign-in
+screen. `hasSupabase` is false, so the auth phase resolves straight to
+`noprofile` — there is no guest flow here at all, because the guest CTA only
+exists as an alternative to signing in. Type any name and you are on the
+dashboard with a fresh profile; **Deal Me In** starts a session. `localStorage.clear()`
+in the devtools console resets you to that first screen.
+
+To land on a *populated* dashboard (streak, skills, past reads) rather than an
+empty one, seed the profile the way the e2e suite does — `baseUser()` and
+`seedAndOpen()` in `e2e/helpers.mjs` are the canonical shape. Paste a
+`localStorage.setItem('cr_user', …)` and reload.
+
+### ⚠ Any full build CLOBBERS the localStorage-mode build
+
+`npm run gates` ends with `CI=true npm run build`, and that plain build **bakes
+your real Supabase keys into `build/`**. If a preview server is running against
+`build/`, it silently starts serving the production-mode bundle and every reload
+lands on the sign-in wall with no way to reach gameplay — the app looks broken or
+unchanged when nothing is wrong with it.
+
+This bit us on July 28: `e2e:build` → preview → `gates` → the preview turned into
+a sign-in wall, and the change under review looked like it had not shipped.
+
+**Rule: re-run `npm run e2e:build` after any `npm run gates` or `npm run build`
+if a preview server is still up.** The same applies to `npm run e2e` — gate 6
+requires `e2e:build` first for exactly this reason. When a local preview shows an
+unexpected screen, check which build is on disk before debugging the code.
+
+### Two things that will fool you
+
+1. **The Coach's Read never renders locally.** It needs `/api/coach-read`, a Vercel
+   function that neither local server has, so the read block fails and the rest of
+   the summary renders around it (`utils/session.js` treats the read as
+   fire-and-forget by design). This is expected, not a regression. Per-hand feedback
+   is pre-written static content and works fine. To exercise the read path, stub it
+   the way `stubCoach()` does in `e2e/helpers.mjs`.
+2. **Viewport-gated layouts silently do nothing at the wrong window size.** The
+   desktop side-by-side Hand Analysis only engages at **≥1280 CSS pixels**, and
+   browser zoom shrinks the CSS viewport — a zoomed-in window on a 1440px display
+   can report under 1280. Check `innerWidth` in the console before concluding a
+   layout change didn't land. The mobile guards are the mirror image: `⌘0` to reset
+   zoom, and use devtools device emulation rather than a narrow desktop window.
 
 ---
 

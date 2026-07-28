@@ -4,6 +4,175 @@
 
 ---
 
+## Triage — Tester Feedback (batch of July 26, 2026)
+
+Nine items from the tester batch, each triaged against the code on July 28. The
+tester's original numbering is preserved so this list stays matchable to the
+source message. Verdicts are recorded with the evidence that drove them — two of
+the nine did not survive contact with the code, and the reasons matter more than
+the calls.
+
+1. **✅ DONE 2026-07-28 — desktop: the Hand Analysis sits BESIDE the felt, not over it.**
+   The analysis and the table shared one grid cell (`.sc2-stage` is a single-cell
+   grid; the overlay sat at `grid-area: 1/1` with `z-index: 10`), so the board you
+   had just played was hidden exactly when you were being told what to do with it.
+   The `👁 Show table` / `← Back to analysis` pair existed only to work around this.
+   **Fix:** a `.sc2-analysis` state modifier on the gameplay card (set only while
+   feedback is up) that App.css acts on at `min-width: 1280px`, moving the panel
+   into a second grid column — 720px table + 410px panel. The card reclaims 120px
+   per side of already-empty gutter to reach 1200px; everything is border-box, so
+   it lands flush with `.app`'s 1200px box and never overflows. Peek is hidden at
+   that breakpoint, including the peeked *state* (a narrow→wide resize while peeked
+   would otherwise strand a transparent panel whose restore chip had been hidden).
+   Below 1280 nothing changes. The felt shifts left when the panel opens — it cannot
+   stay page-centred and have 410px appear beside it; holding the table at its full
+   720px was the deliberate half of that trade, since a table that changed SIZE
+   between playing and reviewing would break the comparison the panel is asking for.
+   **Ratchets:** `CanvasLayout.test.js` pins the modifier (jsdom has no layout, so it
+   pins the *switch* the whole CSS rule hangs off), and `e2e/desktopanalysis.spec.mjs`
+   measures both directions — at 1440 the panel must not intersect the table and must
+   sit to its right with zero horizontal overflow; at 1200 it must STILL cover, so a
+   breakpoint that leaked down to phones fails instead of passing quietly. The
+   collapse guard (`.sc2-table` ≥ 400×300) is re-run at the new breakpoint because
+   changing `grid-template-columns` on `.sc2-stage` is precisely the change class the
+   `.sc2-table` width law was written for. Canvas screenshotted at both widths.
+
+2. **⏳ LOW — cap the Coach's Notebook below 30 reads.** True but nearly free of
+   benefit. `COACH_READS_CAP = 30` (`utils/coachRead.js:13`) is enforced in exactly
+   two places, both via the imported symbol, so changing it is a one-character edit
+   with no migration risk (derived state, self-heals). But the reads arrive inside
+   the sessions query already — the cap trims an array, not a payload — and the
+   notebook is double-collapsed: the list hides behind a toggle that defaults closed,
+   and each row is CSS-clamped to one line until tapped. The 30 is invisible unless
+   deliberately expanded. **Action:** drop to ~12 whenever that file is next open;
+   do not schedule a session for it. Watch `db.test.js:188` — its literal 40-row
+   fixture stops testing truncation if the cap is ever raised above 40.
+
+3. **❌ DECLINED as asked — reference guide beside the table — ⏳ but a real bug sits under it.**
+   Declined because items 1 and 3 compete for the same pixels: there is no room for
+   both a 410px analysis panel and a guide rail beside a 720px table, and item 1 is
+   the better use. (The tester hedged on this one themselves.)
+   **The real find:** opening the VillainGuide mid-hand does NOT pause the timer.
+   `TimerRing` pauses only on its `paused` prop and the only value ever passed is
+   `decided` (`CanvasLayout.jsx:44`); `guide` state lives in `App.jsx:31` and is never
+   threaded into `ScenarioCard`. So on Intermediate, a player who taps the villain
+   bubble to learn what an archetype means can be timed out behind the modal —
+   consulting the help costs you the hand. Beginner is safe only by accident
+   (`showTimer={difficulty !== 'beginner'}`). **Fix:** pass `guide !== null` as an
+   additional pause input; ratchet with a `CanvasLayout` test asserting the ring is
+   paused while the guide is open.
+
+4. **◐ SPLIT — reduce friction / fewer coach reads.** The coach read is NOT the
+   friction and should not be touched: it is one API call per completed session,
+   fired after `setShowSummary(true)`, so the summary renders immediately with only
+   the read block in a loading state and both exits live. Seamless replay is also
+   already built — `Deal Next Session →` chains at the same difficulty with no
+   dashboard round trip, carrying the just-played hands forward so they cannot
+   re-deal. Session N → N+1 is **one tap**. The real ceremony is the 10 taps per
+   session (5 actions + 5 Next). Do **not** auto-advance past feedback: F1 says
+   explanation quality is the highest-effect-size lever, so skipping people past the
+   explanation trades the thing that works for the thing that feels fast.
+   **Cheap:** keyboard advance (space/enter) on desktop. **Deferred:** session-length
+   option — see working-queue item 6, which already holds the decision rule;
+   `SESSION_LENGTH` is module-private (`deal.js:13`) but the literal 5 is hardcoded in
+   `e2e/helpers.mjs:80`, `App.integration.test.js`, and both simulation harnesses.
+   **Unflagged by anyone, and worse than click count:** `api/coach-read.js:11` caps
+   reads at 5/day, so the most engaged players — the ones chaining — silently stop
+   getting reads after the fifth session of the day.
+
+5. **❌ DECLINED — tokens/credits instead of a subscription.** The premise (AI cost
+   scales with use, so price should too) is generally true and specifically weak
+   here: at most **five model calls per user per day**, hard-capped server-side. That
+   cap is already the mechanism that makes flat-rate safe. Against it, metering
+   charges per use in a product whose entire value is habit formation, and rationing
+   is the opposite of what a daily loop needs. `RESEARCH_SUBSCRIPTION_MARKET.md`
+   landed on single-tier $9.99/mo, and the coin economy was permanently rejected on
+   July 5 — a token model is the same idea in a different hat. **If cost ever becomes
+   real the lever is the daily cap** (tighter free tier, higher Pro cap), not a
+   currency.
+
+6. **💡 ACCEPTED as the defining Expert mechanic — blocked on content, not code.**
+   Hiding the villain archetype is mechanically small: the label is derived at runtime
+   in `mkScenario` and surfaces through one function (`ticker.js:73` `villainSummary`)
+   feeding two render sites. The situation ticker is already type-blind — it says "CO
+   bets $15", never "the Calling Station bets $15". The cost is content: **zero expert
+   scenarios exist** (81 beginner / 91 intermediate) and Expert is a `disabled: true`
+   stub. Note the overlap with Table Reads, which already owns identify-the-archetype
+   with distractors and `whyNot` text — but the ideas are distinct: Table Reads is
+   identification with no decision, Expert is *deciding without being told*, which is
+   the harder and more realistic skill. The interesting version asks both on one hand.
+   **Decide explicitly:** whether the hidden label is still sent to the coach
+   (`claude.js:17` sends it today — it should stay, so the coach can name a misread).
+   **Action:** record the mechanic here and in DECISIONS so it constrains authoring;
+   build when the pool exists.
+
+7. **⏳ ACCEPTED in spirit, DIRECTION REVERSED — recency weighting.** Taken literally
+   ("weigh the recent 5 hands less and less") this would worsen the engine's worst
+   documented defect. Current state: skill ratings are a lifetime `correct/attempts`
+   counter with no time term (`constants.js:116-134`); the direction tally is an
+   unbounded lifetime sum (`schema.js:92-110`); the only recency mechanism anywhere is
+   the IQ display's hard 8-hand window. There is no decay or half-life in the repo.
+   And `schema.js:204-211` already documents the failure: **early random skew freezes
+   into the lifetime tally** — one steady-strong trial wore "The Conflict Avoider" from
+   session 19 to session 40. The problem is not that recent hands count too much; it is
+   that old hands never stop counting. What the tester likely felt is a player who
+   improved and watched the diagnosis refuse to move.
+   **Scope:** decay on the **direction tally only**. Leave the skill ledger lifetime —
+   it is the honest "here is your record" surface, and `simulate-schemas.mjs` needs a
+   0.40-accuracy skill to read red reliably over ~25 lifetime attempts; an 8-hand
+   window makes that a coin flip and the gate starts failing.
+   **The real cost is the harness, not the engine:** `simulate-schemas.mjs` synthesizes
+   the tally linearly from session count (`synthTally`, `:98-102`) with **no time axis
+   whatsoever**, so it cannot verify a decay change at all. Sequence: give the harness a
+   time axis, confirm it reproduces today's behaviour, *then* introduce decay. Watch the
+   `Positional + mild under-skew` profile — at 2.0 vs ~1.9 it is the tightest margin in
+   the suite and the first thing any rescaling breaks. **This is a spec, not an edit,
+   and it is the most valuable engine work on the list.**
+
+8. **✅ FIXED 2026-07-27 (`7cc8c84`) — sign-in redundancy + missing sign-up door.**
+   Reported independently by the founder and fixed same-day; removed from this triage.
+   There was only ever one `SignIn` component with an internal `showSignIn` state — the
+   "two screens" are two states. The guest CTA is now gated on `!showSignIn`, and the
+   reveal link reads "Sign in or create an account →". Magic link *is* sign-up
+   (`signInWithOtp` never passes `shouldCreateUser`, which defaults true).
+   **⏳ Gap left behind:** `e2e/` has **zero** SignIn coverage — every spec seeds a
+   signed-in profile straight into localStorage. This fix is pinned in jest only, on
+   the one screen where users actually leave. Thinnest net in the repo.
+
+9. **◐ SPLIT — better logo/icon on mobile.** The in-app logo is not an image: it is the
+   text `Check<em>Raise</em>` in four places, platform-safe and fine. The
+   emoji-rendering bug being remembered was the difficulty-card suit glyphs, already
+   fixed by font-pinning (`App.css:2242`). The mobile complaint is most likely the app
+   **icon**, and there is a concrete defect: neither manifest icon declares
+   `"purpose": "maskable"`, so Android circle-crops the full square, and
+   `apple-touch-icon` points at the 192px PNG when iOS wants 180×180 and ignores
+   transparency. **Do the plumbing first** (maskable variant with safe-area padding,
+   180×180, and extend the asset-budget invariant to cover `icon-192.png` at 72 KB and
+   `og.png` at 247 KB, both currently unbudgeted; `icon-512.png` is at 116 KB against a
+   150 KB hard limit — 34 KB of headroom). New files must be lowercase or the
+   case-sensitivity invariant errors. Actual logo *design* is a separate, non-engineering
+   task — see whether the complaint survives the plumbing fix.
+   **⏳ Also:** two bare `♠` glyphs escaped the July 27 font-pinning fix —
+   `SignIn.jsx:80` and the `Dashboard.jsx:69` avatar. Same bug class, one of them on the
+   landing screen. That fix should have left a check behind and did not.
+
+**💡 Founder thought (July 28) — is the Coach's Read too frequent, and too behavioural?**
+Not yet triaged; raised for discussion. The concern: saying "you play this way" off 5
+hands feels wrong when 500 sessions of data exist, and the read may be both too often
+and too myopic. Sketch offered: the per-session read explains the **errors** without
+behavioural verdicts, and a separate **holistic** read lives on the dashboard over the
+full record. Note this rhymes with an existing decision rather than contradicting it —
+the July 22 reframe already scoped the read to session field notes precisely because 5
+hands cannot support "you are a X" (`api/coach-read.js:133`: "The trend across sessions
+is the notebook's job; yours is one session's field notes"). So the question is whether
+that reframe went far enough, and whether the cross-session surface it points at should
+actually exist. Related: the **periodic meta-read** already sitting in the feature
+backlog is arguably this exact idea. Also interacts with item 7 — a holistic surface
+wants a diagnosis that can move as the player improves. **Discuss before scoping; the
+load-bearing decision is where behavioural claims are allowed to live, not the UI.**
+
+---
+
 ## Phase Status
 
 ### Phase 1.0 — COMPLETE

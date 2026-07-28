@@ -70,6 +70,25 @@ test('every canvas region renders exactly once', () => {
   }
 });
 
+// The desktop split places these two in the table's grid column by selecting
+// `.sc2-analysis .sc2-stage > .sc2-history`. If either drifts back out of the
+// stage the selector stops matching, the ticker silently returns to being
+// centred across the whole widened card, and the felt slides out from under it
+// — the exact July 28 founder report. Nothing else would fail.
+test('the villain strip and the hand-so-far sit inside the stage, in the table column', () => {
+  layout();
+  expect(document.querySelector('.sc2-stage > .sc2-history')).not.toBeNull();
+  expect(document.querySelector('.sc2-stage > .sc2-villain-mobile')).not.toBeNull();
+});
+
+test('the gameplay unit keeps its render order: felt, then strip, then ticker', () => {
+  layout();
+  const kids = [...document.querySelector('.sc2-stage').children].map((el) => el.className);
+  // Mobile stacks these in DOM order, so the order IS the mobile layout.
+  expect(kids.indexOf('sc2-table')).toBeLessThan(kids.indexOf('sc2-villain-mobile'));
+  expect(kids.indexOf('sc2-villain-mobile')).toBeLessThan(kids.indexOf('sc2-history'));
+});
+
 test('the skill tag and progress live in the chrome, above the stage', () => {
   layout();
   expect(document.querySelector('.sc2-chrome')).toHaveTextContent('Pot Odds');
@@ -126,6 +145,26 @@ test('the overlay mounts inside the stage so it covers the felt, not the page', 
   layout({ feedback: { grade: 'correct', loading: false, text: 'Right price.', choice: 'call' }, decided: true });
   expect(document.querySelector('.sc2-stage > .sc2-overlay')).not.toBeNull();
   expect(document.querySelector('.sc2-actions')).toBeNull();   // decided hides the buttons
+});
+
+// Tester feedback #1 (July 2026). The desktop side-by-side layout hangs off
+// this ONE class: App.css keys its entire >=1280px two-column rule on
+// `.sc2-analysis`. If the modifier stops tracking `feedback`, the analysis
+// silently goes back to covering the felt on every desktop and nothing else
+// fails. jsdom has no layout engine, so what is pinned here is the switch; the
+// measured half — that the panel really lands beside the table — is
+// e2e/desktopanalysis.spec.mjs.
+test('the card is not in the analysis state while the hand is live', () => {
+  layout();
+  expect(document.querySelector('.sc2')).not.toHaveClass('sc2-analysis');
+});
+
+test('feedback puts the card into the side-by-side analysis state', () => {
+  layout({ feedback: { grade: 'correct', loading: false, text: 'Right price.', choice: 'call' }, decided: true });
+  expect(document.querySelector('.sc2')).toHaveClass('sc2-analysis');
+  // The split is scoped to the stage inside this card — the CSS selector is
+  // `.sc2-analysis .sc2-stage`, so this nesting is load-bearing.
+  expect(document.querySelector('.sc2-analysis > .sc2-stage')).not.toBeNull();
 });
 
 test('peeking lifts the overlay, hides it from assistive tech, and tracks the event', () => {

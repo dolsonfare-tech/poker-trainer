@@ -30,8 +30,13 @@ export default function CanvasLayout({
   // disagree with. Resets on every new hand.
   const [peek, setPeek] = useState(false);
   useEffect(() => { setPeek(false); }, [currentIndex]);
+  // `sc2-analysis` is the desktop side-by-side switch (tester feedback #1, July
+  // 2026). It is a state modifier, not a breakpoint: App.css only acts on it at
+  // >=1280px, where there is room to put the analysis BESIDE the felt instead of
+  // on top of it. Applying it only while feedback is up keeps the playing card
+  // at its normal width for the decision itself.
   return (
-    <div className="scenario-card sc2">
+    <div className={`scenario-card sc2${feedback ? ' sc2-analysis' : ''}`}>
       <div className="sc2-chrome">
         <div className="skill-tag">{scenario.tag}</div>
         <div className="sc2-chrome-right">
@@ -93,29 +98,35 @@ export default function CanvasLayout({
             )}
           </>
         )}
-      </div>
-
-      {v && (
-        <div className="sc2-villain-mobile">
-          <div className="sc2-strip-label">⚑ VILLAIN READ</div>
-          <div
-            className={`sc2-strip${onVillainInfo ? ' sc2-strip-tappable' : ''}`}
-            onClick={onVillainInfo ? () => onVillainInfo(v.label) : undefined}
-            role={onVillainInfo ? 'button' : undefined}
-          >
-            <span className="sc2-monogram">{v.monogram}</span>
-            <span className="sc2-strip-text">
-              <b>{v.label}</b>
-              <span className="sc2-strip-pos">{relationLine(v)}</span>
-            </span>
-            {onVillainInfo && <span className="sc2-bub-info">ⓘ</span>}
+        {/* The villain strip and the hand-so-far live INSIDE the stage, not
+            after it, so the desktop split can keep them in the table's column.
+            The table and the ticker are one gameplay unit: when the analysis
+            opened beside a stage holding only the table, the felt slid left and
+            left the ticker stranded under the panel (founder report, July 28).
+            Order here is table → strip → ticker, which is exactly the order
+            they rendered in as siblings, so mobile is untouched. */}
+        {v && (
+          <div className="sc2-villain-mobile">
+            <div className="sc2-strip-label">⚑ VILLAIN READ</div>
+            <div
+              className={`sc2-strip${onVillainInfo ? ' sc2-strip-tappable' : ''}`}
+              onClick={onVillainInfo ? () => onVillainInfo(v.label) : undefined}
+              role={onVillainInfo ? 'button' : undefined}
+            >
+              <span className="sc2-monogram">{v.monogram}</span>
+              <span className="sc2-strip-text">
+                <b>{v.label}</b>
+                <span className="sc2-strip-pos">{relationLine(v)}</span>
+              </span>
+              {onVillainInfo && <span className="sc2-bub-info">ⓘ</span>}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="sc2-history">
-        <div className="sc2-history-label">THE HAND SO FAR</div>
-        <SituationTicker scenario={scenario} />
+        <div className="sc2-history">
+          <div className="sc2-history-label">THE HAND SO FAR</div>
+          <SituationTicker scenario={scenario} />
+        </div>
       </div>
 
       {!decided && (
