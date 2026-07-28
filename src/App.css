@@ -619,10 +619,45 @@ body {
 .ss-hand-review {
   background: rgba(0,0,0,0.25);
   border-radius: var(--radius-md);
-  padding: 14px 16px;
+  /* No padding here — the collapsed .ss-hr-row supplies its own (July 2026).
+     This wrapper used to be the whole card's padding before the collapse
+     redesign; left in place it stacked with the row's padding and pushed
+     every review row from ~44px to ~72px, which is what put the chain button
+     below the fold on a 4-5 miss session (mobilefold.spec.mjs bottom=881). */
   display: grid;
   gap: 10px;
 }
+
+/* Collapsed review row (July 2026). Full-size rows made Hands to Review 889px
+   of a 1549px page at 390x844 and pushed the chain button below the fold.
+   Same clamp-and-expand register as .db-notebook-row on the dashboard. */
+.ss-hr-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  min-height: 44px;            /* tap-target floor, guarded by taptargets.spec */
+}
+.ss-hr-arrow {
+  font-size: 0.7rem;
+  color: var(--cream-faint);
+  flex-shrink: 0;
+}
+.ss-hr-row .ss-hr-cards {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ss-hr-row .ss-hr-skill { flex-shrink: 0; }
+.ss-hr-detail { padding: 0 12px 12px; }
 
 .ss-hr-cards {
   display: flex;

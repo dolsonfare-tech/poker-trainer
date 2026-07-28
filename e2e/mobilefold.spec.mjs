@@ -6,7 +6,7 @@
 // inside the 844px fold, on hand 1, at BOTH difficulties; the dashboard's
 // primary CTA must sit above the fold too. Also re-asserts the July 18
 // table-collapse guard at phone width (desktop smoke covers 1200px only).
-import { baseUser, seedAndOpen, stubCoach, STRUCTURED_READ } from './helpers.mjs';
+import { baseUser, seedAndOpen, stubCoach, playSession, STRUCTURED_READ } from './helpers.mjs';
 
 const VIEW = { width: 390, height: 844 };
 
@@ -149,6 +149,31 @@ export default async function run({ browser, baseURL, check }) {
 
   await guardHand('intermediate');
   await guardHand('beginner');
+
+  // ── Session summary: the chain button must clear the fold ──
+  // Measured July 2026: with full-size review rows the summary was 1814px tall
+  // and "Deal Next Session" sat at y=1640 on an 844px screen — nearly two
+  // screens of scrolling to continue. Removing the coach read got it to 1375;
+  // collapsing Hands to Review got it above the fold. This guard is what stops
+  // the page silently growing back: every future addition answers to it.
+  //
+  // guardHand() leaves the page mid-hand (action buttons dealt, not yet
+  // clicked) rather than at the dashboard, so navigate back before
+  // playSession() — it starts by clicking `.db-cta-btn`.
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.db-cta-btn', { timeout: 20000 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await playSession(page);
+  await page.waitForTimeout(400);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(150);
+
+  const chain = await page.locator('.restart-btn').boundingBox();
+  check('summary chain button fully above the fold', !!chain && chain.y + chain.height <= VIEW.height,
+    chain ? `bottom=${Math.round(chain.y + chain.height)} fold=${VIEW.height}` : 'missing');
+
+  const collapsed = await page.locator('.ss-hr-detail').count();
+  check('review rows start collapsed', collapsed === 0, `expanded=${collapsed}`);
 
   await page.close();
 }

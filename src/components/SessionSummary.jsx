@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill, DIFFICULTY_LABELS, GUEST_GATE_CTA } from '../data/constants';
 import { derivePokerScore } from '../utils/iq';
 import { milestoneProximity, MILESTONE_NAMES } from '../utils/streak';
@@ -30,7 +31,14 @@ function personalizeBody(scenario) {
 // shown on the skill chip so the hand connects to its rating move without a
 // separate skill list (the old rows + slide-over double-listed hands and
 // only covered changed skills; founders found it confusing, July 8).
+//
+// Collapsed by default (July 2026). Full-size rows made this section 889px of
+// a 1549px page at 390x844 and pushed the chain button below the fold. The
+// player already got elaborated feedback on each of these hands DURING the
+// session and the resurface ladder (F3/R1) is what drives relearning, so the
+// summary's job here is a recap that stays one tap away, not a re-teach.
 function HandReview({ entry, move = null }) {
+  const [open, setOpen] = useState(false);
   const { scenario, choiceVal, result } = entry;
   const userOption    = scenario.options.find(o => o.val === choiceVal);
   const correctOption = scenario.options.find(o => o.val === scenario.correct);
@@ -40,9 +48,16 @@ function HandReview({ entry, move = null }) {
 
   return (
     <div className="ss-hand-review">
-      <div className="ss-hr-cards">
-        <span className="ss-hr-hand">{handStr}</span>
-        {boardStr && <><span className="ss-hr-divider">·</span><span className="ss-hr-board">{boardStr}</span></>}
+      <button
+        className="ss-hr-row"
+        aria-expanded={open}
+        onClick={() => setOpen(o => !o)}
+      >
+        <span className="ss-hr-arrow">{open ? '▾' : '▸'}</span>
+        <span className="ss-hr-cards">
+          <span className="ss-hr-hand">{handStr}</span>
+          {boardStr && <><span className="ss-hr-divider">·</span><span className="ss-hr-board">{boardStr}</span></>}
+        </span>
         <span className="ss-hr-skill">
           {SKILL_NAMES[scenario.skill]}
           {move && (
@@ -51,45 +66,50 @@ function HandReview({ entry, move = null }) {
             </span>
           )}
         </span>
-      </div>
-      <div className="ss-hr-context">
-        {scenario.body && (
-          <span className="ss-hr-situation">{personalizeBody(scenario)}</span>
-        )}
-        {/* The gold READ line renders at decision time (comprehension audit
-            C1) — ~10 scenarios grade on it, so the review card must carry it
-            too or the player reviews a grading justified by invisible info. */}
-        {scenario.tableContext && (
-          <span className="ss-hr-read">
-            <span className="ss-hr-ctx-label">Read: </span>
-            {scenario.tableContext}
-          </span>
-        )}
-        {scenario.pot && (
-          <span className="ss-hr-pot">
-            <span className="ss-hr-ctx-label">Pot: </span>
-            {scenario.pot}
-            {scenario.toCall && <> · To call: {scenario.toCall}</>}
-          </span>
-        )}
-      </div>
-      <div className="ss-hr-plays">
-        <div className="ss-hr-play">
-          <span className="ss-hr-play-label">You played</span>
-          <span className="ss-hr-play-name" style={{ color: RESULT_COLOR[result] }}>
-            {choiceVal ? (userOption?.label ?? choiceVal) : 'Action passed you by'}
-          </span>
-        </div>
-        {showCorrect && (
-          <div className="ss-hr-play">
-            {/* "Recommended", not "Correct" — honest-labeling pass, July 2026 */}
-            <span className="ss-hr-play-label">Recommended</span>
-            <span className="ss-hr-play-name" style={{ color: '#56c878' }}>
-              {correctOption?.label ?? scenario.correct}
-            </span>
+      </button>
+
+      {open && (
+        <div className="ss-hr-detail">
+          <div className="ss-hr-context">
+            {scenario.body && (
+              <span className="ss-hr-situation">{personalizeBody(scenario)}</span>
+            )}
+            {/* The gold READ line renders at decision time (comprehension audit
+                C1) — ~10 scenarios grade on it, so the review card must carry it
+                too or the player reviews a grading justified by invisible info. */}
+            {scenario.tableContext && (
+              <span className="ss-hr-read">
+                <span className="ss-hr-ctx-label">Read: </span>
+                {scenario.tableContext}
+              </span>
+            )}
+            {scenario.pot && (
+              <span className="ss-hr-pot">
+                <span className="ss-hr-ctx-label">Pot: </span>
+                {scenario.pot}
+                {scenario.toCall && <> · To call: {scenario.toCall}</>}
+              </span>
+            )}
           </div>
-        )}
-      </div>
+          <div className="ss-hr-plays">
+            <div className="ss-hr-play">
+              <span className="ss-hr-play-label">You played</span>
+              <span className="ss-hr-play-name" style={{ color: RESULT_COLOR[result] }}>
+                {choiceVal ? (userOption?.label ?? choiceVal) : 'Action passed you by'}
+              </span>
+            </div>
+            {showCorrect && (
+              <div className="ss-hr-play">
+                {/* "Recommended", not "Correct" — honest-labeling pass, July 2026 */}
+                <span className="ss-hr-play-label">Recommended</span>
+                <span className="ss-hr-play-name" style={{ color: '#56c878' }}>
+                  {correctOption?.label ?? scenario.correct}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

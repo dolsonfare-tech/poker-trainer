@@ -2,7 +2,7 @@
 // a perfect session can't be forced through the real UI without knowing
 // every scenario's answer, so the display contract is pinned here.
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import SessionSummary from './SessionSummary';
 import SCENARIOS from '../data/scenarios';
 import { RECENT_WINDOW } from '../utils/iq';
@@ -19,6 +19,10 @@ const hist = (results) => pool.map((s, i) => ({
 const baseProps = {
   difficulty: 'beginner',
   userSkills: DEFAULT_SKILLS,
+  // At least one missed hand so `Hands to Review` renders by default — the
+  // collapse tests below need `.ss-hr-row` present without every test having
+  // to pass its own sessionHistory override.
+  sessionHistory: hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct']),
   onPlayAgain: () => {},
   onRestart: () => {},
 };
@@ -229,4 +233,31 @@ test('CA-031: SessionSummary.jsx does not hard-code the guest CTA string', () =>
   );
   expect(src).not.toMatch(/'Sign In Free to Keep Playing'/);
   expect(src).not.toMatch(/"Sign In Free to Keep Playing"/);
+});
+
+// ── Hands to Review: collapsed by default (July 2026) ──────────────────────
+// Measured at 390x844, this section was 889px of a 1549px page and pushed the
+// chain button 531px below the fold. Collapsed rows keep the recap one tap
+// away without burying the primary action. e2e/mobilefold.spec.mjs measures
+// the consequence; this pins the behaviour.
+test('review rows are collapsed by default — no detail rendered', () => {
+  render(<SessionSummary {...baseProps} />);
+  expect(document.querySelectorAll('.ss-hr-row').length).toBeGreaterThan(0);
+  expect(document.querySelector('.ss-hr-detail')).toBeNull();
+});
+
+test('tapping a review row expands that row in place', () => {
+  render(<SessionSummary {...baseProps} />);
+  fireEvent.click(document.querySelectorAll('.ss-hr-row')[0]);
+  expect(document.querySelectorAll('.ss-hr-detail').length).toBe(1);
+  expect(document.querySelectorAll('.ss-hr-row')[0]).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('tapping an expanded row collapses it again', () => {
+  render(<SessionSummary {...baseProps} />);
+  const row = document.querySelectorAll('.ss-hr-row')[0];
+  fireEvent.click(row);
+  fireEvent.click(row);
+  expect(document.querySelector('.ss-hr-detail')).toBeNull();
+  expect(row).toHaveAttribute('aria-expanded', 'false');
 });
