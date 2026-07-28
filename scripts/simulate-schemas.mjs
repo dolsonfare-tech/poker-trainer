@@ -1,5 +1,5 @@
 // Schema-diagnosis simulation harness — tests deriveSchema (the REAL production
-// function, imported from userStorage.js) against synthetic player profiles.
+// function, imported from schema.js) against synthetic player profiles.
 //
 // Run:  npm run simulate:schemas   (or: node scripts/simulate-schemas.mjs)
 //
@@ -32,7 +32,7 @@
 import { register } from 'node:module';
 register(new URL('ext-resolver.mjs', import.meta.url));
 
-const { deriveSchema } = await import('../src/utils/userStorage.js');
+const { deriveSchema } = await import('../src/utils/schema.js');
 const { applyHandToSkill } = await import('../src/data/constants.js');
 
 const SKILLS = ['preflop', 'position', 'aggression', 'betsize', 'bluffing', 'potodds', 'reads', 'opponent'];
@@ -41,7 +41,7 @@ const SESSION_COUNTS = [5, 10, 20, 40];
 const HANDS_PER_SESSION = 5;
 
 // Neutral direction shares — what a uniform-random mistaker produces on the pool
-// (mirrors computeDirectionBaseline in userStorage.js; 'under' absorbs 3 of the
+// (mirrors computeDirectionBaseline in schema.js; 'under' absorbs 3 of the
 // 6 ordered mispairs so it sits near 0.53 even for a balanced player). A profile
 // with these shares has zero excess over baseline → no direction schema fires,
 // however much evidence it accrues.

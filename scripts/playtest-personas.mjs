@@ -39,8 +39,12 @@ Date = class extends RealDate {
 
 const { default: SCENARIOS } = await import('../src/data/scenarios.js');
 const { buildSession, SURGE_QUEUE_THRESHOLD } = await import('../src/utils/spacedrep.js');
-const userStorage = await import('../src/utils/userStorage.js');
-const { applySessionResults, createUser, derivePokerScore, toLocalDateString } = userStorage;
+// Repointed at the owning modules when the MOD-001 barrel was deleted
+// (2026-07-27). scripts/ was outside the original sweep, which is what turned
+// CI run #28 red.
+const { applySessionResults, createUser } = await import('../src/utils/session.js');
+const { derivePokerScore } = await import('../src/utils/iq.js');
+const { toLocalDateString } = await import('../src/utils/dates.js');
 
 const SESSIONS = 40;
 const LENGTH = 5;
