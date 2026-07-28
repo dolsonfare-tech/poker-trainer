@@ -5,7 +5,7 @@ import {
   buildSession, applyHandsToHistory, historyFromSessions,
   RESURFACE_COOLDOWN_SESSIONS, LADDER_SESSIONS, GRADUATION_TARGET,
   GRADUATION_TARGET_FIRST, GRADUATION_TARGET_REPEAT, SURGE_QUEUE_THRESHOLD,
-  CONFIDENT_MISS_MS,
+  CONFIDENT_MISS_MS, remediationQueueDepth,
 } from './spacedrep';
 
 // Minimal scenario stand-ins — the builder reads id, skill, and board (the
@@ -601,4 +601,22 @@ test('with no matching partner the session builds exactly as pre-R4 (weak weight
     expect(session).toHaveLength(5);
     expect(session.filter(s => s.skill === 'potodds')).toHaveLength(2);
   }
+});
+
+// ── remediationQueueDepth ──────────────────────────────────────────────────
+
+test('remediationQueueDepth counts hands still working through the ladder', () => {
+  const history = {
+    sc_001: { seen: 2, lastResult: 'incorrect', remediating: true, rung: 0 },
+    sc_002: { seen: 1, lastResult: 'correct', remediating: false, rung: 0 },
+    sc_003: { seen: 3, lastResult: 'incorrect', remediating: true, rung: 1 },
+    // legacy entry with no `remediating` field falls back to lastResult
+    sc_004: { seen: 1, lastResult: 'incorrect' },
+  };
+  expect(remediationQueueDepth(history)).toBe(3);
+});
+
+test('remediationQueueDepth handles an empty or missing history', () => {
+  expect(remediationQueueDepth({})).toBe(0);
+  expect(remediationQueueDepth(undefined)).toBe(0);
 });

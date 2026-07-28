@@ -131,6 +131,13 @@ const ladderInterval = (rung) => LADDER_SESSIONS[Math.min(rung, LADDER_SESSIONS.
 // miss" so old history still resurfaces once.
 const isRemediating = (h) => (h ? (h.remediating ?? h.lastResult === 'incorrect') : false);
 
+// How many scenarios are currently working through the graduation ladder.
+// Lives here because this file owns ladder semantics — the dashboard strip
+// reports the number but must never re-derive what "remediating" means.
+export function remediationQueueDepth(history) {
+  return Object.values(history ?? {}).filter(isRemediating).length;
+}
+
 // Due for a comeback? Both the rung's session interval AND the 1-calendar-day
 // floor (R2) must have elapsed. Degrades to session-count-only when there are
 // no dates to compare (legacy history, or unit tests that pass no clock).
