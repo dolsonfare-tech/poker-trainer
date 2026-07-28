@@ -85,7 +85,10 @@ Sequenced in `docs/architecture/TARGET_ARCHITECTURE.md`. High-level order:
 
 - **Wave 1 — ✅ DONE 2026-07-26 (`3dac2c4`):** `shuffle` → `random.js`, M2 copy → `copy.js`, Dashboard date formatters → `dates.js`, `dummyUser.js` delete + CLAUDE.md drift fixes (CA-035).
 - **Wave 2 (after Wave 1):** Dashboard.jsx split → `src/components/dashboard/`; ScenarioCard.jsx split → `src/components/scenario/`.
-- **Wave 3 (after Wave 2):** App hooks extraction (`useAuthSession`, `useGuest`, `useSessionRun`); `userStorage.js` split into six modules; prop-drilling contexts.
+- **Wave 3 — PARTIALLY DONE 2026-07-27.** Landed: MOD-001 (`userStorage.js` → six modules + re-export barrel, all 18 import sites untouched), `submitSession` (utils/session.js — the choke point Wave 4's trust boundary needs), `useSessionRun` (hooks/, App.jsx 633 → 409 lines), plus pure extractions `utils/deal.js` and `buildSessionDelta`.
+  **Remaining:** `useGuest` (small, self-contained) and `useAuthSession` (the `onAuthStateChange` listener + the setTimeout(0) deadlock workaround — production auth was verified working end-to-end on 2026-07-27, so there is a known-good baseline to refactor against).
+  **Recommended SKIP:** MOD-014 contexts. They exist to remove three hops of prop-drilling for `onVillainInfo`; React context adds indirection and a re-render surface for little gain. Decide with the real component graph rather than from the plan.
+  **Note:** Wave 3 is NOT a prerequisite for Wave 4. The doc's stated dependency was "`submitSession` seam exists", and that is built.
 - **Wave 4 (after Wave 3):** `events.js` typed emitters; scenarios batch split + lazy-load; trust-boundary Postgres functions (required before leaderboard or purchasable Rebuys); test expansion (VillainGuide, DisagreeBox, TableReads e2e).
 
 P1 security items before Pro/leaderboard: CA-001 (client-writable integrity fields), CA-002 (CI permissions stanza), CA-006 (hostile localStorage seed), CA-012 (migrateUser shape validation). See full findings in `docs/audit/2026-07-25-cohesion-audit.md`.
@@ -132,3 +135,43 @@ The founder's briefing artifact is the one with an active obligation: it is used
 ## Monetization (current decision)
 
 Launch free, no ads. Pro tier via subscription when scope is locked. Headline from `docs/research/RESEARCH_SUBSCRIPTION_MARKET.md`: $9.99/mo · $49.99/yr single tier; free tier keeps the habit loop; Pro = Table Reads + Expert + deeper coach/analytics; freemium converts ~2.1–2.3% of downloads. The coin-economy idea (July 5) is permanently rejected.
+
+---
+
+## Open decisions awaiting the founder (as of 2026-07-27)
+
+Recorded here rather than lost in a chat log. Each one is blocked on a judgement
+call, not on work.
+
+1. **Collapse `UsernameEntry`?** A new signed-in user passes two screens before
+   the dashboard: SignIn, then pick-a-display-name. Guests skip the second
+   entirely. UsernameEntry is not purely decorative — it also carries the
+   pre-Supabase history migration and the "Not you?" account-switch escape
+   hatch added after a live dead-session incident (July 6).
+   **The trap:** auto-deriving a name from the email looks free because the
+   dashboard already has inline rename — but renames are capped at one per week
+   (`RENAME_COOLDOWN_MS`). Auto-assign a name someone dislikes and they get one
+   correction, then wait seven days. Collapsing the screen therefore requires
+   relaxing or waiving the first rename.
+
+2. **`sc_098`: is `call` graded too harshly?** It is `incorrect`; with position
+   and 100bb, calling QJs vs a nit's UTG open is defensible enough that
+   `partial` may fit. NOT changed — ROADMAP item 2 forbids mid-test regrades,
+   and grading is founder/SME territory. Note this is the **same pattern** as
+   the existing L2 finding on `sc_009` in `SCENARIO_GRADING_FINDINGS.md`. Two
+   independent instances make it a policy question: *when is a
+   defensible-but-inferior line `partial` rather than `incorrect`?*
+
+3. **18 unverified domination claims** across 14 scenarios, listed in
+   `SCENARIO_GRADING_FINDINGS.md`. Grandfathered by content hash in
+   `audit:scenarios`, so only new or edited claims warn. `sc_098` proved the
+   failure mode is real, not theoretical.
+
+4. **Wave 3 finish or stop** — see the wave list above. Not a Pro prerequisite.
+
+5. **Wave 4 scope, when Pro is real.** The trust boundary (CA-001/006/012) is
+   MANDATORY before any leaderboard or purchasable Rebuys: `db.js:228` writes
+   `streak`, `rebuys` and `poker_score` from the client, which is harmless for
+   private stats and trivially forgeable the moment they are competitive or
+   paid. Payments/Stripe is in NO wave and is likely the largest unknown.
+   Bundle/lazy-load is wanted on UX grounds (354 KB gzip, scenarios eager).
