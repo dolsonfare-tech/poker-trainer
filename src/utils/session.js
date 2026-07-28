@@ -165,3 +165,47 @@ export async function submitSession({ user, hands, sessionHistory, difficulty, i
     return { user: updated, coachText: '', limited: err?.code === 'daily_limit' };
   }
 }
+
+// ── buildSessionDelta (MOD-002, Wave 3) ────────────────────────────────────
+// The before/after snapshot the summary animates from: IQ delta, previous
+// streak/sessions/score/skills, and the three streak-mechanics moments (M1–M3).
+//
+// Pure derivation from (user, sessionHistory, skillResults) — extracted from
+// useSessionRun because the component-budget invariant fired and this was the
+// largest thing in that hook with no React in it. It also means the M1/M2/M3
+// moments can be asserted directly instead of by driving a whole session.
+export function buildSessionDelta({ user, sessionHistory, skillResults }) {
+  // Count every hand played — matches SessionSummary, not the per-skill deduped
+  // skillResults.
+  const correct   = sessionHistory.filter(h => h.result === 'correct').length;
+  const incorrect = sessionHistory.filter(h => h.result === 'incorrect').length;
+  const today = toLocalDateString(new Date());
+  // One streak recompute feeds every streak-mechanics surface (M1–M3): the
+  // secured line, the Rebuy-used note, and the broken-streak moment.
+  const streakResult = user && user.lastSessionDate !== today ? calcStreak(user) : null;
+  const prevStreak = user?.streak ?? 0;
+  return {
+    counts: { correct, incorrect },
+    iqDelta: correct * 2 - incorrect,
+    prevStreak,
+    prevSessions: user?.sessionsCompleted ?? 0,
+    prevPokerScore: user?.pokerScore ?? null,
+    prevSkills: user ? { ...user.skills } : {},
+    // Pre-session recent-hands buffer for the recency-weighted IQ before→after
+    // (F3) — the summary folds this session's hands on top, matching apply.
+    prevRecentHands: user?.recentHands ?? [],
+    skillResults: { ...skillResults },
+    // First session of the day = the moment the streak day is earned; later
+    // sessions the same day show nothing (already secured).
+    streakSecured: streakResult ? streakResult.streak : null,
+    // A Rebuy silently covered a missed day — streak intact (M1).
+    rebuyUsed: streakResult ? streakResult.rebuyUsed : false,
+    // A real streak (>1) reset to 1 → the broken-streak moment (M2), never a
+    // bare drop; activeDaysLast30 is the consistency record.
+    streakBroken: !!streakResult && streakResult.streak === 1 && prevStreak > 1,
+    activeDaysLast30: user?.activeDaysLast30 ?? null,
+    // null until a best exists (legacy local users / first session) so a first
+    // result is never hailed as a "personal best"
+    prevBest: user?.bestSessionCorrect ?? null,
+  };
+}

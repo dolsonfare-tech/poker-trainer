@@ -48,7 +48,8 @@ check behind is a triage failure, not a fix.
 ## PostHog event catalog
 
 Every `track(` call in src, verified by grep (July 27, 2026 — file paths
-re-checked after the Wave 2 component splits moved seven of them). `track`/`identify`/
+re-checked after the Wave 2 component splits moved seven of them, and again
+on July 27 when Wave 3's useSessionRun took the three session events). `track`/`identify`/
 `resetAnalytics` live ONLY in `src/utils/analytics.js` (invariants rule 3);
 autocapture is off — this catalog is the complete event surface. **32 events.**
 
@@ -67,9 +68,9 @@ Funnel order: `sign_in_link_sent` → `signed_in` → `profile_created` →
 | `profile_create_failed` | `message` | UsernameEntry.jsx |
 | `guest_play_clicked` | — | App.jsx |
 | `guest_gate_signin` | `from` (summary\|dashboard\|topbar) | App.jsx |
-| `session_started` | `difficulty`, `chained`, `guest` | App.jsx |
-| `decision_made` | `scenario_id`, `skill`, `result`, `timed_out`, `replay`; + `decision_ms` (non-timeout path; timeout path sends `result:'incorrect'`, `timed_out:true`) | App.jsx (two call sites) |
-| `session_completed` | `difficulty`, `correct`, `incorrect`, `total`, `guest` | App.jsx |
+| `session_started` | `difficulty`, `chained`, `guest` | hooks/useSessionRun.js |
+| `decision_made` | `scenario_id`, `skill`, `result`, `timed_out`, `replay`; + `decision_ms` (non-timeout path; timeout path sends `result:'incorrect'`, `timed_out:true`) | hooks/useSessionRun.js (two call sites) |
+| `session_completed` | `difficulty`, `correct`, `incorrect`, `total`, `guest` | hooks/useSessionRun.js |
 | `coach_read_ok` | — | utils/claude.js |
 | `coach_read_failed` | `reason` (network\|daily_limit\|http\|empty_response), `status` (http only) | utils/claude.js |
 | `schema_guide_opened` | `schema` | App.jsx |

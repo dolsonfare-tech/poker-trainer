@@ -1,11 +1,9 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
-import SCENARIOS from './data/scenarios';
-import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, calcStreak, toLocalDateString, RENAME_COOLDOWN_MS, loadLastDifficulty, saveLastDifficulty } from './utils/userStorage';
-import { submitSession } from './utils/session';
-import { buildSession, applyHandsToHistory } from './utils/spacedrep';
+import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, RENAME_COOLDOWN_MS, loadLastDifficulty } from './utils/userStorage';
+import { useSessionRun, TIMER_SECONDS } from './hooks/useSessionRun';
 import { supabase, hasSupabase } from './utils/supabase';
-import { fetchRemoteUser, createRemoteProfile, saveRemoteUser, recordSession, updateDisplayName } from './utils/db';
+import { fetchRemoteUser, createRemoteProfile, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
 import { setSentryUser, clearSentryUser } from './utils/sentry';
 import ScenarioCard from './components/ScenarioCard';
@@ -18,8 +16,6 @@ import UsernameEntry from './components/UsernameEntry';
 import SignIn from './components/SignIn';
 
 // ─── Constants ────────────────────────────────────────────────────────────
-const SESSION_LENGTH = 5;
-const TIMER_SECONDS = 60; // HARDCODED — pull from user settings in Phase 2
 // Guest gate (founder decision July 8): one full free session, no account —
 // then a free sign-in to continue. Guest progress migrates on first sign-in
 // via the same untagged-cache path pre-Supabase testers use. Client-side
@@ -36,29 +32,6 @@ const GUEST_NAME = 'Guest';
 // persist HAS landed they're already in user.scenarioHistory (lastSeenAt ===
 // the current session count), so the merge is skipped to keep the cooldown
 // clock exact.
-function dealScenarios(difficulty, user, pendingHands = []) {
-  const pool = SCENARIOS.filter(s => s.difficulty === difficulty);
-  const played = user?.sessionsCompleted ?? 0;
-  const priorHistory = user?.scenarioHistory ?? {};
-  const today = toLocalDateString(new Date());
-  const alreadyApplied = pendingHands.length > 0 &&
-    pendingHands.every(h => priorHistory[h.scenarioId]?.lastSeenAt === played);
-  const merge = pendingHands.length > 0 && !alreadyApplied;
-  const sessionsCompleted = merge ? played + 1 : played;
-  // Merge with today's date so a just-played same-day miss is stamped for the
-  // R2 day floor and can't resurface in the very next chained deal.
-  const history = merge
-    ? applyHandsToHistory(priorHistory, pendingHands, sessionsCompleted, today)
-    : priorHistory;
-  return buildSession(pool, {
-    history,
-    skills: user?.skills ?? {},
-    sessionsCompleted,
-    length: SESSION_LENGTH,
-    currentDate: today,
-  });
-}
-
 // ─── Main App ──────────────────────────────────────────────────────────────
 export default function App() {
   // null = closed; {} = open on default tab; { focus } = open scrolled to
@@ -71,36 +44,6 @@ export default function App() {
   // as noprofile; see the auth listener's catch) | 'ready'
   const [authPhase, setAuthPhase]                 = useState(hasSupabase ? 'loading' : 'local');
   const [screen, setScreen]                       = useState('dashboard');
-  const [difficulty, setDifficulty]               = useState('beginner');
-  const [shuffledScenarios, setShuffledScenarios] = useState([]);
-  const [currentIndex, setCurrentIndex]           = useState(0);
-  const [skillResults, setSkillResults]           = useState({});
-  const [decided, setDecided]                     = useState(false);
-  const [feedback, setFeedback]                   = useState(null);
-  const [showSummary, setShowSummary]             = useState(false);
-  const [coachRead, setCoachRead]                 = useState('');
-  const [coachLoading, setCoachLoading]           = useState(false);
-  const [coachLimited, setCoachLimited]           = useState(false);
-  const [timedOut, setTimedOut]                   = useState(false);
-  const [combo, setCombo]                         = useState(0);
-  const [correctCount, setCorrectCount]           = useState(0);
-  const [sessionHistory, setSessionHistory]       = useState([]);
-  const [sessionDelta, setSessionDelta]           = useState(null);
-  const sessionUserRef                            = useRef(null);
-  // Synchronous decided guard — state/effect updates can lag in throttled
-  // background tabs, so this ref is the authoritative "already answered" flag
-  const decidedRef                                = useRef(false);
-  // Stamp when the current scenario was presented, so a decision can record
-  // decisionMs (F2: fast + wrong ≈ a confident miss — the resurface ladder and
-  // the coach payload lean on it).
-  const shownAtRef                                = useRef(null);
-
-  const scenario = shuffledScenarios[currentIndex];
-
-  // Re-stamp on entering the session and on every new hand.
-  useEffect(() => {
-    if (screen === 'session') shownAtRef.current = Date.now();
-  }, [currentIndex, screen]);
 
   // ── Auth lifecycle (Supabase mode only) ──────────────────────────────────
   // Tracks which user's profile is already loaded so later auth events
@@ -112,6 +55,19 @@ export default function App() {
   // closure can't see authPhase)
   const guestRef = useRef(false);
   const isGuest = authPhase === 'guest';
+
+  // ── Session run (MOD-002, Wave 3) ────────────────────────────────────────
+  // The deal, the per-hand loop, the end-of-session delta and the submitSession
+  // hand-off now live in hooks/useSessionRun.js. App keeps identity (`user`)
+  // and routing (`screen`); the hook reads both and reports what changed.
+  const {
+    scenario, shuffledScenarios, currentIndex, difficulty,
+    decided, feedback, timedOut, combo, correctCount,
+    showSummary, sessionDelta, sessionHistory, skillResults,
+    coachRead, coachLoading, coachLimited,
+    handleDifficultySelect, handlePlayAgain,
+    handleDecision, handleTimeout, handleNext, handleRestart,
+  } = useSessionRun({ user, setUser, isGuest, screen, setScreen });
 
   useEffect(() => {
     if (!hasSupabase) return;
@@ -186,27 +142,6 @@ export default function App() {
   // History holds exactly one entry per hand slot — a duplicate append for the
   // same hand (e.g. a double-fired timeout) is dropped, protecting the summary
   // display, IQ delta, and stored accuracy in one place.
-  const appendHistory = useCallback((idx, entry) => {
-    setSessionHistory(prev => (prev.length > idx ? prev : [...prev, entry]));
-  }, []);
-
-  // Countdown lives inside TimerRing (ScenarioCard) — this only handles expiry
-  const handleTimeout = useCallback(() => {
-    if (!scenario || decided || decidedRef.current) return;
-    decidedRef.current = true;
-    setTimedOut(true);
-    setDecided(true);
-    setSkillResults(prev => ({ ...prev, [scenario.skill]: 'incorrect' }));
-    // A timeout froze on the decision — slow-wrong, the opposite of a confident
-    // miss — so decisionMs is null, never counted as a fast error.
-    appendHistory(currentIndex, { scenario, choiceVal: null, result: 'incorrect', decisionMs: null });
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: 'incorrect', timed_out: true, replay: !!scenario.replay });
-    setCombo(0);
-    const correctGrading = scenario.grading[scenario.correct];
-    setFeedback({ grade: { ...correctGrading, skill: scenario.tag }, loading: false, text: scenario.feedback.correct, choice: null });
-    // Feedback overlays the table at the top of the canvas — scroll to it
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
-  }, [scenario, decided, currentIndex, appendHistory]);
 
   const handleStartSession = () => {
     if (isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS) {
@@ -245,36 +180,7 @@ export default function App() {
 
   // Shared by the difficulty screen and summary chaining — resets every piece
   // of per-session state so a chained session can't inherit the last one's.
-  const startSession = (selected, { chained = false } = {}) => {
-    decidedRef.current = false;
-    setDifficulty(selected);
-    saveLastDifficulty(selected);
-    const pending = chained
-      ? sessionHistory.map(h => ({ scenarioId: h.scenario.id, result: h.result, decisionMs: h.decisionMs ?? null }))
-      : [];
-    setShuffledScenarios(dealScenarios(selected, user, pending));
-    setCurrentIndex(0);
-    setSkillResults({});
-    setDecided(false);
-    setFeedback(null);
-    setShowSummary(false);
-    setCoachRead('');
-    setCoachLimited(false);
-    setTimedOut(false);
-    setCombo(0);
-    setCorrectCount(0);
-    setSessionHistory([]);
-    setSessionDelta(null);
-    setScreen('session');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    track('session_started', { difficulty: selected, chained, guest: isGuest });
-  };
 
-  const handleDifficultySelect = (selected) => startSession(selected);
-
-  // One-tap "Deal Next Session" from the summary — same difficulty, no
-  // dashboard/difficulty-screen round trip between sessions.
-  const handlePlayAgain = () => startSession(difficulty, { chained: true });
 
   // Table Reads — signed-in users only (guests have one gated session; a
   // second free mode would blur that gate). Mode-local scoring, see TableReads.
@@ -283,120 +189,8 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // The pipeline itself lives in utils/session.js (MOD-002) — this keeps only
-  // the React state around it. `remote` is injected there rather than imported,
-  // which breaks a session -> db -> userStorage cycle and doubles as the
-  // localStorage-only signal.
-  const handleFetchCoachRead = async () => {
-    const prevUser = sessionUserRef.current;
-    // Every hand played counts toward accuracy — not the per-skill deduped
-    // results. decisionMs rides along (additive, no schema change): it derives
-    // the confident-miss flag for the R1 ladder and the coach payload (F2).
-    const hands = sessionHistory.map(h => ({
-      scenarioId: h.scenario.id, skill: h.scenario.skill,
-      result: h.result, choiceVal: h.choiceVal, decisionMs: h.decisionMs ?? null,
-    }));
-    if (!isGuest) setCoachLoading(true);
-    const { user: updated, coachText, limited } = await submitSession({
-      user: prevUser, hands, sessionHistory, difficulty, isGuest,
-      remote: hasSupabase ? { saveRemoteUser, recordSession } : null,
-    });
-    if (updated) setUser(updated);
-    setCoachRead(coachText);
-    if (limited) setCoachLimited(true);
-    if (!isGuest) setCoachLoading(false);
-  };
 
-  const handleDecision = useCallback((choice) => {
-    if (decided || decidedRef.current) return;
-    decidedRef.current = true;
-    setDecided(true);
-    setTimedOut(false);
-    const gr = scenario.grading[choice];
-    const decisionMs = shownAtRef.current ? Date.now() - shownAtRef.current : null;
-    setSkillResults(prev => ({ ...prev, [scenario.skill]: gr.g }));
-    appendHistory(currentIndex, { scenario, choiceVal: choice, result: gr.g, decisionMs });
-    // decision_ms powers the per-scenario comprehension heatmap (July 19, 2026
-    // audit): p50 decision time + timeout rate per scenario = the ranked list
-    // of spots where players can't parse the situation fast enough.
-    track('decision_made', { scenario_id: scenario.id, skill: scenario.skill, result: gr.g, timed_out: false, replay: !!scenario.replay, decision_ms: decisionMs });
-    if (gr.g === 'correct') {
-      setCombo(prev => prev + 1);
-      setCorrectCount(prev => prev + 1);
-    } else {
-      setCombo(0);
-    }
-    const feedbackText = scenario.feedback[gr.g];
-    setFeedback({ grade: { ...gr, skill: scenario.tag }, loading: false, text: feedbackText, choice });
-    setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
-  }, [decided, scenario, currentIndex, appendHistory]);
 
-  const handleNext = () => {
-    const next = currentIndex + 1;
-    if (next >= shuffledScenarios.length) {
-      // Count every hand played — matches SessionSummary, not the per-skill deduped skillResults
-      const correct   = sessionHistory.filter(h => h.result === 'correct').length;
-      const incorrect = sessionHistory.filter(h => h.result === 'incorrect').length;
-      sessionUserRef.current = user;
-      const today = toLocalDateString(new Date());
-      // One streak recompute feeds every streak-mechanics surface (M1–M3):
-      // the secured line, the Rebuy-used note, and the broken-streak moment.
-      const streakResult = user && user.lastSessionDate !== today ? calcStreak(user) : null;
-      const prevStreak = user?.streak ?? 0;
-      setSessionDelta({
-        iqDelta: correct * 2 - incorrect,
-        prevStreak,
-        prevSessions: user?.sessionsCompleted ?? 0,
-        prevPokerScore: user?.pokerScore ?? null,
-        prevSkills: user ? { ...user.skills } : {},
-        // Pre-session recent-hands buffer for the recency-weighted IQ before→after
-        // (F3) — the summary folds this session's hands on top, matching apply.
-        prevRecentHands: user?.recentHands ?? [],
-        skillResults: { ...skillResults },
-        // First session of the day = the moment the streak day is earned;
-        // later sessions the same day show nothing (already secured).
-        streakSecured: streakResult ? streakResult.streak : null,
-        // A Rebuy silently covered a missed day — streak intact (M1).
-        rebuyUsed: streakResult ? streakResult.rebuyUsed : false,
-        // A real streak (>1) reset to 1 → the broken-streak moment (M2), never
-        // a bare drop; activeDaysLast30 is the consistency record.
-        streakBroken: !!streakResult && streakResult.streak === 1 && prevStreak > 1,
-        activeDaysLast30: user?.activeDaysLast30 ?? null,
-        // null until a best exists (legacy local users / first session) so a
-        // first result is never hailed as a "personal best"
-        prevBest: user?.bestSessionCorrect ?? null,
-      });
-      setShowSummary(true);
-      track('session_completed', { difficulty, correct, incorrect, total: sessionHistory.length, guest: isGuest });
-      handleFetchCoachRead();
-    } else {
-      decidedRef.current = false;
-      setCurrentIndex(next);
-      setDecided(false);
-      setFeedback(null);
-      setTimedOut(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleRestart = () => {
-    decidedRef.current = false;
-    setScreen('dashboard');
-    setCurrentIndex(0);
-    setSkillResults({});
-    setDecided(false);
-    setFeedback(null);
-    setShowSummary(false);
-    setCoachRead('');
-    setCoachLimited(false);
-    setCoachLoading(false);
-    setShuffledScenarios([]);
-    setTimedOut(false);
-    setCombo(0);
-    setCorrectCount(0);
-    setSessionHistory([]);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
   const handleCreateUser = async (username) => {
     if (hasSupabase) {
