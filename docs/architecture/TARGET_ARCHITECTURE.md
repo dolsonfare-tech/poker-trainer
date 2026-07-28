@@ -16,13 +16,13 @@
 | | `src/utils/iq.js` | `derivePokerScore`, `appendRecentHands`, `RECENT_WINDOW`, `RECENT_HANDS_CAP` |
 | | `src/utils/coachRead.js` | `parseCoachRead`, `COACH_READS_CAP` |
 | | `src/utils/session.js` | `applySessionResults`, `submitSession`, `createUser`, `DEFAULT_SKILLS`, `RENAME_COOLDOWN_MS` |
-| | `userStorage.js` (kept as re-export barrel) | Re-exports all of the above for one release cycle; deleted after import sites update |
+| | ~~`userStorage.js` (re-export barrel)~~ ✅ DELETED 2026-07-27 | Served one release, then all 17 import sites were repointed at the owning module and the file was removed |
 | `src/utils/dates.js` ✅ DONE | `src/utils/dates.js` | `toLocalDateString`, `localDateFrom`, `formatShortDate` (MOD-015 addition) |
-| `src/App.jsx` | `src/hooks/useAuthSession.js` | `{ authPhase, user, setUser, loadedUidRef }` — encapsulates `onAuthStateChange` + `setTimeout(0)` deadlock workaround |
-| | `src/hooks/useGuest.js` | `{ isGuest, handleGuestPlay, handleGuestSignIn, guestRef }` — guest gate calc + guest flow state |
+| `src/App.jsx` ✅ DONE | `src/hooks/useAuthSession.js` | **Shipped as** `{ user, setUser, authPhase, setAuthPhase, loadedUidRef, handleCreateUser, handleRename, signOut, handleSwitchAccount }` — the listener + `setTimeout(0)` deadlock workaround, plus the three identity mutations. Takes `{ guestRef }`. `signOut` is deliberately NOT composed with the session reset: this hook is constructed before `useSessionRun`, so the caller chains `handleRestart` |
+| | `src/hooks/useGuest.js` | **Shipped as** `{ isGuest, guestGated, handleGuestPlay, handleGuestSignIn, guestOffer }` — takes `guestRef` rather than returning it (see the Wave 3 note on ownership). `guestOffer()` is a function, not a value: it reads localStorage and only the signed-out branch needs it |
 | | `src/hooks/useSessionRun.js` | `{ scenario, feedback, decided, timedOut, combo, handleDecision, handleTimeout, handleNext, sessionDelta, showSummary }` |
 | | `src/utils/session.js:submitSession` | `submitSession(user, hands, { isGuest, hasSupabase })` — coach-read fetch + persist pipeline |
-| | `src/App.jsx` (residual) | `<Screen>` render tree only; delegates props to hooks |
+| | `src/App.jsx` (residual) | Render tree + hook composition; owns screen routing, the guide modal, and `guestRef`. Shipped at 243 lines (from 633) |
 | `src/components/Dashboard.jsx` ✅ DONE | `src/components/dashboard/StreakWarning.jsx` | `StreakWarning({ user })` |
 | | `src/components/dashboard/StreakStatus.jsx` | `StreakStatus({ user, sessionDelta })` |
 | | `src/components/dashboard/SchemaPanel.jsx` | `SchemaPanel({ schema, sessionsCompleted, onSchemaInfo })` — added during Wave 2 (see note below) |
@@ -103,9 +103,15 @@ Each wave ships independently with all Definition-of-Done gates green before the
 - The existing CA-032 and CA-037 source pins were **widened from `Dashboard.jsx` to the whole dashboard directory** — scanning only the residual would have left both passing while guarding nothing.
 - **Invariants rule 23 (`frozen-clock`)**: see the CI note in the DONE ledger below.
 
-### Wave 3 — Hooks + Contexts (unblocked after Wave 2)
+### Wave 3 — Hooks + Contexts — ✅ DONE 2026-07-27 (`45e35fa`, `43183e1`, `ea990cc`, + barrel removal)
 
-**Items:** MOD-002 (App hooks: `useAuthSession`, `useGuest`, `useSessionRun`; `submitSession` in `session.js`), MOD-014 (`GuideContext`, `SessionActionsContext`), MOD-001 (`userStorage.js` split into six modules).
+**Items:** MOD-002 ✅ (App hooks: `useAuthSession`, `useGuest`, `useSessionRun`; `submitSession` in `session.js`), MOD-001 ✅ (`userStorage.js` split into six modules + barrel, barrel since removed), MOD-014 ❌ **DECLINED**.
+
+**MOD-014 (`GuideContext`, `SessionActionsContext`) was declined, not deferred.** It existed to remove three hops of prop-drilling for `onVillainInfo`. With the finished component graph visible, context buys indirection and a re-render surface for one callback. Revisit only if a THIRD consumer appears.
+
+**The `guestRef` ownership decision.** `App` holds it, not either hook. Neither can own it without a cycle — `useGuest` needs `authPhase` from `useAuthSession`, and `useAuthSession`'s listener needs the ref. It also cannot collapse into `authPhase === 'guest'`: the guest handlers write it synchronously, while a state read inside the listener closure lags one render, and that window is where the "guest stomped back to SignIn" bug lives. A composition root holding a channel its children share is the honest shape.
+
+**Lesson banked — `exhaustive-deps` gets STRICTER as code gets better organized.** Moving a `useRef` behind a hook boundary means the lint rule can no longer see the `useRef()` call, so it stops treating the ref as stable and demands it as a dependency. `CI=true` promotes that to a red deploy — which is what happened on `45e35fa` (fixed in `43183e1`). Every dep array closing over a cross-boundary ref must LIST it, never suppress the rule. This also produced gate 2b and `npm run gates`.
 
 **What unblocks it:** Wave 2 complete (component graph stable, prop-drilling targets identified at their final locations).
 
@@ -113,7 +119,7 @@ Each wave ships independently with all Definition-of-Done gates green before the
 
 **Prerequisites within wave:**
 - `dates.js` and `persistence.js` extracted before `streak.js` (cycle-break; `spacedrep` → `dates` already done ✅, `userStorage` → `spacedrep` cycle resolved by the `session.js` extraction).
-- `userStorage.js` re-export barrel kept for one release; removed in a follow-up commit once all import sites update (grep `from.*userStorage` to find them; there are 4: App, Dashboard, SessionSummary, db).
+- ✅ DONE 2026-07-27. `userStorage.js` re-export barrel kept for one release, then deleted. **Scoping correction:** this line said "there are 4: App, Dashboard, SessionSummary, db" — the real count was **17** (12 source + 5 test). The four named were only the ones importing *persistence* symbols; the barrel also fronted `streak`, `schema`, `iq` and `coachRead` for nine components. Count with `grep -rn "from.*userStorage" src/`, not from memory.
 - Invariant rule added: `deriveSchema` must live only in `src/utils/schema.js` (mirrors the `db-access` and `posthog` ownership rules).
 
 **Ratchet each item leaves:**
@@ -192,6 +198,6 @@ Jest suite: 206 → 337 tests. Invariants: 18 → 23 rules.
 
 **"App is routing only":** the CLAUDE.md claim is false today. It becomes true only after Wave 3 (hooks + contexts) lands. Task 8 (lean CLAUDE.md) must not assert it until then.
 
-**`userStorage.js` barrel:** kept as a re-export shim for one release after the Wave 3 split. Removed in a follow-up commit once all four import sites (App, Dashboard, SessionSummary, db) update their import paths.
+**`userStorage.js` barrel:** ✅ removed 2026-07-27, one release after the Wave 3 split, with all 17 import sites repointed at their owning module. The `barrel-only` invariant that guarded it retired with it; rule 27 (`dates-owner`) was added FIRST so that deleting the file could not silently drop the CA-028 source pin it hosted.
 
 **Scenarios `index.js`:** the audit scripts (`audit:scenarios`, `audit:observations`, `simulate:schemas`) import the flat `SCENARIOS` export. The split to batch files must preserve that export shape — no audit logic changes required.

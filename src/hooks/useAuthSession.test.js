@@ -44,7 +44,7 @@ jest.mock('../utils/sentry', () => ({
 }));
 
 import { useAuthSession } from './useAuthSession';
-import { fetchRemoteUser } from '../utils/db';
+import { fetchRemoteUser, createRemoteProfile } from '../utils/db';
 import { track } from '../utils/analytics';
 import { createUser } from '../utils/session';
 import { saveUser, setCacheOwner, cacheOwner } from '../utils/persistence';
@@ -148,6 +148,37 @@ describe('generic load failure', () => {
     await waitFor(() => expect(result.current.authPhase).toBe('error'));
     expect(result.current.authPhase).not.toBe('noprofile');
     expect(track).toHaveBeenCalledWith('profile_load_failed', { message: 'network down' });
+  });
+});
+
+// ── the migration payload (the receiving end of ROADMAP item 10) ──────────
+// `handleCreateUser` decides what a brand-new account inherits, and it decides
+// it from ONE signal: whether the local cache carries an owner tag. Both
+// directions are load-bearing and fail in opposite ways — an untagged cache
+// dropped loses a guest's or tester's real history, and a tagged cache
+// migrated copies one account's stats into another (the two-accounts-one-phone
+// leak, July 2026).
+describe('handleCreateUser migration payload', () => {
+  test('migrates an UNTAGGED cache — guest progress and tester history survive', async () => {
+    saveUser({ ...createUser('Guest'), sessionsCompleted: 1, pokerScore: 700 });
+    createRemoteProfile.mockResolvedValue(createUser('Real'));
+    const { result } = setup();
+
+    await act(async () => { await result.current.handleCreateUser('Real'); });
+
+    expect(createRemoteProfile).toHaveBeenCalledWith(
+      'Real', expect.objectContaining({ pokerScore: 700, sessionsCompleted: 1 }));
+  });
+
+  test('does NOT migrate an OWNER-TAGGED cache — a fresh account starts fresh', async () => {
+    saveUser({ ...createUser('Other'), pokerScore: 1400 });
+    setCacheOwner('uid-other');
+    createRemoteProfile.mockResolvedValue(createUser('Real'));
+    const { result } = setup();
+
+    await act(async () => { await result.current.handleCreateUser('Real'); });
+
+    expect(createRemoteProfile).toHaveBeenCalledWith('Real', null);
   });
 });
 

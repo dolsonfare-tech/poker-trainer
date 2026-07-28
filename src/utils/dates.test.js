@@ -58,15 +58,11 @@ test('formatShortDate returns the input unchanged for an unparseable string', ()
   expect(formatShortDate('')).toBe('');
 });
 
-// ── CA-028 source pins: neither source file defines the function anymore ───────
-
-test('CA-028: userStorage.js does not define toLocalDateString (re-export only)', () => {
-  const src = fs.readFileSync(require.resolve('./userStorage'), 'utf8');
-  // A definition looks like `function toLocalDateString` or `const toLocalDateString =`
-  // A re-export line (`export { toLocalDateString }` or `export { toLocalDateString } from`) does NOT match
-  expect(src).not.toMatch(/function\s+toLocalDateString\b/);
-  expect(src).not.toMatch(/const\s+toLocalDateString\s*=/);
-});
+// ── CA-028 source pin ─────────────────────────────────────────────────────────
+// The companion pin on userStorage.js is gone: that file was deleted when the
+// MOD-001 barrel was removed, and a deleted file cannot redefine anything. The
+// general guarantee now lives in check-invariants.mjs rule 27 ('dates-owner'),
+// which covers EVERY src file rather than the two that had already gone wrong.
 
 test('CA-028: spacedrep.js does not define localDateFrom (imports from dates.js)', () => {
   const src = fs.readFileSync(require.resolve('./spacedrep'), 'utf8');

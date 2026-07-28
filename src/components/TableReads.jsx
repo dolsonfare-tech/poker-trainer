@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import OBSERVATIONS, { ARCHETYPE_LABELS } from '../data/observations';
-import { loadTableReadsStats, saveTableReadsStats } from '../utils/userStorage';
+import { loadTableReadsStats, saveTableReadsStats } from '../utils/persistence';
 import { track } from '../utils/analytics';
 import { shuffle } from '../utils/random';
 

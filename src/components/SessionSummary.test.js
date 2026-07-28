@@ -5,8 +5,8 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import SessionSummary from './SessionSummary';
 import SCENARIOS from '../data/scenarios';
-import { DEFAULT_SKILLS, RECENT_WINDOW } from '../utils/userStorage';
-
+import { RECENT_WINDOW } from '../utils/iq';
+import { DEFAULT_SKILLS } from '../utils/session';
 jest.mock('../utils/supabase', () => ({ supabase: null, hasSupabase: false }));
 
 const pool = SCENARIOS.slice(0, 5);

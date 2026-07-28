@@ -7,7 +7,7 @@ jest.mock('../utils/supabase', () => ({ supabase: {}, hasSupabase: true }));
 jest.mock('../utils/db', () => ({ submitFeedback: jest.fn() }));
 
 import Dashboard from './Dashboard';
-import { createUser } from '../utils/userStorage';
+import { createUser } from '../utils/session';
 import { SKILL_NAMES } from '../data/constants';
 
 const user = { ...createUser('RiverRat'), sessionsCompleted: 3 };

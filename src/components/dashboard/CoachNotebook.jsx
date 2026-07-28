@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { parseCoachRead } from '../../utils/userStorage';
+import { parseCoachRead } from '../../utils/coachRead';
 import { track } from '../../utils/analytics';
 import { formatShortDate } from '../../utils/dates';
 

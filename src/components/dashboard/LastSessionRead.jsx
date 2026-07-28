@@ -1,4 +1,4 @@
-import { parseCoachRead } from '../../utils/userStorage';
+import { parseCoachRead } from '../../utils/coachRead';
 import CoachNotebook from './CoachNotebook';
 
 // ─── Last Session's Read ──────────────────────────────────────────────────

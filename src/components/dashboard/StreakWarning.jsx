@@ -1,5 +1,5 @@
-import { toLocalDateString, streakAlive } from '../../utils/userStorage';
-
+import { toLocalDateString } from '../../utils/dates';
+import { streakAlive } from '../../utils/streak';
 // ─── Streak warning (backlog item, pulled into launch scope July 2026) ────
 // After 6pm local, if today's session hasn't been played, nudge — protecting
 // the streak is the whole retention loop.

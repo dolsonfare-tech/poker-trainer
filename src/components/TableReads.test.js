@@ -5,8 +5,7 @@ import '@testing-library/jest-dom';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import TableReads, { dealObservations } from './TableReads';
 import OBSERVATIONS, { ARCHETYPE_LABELS } from '../data/observations';
-import { loadTableReadsStats } from '../utils/userStorage';
-
+import { loadTableReadsStats } from '../utils/persistence';
 jest.mock('../utils/supabase', () => ({ supabase: null, hasSupabase: false }));
 
 const BEGINNER_IDS = OBSERVATIONS.filter((o) => o.difficulty === 'beginner').map((o) => o.id);

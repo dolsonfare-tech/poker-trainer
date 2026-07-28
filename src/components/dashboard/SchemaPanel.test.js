@@ -3,8 +3,7 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent } from '@testing-library/react';
 import SchemaPanel from './SchemaPanel';
-import { SCHEMA_UNLOCK_SESSIONS } from '../../utils/userStorage';
-
+import { SCHEMA_UNLOCK_SESSIONS } from '../../utils/schema';
 const schema = { name: 'The Calling Station', quote: 'You pay to find out.' };
 
 test('a locked profile counts down the sessions still needed', () => {

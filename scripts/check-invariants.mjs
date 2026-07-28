@@ -620,18 +620,21 @@ onlyIn('persistence-owner',
   ['src/utils/persistence.js'], srcNonTest,
   'the user record is read/written only in src/utils/persistence.js');
 
-// The barrel must stay a BARREL. Its whole justification is that the split
-// landed as a pure move; if logic creeps back in, the six modules stop being
-// the single source and the next wave inherits a seventh place to look.
-{
-  const barrel = read(join(ROOT, 'src/utils/userStorage.js'));
-  const code = barrel.split('\n')
-    .filter(l => !/^\s*\/\//.test(l) && l.trim())
-    .join('\n');
-  if (/^(?!export \{)[^\n]*\b(function|=>|const\s+\w+\s*=\s*[^{])/m.test(code))
-    flag('ERROR', 'barrel-only',
-      'src/utils/userStorage.js contains logic — it is a re-export barrel for one release (TARGET_ARCHITECTURE §4); put new code in the module that owns the responsibility');
-}
+// ── 27. Local-date ownership (CA-028 / CA-037) ──────────────────────────
+// CLAUDE.md's ownership map has always said dates.js owns these, but the only
+// mechanical enforcement was two source pins inside dates.test.js, each naming
+// ONE file (userStorage.js, spacedrep.js). That protected the two places the
+// duplication had already happened and nowhere else — and the userStorage pin
+// died with the barrel when MOD-001 finished. This is the repo-wide version,
+// added BEFORE deleting the barrel so coverage strictly increases.
+//
+// Why it matters: a second toLocalDateString is how a streak silently breaks.
+// The engine compares calendar days in LOCAL time; a redefinition that drifts
+// to UTC moves the day boundary by hours for every player west of Greenwich.
+onlyIn('dates-owner',
+  /(?:function\s+(?:toLocalDateString|localDateFrom|formatShortDate)\s*\(|const\s+(?:toLocalDateString|localDateFrom|formatShortDate)\s*=)/,
+  ['src/utils/dates.js'], srcNonTest,
+  'local date formatting is single-sourced in src/utils/dates.js (CA-028/CA-037) — import it instead of redefining');
 
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');

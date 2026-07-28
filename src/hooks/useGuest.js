@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { loadUser, saveUser, cacheOwner } from '../utils/persistence';
+import { loadUser, saveUser, clearUser, cacheOwner } from '../utils/persistence';
 import { createUser } from '../utils/session';
 import { track } from '../utils/analytics';
 
@@ -42,7 +42,17 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen, gu
     track('guest_play_clicked');
     const existing = cacheOwner() ? null : loadUser();
     const guest = existing ?? createUser(GUEST_NAME);
-    if (!existing) saveUser(guest);
+    if (!existing) {
+      // clearUser() before saveUser(), not saveUser() alone. The owner tag is
+      // metadata ABOUT the cached profile, and minting a fresh guest replaces
+      // that profile — leaving the tag behind makes it describe a record that
+      // no longer exists. Concretely: sign-in would read cacheOwner() as truthy,
+      // treat this guest's progress as another account's warm cache, and drop
+      // it instead of migrating it. Reachable via a no-session INITIAL_SESSION
+      // over a surviving tagged cache (SIGNED_OUT clears both keys).
+      clearUser();
+      saveUser(guest);
+    }
     guestRef.current = true;
     setUser(guest);
     setAuthPhase('guest');

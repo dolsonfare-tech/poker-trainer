@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RENAME_COOLDOWN_MS } from '../../utils/userStorage';
+import { RENAME_COOLDOWN_MS } from '../../utils/session';
 import { track } from '../../utils/analytics';
 import { formatShortDate } from '../../utils/dates';
 

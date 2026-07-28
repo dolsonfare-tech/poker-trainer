@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { GUEST_GATE_CTA } from '../data/constants';
-import { streakAlive } from '../utils/userStorage';
+import { streakAlive } from '../utils/streak';
 import { track } from '../utils/analytics';
 import { hasSupabase } from '../utils/supabase';
 import useCountUp from '../hooks/useCountUp';

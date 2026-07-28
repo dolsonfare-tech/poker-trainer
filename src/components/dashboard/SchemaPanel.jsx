@@ -1,5 +1,4 @@
-import { SCHEMA_UNLOCK_SESSIONS } from '../../utils/userStorage';
-
+import { SCHEMA_UNLOCK_SESSIONS } from '../../utils/schema';
 // ─── Player schema panel ──────────────────────────────────────────────────
 // Left half of the Player Profile card: the read itself, or the locked state
 // with an honest countdown to the unlock.

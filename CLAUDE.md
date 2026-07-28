@@ -16,7 +16,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 
 | # | Command | When | Enforces |
 |---|---|---|---|
-| 1 | `npm run check:invariants` | after EVERY code change | 23 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, root-doc allowlist, CLAUDE.md line budget, component line budgets, test co-location, frozen-clock) |
+| 1 | `npm run check:invariants` | after EVERY code change | 27 architecture rules (single-file ownership incl. schema/persistence/dates owners, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, triage-doc event paths, root-doc allowlist, CLAUDE.md line budget, component + hook line budgets, test co-location, frozen-clock) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
 | 2b | `CI=true npm run build` | after every code change — **`npm run gates` runs 1 + 2 + 2b as one command; prefer it** | the build Vercel runs. `CI=true` promotes ESLint warnings to errors, so a lint-only issue (e.g. `react-hooks/exhaustive-deps` after a ref moves into a hook) is a RED DEPLOY even with every test green. Jest and e2e cannot catch it — they don't lint. Red deploy July 27, 2026 |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
@@ -93,7 +93,10 @@ poker-trainer/
 │   │   ├── UsernameEntry.jsx  ← First-run profile creation.
 │   │   └── VillainGuide.jsx   ← Info modal: villain types, positions, glossary, schemas.
 │   ├── hooks/
-│   │   └── useCountUp.js      ← Stat count-up animation (CA-024). Wave 3 adds the session/auth hooks.
+│   │   ├── useAuthSession.js  ← Auth listener, profile load, identity mutations (Wave 3).
+│   │   ├── useCountUp.js      ← Stat count-up animation (CA-024).
+│   │   ├── useGuest.js        ← Guest gate + free-session flow (Wave 3).
+│   │   └── useSessionRun.js   ← The deal, per-hand loop, end-of-session delta (Wave 3).
 │   ├── data/
 │   │   ├── constants.js       ← Skill names, PLAYER_SCHEMAS, rating engine.
 │   │   ├── observations.js    ← Table Reads observation hands.
@@ -105,7 +108,13 @@ poker-trainer/
 │       ├── spacedrep.js       ← Session builder v2: dealing, graduation ladder, history rebuild.
 │       ├── supabase.js
 │       ├── ticker.js          ← buildTicker, villainSummary, relationLine (rule 19).
-│       └── userStorage.js     ← localStorage cache + pure logic: schemas, ratings, streaks, IQ, coach reads.
+│       ├── persistence.js     ← localStorage seam: loadUser/saveUser/clearUser + owner tag (rule 26).
+│       ├── session.js         ← createUser, applySessionResults, submitSession, buildSessionDelta.
+│       ├── streak.js          ← calcStreak, streakAlive, Rebuys, milestones.
+│       ├── schema.js          ← deriveSchema + direction tally — single-sourced (rule 26).
+│       ├── iq.js              ← derivePokerScore, recent-hands window.
+│       ├── coachRead.js       ← parseCoachRead (structured vs legacy prose).
+│       └── deal.js            ← dealScenarios (pure; extracted from useSessionRun).
 ├── e2e/                       ← 5 Playwright specs (smoke, streaks, context, taptargets, mobilefold).
 ├── scripts/                   ← check-invariants, audit-scenarios, audit-observations, simulate-schemas,
 │                                 playtest-personas, eval-coach, export-review.

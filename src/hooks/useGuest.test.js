@@ -84,16 +84,13 @@ describe('handleGuestPlay', () => {
     const handed = setUser.mock.calls[0][0];
     expect(handed.displayName).toBe(GUEST_NAME);
     expect(handed.pokerScore).toBeNull();
-    // …and the tagged cache is overwritten by the new guest, which is the
-    // pre-extraction behaviour, pinned here so the extraction is provably pure.
+    // …the tagged cache is replaced by the new guest…
     expect(loadUser().displayName).toBe(GUEST_NAME);
-    // KNOWN GAP (pre-existing, not introduced by this extraction): saveUser
-    // does not clear the owner tag, so this guest's progress is invisible to
-    // the migration path on next sign-in (`cacheOwner()` is still truthy).
-    // Reachable only via a no-session INITIAL_SESSION over a surviving tagged
-    // cache — SIGNED_OUT clears both keys. Left as-is deliberately; a refactor
-    // commit is the wrong place to change behaviour.
-    expect(localStorage.getItem('cr_user_owner')).toBe('uid-abc');
+    // …AND the stale owner tag goes with the profile it described. This is the
+    // regression pin for the stranded-progress bug (ROADMAP item 10, fixed
+    // 2026-07-27): a surviving tag makes sign-in read this guest's progress as
+    // another account's warm cache and DROP it instead of migrating it.
+    expect(localStorage.getItem('cr_user_owner')).toBeNull();
   });
 });
 

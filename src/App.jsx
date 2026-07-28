@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import './App.css';
-import { loadUser, cacheOwner, loadLastDifficulty } from './utils/userStorage';
+import { loadUser, cacheOwner, loadLastDifficulty } from './utils/persistence';
 import { useAuthSession } from './hooks/useAuthSession';
 import { useSessionRun, TIMER_SECONDS } from './hooks/useSessionRun';
 import { useGuest, GUEST_NAME } from './hooks/useGuest';

@@ -1,8 +1,9 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
 import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
-import { RECENT_HANDS_CAP, COACH_READS_CAP, DEFAULT_SKILLS } from './userStorage';
-
+import { COACH_READS_CAP } from './coachRead';
+import { RECENT_HANDS_CAP } from './iq';
+import { DEFAULT_SKILLS } from './session';
 // ── Supabase mock ─────────────────────────────────────────────────────────────
 // jest.mock() factories are hoisted before any variable initialisation, so the
 // mock object must live inside the factory closure (not in a module-level var).

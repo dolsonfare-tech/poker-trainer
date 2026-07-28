@@ -2,7 +2,11 @@
 // exact userStorage.js shape, so the rest of the app doesn't know or care
 // whether it came from localStorage or the database.
 import { supabase } from './supabase';
-import { DEFAULT_SKILLS, deriveSchema, derivePokerScore, RECENT_HANDS_CAP, COACH_READS_CAP, createUser, toLocalDateString, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './userStorage';
+import { COACH_READS_CAP } from './coachRead';
+import { toLocalDateString } from './dates';
+import { derivePokerScore, RECENT_HANDS_CAP } from './iq';
+import { deriveSchema, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './schema';
+import { DEFAULT_SKILLS, createUser } from './session';
 import { historyFromSessions } from './spacedrep';
 
 const SKILL_KEYS = Object.keys(DEFAULT_SKILLS);

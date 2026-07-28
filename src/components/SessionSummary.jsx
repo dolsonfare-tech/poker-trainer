@@ -1,5 +1,7 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill, DIFFICULTY_LABELS, GUEST_GATE_CTA } from '../data/constants';
-import { derivePokerScore, milestoneProximity, parseCoachRead, MILESTONE_NAMES } from '../utils/userStorage';
+import { parseCoachRead } from '../utils/coachRead';
+import { derivePokerScore } from '../utils/iq';
+import { milestoneProximity, MILESTONE_NAMES } from '../utils/streak';
 import { activeDaysLine } from '../copy';
 import AdSlot from './AdSlot';
 

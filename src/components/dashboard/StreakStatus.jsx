@@ -1,4 +1,4 @@
-import { milestoneProximity, streakAlive } from '../../utils/userStorage';
+import { milestoneProximity, streakAlive } from '../../utils/streak';
 import { activeDaysLine } from '../../copy';
 
 // ─── Streak status line (M1–M3) ───────────────────────────────────────────
