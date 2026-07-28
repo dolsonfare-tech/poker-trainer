@@ -17,8 +17,6 @@ const hist = (results) => pool.map((s, i) => ({
 }));
 
 const baseProps = {
-  coachRead: '',
-  coachLoading: false,
   difficulty: 'beginner',
   userSkills: DEFAULT_SKILLS,
   onPlayAgain: () => {},
@@ -176,50 +174,36 @@ test('broken streak falls back to copy-only when the record is unavailable', () 
   expect(screen.queryByText(/of the last 30 days/)).not.toBeInTheDocument();
 });
 
-// ── Coach's Read rendering (structured JSON + legacy prose) ─────────────────
-test('a structured coach read renders headline, evidence rows, and watch-for', () => {
-  const read = JSON.stringify({
-    headline: 'Confident errors are the pattern here',
-    evidence: ['Snap-called the station on Q94r', 'Raised the nit who never bluffs'],
-    watchFor: 'When a tight player raises, slow down before you act',
-  });
-  render(<SessionSummary {...baseProps} coachRead={read}
-    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
-  />);
-  expect(screen.getByText('Confident errors are the pattern here')).toBeInTheDocument();
-  expect(screen.getByText(/Snap-called the station/)).toBeInTheDocument();
-  expect(screen.getByText(/Raised the nit/)).toBeInTheDocument();
-  expect(screen.getByText(/slow down before you act/)).toBeInTheDocument();
-  expect(screen.getByText(/Watch for/i)).toBeInTheDocument();
-  // No prose fallback element when structured
-  expect(document.querySelector('.ss-coach-structured')).toBeInTheDocument();
-  expect(screen.queryByText(/No pattern identified yet/)).not.toBeInTheDocument();
-});
-
-test('a legacy (prose) coach read renders as the italic paragraph', () => {
-  const prose = 'You are folding too often against aggressive regulars. Tighten up your calls.';
-  render(<SessionSummary {...baseProps} coachRead={prose}
-    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
-  />);
-  const el = document.querySelector('.ss-coach-text');
-  expect(el).toHaveTextContent(prose);
+// ── The summary is AI-free (Phase A, July 2026) ────────────────────────────
+// The read moved to the dashboard because a spinner sitting between the player
+// and the next hand reads as a gate even though it never blocked. If a coach
+// block ever returns here, that friction returns with it and nothing else in
+// the suite would notice — this is the guard.
+test('the summary renders no coach block and no loading state', () => {
+  render(<SessionSummary {...baseProps} />);
+  expect(document.querySelector('.ss-coach-read')).toBeNull();
   expect(document.querySelector('.ss-coach-structured')).toBeNull();
+  expect(document.querySelector('.thinking')).toBeNull();
+  expect(screen.queryByText(/Coach's Read/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Reading your session/i)).not.toBeInTheDocument();
 });
 
-test('daily coach limit shows honest copy, not the generic fallback', () => {
-  render(<SessionSummary {...baseProps} coachLimited
-    sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
-  />);
-  expect(screen.getByText(/used today's 5 Coach's Reads/)).toBeInTheDocument();
-  expect(screen.queryByText(/No pattern identified yet/)).not.toBeInTheDocument();
+test('the chaining CTA is present and needs no waiting', () => {
+  render(<SessionSummary {...baseProps} />);
+  const cta = screen.getByRole('button', { name: /Deal Next Session/i });
+  expect(cta).toBeInTheDocument();
+  expect(cta).toBeEnabled();
 });
 
-test('guest summary: coach teaser + sign-in gate instead of chaining', () => {
+test('guest summary: sign-in gate instead of chaining (Phase A: no coach teaser)', () => {
+  // The old teaser copy ("Your Coach's Read... comes with a free account")
+  // lived inside the now-deleted ss-coach-read block. It advertised a read
+  // that no longer renders here, so it went with the block — the gate itself
+  // (CTA swapped in for the chaining button) is the part still under test.
   const onGuestSignIn = jest.fn();
   render(<SessionSummary {...baseProps} guest onGuestSignIn={onGuestSignIn}
     sessionHistory={hist(['correct', 'incorrect', 'correct', 'incorrect', 'correct'])}
   />);
-  expect(screen.getByText(/comes with a free account/)).toBeInTheDocument();
   expect(screen.queryByText(/Deal Next Session/)).not.toBeInTheDocument();
   screen.getByText(/Sign In Free to Keep Playing/).click();
   expect(onGuestSignIn).toHaveBeenCalledWith('summary');

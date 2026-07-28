@@ -37,8 +37,12 @@ export default async function run({ browser, baseURL, check }) {
   });
 
   check('summary shows the real IQ line', /\d+ → \d+|Unlocked · \d+|Unlocks as skills/.test(summary));
-  check('structured coach read renders', summary.includes(STRUCTURED_READ.headline));
-  check('watch-for line renders', summary.includes(STRUCTURED_READ.watchFor));
+  // Phase A negative control (July 2026): the read moved to the dashboard. A
+  // coach block here is the friction regression — a spinner between the player
+  // and the next hand — and nothing else in the suite would catch it.
+  check('summary carries NO coach read', !summary.includes(STRUCTURED_READ.headline));
+  check('summary carries NO watch-for line', !summary.includes(STRUCTURED_READ.watchFor));
+  check('summary shows no loading state', (await page.locator('.thinking').count()) === 0);
   check('chaining CTA present', summary.includes('Deal Next Session'));
   await page.close();
 }

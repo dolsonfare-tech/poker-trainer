@@ -31,9 +31,6 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
   const [decided, setDecided]                     = useState(false);
   const [feedback, setFeedback]                   = useState(null);
   const [showSummary, setShowSummary]             = useState(false);
-  const [coachRead, setCoachRead]                 = useState('');
-  const [coachLoading, setCoachLoading]           = useState(false);
-  const [coachLimited, setCoachLimited]           = useState(false);
   const [timedOut, setTimedOut]                   = useState(false);
   const [combo, setCombo]                         = useState(0);
   const [correctCount, setCorrectCount]           = useState(0);
@@ -93,8 +90,6 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     setDecided(false);
     setFeedback(null);
     setShowSummary(false);
-    setCoachRead('');
-    setCoachLimited(false);
     setTimedOut(false);
     setCombo(0);
     setCorrectCount(0);
@@ -124,15 +119,16 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
       scenarioId: h.scenario.id, skill: h.scenario.skill,
       result: h.result, choiceVal: h.choiceVal, decisionMs: h.decisionMs ?? null,
     }));
-    if (!isGuest) setCoachLoading(true);
-    const { user: updated, coachText, limited } = await submitSession({
+    // The read is still fetched and still persisted — submitSession writes it to
+    // sessions.coach_read and folds it into user.coachReads, which is what feeds
+    // the dashboard. Only the SUMMARY's display state is gone (Phase A): nothing
+    // on this screen renders the read, so there is nothing to hold in state and
+    // nothing to show a spinner for.
+    const { user: updated } = await submitSession({
       user: prevUser, hands, sessionHistory, difficulty, isGuest,
       remote: hasSupabase ? { saveRemoteUser, recordSession } : null,
     });
     if (updated) setUser(updated);
-    setCoachRead(coachText);
-    if (limited) setCoachLimited(true);
-    if (!isGuest) setCoachLoading(false);
   };
 
   const handleDecision = useCallback((choice) => {
@@ -188,9 +184,6 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     setDecided(false);
     setFeedback(null);
     setShowSummary(false);
-    setCoachRead('');
-    setCoachLimited(false);
-    setCoachLoading(false);
     setShuffledScenarios([]);
     setTimedOut(false);
     setCombo(0);
@@ -204,7 +197,6 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     scenario, shuffledScenarios, currentIndex, difficulty,
     decided, feedback, timedOut, combo, correctCount,
     showSummary, sessionDelta, sessionHistory, skillResults,
-    coachRead, coachLoading, coachLimited,
     // actions
     startSession, handleDifficultySelect, handlePlayAgain,
     handleDecision, handleTimeout, handleNext, handleRestart,

@@ -1,15 +1,10 @@
 import { SKILL_NAMES, RATING_ORDER, applyHandToSkill, DIFFICULTY_LABELS, GUEST_GATE_CTA } from '../data/constants';
-import { parseCoachRead } from '../utils/coachRead';
 import { derivePokerScore } from '../utils/iq';
 import { milestoneProximity, MILESTONE_NAMES } from '../utils/streak';
 import { activeDaysLine } from '../copy';
 import AdSlot from './AdSlot';
 
 const RESULT_COLOR = { correct: '#56c878', partial: '#e89028', incorrect: '#e25555' };
-
-// Mirrors DAILY_LIMIT in api/coach-read.js — display only; the cap is
-// enforced server-side.
-const COACH_DAILY_LIMIT = 5;
 
 function personalizeBody(scenario) {
   if (!scenario.body) return null;
@@ -99,7 +94,7 @@ function HandReview({ entry, move = null }) {
   );
 }
 
-export default function SessionSummary({ sessionHistory = [], coachRead, coachLoading, coachLimited = false, difficulty, userSkills = {}, recentHands = [], streakSecured = null, rebuyUsed = false, streakBroken = false, activeDaysLast30 = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
+export default function SessionSummary({ sessionHistory = [], difficulty, userSkills = {}, recentHands = [], streakSecured = null, rebuyUsed = false, streakBroken = false, activeDaysLast30 = null, prevBest = null, guest = false, onGuestSignIn, onPlayAgain, onRestart }) {
   // Replay this session's hands through the rating engine to get post-session
   // ratings — same math as userStorage.applySessionResults.
   const afterSkills = (() => {
@@ -190,48 +185,6 @@ export default function SessionSummary({ sessionHistory = [], coachRead, coachLo
       {rebuyUsed && (
         <div className="ss-rebuy-line">🛟 Rebuy used — streak intact</div>
       )}
-
-      <div className="ss-coach-read">
-        <div className="ss-coach-label">🧠 Coach's Read</div>
-        {guest ? (
-          <div className="ss-coach-text ss-coach-guest">
-            Your Coach's Read — a personalized pattern analysis of your session — comes with a free account. Sign in and these results carry over.
-          </div>
-        ) : coachLoading ? (
-          <div className="thinking">Reading your session…</div>
-        ) : coachLimited ? (
-          <div className="ss-coach-text ss-coach-limit">
-            You've used today's {COACH_DAILY_LIMIT} Coach's Reads — they refresh tomorrow.
-          </div>
-        ) : (
-          (() => {
-            // Structured reads render as headline + evidence rows + a closing
-            // watch-for line; legacy/prose reads (pre-restructure DB rows, or the
-            // graceful-degradation fallback) render as the italic paragraph.
-            const parsed = parseCoachRead(coachRead);
-            if (parsed?.structured) {
-              const { headline, evidence, watchFor } = parsed.structured;
-              return (
-                <div className="ss-coach-structured">
-                  <div className="ss-coach-headline">{headline}</div>
-                  {evidence.length > 0 && (
-                    <ul className="ss-coach-evidence">
-                      {evidence.map((e, i) => <li key={i} className="ss-coach-evidence-row">{e}</li>)}
-                    </ul>
-                  )}
-                  {watchFor && (
-                    <div className="ss-coach-watchfor">
-                      <span className="ss-coach-watchfor-label">Watch for</span>
-                      <span className="ss-coach-watchfor-text">{watchFor}</span>
-                    </div>
-                  )}
-                </div>
-              );
-            }
-            return <div className="ss-coach-text">{parsed?.legacy || 'No pattern identified yet.'}</div>;
-          })()
-        )}
-      </div>
 
       <div className="summary-sub" style={{ marginBottom: '12px' }}>Session Impact</div>
       <div className="ss-impact-list">

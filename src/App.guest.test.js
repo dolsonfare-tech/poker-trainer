@@ -51,10 +51,10 @@ test('guest plays one free session, then every path gates to sign-in with progre
     fireEvent.click(next);
   }
 
-  // Summary: coach read replaced by the honest unlock pitch; the chain
-  // button is replaced by the sign-in gate
+  // Summary (Phase A, July 2026): no coach read here at all — moved to the
+  // dashboard. The chain button is replaced by the sign-in gate.
   expect(await screen.findByText('Session Complete')).toBeInTheDocument();
-  expect(screen.getByText(/comes with a free account/)).toBeInTheDocument();
+  expect(document.querySelector('.ss-coach-read')).toBeNull();
   expect(screen.queryByText(/Deal Next Session/)).not.toBeInTheDocument();
   expect(screen.getByText(/Sign In Free to Keep Playing/)).toBeInTheDocument();
 

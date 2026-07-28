@@ -81,7 +81,6 @@ export default function App() {
     scenario, shuffledScenarios, currentIndex, difficulty,
     decided, feedback, timedOut, combo, correctCount,
     showSummary, sessionDelta, sessionHistory, skillResults,
-    coachRead, coachLoading, coachLimited,
     handleDifficultySelect, handlePlayAgain,
     handleDecision, handleTimeout, handleNext, handleRestart,
   } = useSessionRun({ user, setUser, isGuest, screen, setScreen });
@@ -216,9 +215,6 @@ export default function App() {
             <SessionSummary
               skillResults={skillResults}
               sessionHistory={sessionHistory}
-              coachRead={coachRead}
-              coachLoading={coachLoading}
-              coachLimited={coachLimited}
               difficulty={difficulty}
               userSkills={sessionDelta?.prevSkills ?? user.skills}
               recentHands={sessionDelta?.prevRecentHands ?? user.recentHands}

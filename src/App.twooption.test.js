@@ -56,8 +56,14 @@ test('a 2-option (all-in) scenario plays through to the summary', async () => {
   fireEvent.click(await screen.findByText(/See My Results/));
   expect(await screen.findByText('Session Complete')).toBeInTheDocument();
 
-  // Let the coach-read fetch settle so the chained deal sees persisted state
-  expect(await screen.findByText('No pattern identified yet.')).toBeInTheDocument();
+  // Let the coach-read fetch settle so the chained deal sees persisted state.
+  // Phase A removed the summary's coach-read display, so the settle point is
+  // no longer a DOM text — wait on the localStorage write submitSession makes
+  // instead (same underlying async work, no longer surfaced to the player).
+  await waitFor(() => {
+    const stored = JSON.parse(localStorage.getItem('cr_user'));
+    expect(stored?.sessionsCompleted).toBe(1);
+  });
 
   // One-tap chaining re-deals at the same difficulty. With a pool of one
   // already-played scenario this also proves the least-recently-seen

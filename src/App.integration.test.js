@@ -56,10 +56,14 @@ test('new user completes first session and sees the summary', async () => {
   expect(container.querySelector('.ss-score-line')).toBeInTheDocument();
   expect(screen.getByText('Session Impact')).toBeInTheDocument();
 
-  // Let the coach-read fetch settle (no API in tests → fallback copy)
-  expect(
-    await screen.findByText('No pattern identified yet.')
-  ).toBeInTheDocument();
+  // Let the coach-read fetch settle before reading localStorage. Phase A
+  // removed the summary's coach-read display, so there is no DOM text left to
+  // wait on — the read is still fetched and persisted (submitSession), so
+  // wait on that same persisted write instead.
+  await waitFor(() => {
+    const stored = JSON.parse(localStorage.getItem('cr_user'));
+    expect(stored?.sessionsCompleted).toBe(1);
+  });
 
   // Scenario history persisted — the session builder's no-repeat behavior
   // depends on every played hand landing here with its scenarioId
