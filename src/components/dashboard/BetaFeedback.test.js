@@ -8,7 +8,7 @@ jest.mock('../../utils/supabase', () => ({ supabase: {}, hasSupabase: true }));
 jest.mock('../../utils/db', () => ({ submitFeedback: jest.fn() }));
 jest.mock('../../utils/analytics', () => ({ track: jest.fn() }));
 
-import BetaFeedback from './BetaFeedback';
+import BetaFeedback, { FEEDBACK_CATEGORIES } from './BetaFeedback';
 import { submitFeedback } from '../../utils/db';
 import { track } from '../../utils/analytics';
 
@@ -61,4 +61,43 @@ test('a failed insert surfaces the error and never claims it was sent', async ()
   expect(screen.queryByText(/Dealt to the founders/)).not.toBeInTheDocument();
   expect(track).toHaveBeenCalledWith('feedback_submit_failed');
   console.error.mockRestore();
+});
+
+// ── Schema contract (CA-049, Wave 4) ──────────────────────────────────────
+// The same failure this file's header warns about, one level lower: a rejected
+// insert that reads as "sent". `category` and `body` are both CHECK-constrained
+// columns, so the UI can produce a value the database refuses — and the founder
+// silently loses the report. Parsed from schema.sql rather than restated, so
+// the two cannot drift apart.
+describe('schema contract', () => {
+  const fs = require('fs');
+  const path = require('path');
+  const schema = fs.readFileSync(
+    path.join(__dirname, '../../../supabase/schema.sql'), 'utf8');
+
+  test('every category button sends a value the database accepts', () => {
+    const m = schema.match(/category\s+text\s+not null\s+check\s*\(\s*category\s+in\s*\(([^)]*)\)/i);
+    expect(m).not.toBeNull();
+    const allowed = m[1].match(/'([^']+)'/g).map(s => s.replace(/'/g, ''));
+    expect(allowed.length).toBeGreaterThan(0);
+
+    const offered = FEEDBACK_CATEGORIES.map(([key]) => key);
+    for (const key of offered) expect(allowed).toContain(key);
+    // …and no accepted category is unreachable from the UI.
+    for (const key of allowed) expect(offered).toContain(key);
+  });
+
+  test('the textarea cannot exceed the body length the database allows', () => {
+    const m = schema.match(/char_length\(body\)\s+between\s+(\d+)\s+and\s+(\d+)/i);
+    expect(m).not.toBeNull();
+    const [, min, max] = m.map(Number);
+
+    render(<BetaFeedback />);
+    open();
+    const box = screen.getByPlaceholderText(/What happened/);
+    expect(Number(box.getAttribute('maxLength'))).toBeLessThanOrEqual(max);
+    // The lower bound is enforced by the send button's empty-text guard.
+    expect(min).toBe(1);
+    expect(screen.getByText('Send feedback')).toBeDisabled();
+  });
 });

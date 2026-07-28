@@ -8,7 +8,10 @@ import { submitFeedback } from '../../utils/db';
 // text form. Inserts into the Supabase `feedback` table (insert-only RLS);
 // in localStorage-only mode (dev/jest, no backend) it still renders and
 // "sends" so the UI stays testable — nothing persists there by design.
-const FEEDBACK_CATEGORIES = [
+// Exported for the schema contract in BetaFeedback.test.js: these keys are a
+// CHECK-constrained column, so a category added here without the matching
+// migration is a rejected insert the UI still reports as sent.
+export const FEEDBACK_CATEGORIES = [
   ['gameplay', 'Gameplay'],
   ['scenarios', 'Scenarios'],
   ['technical', 'Technical'],
