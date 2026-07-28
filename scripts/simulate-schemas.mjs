@@ -11,7 +11,7 @@
 // longer accuracy-only. The three DIRECTION schemas (Conflict Avoider, The
 // Gambler, The Overaggressor) are scored from a direction-of-error TALLY —
 // which fold/call/raise mistake a player makes — not from per-skill accuracy;
-// the three SKILL schemas (Positional Blind Spot, Results Thinker, Exploitable
+// the three SKILL schemas (Positional Blind Spot, The Resulter, Exploitable
 // Regular) keep their absolute per-skill-weakness scoring. So each profile now
 // carries BOTH:
 //   • an accuracy dial (`acc`/`base`) that drives skill ratings → skill schemas
@@ -74,7 +74,7 @@ const PROFILES = [
   { label: 'Overaggressor (over-dominant)',         base: 0.80, acc: { betsize: 0.4 },                   dir: OA_DIR,      expect: 'The Overaggressor' },
   // Skill-leak profiles: a genuinely red primary skill + a near-neutral tally.
   { label: 'Positional Blind Spot (position 40%)',  base: 0.80, acc: { position: 0.4 },                        expect: 'The Positional Blind Spot' },
-  { label: 'Results Thinker (reads 40%)',           base: 0.80, acc: { reads: 0.4 },                           expect: 'The Results Thinker' },
+  { label: 'Results Thinker (reads 40%)',           base: 0.80, acc: { reads: 0.4 },                           expect: 'The Resulter' },
   { label: 'Exploitable Regular (opponent 40%)',    base: 0.80, acc: { opponent: 0.4 },                        expect: 'The Exploitable Regular' },
   // Fallback voice is level-aware (founder, July 19, 2026): no-dominant-leak +
   // majority-green ledger → 'The Balanced Player'; otherwise 'The Student of

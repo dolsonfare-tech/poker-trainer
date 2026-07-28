@@ -5,9 +5,15 @@ import { VILLAIN_LABELS } from '../data/scenarios';
 
 // The 8 measured skills, sourced from the shared constants so the guide can
 // never drift from what the dashboard and rating engine use.
-const SKILLS = Object.keys(SKILL_NAMES).map(key => ({
+// Built per-render so each card can carry the PLAYER'S current rating. Before
+// July 27 2026 this tab showed a shape legend with nothing rated beneath it —
+// a key for a chart that wasn't there (founder report). The symbols come from
+// the same four groups the dashboard's SkillLedger uses, so the two surfaces
+// cannot drift.
+const buildSkills = (skills = {}) => Object.keys(SKILL_NAMES).map(key => ({
   label: SKILL_NAMES[key],
   desc: SKILL_DESCRIPTIONS[key],
+  rating: skills?.[key]?.rating ?? 'gray',
 }));
 
 // Status names only — the accuracy thresholds behind them are engine
@@ -18,6 +24,9 @@ const SKILL_RATINGS = [
   { key: 'green',  sym: '●', label: 'Strong' },
   { key: 'gray',   sym: '○', label: 'Unrated' },
 ];
+// Declared after SKILL_RATINGS on purpose: a const cannot be read before its
+// initialiser runs, and hoisting this above the array is a TDZ crash at import.
+const RATING_SYM = Object.fromEntries(SKILL_RATINGS.map(r => [r.key, r]));
 
 // Descriptions keyed by the dealer's villain TYPE keys; labels come from
 // VILLAIN_LABELS so the list can't drift from what the game actually deals.
@@ -148,10 +157,10 @@ function PositionDiagram() {
 }
 
 // `focus` (a villain label like "Tight Nit", or a schema name like "The
-// Results Thinker") opens the guide scrolled to and highlighting that item;
+// The Resulter") opens the guide scrolled to and highlighting that item;
 // `initialTab` picks the starting tab (the dashboard schema card opens
 // 'schemas'; the villain read on the table opens the default 'players').
-export default function VillainGuide({ onClose, focus, initialTab }) {
+export default function VillainGuide({ onClose, focus, initialTab, skills }) {
   const [activeTab, setActiveTab] = useState(initialTab ?? 'players');
   const focusRef = useRef(null);
 
@@ -169,7 +178,7 @@ export default function VillainGuide({ onClose, focus, initialTab }) {
 
   const items = activeTab === 'players' ? VILLAINS
     : activeTab === 'schemas' ? SCHEMAS
-    : activeTab === 'skills' ? SKILLS
+    : activeTab === 'skills' ? buildSkills(skills)
     : activeTab === 'positions' ? POSITIONS
     : GLOSSARY;
 
@@ -178,7 +187,7 @@ export default function VillainGuide({ onClose, focus, initialTab }) {
     : activeTab === 'schemas'
     ? 'How the trainer diagnoses you. Each schema is the root belief behind your most common mistakes — your own leak, not an opponent.'
     : activeTab === 'skills'
-    ? 'The eight skills the trainer measures. Each rating tracks your true accuracy across every hand that tests that skill.'
+    ? 'The eight skills the trainer measures, with your current rating on each. Ratings track your true accuracy across every hand that tests that skill.'
     : null;
 
   return (
@@ -232,7 +241,15 @@ export default function VillainGuide({ onClose, focus, initialTab }) {
                 ref={focused ? focusRef : undefined}
                 className={`vg-item${focused ? ' vg-item-focus' : ''}`}
               >
-                <div className="vg-item-label">{item.label}</div>
+                <div className="vg-item-label">
+                  {item.rating && (
+                    <span
+                      className={`vg-item-rating vg-sym-${item.rating}`}
+                      title={RATING_SYM[item.rating]?.label}
+                    >{RATING_SYM[item.rating]?.sym}</span>
+                  )}
+                  {item.label}
+                </div>
                 {item.quote && <div className="vg-item-quote">“{item.quote}”</div>}
                 <div className="vg-item-desc">{item.desc}</div>
               </div>

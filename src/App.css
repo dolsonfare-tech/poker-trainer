@@ -2474,6 +2474,15 @@ body {
   flex-shrink: 0;
 }
 
+/* Per-skill rating badge on the guide's Skills tab (July 27 2026). Shares the
+   .vg-sym-* colours with the legend above it, so the key and the thing it keys
+   can never diverge. */
+.vg-item-rating {
+  display: inline-block;
+  margin-right: 7px;
+  font-size: 0.78em;
+  vertical-align: middle;
+}
 .vg-sym-green  { color: #56c878; text-shadow: 0 0 5px rgba(86,200,120,0.5); }
 .vg-sym-yellow { color: #e89028; text-shadow: 0 0 5px rgba(232,144,40,0.5); }
 .vg-sym-red    { color: #e25555; text-shadow: 0 0 5px rgba(226,85,85,0.5); }

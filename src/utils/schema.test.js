@@ -132,7 +132,7 @@ test('deriveSchema: a direction schema outscores a merely-yellow skill', () => {
 test('deriveSchema: no tally argument → legacy behavior for skill schemas only', () => {
   const skills = { ...allGreen(), reads: { rating: 'red', attempts: 12, correct: 3 } };
   // Skill schema still fires with no direction tally...
-  expect(deriveSchema(skills, 10).name).toBe('The Results Thinker');
+  expect(deriveSchema(skills, 10).name).toBe('The Resulter');
   // ...and direction schemas simply can't qualify without a tally.
   expect(deriveSchema(allGreen(), 10).name).toBe('The Balanced Player');
 });

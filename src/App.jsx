@@ -322,7 +322,7 @@ export default function App() {
         <button className="info-btn" aria-label="Open the guide" onClick={() => setGuide({})}>i</button>
       </div>
 
-      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} initialTab={guide.tab} />}
+      {guide && <VillainGuide onClose={() => setGuide(null)} focus={guide.focus} initialTab={guide.tab} skills={user?.skills} />}
 
       {screen === 'dashboard' && (
         <Dashboard

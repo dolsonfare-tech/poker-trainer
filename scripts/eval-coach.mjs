@@ -143,7 +143,7 @@ const PERSONAS = [
     ],
   },
   {
-    name: 'Results Thinker (mixed misses)',
+    name: 'The Resulter (mixed misses)',
     expect: 'No single direction — a mixed pattern honestly described, not forced.',
     plan: [
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },

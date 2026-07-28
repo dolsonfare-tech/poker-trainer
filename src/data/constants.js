@@ -56,7 +56,7 @@ export const SKILL_DESCRIPTIONS = {
 //     over-raising) must diagnose differently, and accuracy alone can't tell
 //     them apart — worse, it manufactures the opposite label (a passive player's
 //     misses turn `betsize` red, and red betsize used to read as aggression).
-//   • SKILL schemas (Positional Blind Spot, Results Thinker, Exploitable
+//   • SKILL schemas (Positional Blind Spot, The Resulter, Exploitable
 //     Regular) have NO `direction` field and keep the absolute-weakness scoring
 //     off their `primary` skill.
 //   • The `primary` arrays on the three DIRECTION schemas are NO LONGER scored
@@ -85,7 +85,7 @@ export const PLAYER_SCHEMAS = [
     desc: 'You play the same whether first or last to act, ignoring the edge position gives you. Play tighter out of position and widen up on the button.',
   },
   {
-    name: 'The Results Thinker',
+    name: 'The Resulter',
     quote: 'If it worked, it was right',
     primary: ['reads'],
     desc: 'You judge decisions by whether they won, not whether they were correct, so lucky mistakes stick around. At the table it shows in your Reads — you remember how the hand ended, not what the betting was telling you. Grade the decision, not the outcome.',
