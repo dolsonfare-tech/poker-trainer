@@ -10,6 +10,7 @@ import { toLocalDateString } from './dates';
 import { calcStreak } from './streak';
 import { addHandsToDirectionTally, deriveSchema, EMPTY_DIRECTION_TALLY } from './schema';
 import { appendRecentHands, derivePokerScore } from './iq';
+import { appendRecentSession } from './recentForm';
 import { COACH_READS_CAP } from './coachRead';
 import { saveUser } from './persistence';
 import { fetchCoachRead } from './claude';
@@ -44,6 +45,7 @@ export function createUser(username) {
     pokerScore: null,
     scenarioHistory: {},
     recentHands: [],
+    recentSessions: [],
     directionTally: { ...EMPTY_DIRECTION_TALLY },
     leaderboard: null,
   };
@@ -103,7 +105,17 @@ export function applySessionResults(user, hands, coachRead) {
     ? [{ date: toLocalDateString(new Date()), body: coachRead }, ...(user.coachReads ?? [])].slice(0, COACH_READS_CAP)
     : (user.coachReads ?? []);
 
-  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, directionTally, bestSessionCorrect };
+  // Recent-form window (dashboard strip). In Supabase mode db.js rebuilds this
+  // from the session log on load — this keeps the current device accurate
+  // between loads, the same pattern as recentHands/scenarioHistory.
+  const recentSessions = appendRecentSession(user.recentSessions, {
+    date: toLocalDateString(new Date()),
+    correct: sessionCorrect,
+    total: hands.length,
+    hands: hands.map(h => ({ skill: h.skill, result: h.result })),
+  });
+
+  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect };
 }
 
 // ── submitSession (MOD-002, Wave 3) ────────────────────────────────────────

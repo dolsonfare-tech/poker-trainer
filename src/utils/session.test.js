@@ -48,6 +48,20 @@ test('applySessionResults tolerates a legacy user with no coachReads field', () 
   ]);
 });
 
+test('applySessionResults records the session in the recent-form window', () => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date('2026-07-28T12:00:00'));
+  const user = { ...createUser('N'), recentSessions: [] };
+  const hands = [
+    { scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' },
+    { scenarioId: 'sc_002', skill: 'bluffing', result: 'incorrect', choiceVal: 'fold' },
+  ];
+  const out = applySessionResults(user, hands, null);
+  expect(out.recentSessions).toHaveLength(1);
+  expect(out.recentSessions[0]).toMatchObject({ date: '2026-07-28', correct: 1, total: 2 });
+  jest.useRealTimers();
+});
+
 test('applySessionResults maintains the lifetime direction tally', () => {
   const u = createUser('Dir');
   const hands = [

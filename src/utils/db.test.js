@@ -1,8 +1,9 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
-import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
+import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, recentSessionsFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
 import { COACH_READS_CAP } from './coachRead';
 import { RECENT_HANDS_CAP } from './iq';
+import { RECENT_SESSIONS_CAP } from './recentForm';
 import { DEFAULT_SKILLS } from './session';
 // ── Supabase mock ─────────────────────────────────────────────────────────────
 // jest.mock() factories are hoisted before any variable initialisation, so the
@@ -192,6 +193,35 @@ test('coachReadsFromSessions caps at COACH_READS_CAP, keeping the newest', () =>
   expect(out).toHaveLength(COACH_READS_CAP);
   expect(out[0].body).toBe('read 39');                       // newest
   expect(out[COACH_READS_CAP - 1].body).toBe(`read ${40 - COACH_READS_CAP}`); // oldest survivor
+});
+
+// ── recentSessionsFromSessions (dashboard recent-form strip) ─────────────────
+
+test('recentSessionsFromSessions rebuilds newest-first and caps at the window pair', () => {
+  const rows = Array.from({ length: RECENT_SESSIONS_CAP + 3 }, (_, i) => ({
+    created_at: `2026-07-${String(i + 1).padStart(2, '0')}T12:00:00Z`,
+    correct_count: i % 5,
+    hands: [{ skill: 'potodds', result: 'correct' }, { skill: 'bluffing', result: 'incorrect' }],
+  }));
+  const out = recentSessionsFromSessions(rows);
+  expect(out).toHaveLength(RECENT_SESSIONS_CAP);
+  // rows arrive created_at ASCENDING; the newest row must end up first
+  expect(out[0].total).toBe(2);
+  // correct is counted from the (fixed, 1-of-2) hands log, not correct_count —
+  // every row's correct_count differs (i % 5) but hands never does.
+  expect(out[0].correct).toBe(1);
+});
+
+test('recentSessionsFromSessions counts correct from hands, not the stored column', () => {
+  // correct_count is a client-written integrity field (CA-001). The hands log
+  // is the append-only truth, so the strip must count from it.
+  const out = recentSessionsFromSessions([{
+    created_at: '2026-07-02T12:00:00Z',
+    correct_count: 99,
+    hands: [{ skill: 'potodds', result: 'correct' }, { skill: 'potodds', result: 'incorrect' }],
+  }]);
+  expect(out[0].correct).toBe(1);
+  expect(out[0].total).toBe(2);
 });
 
 // ── CA-015: bounded sessions fetch ───────────────────────────────────────────

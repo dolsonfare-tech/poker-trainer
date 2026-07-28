@@ -6,6 +6,7 @@ import { COACH_READS_CAP } from './coachRead';
 import { toLocalDateString } from './dates';
 import { derivePokerScore, RECENT_HANDS_CAP } from './iq';
 import { deriveSchema, addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './schema';
+import { RECENT_SESSIONS_CAP } from './recentForm';
 import { DEFAULT_SKILLS, createUser } from './session';
 import { historyFromSessions } from './spacedrep';
 
@@ -70,6 +71,27 @@ export function coachReadsFromSessions(sessionRows) {
   return out.length > COACH_READS_CAP ? out.slice(0, COACH_READS_CAP) : out;
 }
 
+// Recent-form window, rebuilt from the append-only session log — self-healing
+// across devices, same pattern as recentHands/coachReads. Rows arrive
+// created_at ascending (oldest first); reverse to newest-first and cap at the
+// window pair the strip compares. `correct` is counted from the hands log, NOT
+// from correct_count: that column is client-written (CA-001) and the log is the
+// append-only truth.
+export function recentSessionsFromSessions(sessionRows) {
+  const out = [];
+  for (const r of sessionRows ?? []) {
+    const hands = (r.hands ?? []).map(h => ({ skill: h.skill, result: h.result }));
+    out.push({
+      date: toLocalDateString(new Date(r.created_at)),
+      correct: hands.filter(h => h.result === 'correct').length,
+      total: hands.length,
+      hands,
+    });
+  }
+  out.reverse();  // ascending rows → newest first
+  return out.length > RECENT_SESSIONS_CAP ? out.slice(0, RECENT_SESSIONS_CAP) : out;
+}
+
 function assembleUser(profile, skillRows, sessionRows, bestSessionCorrect = null) {
   const skills = Object.fromEntries(
     SKILL_KEYS.map((k) => {
@@ -110,6 +132,8 @@ function assembleUser(profile, skillRows, sessionRows, bestSessionCorrect = null
     // Coach's Notebook — full read history derived from the session log
     // (newest first, capped), self-healing like recentHands/scenarioHistory.
     coachReads: coachReadsFromSessions(sessionRows),
+    // Recent-form window for the dashboard strip — derived like coachReads.
+    recentSessions: recentSessionsFromSessions(sessionRows),
     usernameChangedAt: profile.username_changed_at ?? null,
     // Derived from the append-only session log — feeds the session builder
     // (no repeats, comeback hands) and follows the account across devices.
