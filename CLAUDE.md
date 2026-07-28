@@ -18,6 +18,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 |---|---|---|---|
 | 1 | `npm run check:invariants` | after EVERY code change | 23 architecture rules (single-file ownership, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, root-doc allowlist, CLAUDE.md line budget, component line budgets, test co-location, frozen-clock) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
+| 2b | `CI=true npm run build` | after every code change — **`npm run gates` runs 1 + 2 + 2b as one command; prefer it** | the build Vercel runs. `CI=true` promotes ESLint warnings to errors, so a lint-only issue (e.g. `react-hooks/exhaustive-deps` after a ref moves into a hook) is a RED DEPLOY even with every test green. Jest and e2e cannot catch it — they don't lint. Red deploy July 27, 2026 |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
 | 3b | `npm run audit:observations` | `observations.js` touched | Table Reads content (rules O1–O6) |
 | 4 | `npm run simulate:schemas` | `deriveSchema` or rating engine touched | exits 1 on structural diagnosis bias |

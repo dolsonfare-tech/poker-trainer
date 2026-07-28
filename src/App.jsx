@@ -135,7 +135,12 @@ export default function App() {
       }, 0);
     });
     return () => { active = false; sub.subscription.unsubscribe(); };
-  }, []);
+    // `guestRef` is the object returned by useRef inside useGuest — a stable
+    // identity for the component's whole life, so listing it keeps this a
+    // mount-once listener. It became a required dep when the ref moved into a
+    // hook: exhaustive-deps can no longer see the useRef call, and CI=true
+    // promotes that warning to a build failure (red deploy, July 27 2026).
+  }, [guestRef]);
 
   // History holds exactly one entry per hand slot — a duplicate append for the
   // same hand (e.g. a double-fired timeout) is dropped, protecting the summary
