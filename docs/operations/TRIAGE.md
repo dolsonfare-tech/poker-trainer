@@ -66,8 +66,8 @@ Funnel order: `sign_in_link_sent` → `signed_in` → `profile_created` →
 | `profile_load_failed` | `message` | App.jsx (fetch error → retry screen) |
 | `profile_created` | — | App.jsx |
 | `profile_create_failed` | `message` | UsernameEntry.jsx |
-| `guest_play_clicked` | — | App.jsx |
-| `guest_gate_signin` | `from` (summary\|dashboard\|topbar) | App.jsx |
+| `guest_play_clicked` | — | hooks/useGuest.js |
+| `guest_gate_signin` | `from` (summary\|dashboard\|topbar) | hooks/useGuest.js |
 | `session_started` | `difficulty`, `chained`, `guest` | hooks/useSessionRun.js |
 | `decision_made` | `scenario_id`, `skill`, `result`, `timed_out`, `replay`; + `decision_ms` (non-timeout path; timeout path sends `result:'incorrect'`, `timed_out:true`) | hooks/useSessionRun.js (two call sites) |
 | `session_completed` | `difficulty`, `correct`, `incorrect`, `total`, `guest` | hooks/useSessionRun.js |

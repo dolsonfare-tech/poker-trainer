@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { loadUser, saveUser, clearUser, setCacheOwner, cacheOwner, createUser, RENAME_COOLDOWN_MS, loadLastDifficulty } from './utils/userStorage';
 import { useSessionRun, TIMER_SECONDS } from './hooks/useSessionRun';
+import { useGuest, GUEST_NAME } from './hooks/useGuest';
 import { supabase, hasSupabase } from './utils/supabase';
 import { fetchRemoteUser, createRemoteProfile, updateDisplayName } from './utils/db';
 import { track, identify, resetAnalytics } from './utils/analytics';
@@ -14,14 +15,6 @@ import Dashboard from './components/Dashboard';
 import TableReads from './components/TableReads';
 import UsernameEntry from './components/UsernameEntry';
 import SignIn from './components/SignIn';
-
-// ─── Constants ────────────────────────────────────────────────────────────
-// Guest gate (founder decision July 8): one full free session, no account —
-// then a free sign-in to continue. Guest progress migrates on first sign-in
-// via the same untagged-cache path pre-Supabase testers use. Client-side
-// gate only: the sole paid surface (coach read) is already server-gated.
-const GUEST_FREE_SESSIONS = 1;
-const GUEST_NAME = 'Guest';
 
 // ─── Utility ──────────────────────────────────────────────────────────────
 // Deal via the session builder (utils/spacedrep.js): unseen scenarios first,
@@ -50,11 +43,16 @@ export default function App() {
   // (hourly TOKEN_REFRESHED, tab-focus re-emits) don't refetch — or worse,
   // knock a ready user back to 'noprofile' on one flaky request.
   const loadedUidRef = useRef(null);
-  // Guests have no session, so a stray no-session auth event must not stomp
-  // their in-progress state back to the SignIn screen (ref: the listener's
-  // closure can't see authPhase)
-  const guestRef = useRef(false);
-  const isGuest = authPhase === 'guest';
+
+  // ── Guest flow (MOD-002, Wave 3) ─────────────────────────────────────────
+  // The free unauthenticated session, its gate, and what SignIn should offer.
+  // `guestRef` is read by the auth listener below: a stray no-session event
+  // must not stomp a guest mid-session back to SignIn, and that callback's
+  // closure can't see `authPhase`.
+  const {
+    isGuest, guestGated, guestRef,
+    handleGuestPlay, handleGuestSignIn, guestOffer,
+  } = useGuest({ authPhase, setAuthPhase, user, setUser, setScreen });
 
   // ── Session run (MOD-002, Wave 3) ────────────────────────────────────────
   // The deal, the per-hand loop, the end-of-session delta and the submitSession
@@ -144,43 +142,13 @@ export default function App() {
   // display, IQ delta, and stored accuracy in one place.
 
   const handleStartSession = () => {
-    if (isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS) {
+    if (guestGated) {
       handleGuestSignIn('dashboard'); // gate: the free session is used
       return;
     }
     setScreen('difficulty');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // ── Guest flow ────────────────────────────────────────────────────────────
-  // "Try a free session" from SignIn: play as an untagged local profile —
-  // the exact shape first sign-in already migrates (pre-Supabase tester path).
-  const handleGuestPlay = () => {
-    track('guest_play_clicked');
-    const existing = cacheOwner() ? null : loadUser();
-    const guest = existing ?? createUser(GUEST_NAME);
-    if (!existing) saveUser(guest);
-    guestRef.current = true;
-    setUser(guest);
-    setAuthPhase('guest');
-    // Straight toward the cards (founder decision July 8): level pick, then deal
-    setScreen('difficulty');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Guest → SignIn (gate hit, or they chose to sign in). Progress stays in
-  // the untagged cache and migrates on account creation.
-  const handleGuestSignIn = (from) => {
-    track('guest_gate_signin', { from });
-    guestRef.current = false;
-    setScreen('dashboard');
-    setAuthPhase('signedout');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  // Shared by the difficulty screen and summary chaining — resets every piece
-  // of per-session state so a chained session can't inherit the last one's.
-
 
   // Table Reads — signed-in users only (guests have one gated session; a
   // second free mode would blur that gate). Mode-local scoring, see TableReads.
@@ -288,13 +256,7 @@ export default function App() {
     );
   }
   if (authPhase === 'signedout') {
-    // Untagged cache = guest progress or a pre-Supabase tester's history.
-    // A used-up guest sees the carry-over note instead of the guest CTA; a
-    // tester (real name) sees neither — signing in migrates their history.
-    const local = cacheOwner() ? null : loadUser();
-    const guestUsed = local?.displayName === GUEST_NAME
-      && (local?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS;
-    const canGuest = !guestUsed && (!local || local.displayName === GUEST_NAME);
+    const { guestUsed, canGuest } = guestOffer();
     return <SignIn onGuestPlay={canGuest ? handleGuestPlay : undefined} guestUsed={guestUsed} />;
   }
   if (authPhase === 'noprofile' || !user) {
@@ -332,7 +294,7 @@ export default function App() {
           onSignOut={handleSignOut}
           onRename={handleRename}
           guest={isGuest}
-          guestGated={isGuest && (user?.sessionsCompleted ?? 0) >= GUEST_FREE_SESSIONS}
+          guestGated={guestGated}
           onGuestSignIn={handleGuestSignIn}
           onTableReads={!isGuest ? handleOpenTableReads : undefined}
           onSchemaInfo={(name) => {
