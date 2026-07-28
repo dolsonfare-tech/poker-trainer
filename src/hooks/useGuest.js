@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useCallback } from 'react';
 import { loadUser, saveUser, cacheOwner } from '../utils/persistence';
 import { createUser } from '../utils/session';
 import { track } from '../utils/analytics';
@@ -15,17 +15,21 @@ import { track } from '../utils/analytics';
 // scroll side effects. The caller keeps `authPhase`, `user` and `screen`; this
 // hook reads them and reports what the guest rules say about them.
 //
-// `guestRef` is returned rather than kept private because useAuthSession's
-// onAuthStateChange closure has to read it: a stray no-session auth event
-// (INITIAL_SESSION, a tab-focus re-emit) must NOT stomp a guest mid-session
-// back to SignIn, and that callback cannot see `authPhase` through its own
-// closure. The ref is the cross-hook channel; that is why useGuest lands first.
+// `guestRef` is a PARAMETER, owned by the composition root (App) rather than by
+// either hook. useAuthSession's onAuthStateChange closure has to read it — a
+// stray no-session auth event (INITIAL_SESSION, a tab-focus re-emit) must NOT
+// stomp a guest mid-session back to SignIn — while the guest handlers here are
+// what write it. Neither hook can own it without a cycle: useGuest needs
+// `authPhase` from useAuthSession, and useAuthSession needs the ref from here.
+//
+// It also cannot be derived from `authPhase === 'guest'`. These handlers write
+// the ref SYNCHRONOUSLY; a state read inside the listener's closure lags by a
+// render, and that render-sized window is exactly where the bug lives.
 
 export const GUEST_FREE_SESSIONS = 1;
 export const GUEST_NAME = 'Guest';
 
-export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen }) {
-  const guestRef = useRef(false);
+export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen, guestRef }) {
   const isGuest = authPhase === 'guest';
 
   // The gate itself: a guest who has spent the free session. Drives both the
@@ -45,7 +49,7 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen }) 
     // Straight toward the cards (founder decision July 8): level pick, then deal
     setScreen('difficulty');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setUser, setAuthPhase, setScreen]);
+  }, [setUser, setAuthPhase, setScreen, guestRef]);
 
   // Guest → SignIn (gate hit, or they chose to sign in). Progress stays in the
   // untagged cache and migrates on account creation.
@@ -55,7 +59,7 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen }) 
     setScreen('dashboard');
     setAuthPhase('signedout');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [setAuthPhase, setScreen]);
+  }, [setAuthPhase, setScreen, guestRef]);
 
   // What the SignIn screen should offer. A function, not a computed value: it
   // reads localStorage, and the signed-out branch is the only caller — hoisting
@@ -72,5 +76,5 @@ export function useGuest({ authPhase, setAuthPhase, user, setUser, setScreen }) 
     return { guestUsed, canGuest };
   }, []);
 
-  return { isGuest, guestGated, guestRef, handleGuestPlay, handleGuestSignIn, guestOffer };
+  return { isGuest, guestGated, handleGuestPlay, handleGuestSignIn, guestOffer };
 }

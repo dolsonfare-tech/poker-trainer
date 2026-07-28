@@ -19,16 +19,20 @@ import { loadUser, saveUser, setCacheOwner } from '../utils/persistence';
 import { createUser } from '../utils/session';
 import { track } from '../utils/analytics';
 
+// `guestRef` is owned by the composition root (App), not by the hook — it is
+// the channel useAuthSession's listener reads. Tests supply their own, which is
+// also the cheapest way to assert the synchronous writes.
 const setup = (over = {}) => {
   const setUser = jest.fn();
   const setAuthPhase = jest.fn();
   const setScreen = jest.fn();
+  const guestRef = over.guestRef ?? { current: false };
   const props = {
     authPhase: 'signedout', user: null,
-    setUser, setAuthPhase, setScreen, ...over,
+    setUser, setAuthPhase, setScreen, ...over, guestRef,
   };
   const view = renderHook((p) => useGuest(p), { initialProps: props });
-  return { ...view, setUser, setAuthPhase, setScreen };
+  return { ...view, setUser, setAuthPhase, setScreen, guestRef };
 };
 
 beforeEach(() => {
@@ -40,7 +44,7 @@ beforeEach(() => {
 // ── handleGuestPlay ────────────────────────────────────────────────────────
 describe('handleGuestPlay', () => {
   test('creates an UNTAGGED guest profile — the shape first sign-in migrates', () => {
-    const { result, setUser, setAuthPhase, setScreen } = setup();
+    const { result, setUser, setAuthPhase, setScreen, guestRef } = setup();
 
     act(() => { result.current.handleGuestPlay(); });
 
@@ -54,7 +58,7 @@ describe('handleGuestPlay', () => {
     expect(setUser).toHaveBeenCalledWith(stored);
     expect(setAuthPhase).toHaveBeenCalledWith('guest');
     expect(setScreen).toHaveBeenCalledWith('difficulty'); // level pick, not dashboard
-    expect(result.current.guestRef.current).toBe(true);
+    expect(guestRef.current).toBe(true);
     expect(track).toHaveBeenCalledWith('guest_play_clicked');
   });
 
@@ -96,12 +100,12 @@ describe('handleGuestPlay', () => {
 // ── handleGuestSignIn ──────────────────────────────────────────────────────
 describe('handleGuestSignIn', () => {
   test('drops the guest flag and routes to SignIn, tagging where the gate fired', () => {
-    const { result, setAuthPhase, setScreen } = setup({ authPhase: 'guest' });
-    act(() => { result.current.guestRef.current = true; });
+    const guestRef = { current: true }; // mid-guest-session
+    const { result, setAuthPhase, setScreen } = setup({ authPhase: 'guest', guestRef });
 
     act(() => { result.current.handleGuestSignIn('summary'); });
 
-    expect(result.current.guestRef.current).toBe(false);
+    expect(guestRef.current).toBe(false);
     expect(setScreen).toHaveBeenCalledWith('dashboard');
     expect(setAuthPhase).toHaveBeenCalledWith('signedout');
     expect(track).toHaveBeenCalledWith('guest_gate_signin', { from: 'summary' });

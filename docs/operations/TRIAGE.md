@@ -61,10 +61,10 @@ Funnel order: `sign_in_link_sent` → `signed_in` → `profile_created` →
 | `sign_in_link_sent` | — | SignIn.jsx |
 | `sign_in_link_error` | `message` | SignIn.jsx |
 | `google_sign_in_clicked` | — | SignIn.jsx |
-| `signed_in` | — | App.jsx (SIGNED_IN auth event) |
-| `stale_session_cleared` | — | App.jsx (invalid-session recovery) |
-| `profile_load_failed` | `message` | App.jsx (fetch error → retry screen) |
-| `profile_created` | — | App.jsx |
+| `signed_in` | — | hooks/useAuthSession.js (SIGNED_IN auth event) |
+| `stale_session_cleared` | — | hooks/useAuthSession.js (invalid-session recovery) |
+| `profile_load_failed` | `message` | hooks/useAuthSession.js (fetch error → retry screen) |
+| `profile_created` | — | hooks/useAuthSession.js |
 | `profile_create_failed` | `message` | UsernameEntry.jsx |
 | `guest_play_clicked` | — | hooks/useGuest.js |
 | `guest_gate_signin` | `from` (summary\|dashboard\|topbar) | hooks/useGuest.js |
