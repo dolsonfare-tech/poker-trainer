@@ -1,35 +1,7 @@
 import { supabase, hasSupabase } from './supabase';
-import { CONFIDENT_MISS_MS } from './spacedrep';
 import { emitCoachReadFailed, emitCoachReadOk } from './events';
 
-export async function fetchCoachRead(sessionHistory) {
-  // One entry per hand actually played, with the per-hand result — NOT the
-  // per-skill deduped skillResults (two hands sharing a skill would misreport
-  // the earlier one). chose vs correctAction lets the coach see the direction
-  // of each mistake (too passive vs too aggressive), not just right/wrong.
-  const decisionsPlayed = sessionHistory.map(h => {
-    const s = h.scenario;
-    const hero = s.positions.find(p => p.state === 'hero');
-    const choseOpt = s.options.find(o => o.val === h.choiceVal);
-    const correctOpt = s.options.find(o => o.val === s.correct);
-    return {
-      scenario: s.tag,
-      villain: s.villain.label,
-      villainNotes: s.villain.notes,
-      tableContext: s.tableContext || null,
-      hand: s.hand.map(c => c.r + c.s).join(''),
-      position: hero ? hero.label : '',
-      chose: choseOpt ? choseOpt.label : 'Timed out (no action)',
-      correctAction: correctOpt ? correctOpt.label : '',
-      result: h.result,
-      // Fast + wrong ≈ a confident miss (F2): the highest-leverage coaching
-      // moment — the leak they don't know they have. A timeout is slow-wrong,
-      // never confident (decisionMs null).
-      confidentMiss: h.result === 'incorrect'
-        && typeof h.decisionMs === 'number' && h.decisionMs > 0 && h.decisionMs <= CONFIDENT_MISS_MS,
-    };
-  });
-
+export async function fetchCoachRead() {
   // The endpoint requires a signed-in user (per-user daily cap server-side)
   const headers = { 'Content-Type': 'application/json' };
   if (hasSupabase) {
@@ -45,7 +17,10 @@ export async function fetchCoachRead(sessionHistory) {
     res = await fetch('/api/coach-read', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ decisionsPlayed }),
+      // No payload by design: the server builds the window from the
+      // append-only log itself, so there is nothing here for a client to
+      // inflate or fabricate (CA-001).
+      body: '{}',
     });
   } catch (err) {
     emitCoachReadFailed('network');

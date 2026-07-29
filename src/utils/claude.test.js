@@ -26,44 +26,11 @@ jest.mock('./supabase', () => ({
   hasSupabase: false,
 }));
 
-// spacedrep is imported for CONFIDENT_MISS_MS only — provide the real value
-// so confidentMiss derivation inside decisionsPlayed works correctly.
-jest.mock('./spacedrep', () => ({
-  CONFIDENT_MISS_MS: 15000,
-}));
-
 import { fetchCoachRead } from './claude';
 
-// ── Minimal sessionHistory fixture ───────────────────────────────────────────
-// fetchCoachRead maps sessionHistory → decisionsPlayed payload before fetching.
-// Each entry needs: scenario (with positions/options/correct/tag/villain/hand/tableContext)
-// and choiceVal/result/decisionMs.
-
-function makeHand({ result = 'correct', choiceVal = 'call', decisionMs = null } = {}) {
-  return {
-    scenario: {
-      tag: 'potodds',
-      villain: { label: 'Tight-Aggressive', notes: 'Solid regular.' },
-      tableContext: null,
-      hand: [{ r: 'A', s: '♠' }, { r: 'K', s: '♥' }],
-      positions: [
-        { state: 'hero', label: 'BTN' },
-        { state: 'villain', label: 'CO' },
-      ],
-      options: [
-        { val: 'fold', label: 'Fold', cls: 'fold' },
-        { val: 'call', label: 'Call $10', cls: 'call' },
-        { val: 'raise', label: 'Raise to $30', cls: 'raise' },
-      ],
-      correct: 'call',
-    },
-    choiceVal,
-    result,
-    decisionMs,
-  };
-}
-
-const SESSION = [makeHand()];
+// No sessionHistory fixture any more: fetchCoachRead takes no arguments and
+// sends no payload. The server builds the window from the append-only log, so
+// there is nothing left on the client to shape into a request body.
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -87,11 +54,28 @@ test('happy path: returns data.text and tracks coach_read_ok', async () => {
     makeResponse({ ok: true, status: 200, json: { text: 'Great session!' } })
   );
 
-  const result = await fetchCoachRead(SESSION);
+  const result = await fetchCoachRead();
 
   expect(result).toBe('Great session!');
   expect(mockTrack).toHaveBeenCalledTimes(1);
   expect(mockTrack).toHaveBeenCalledWith('coach_read_ok');
+});
+
+// ── The request itself ───────────────────────────────────────────────────────
+
+test('the client sends no payload — the server builds the window itself', async () => {
+  const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(
+    makeResponse({ ok: true, status: 200, json: { text: 'read' } })
+  );
+
+  await fetchCoachRead();
+
+  const [url, init] = fetchMock.mock.calls[0];
+  expect(url).toBe('/api/coach-read');
+  expect(init.method).toBe('POST');
+  // The body carries no hand data at all: anything here would be client-trusted
+  // input the server must not depend on (CA-001).
+  expect(JSON.parse(init.body || '{}')).toEqual({});
 });
 
 // ── !res.ok (e.g. 502) ────────────────────────────────────────────────────────
@@ -101,7 +85,7 @@ test('!res.ok: returns empty string (does NOT throw)', async () => {
     makeResponse({ ok: false, status: 502, json: {} })
   );
 
-  const result = await fetchCoachRead(SESSION);
+  const result = await fetchCoachRead();
 
   expect(result).toBe('');
 });
@@ -111,7 +95,7 @@ test('!res.ok: tracks coach_read_failed with reason:http and the status', async 
     makeResponse({ ok: false, status: 502, json: {} })
   );
 
-  await fetchCoachRead(SESSION);
+  await fetchCoachRead();
 
   expect(mockTrack).toHaveBeenCalledTimes(1);
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'http', status: 502 });
@@ -122,7 +106,7 @@ test('!res.ok: carries the actual HTTP status in the tracking payload (503 varia
     makeResponse({ ok: false, status: 503, json: {} })
   );
 
-  await fetchCoachRead(SESSION);
+  await fetchCoachRead();
 
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'http', status: 503 });
 });
@@ -134,7 +118,7 @@ test('missing data.text: returns empty string (does NOT throw)', async () => {
     makeResponse({ ok: true, status: 200, json: {} })  // no text field
   );
 
-  const result = await fetchCoachRead(SESSION);
+  const result = await fetchCoachRead();
 
   expect(result).toBe('');
 });
@@ -144,7 +128,7 @@ test('missing data.text: tracks coach_read_failed with reason:empty_response', a
     makeResponse({ ok: true, status: 200, json: {} })
   );
 
-  await fetchCoachRead(SESSION);
+  await fetchCoachRead();
 
   expect(mockTrack).toHaveBeenCalledTimes(1);
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'empty_response' });
@@ -155,7 +139,7 @@ test('empty string data.text: also returns empty string and tracks empty_respons
     makeResponse({ ok: true, status: 200, json: { text: '' } })
   );
 
-  const result = await fetchCoachRead(SESSION);
+  const result = await fetchCoachRead();
 
   expect(result).toBe('');
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'empty_response' });
@@ -167,14 +151,14 @@ test('network rejection: THROWS (re-throws the fetch error)', async () => {
   const netErr = new TypeError('Failed to fetch');
   jest.spyOn(global, 'fetch').mockRejectedValue(netErr);
 
-  await expect(fetchCoachRead(SESSION)).rejects.toThrow('Failed to fetch');
+  await expect(fetchCoachRead()).rejects.toThrow('Failed to fetch');
 });
 
 test('network rejection: tracks coach_read_failed with reason:network before throwing', async () => {
   const netErr = new TypeError('Failed to fetch');
   jest.spyOn(global, 'fetch').mockRejectedValue(netErr);
 
-  await expect(fetchCoachRead(SESSION)).rejects.toThrow();
+  await expect(fetchCoachRead()).rejects.toThrow();
 
   expect(mockTrack).toHaveBeenCalledTimes(1);
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'network' });
@@ -185,7 +169,7 @@ test('network rejection: re-throws the exact same error instance', async () => {
   jest.spyOn(global, 'fetch').mockRejectedValue(netErr);
 
   let caught;
-  try { await fetchCoachRead(SESSION); } catch (e) { caught = e; }
+  try { await fetchCoachRead(); } catch (e) { caught = e; }
 
   expect(caught).toBe(netErr);
 });
@@ -200,7 +184,7 @@ test('429: THROWS (does not return a value)', async () => {
     makeResponse({ ok: false, status: 429, json: {} })
   );
 
-  await expect(fetchCoachRead(SESSION)).rejects.toThrow();
+  await expect(fetchCoachRead()).rejects.toThrow();
 });
 
 test('429: thrown error has err.code === "daily_limit"', async () => {
@@ -209,7 +193,7 @@ test('429: thrown error has err.code === "daily_limit"', async () => {
   );
 
   let caught;
-  try { await fetchCoachRead(SESSION); } catch (e) { caught = e; }
+  try { await fetchCoachRead(); } catch (e) { caught = e; }
 
   expect(caught).toBeInstanceOf(Error);
   expect(caught.code).toBe('daily_limit');
@@ -220,7 +204,7 @@ test('429: tracks coach_read_failed with reason:daily_limit', async () => {
     makeResponse({ ok: false, status: 429, json: {} })
   );
 
-  await expect(fetchCoachRead(SESSION)).rejects.toThrow();
+  await expect(fetchCoachRead()).rejects.toThrow();
 
   expect(mockTrack).toHaveBeenCalledTimes(1);
   expect(mockTrack).toHaveBeenCalledWith('coach_read_failed', { reason: 'daily_limit' });
@@ -237,7 +221,7 @@ test('429 does NOT silently return empty string — it throws, distinguishing ca
 
   let returned;
   let threw = false;
-  try { returned = await fetchCoachRead(SESSION); } catch { threw = true; }
+  try { returned = await fetchCoachRead(); } catch { threw = true; }
 
   expect(threw).toBe(true);
   expect(returned).toBeUndefined();

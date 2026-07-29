@@ -1,5 +1,5 @@
-import { localDateFrom } from './dates';
-import { shuffle } from './random';
+import { localDateFrom } from './dates.js';
+import { shuffle } from './random.js';
 
 // Spaced repetition v2 — the session builder.
 //

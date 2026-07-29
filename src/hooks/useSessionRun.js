@@ -125,7 +125,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     // on this screen renders the read, so there is nothing to hold in state and
     // nothing to show a spinner for.
     const { user: updated } = await submitSession({
-      user: prevUser, hands, sessionHistory, difficulty, isGuest,
+      user: prevUser, hands, difficulty, isGuest,
       remote: hasSupabase ? { saveRemoteUser, recordSession } : null,
     });
     if (updated) setUser(updated);

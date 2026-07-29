@@ -1,10 +1,10 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
-import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, recentSessionsFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
+import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, recentSessionsFromSessions, sessionsSinceReadFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
 import { COACH_READS_CAP } from './coachRead';
 import { RECENT_HANDS_CAP } from './iq';
 import { RECENT_SESSIONS_CAP } from './recentForm';
-import { DEFAULT_SKILLS } from './session';
+import { DEFAULT_SKILLS, applySessionResults, createUser } from './session';
 // ── Supabase mock ─────────────────────────────────────────────────────────────
 // jest.mock() factories are hoisted before any variable initialisation, so the
 // mock object must live inside the factory closure (not in a module-level var).
@@ -555,4 +555,62 @@ test('CA-005: saveRemoteUser includes rebuys when user.rebuys is a finite number
   const updateCall = profileBuilder._calls.find(c => c[0] === 'update');
   const payload = updateCall[1];
   expect(payload).toHaveProperty('rebuys', 2);
+});
+
+test('sessionsSinceReadFromSessions counts rows after the last stored read', () => {
+  // rows arrive created_at ASCENDING (oldest first), same as every other derivation
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: 'read A', hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-03T12:00:00Z', coach_read: '', hands: [] },   // empty counts as no read
+    { created_at: '2026-07-04T12:00:00Z', coach_read: null, hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(3);
+});
+
+test('with a read on the newest row, nothing has happened since', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: 'read B', hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(0);
+});
+
+// A brand-new player has no read, so "sessions since the last read" is
+// undefined unless we define it. It must equal the total, or the >=5 half of
+// the trigger can never be satisfied and the first read never fires.
+test('with no read ever stored, every session counts', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: null, hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(2);
+  expect(sessionsSinceReadFromSessions([])).toBe(0);
+  expect(sessionsSinceReadFromSessions(undefined)).toBe(0);
+});
+
+// ── the two owners of "did a read land?" must agree ─────────────────────────
+// `sessionsSinceRead`, `coachNote` and `coachReads` each have TWO owners: the
+// local update in session.js:applySessionResults, and the rebuild here from the
+// append-only log. They disagreed on a whitespace-only read — session.js used a
+// bare truthy check, db.js used `.trim()` — and the divergence was reachable:
+// api/coach-read.js returns `...?.text || ''`, normalizeCoachRead passes ' '
+// through untouched, and claude.js's `if (!data.text)` is false for ' '. The
+// local counter reset while the rebuilt one kept climbing, and a dated but
+// EMPTY Coach's Read block persisted across devices for up to five sessions.
+// This pins the two owners to the same answer, which is the only thing that
+// stops them drifting apart again.
+test('a whitespace-only read is "no read" to BOTH owners of the counter', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: 'a real read', hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: '   ', hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(1);
+  expect(coachReadsFromSessions(rows).map(r => r.body)).toEqual(['a real read']);
+
+  const user = { ...createUser('Ghost'), sessionsSinceRead: 4 };
+  const out = applySessionResults(user, [{ scenarioId: 1, skill: 'preflop', result: 'correct' }], '   ');
+  expect(out.sessionsSinceRead).toBe(5);   // advanced, not reset
+  expect(out.coachNote).toBeNull();        // no dated-but-empty block
+  expect(out.coachReads).toEqual([]);      // nothing prepended to the notebook
 });
