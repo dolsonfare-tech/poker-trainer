@@ -20,11 +20,32 @@ export default async function run({ browser, baseURL, check }) {
   await seedAndOpen(page, baseURL, baseUser({
     coachNote: { body: read, focus: 'potodds' },
     coachReads: [{ date: '2026-07-24', body: read }, { date: '2026-07-23', body: read }],
+    // Two scenarios flagged remediating gives the strip's third (queue) line
+    // too, on top of baseUser()'s recentSessions producing the score line and
+    // the moved-skill line — the tallest the Player Profile card ever gets.
+    // Scoped to this spec only (not baseUser() itself) so we don't perturb
+    // dealScenarios' weak-slot weighting for every other e2e spec that has no
+    // reason to care about the strip.
+    scenarioHistory: { sc_034: { lastResult: 'incorrect' }, sc_035: { lastResult: 'incorrect' } },
   }), { cr_last_difficulty: 'intermediate' });
 
   // ── Dashboard: primary CTA above the fold, no scroll ──
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(150);
+
+  // Guard against measuring the wrong thing (found in review): baseUser() now
+  // seeds recentSessions specifically so this strip renders here — assert its
+  // presence explicitly, so a future fixture change that silently drops back
+  // to the strip-absent state fails loudly instead of leaving this guard
+  // green for the wrong reason.
+  const form = await page.locator('.db-form').boundingBox();
+  check('recent-form strip is present for the fold measurement', !!form,
+    form ? `height=${Math.round(form.height)}` : 'missing');
+  const moved = await page.locator('.db-form-moved').count();
+  check('recent-form strip includes the moved-skill line (tallest case)', moved === 1, `count=${moved}`);
+  const queue = await page.locator('.db-form-queue').count();
+  check('recent-form strip includes the resurface-queue line (tallest case)', queue === 1, `count=${queue}`);
+
   const cta = await page.locator('.db-cta-btn').boundingBox();
   check('dashboard CTA fully above the fold', !!cta && cta.y + cta.height <= VIEW.height,
     cta ? `bottom=${Math.round(cta.y + cta.height)}` : 'missing');

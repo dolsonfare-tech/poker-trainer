@@ -10,6 +10,64 @@ export function uniformSkills(rating = 'yellow', attempts = 10, correct = 6) {
   return Object.fromEntries(SKILL_KEYS.map(k => [k, { rating, attempts, correct }]));
 }
 
+// Skills other than 'bluffing', used to spread non-bluffing hands across the
+// window without any of them clearing MIN_RATED_ATTEMPTS (5) on their own —
+// 'bluffing' is the only skill this fixture lets clear the bar (see below).
+const OTHER_SKILLS = SKILL_KEYS.filter(k => k !== 'bluffing');
+
+// Twelve 5-hand sessions (RECENT_SESSIONS_CAP), newest first: a trailing
+// window of 6 plus a previous window of 6, so deriveRecentForm's line 1
+// ("N of M, up/down from P") has a real comparison to render, not a bare
+// first-window state.
+//
+// Deliberately engineered so 'bluffing' clears MIN_RATED_ATTEMPTS (5) INSIDE
+// the trailing window (one bluffing hand per window session = 6 attempts)
+// with an accuracy far from its uniformSkills() lifetime rate (0.6) — window
+// accuracy 1/6 vs lifetime 0.6 is the biggest gap of any skill, so it's the
+// deterministic 'moved' winner ("Bluffing is slipping lately"). Every other
+// skill gets ~3 attempts across the window (24 non-bluffing hands over 7
+// skills), which stays under the gate on purpose.
+//
+// This is the fixture the mobilefold guard measures against — the tallest,
+// most-complete version of the strip (score line + moved line), so the fold
+// guard exercises the strip-present path at its worst case for height, not
+// its best case. See mobilefold.spec.mjs for the queue-depth line (added via
+// scenarioHistory in that spec directly, not here — see its comment for why).
+function recentSessionsFixture() {
+  const day = (offset) => {
+    // offset 0 = newest (today), counting back one calendar day per session.
+    const d = new Date(Date.UTC(2026, 6, 28 - offset)); // 2026-07-28 - offset
+    return d.toISOString().slice(0, 10);
+  };
+
+  const windowSession = (i) => {
+    const hands = [
+      { skill: 'bluffing', result: i === 2 ? 'correct' : 'incorrect' },
+      { skill: OTHER_SKILLS[(i * 4 + 0) % OTHER_SKILLS.length], result: 'correct' },
+      { skill: OTHER_SKILLS[(i * 4 + 1) % OTHER_SKILLS.length], result: 'correct' },
+      { skill: OTHER_SKILLS[(i * 4 + 2) % OTHER_SKILLS.length], result: 'incorrect' },
+      { skill: OTHER_SKILLS[(i * 4 + 3) % OTHER_SKILLS.length], result: 'correct' },
+    ];
+    return { date: day(i), correct: hands.filter(h => h.result === 'correct').length, total: hands.length, hands };
+  };
+
+  const prevSession = (i) => {
+    const hands = [
+      { skill: OTHER_SKILLS[(i * 5 + 0) % OTHER_SKILLS.length], result: 'correct' },
+      { skill: OTHER_SKILLS[(i * 5 + 1) % OTHER_SKILLS.length], result: 'correct' },
+      { skill: OTHER_SKILLS[(i * 5 + 2) % OTHER_SKILLS.length], result: 'correct' },
+      { skill: OTHER_SKILLS[(i * 5 + 3) % OTHER_SKILLS.length], result: 'incorrect' },
+      { skill: OTHER_SKILLS[(i * 5 + 4) % OTHER_SKILLS.length], result: 'incorrect' },
+    ];
+    return { date: day(6 + i), correct: hands.filter(h => h.result === 'correct').length, total: hands.length, hands };
+  };
+
+  return [
+    ...Array.from({ length: 6 }, (_, i) => windowSession(i)),
+    ...Array.from({ length: 6 }, (_, i) => prevSession(i)),
+  ];
+}
+
 export function baseUser(overrides = {}) {
   return {
     displayName: 'E2E', initials: 'EE',
@@ -17,6 +75,7 @@ export function baseUser(overrides = {}) {
     sessionsCompleted: 12, bestSessionCorrect: 4,
     skills: uniformSkills(), coachNote: null, pokerScore: 60,
     scenarioHistory: {}, recentHands: [], coachReads: [],
+    recentSessions: recentSessionsFixture(),
     ...overrides,
   };
 }
