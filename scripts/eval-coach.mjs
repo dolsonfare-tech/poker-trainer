@@ -412,6 +412,22 @@ function checkRead(read, summary, cov) {
       lines.push(`- ${hit ? '✓' : '✗'} trajectory headline: ${TRAJECTORY_RULE}`
         + ` (no confident errors; ${summary.previous.correct} → ${summary.accuracy.correct})`);
     }
+    // False-direction guard (live run 2, July 29 2026): two REGRESSING personas
+    // mimicked the tier-2 template and wrote "20/50 up from 30/50" — a decline
+    // dressed as progress — and nothing flagged it. Keyed off the summary like
+    // every conditional check here: fires only when the comparison exists and
+    // did NOT improve, and scans all three fields, because a spun comparison in
+    // the evidence is the same lie in a different row.
+    const declined = summary.previous
+      && (summary.accuracy.correct / summary.accuracy.total)
+        <= (summary.previous.correct / summary.previous.total);
+    if (declined) {
+      cov.directionApplicable += 1;
+      const spun = fields.some((f) => /\b(up from|improv\w*|climbed|rose|better than last)\b/i.test(f));
+      if (!spun) cov.directionPass += 1;
+      lines.push(`- ${spun ? '✗' : '✓'} no false improvement claim on a declined stretch`
+        + ` (${summary.previous.correct} → ${summary.accuracy.correct})`);
+    }
   }
   // The third cap, also unchecked before: live run 2 put 4 of 9 watchFor
   // sentences at exactly 19 words against an 18 cap and nothing reported it.
@@ -459,6 +475,7 @@ const newCoverage = () => ({
   watchFor: 0, watchForOver: 0,
   confidentApplicable: 0, confidentPass: 0,
   trajectoryApplicable: 0, trajectoryPass: 0,
+  directionApplicable: 0, directionPass: 0,
   freezeApplicable: 0, freezePass: 0,
   voiceScanned: 0, voiceFlagged: 0,
 });
@@ -531,6 +548,7 @@ const coverageReport = (cov, dry) => [
   `- watchFor checked: ${cov.watchFor}/${cov.personas} · over the ${WORD_CAPS.watchFor}w cap: ${cov.watchForOver}`,
   `- ${HEADLINE_RULE}: applicable to ${cov.confidentApplicable} persona(s) · passed ${cov.confidentPass}`,
   `- trajectory headline (tier 2): applicable to ${cov.trajectoryApplicable} persona(s) · passed ${cov.trajectoryPass}`,
+  `- no false improvement claim on declined stretches: applicable to ${cov.directionApplicable} persona(s) · passed ${cov.directionPass}`,
   `- freezer timeout rule: applicable to ${cov.freezeApplicable} persona(s) · passed ${cov.freezePass}`,
   `- voice scan: ${cov.voiceScanned} reads scanned · flagged ${cov.voiceFlagged} [soft]`,
   ...(dry ? [] : ['', `**Run verdict: ${runVerdictLine(cov)}**`]),

@@ -292,7 +292,12 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // every tier-2 headline blew the 12-word cap. The slash form carries the same
 // two copied numbers at one word each. Copy-only law unchanged: both numbers
 // still come from the data, only the typography is prescribed.
-const TRAJECTORY_RULE = 'open the headline with that improvement written as compact counts like 20/50 (both numbers copied from above), then name the clearest remaining pattern in the same sentence';
+// The worked example carries three fixes from live run 2 at once: it anchors
+// the headline's length (the run's tier-2 headlines ran 13-14w without it),
+// it shows BOTH counts (one read wrote only the current count), and it shows
+// the counts compact. The example's numbers are placeholders the model must
+// replace with the copied ones — the copy-only law does the rest.
+const TRAJECTORY_RULE = 'open the headline with the improvement as compact counts, then the clearest remaining pattern, in the shape "20/50 up from 10/50; aggression spots still getting checked" (both numbers copied from above)';
 
 // The three length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
@@ -384,6 +389,7 @@ Rules for all three fields:
 - Use only the numbers and spots given above. Never invent a hand, a holding, an opponent or a statistic
 - COUNTS ARE GIVEN, NEVER DERIVED. Every number you write must be copied from a number written above. Do not count the listed lines yourself, do not add two counts together, and do not describe a group as "two vs X" unless the line above literally says X: 2. The per-opponent tallies are already done for you
 - If the mistakes point in different directions, say so honestly instead of forcing one story
+- Only call this stretch improved, or "up from" anything, if the overall numbers above actually rose. A decline is named as a decline or the comparison is left out entirely; never dress a drop as progress
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
