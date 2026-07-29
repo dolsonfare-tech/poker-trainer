@@ -4,6 +4,76 @@
 
 ---
 
+## Phase B status — Coach's Read re-scope (as of 2026-07-29)
+
+**Where it is:** branch `phase-b-coach-read`, **12 commits, not merged, not pushed.**
+`main` is 1 commit ahead of `origin/main` (the Phase B plan doc). Phase A is
+already live on `origin/main`.
+
+**What Phase B does.** The Coach's Read moved from a per-session note over 5 hands
+to a trend read over a trailing 10 sessions, fired at session 6 then every 5. The
+**server builds the window itself** from the append-only log — the client posts an
+empty body, so it can no longer influence what the read is about. The prompt
+receives aggregated patterns (per-skill tallies gated at `MIN_RATED_ATTEMPTS`, the
+direction tally, confident errors and repeat spots pre-grouped by villain with
+counts, the previous stretch to compare against, a timeout count) and speaks
+temporally, never in identity. Spec: `docs/superpowers/specs/2026-07-28-coach-read-scope-design.md`.
+Plan: `docs/superpowers/plans/2026-07-28-coach-read-phase-b.md`.
+
+**Verification state.** `npm run gates` green (525 tests), `npm run e2e` green,
+invariants clean including three new rules added during the work:
+- **29 `server-esm-resolvable`** — no extensionless relative import in the subtree
+  `api/coach-read.js` loads. This existed as a real defect: `eval:coach` had been
+  BROKEN on `main` since `8846d18` and nothing ran it, so it failed silently.
+- **30 `coach-tenant-scope`** — pins `.eq('user_id', uid)` on the sessions query,
+  the one line stopping another player's hands entering somebody's read.
+- **32** — a `--dry` eval run can never overwrite the live artifact.
+
+### THE ONE OPEN DECISION — word caps
+
+The July 29 live eval passed on substance (see CLAUDE.md's eval line) but flagged
+**7 word-cap breaches across 4 of 9 personas**: headline 13w ×2 (cap 12), evidence
+21w and 22w (cap 20), watchFor 19w/20w/21w (cap 18).
+
+The caps (12/20/18) were inherited from the OLD per-session prompt, which described
+five hands. The trend read describes ten sessions, a previous-stretch comparison and
+a villain distribution. The flagged evidence item is
+*"Five confident errors span four opponent types: two vs a Tight Nit, one each vs a
+Calling Station, Maniac, and Tight Recreational"* — 22 words, and exactly the
+aggregate citation Phase B exists to produce. Cutting it to 20 costs a villain name.
+
+Two paths, founder's call:
+1. **Ship now, tune later.** The reads are correct, honest and in voice; the caps are
+   a style constraint. Merge, push, and re-tune caps when the prompt is next touched
+   so one live run validates both. (Recommended — two paid runs were spent on 2026-07-29.)
+2. **Tune first.** Suggested: keep headline at 12 (7 of 9 hit it; a 13-word headline
+   is a sentence), evidence 20 → 24, watchFor 18 → 20. Costs another live run and will
+   not come back all-green — a model told "24 words" writes longer, so it needs real
+   validation, not arithmetic against the current artifact.
+
+**Do not raise a cap to make a run green.** A bound moved to fit the output it bounds
+is not a bound.
+
+### Left undone, deliberately
+
+- **Task 7 follow-through:** whichever path above is chosen, then merge + push. The
+  push IS the deploy, and the eval law binds the deploy.
+- **`repeats` is unexercised by the eval** — no persona misses a scenario twice, so
+  repeat-spot citations ship unjudged by a live run. Pinned in jest instead. Fixing it
+  properly needs a tenth persona, which changes the paid-run cost and the baseline.
+- **The withheld-tag citation path has no live coverage** — no persona combines a
+  sub-bar skill with a confident miss.
+- Three ratchet-hardening minors from the last review (rule 31's re-hardcoding regex
+  misses `words >= N`; rule 32 misdiagnoses one of its two failure modes in its
+  message; an all-errored live run still overwrites the prior live artifact). None can
+  produce a false green today.
+- **First production read must be verified after deploy.** This is the first time
+  `api/` reaches into `src/` (dynamic import). `@vercel/nft` should trace it, but
+  nothing local proves the lambda bundles it — if it misses, every read 500s and the
+  only signal is PostHog `coach_read_failed`.
+
+---
+
 ## Triage — Tester Feedback (batch of July 26, 2026)
 
 Nine items from the tester batch, each triaged against the code on July 28. The
