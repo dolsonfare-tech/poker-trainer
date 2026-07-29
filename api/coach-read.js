@@ -196,6 +196,12 @@ function buildPrompt(s) {
   const repeats = s.repeats
     .map(r => `- ${clamp(r.scenario, 40)} vs ${clamp(r.villain, 30)}: missed ${r.misses} times`)
     .join('\n');
+  // Only when it happened. A freeze is not a bad choice, and it carries no
+  // direction (schema.js refuses to classify one), so without this line a player
+  // who is timing out reads to the model as making patternless mistakes.
+  const timeouts = s.timeouts
+    ? `They ran out of the clock without acting at all on ${s.timeouts} of these hands. That is freezing on the decision, not choosing badly, and it carries no direction — treat it as its own pattern rather than folding it into the passive or aggressive story.\n\n`
+    : '';
 
   return `You are a poker coach reviewing a student's last ${s.sessions} sessions — ${s.hands} hands — and writing up what you have been seeing lately. This is a trend review, not a verdict on who they are: name what has been happening over this stretch, and stay in the present tense of "lately".
 
@@ -208,7 +214,7 @@ ${skillLines || '- (no skill has enough attempts to report)'}
 
 Direction of their mistakes — too passive (${s.direction.under}), too aggressive (${s.direction.over}), too loose (${s.direction.loose}), over ${s.direction.evidence} weighted misses.
 
-${confident ? `Confident errors — answered fast and got it wrong, so they do not know these are leaks:\n${confident}` : 'No confident errors this stretch.'}
+${timeouts}${confident ? `Confident errors — answered fast and got it wrong, so they do not know these are leaks:\n${confident}` : 'No confident errors this stretch.'}
 
 ${repeats ? `Spots they have missed more than once in this stretch:\n${repeats}` : 'No spot was missed more than once.'}
 

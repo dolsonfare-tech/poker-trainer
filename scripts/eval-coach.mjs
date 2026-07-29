@@ -1,8 +1,9 @@
 // Coach's Read eval harness — runs the REAL prompt (imported from
 // api/coach-read.js, the only Anthropic caller) over the REAL aggregate()
-// against synthetic TEN-SESSION windows, one per player schema plus edge
-// personas, and writes the reads to coach-eval-output.md for review against
-// the F5 quality bar:
+// against synthetic TWENTY-session histories — the trailing ten the read speaks
+// over, plus the ten before them that feed the accuracy comparison — one per
+// player schema plus edge personas, and writes the reads to
+// coach-eval-output.md for review against the F5 quality bar:
 //   1. Names the pattern-level WHY (the mental model), not per-hand recaps
 //   2. Names the DIRECTION of the mistakes (too passive vs too aggressive)
 //   3. References the villain types involved, not just abstract skills
@@ -93,127 +94,157 @@ function buildDecisions(plan) {
   });
 }
 
-// Ten sessions of five hands is the window the read speaks over.
-const buildWindow = (plan) => {
-  const hands = buildDecisions(plan);
-  const sessions = [];
-  for (let i = 0; i < hands.length; i += 5) sessions.push({ hands: hands.slice(i, i + 5) });
-  return sessions;
-};
-
 // A trend review fed one session's worth of hands would not exercise the prompt
 // it is judging, so each persona's five-step leak shape is repeated ten times
 // rather than authoring fifty new steps.
 //
-// NOTE: `used` above spans the whole 50, so no scenario repeats within a
-// persona. That keeps every hand a distinct spot, and it means aggregate()'s
+// NOTE: `used` in buildDecisions spans a whole stretch, so no scenario repeats
+// within one. That keeps every hand a distinct spot, and it means aggregate()'s
 // `repeats` (same scenario missed more than once) is always empty here — the
 // prompt renders its "No spot was missed more than once." branch for all nine
 // personas. Real players DO repeat spots (the R1 ladder re-deals missed hands),
-// so that prompt branch is exercised in production but not by this harness.
+// so that prompt branch is live in production but knowingly unexercised here.
 const TEN_SESSIONS = (steps) => Array.from({ length: 10 }, () => steps).flat();
+
+// The stretch BEFORE the one the read speaks about — the same persona playing at
+// a different level. `priorCorrect` is how many of its five steps landed correct
+// back then, against the same five pools.
+//
+// This is sound because of how aggregate() is scoped: `skills`, `direction`,
+// `confidentMisses` and `repeats` all read slice(0, COACH_WINDOW) — the WINDOW
+// only — so the older stretch reaches the prompt through previous.correct/total
+// and nothing else. Every persona's diagnosis is untouched; the comparison
+// sentence just gets something real to compare against. `fast` and `timeout` are
+// deliberately dropped: they would be invisible anyway.
+const priorSteps = (steps, priorCorrect) =>
+  steps.map((st, i) => (i < priorCorrect
+    ? { pool: st.pool, correct: true }
+    : { pool: st.pool, wrongCls: st.wrongCls ?? ['fold', 'call', 'raise'] }));
+
+// Twenty sessions, NEWEST FIRST: the trailing ten the read speaks over, then the
+// ten before them that only feed the accuracy comparison. Each stretch gets its
+// own buildDecisions call (and so its own `used` set), which keeps both leak
+// shapes intact; overlap between the two is harmless since nothing cross-reads.
+const chunk = (hands) => {
+  const out = [];
+  for (let i = 0; i < hands.length; i += 5) out.push({ hands: hands.slice(i, i + 5) });
+  return out;
+};
+const buildWindow = (p) => [
+  ...chunk(buildDecisions(TEN_SESSIONS(p.plan))),
+  ...chunk(buildDecisions(TEN_SESSIONS(priorSteps(p.plan, p.priorCorrect)))),
+];
 
 // One persona per schema (leak expressed in the schema's direction on its
 // primary skills), plus edge personas the prompt must also handle well.
 const PERSONAS = [
   {
     name: 'Conflict Avoider',
+    priorCorrect: 1,   // improving  20% -> 40%
     expect: 'Over-folding / passivity named as the pattern; direction = too passive.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['aggression', 'bluffing']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['aggression']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['betsize']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['potodds']), correct: true },
       { pool: bySkills(['preflop']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Overaggressor',
+    priorCorrect: 3,   // regressing 60% -> 40%
     expect: 'Forcing action / raising into strength named; direction = too aggressive.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['potodds', 'reads']), wrongCls: ['raise'] },
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
       { pool: bySkills(['reads']), wrongCls: ['raise'] },
       { pool: bySkills(['aggression']), correct: true },
       { pool: bySkills(['position']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'The Gambler',
+    priorCorrect: 1,   // improving  20% -> 40%
     expect: 'Calling without the price / any-two-cards named; loose continuance.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: byCorrectCls(bySkills(['potodds']), 'fold'), wrongCls: ['call'] },
       { pool: byCorrectCls(bySkills(['preflop']), 'fold'), wrongCls: ['call', 'raise'] },
       { pool: byCorrectCls(bySkills(['potodds', 'reads']), 'fold'), wrongCls: ['call'] },
       { pool: bySkills(['opponent']), correct: true },
       { pool: bySkills(['reads']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Positional Blind Spot',
+    priorCorrect: 3,   // regressing 60% -> 40%
     expect: 'Position-driven mistakes named as the common thread across villains.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['position']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['position']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['preflop']), wrongCls: ['call'] },
       { pool: bySkills(['betsize']), correct: true },
       { pool: bySkills(['reads']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Exploitable Regular',
+    priorCorrect: 1,   // improving  20% -> 40%
     expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['opponent']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['opponent']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['reads']), wrongCls: ['call'] },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['potodds']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'The Resulter (mixed misses)',
+    priorCorrect: 3,   // regressing 60% -> 40%
     expect: 'No single direction — a mixed pattern honestly described, not forced.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
       { pool: bySkills(['potodds']), wrongCls: ['fold'] },
       { pool: bySkills(['opponent']), wrongCls: ['call'] },
       { pool: bySkills(['position']), correct: true },
       { pool: bySkills(['aggression']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Confident misser (F2 hook)',
+    priorCorrect: 4,   // regressing 80% -> 40%
     expect: 'The fast-and-sure cluster called out directly as the headline.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['potodds']), wrongCls: ['call'], fast: true },
       { pool: bySkills(['opponent']), wrongCls: ['raise'], fast: true },
       { pool: bySkills(['reads']), wrongCls: ['call'], fast: true },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Froze twice (timeouts)',
+    priorCorrect: 5,   // regressing 100% -> 60%
     expect: 'Freezing under the clock treated as its own signal, not generic error.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['potodds']), timeout: true },
       { pool: bySkills(['betsize']), timeout: true },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['reads']), correct: true },
       { pool: bySkills(['aggression']), correct: true },
-    ]),
+    ],
   },
   {
     name: 'Perfect session',
+    priorCorrect: 3,   // improving  60% -> 100%
     expect: 'Brief acknowledgment + one watch-area; no invented weakness.',
-    plan: TEN_SESSIONS([
+    plan: [
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
       { pool: bySkills(['potodds']), correct: true },
       { pool: bySkills(['reads']), correct: true },
       { pool: bySkills(['bluffing']), correct: true },
-    ]),
+    ],
   },
 ];
 
@@ -278,7 +309,7 @@ const sections = [];
 for (const p of PERSONAS) {
   // Built through the REAL window + aggregate seam — the same function the
   // serverless handler calls, so the harness can no longer drift from it.
-  const summary = aggregate(buildWindow(p.plan), lookup);
+  const summary = aggregate(buildWindow(p), lookup);
   // The doc shows the AGGREGATE the model actually saw, not fifty raw hands:
   // that aggregate is the prompt's entire input now.
   const window = [

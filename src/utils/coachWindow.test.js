@@ -13,7 +13,7 @@ const session = (hands) => ({ hands });
 
 test('an empty window aggregates to a zeroed, non-crashing shape', () => {
   const out = aggregate([], lookup);
-  expect(out).toMatchObject({ sessions: 0, hands: 0, previous: null });
+  expect(out).toMatchObject({ sessions: 0, hands: 0, previous: null, timeouts: 0 });
   expect(out.skills).toEqual([]);
   expect(out.confidentMisses).toEqual([]);
   expect(out.repeats).toEqual([]);
@@ -51,6 +51,29 @@ test('only fast AND wrong counts as a confident miss', () => {
   expect(out.confidentMisses).toEqual([
     { skill: 'bluffing', villain: 'Calling Station', scenario: 'Bluff Frequency' },
   ]);
+});
+
+// A freeze is a distinct behaviour from a bad choice, and the prompt says so on
+// its own line. Both nulls are required: keying on `result` would sweep up every
+// ordinary miss, and keying on decisionMs alone would sweep up an ANSWERED hand
+// whose shown-at timestamp went missing.
+test('a timeout is the player never acting, not a slow or a wrong answer', () => {
+  const out = aggregate([session([
+    hand('sc_odds', 'incorrect', { choiceVal: null, decisionMs: null }),  // froze          -> yes
+    hand('sc_bluff', 'incorrect', { choiceVal: null, decisionMs: null }), // froze          -> yes
+    hand('sc_bluff', 'incorrect', { decisionMs: 90000 }),                 // slow, ANSWERED -> no
+    hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),                  // fast + wrong   -> no
+    hand('sc_odds', 'incorrect', { decisionMs: null }),                   // answered, no clock -> no
+    hand('sc_odds', 'correct'),                                           // answered right -> no
+  ])], lookup);
+  expect(out.timeouts).toBe(2);
+});
+
+test('a window with nobody freezing reports zero timeouts', () => {
+  const out = aggregate([session([
+    hand('sc_odds', 'correct'), hand('sc_bluff', 'incorrect'),
+  ])], lookup);
+  expect(out.timeouts).toBe(0);
 });
 
 test('a scenario missed more than once in the window is a repeat offender', () => {

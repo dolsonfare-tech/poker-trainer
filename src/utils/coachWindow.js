@@ -23,6 +23,16 @@ const isConfidentMiss = (h) =>
   h.result === 'incorrect'
   && typeof h.decisionMs === 'number' && h.decisionMs > 0 && h.decisionMs <= CONFIDENT_MISS_MS;
 
+// A timeout is the player never acting — the clock ran out. useSessionRun writes
+// BOTH `choiceVal: null` and `decisionMs: null` for that case, so both are
+// required here. Keying on `result` would be wrong (a timeout grades
+// 'incorrect', and so does an ordinary bad choice), and keying on decisionMs
+// alone would be wrong too (an answered hand can carry a null decisionMs when
+// the shown-at timestamp is missing). A freeze is a distinct behaviour from a
+// bad choice and carries no direction — schema.js already refuses to classify
+// it — so the prompt needs to see it separately or it reads as patternless.
+const isTimeout = (h) => h.choiceVal == null && h.decisionMs == null;
+
 const tally = (sessions) => {
   const hands = sessions.flatMap(s => s.hands ?? []);
   return {
@@ -67,6 +77,7 @@ export function aggregate(sessions, lookup) {
       (a, b) => b.attempts - a.attempts || a.skill.localeCompare(b.skill),
     ),
     direction: addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands),
+    timeouts: hands.filter(isTimeout).length,
     confidentMisses: hands.filter(isConfidentMiss).slice(0, MAX_CITED).map(h => ({
       skill: h.skill ?? meta(h.scenarioId).skill ?? 'Unknown',
       villain: meta(h.scenarioId).villain ?? 'Unknown',
