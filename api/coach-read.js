@@ -185,44 +185,52 @@ const COACH_SCHEMA = {
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
 // file remains the ONLY code that talks to the Anthropic API.
-function buildPrompt(decisionsPlayed) {
-  return `You are a poker coach jotting field notes right after watching a student play a short 5-hand session. This is an observation log entry, not a diagnosis: five hands is a small sample, and your student knows it. Your read should sound like "here's what I noticed today", never a verdict on who they are as a player. Find the clearest pattern in this session's mistakes and describe the thinking that seems to be behind it.
+function buildPrompt(s) {
+  const pct = (c, t) => (t > 0 ? Math.round((c / t) * 100) : 0);
+  const skillLines = s.skills
+    .map(k => `- ${clamp(k.skill, 20)}: ${k.correct} of ${k.attempts}`)
+    .join('\n');
+  const confident = s.confidentMisses
+    .map(m => `- ${clamp(m.scenario, 40)} vs ${clamp(m.villain, 30)} (${clamp(m.skill, 20)})`)
+    .join('\n');
+  const repeats = s.repeats
+    .map(r => `- ${clamp(r.scenario, 40)} vs ${clamp(r.villain, 30)}: missed ${r.misses} times`)
+    .join('\n');
 
-Session decisions (what they chose vs the best play):
-${decisionsPlayed.map(d => {
-  const table = clamp(d.tableContext);
-  const spot = [clamp(d.position, 30), clamp(d.hand, 20)].filter(Boolean).join(' with ');
-  const line = [
-    `${clamp(d.scenario)}${spot ? ` | ${spot}` : ''} vs ${clamp(d.villain)} (${clamp(d.villainNotes)})`,
-    table ? `Table: ${table}` : '',
-    `chose ${clamp(d.chose, 40) || 'unknown'}, best was ${clamp(d.correctAction, 40) || 'unknown'}`,
-    clamp(d.result, 20),
-    d.confidentMiss ? 'answered fast (looked sure)' : '',
-  ].filter(Boolean).join(' | ');
-  return `- ${line}`;
-}).join('\n')}
+  return `You are a poker coach reviewing a student's last ${s.sessions} sessions — ${s.hands} hands — and writing up what you have been seeing lately. This is a trend review, not a verdict on who they are: name what has been happening over this stretch, and stay in the present tense of "lately".
+
+Overall: ${s.accuracy.correct} of ${s.accuracy.total} correct (${pct(s.accuracy.correct, s.accuracy.total)}%)${
+  s.previous ? `, against ${s.previous.correct} of ${s.previous.total} (${pct(s.previous.correct, s.previous.total)}%) over the stretch before this one` : ''
+}.
+
+Per skill over this stretch:
+${skillLines || '- (no skill has enough attempts to report)'}
+
+Direction of their mistakes — too passive (${s.direction.under}), too aggressive (${s.direction.over}), too loose (${s.direction.loose}), over ${s.direction.evidence} weighted misses.
+
+${confident ? `Confident errors — answered fast and got it wrong, so they do not know these are leaks:\n${confident}` : 'No confident errors this stretch.'}
+
+${repeats ? `Spots they have missed more than once in this stretch:\n${repeats}` : 'No spot was missed more than once.'}
 
 Respond with three fields — "headline", "evidence", "watchFor":
-- headline: ONE sentence, 12 words or fewer, naming the clearest pattern you saw THIS session as an observation ("Three profitable raises went unmade today"), not a verdict ("You're too passive a player"). Start with the observation, not with "you". If misses marked "answered fast (looked sure)" cluster, the headline MUST be about that confident-error pattern.
-- evidence: 2 to 3 short items (1 is fine for a clean session), each 20 words or fewer, each tied to a SPECIFIC hand and villain from the data above ("Fired a bluff into the calling station on Q94r; bluffs need a folder").
-- watchFor: ONE sentence, 18 words or fewer, concrete and actionable for the next session ("When a passive player raises the river, believe him").
+- headline: ONE sentence, 12 words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you".
+- evidence: 1 to 2 short items, each 20 words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves — never a restatement of a single hand's result.
+- watchFor: ONE sentence, 18 words or fewer, concrete and actionable for their next session.
 
 Rules for all three fields:
-- Scope every claim to this session ("today", "this session", "these hands") and to observed behavior. Never pronounce on their overall game or identity: no "you are a...", "you always...", "your game...". The trend across sessions is the notebook's job; yours is one session's field notes
-- The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency than raising when caution was best. A timeout means they froze on the decision. Name the tendency you actually see, not a generic weakness
-- A miss marked "answered fast (looked sure)" is a confident error — they don't know it's a leak. If those cluster, the headline leads with it
-- Mention only hands and actions listed above — never invent holdings, outcomes, or spots that aren't in the data
-- If the misses point in different directions (some too passive, some too aggressive), say so honestly instead of forcing them into one story
-- These are exploitative judgment spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
+- Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity or their game as a whole: no "you are a...", no "your game is...". Naming the player's type is a different surface's job, not yours
+- The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency from raising when caution was best. Name the tendency the numbers actually show
+- Confident errors are the highest-leverage thing here — they do not know those are leaks. If there are any, they belong in the headline or the evidence
+- Use only the numbers and spots given above. Never invent a hand, a holding, an opponent or a statistic
+- If the mistakes point in different directions, say so honestly instead of forcing one story
+- These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
 - No generic praise or filler
-- Be direct and specific about what you observe
-- Reference the villain types they struggled against, not just the abstract skill
-- If they got everything right, acknowledge it briefly in the headline and name one area to keep watching in watchFor`;
+- If they are genuinely playing well across this stretch, say so in the headline and name one thing to keep watching in watchFor`;
 }
 
-async function callClaude(decisionsPlayed, apiKey) {
+async function callClaude(summary, apiKey) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -242,7 +250,7 @@ async function callClaude(decisionsPlayed, apiKey) {
       thinking: { type: 'disabled' },
       // Structured output: constrain the response to the three-field schema.
       output_config: { format: { type: 'json_schema', schema: COACH_SCHEMA } },
-      messages: [{ role: 'user', content: buildPrompt(decisionsPlayed) }],
+      messages: [{ role: 'user', content: buildPrompt(summary) }],
     }),
   });
   if (!response.ok) {

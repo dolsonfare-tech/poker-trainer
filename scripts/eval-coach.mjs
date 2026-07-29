@@ -1,14 +1,16 @@
 // Coach's Read eval harness — runs the REAL prompt (imported from
-// api/coach-read.js, the only Anthropic caller) against synthetic sessions,
-// one per player schema plus edge personas, and writes the reads to
-// coach-eval-output.md for review against the F5 quality bar:
+// api/coach-read.js, the only Anthropic caller) over the REAL aggregate()
+// against synthetic TEN-SESSION windows, one per player schema plus edge
+// personas, and writes the reads to coach-eval-output.md for review against
+// the F5 quality bar:
 //   1. Names the pattern-level WHY (the mental model), not per-hand recaps
 //   2. Names the DIRECTION of the mistakes (too passive vs too aggressive)
 //   3. References the villain types involved, not just abstract skills
 //   4. Calls out clustered confident misses ("answered fast") directly
 //   5. Human tone; no generic praise, no restating results the player saw
-//   6. Session-scoped field-notes voice ("what I noticed today"), never a
-//      trait verdict ("you are a passive player") — July 22, 2026 reframe
+//   6. Stretch-scoped trend voice ("what I have been seeing lately"), never a
+//      trait verdict ("you are a passive player") — Phase B reframe. Naming
+//      the player's TYPE is the schema card's job, not the read's.
 //
 // Run:  CLAUDE_API_KEY=sk-... npm run eval:coach        (live calls, ~9 reads)
 //       npm run eval:coach -- --dry                     (print prompts only)
@@ -17,6 +19,7 @@
 
 import { writeFileSync } from 'node:fs';
 import SCENARIOS from '../src/data/scenarios.js';
+import { aggregate } from '../src/utils/coachWindow.js';
 import coach from '../api/coach-read.js';
 
 const { buildPrompt, callClaude } = coach;
@@ -37,9 +40,33 @@ const bySkills = (skills) => SCENARIOS.filter((s) => skills.includes(s.skill));
 const byCorrectCls = (pool, cls) =>
   pool.filter((s) => s.options.find((o) => o.val === s.correct)?.cls === cls);
 
-// Build one synthetic session: `plan` is a list of
+// The harness now exercises the REAL aggregate() and the REAL prompt, so the
+// hand-synced copy of the payload mapping is gone. Personas are expressed as
+// stored hands — { scenarioId, skill, result, choiceVal, decisionMs } — which
+// is exactly what sessions.hands holds in the database.
+const lookup = (id) => {
+  const s = SCENARIOS.find((x) => x.id === id);
+  return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
+};
+
+// One stored hand. `choiceVal` is the option the persona ACTUALLY chose (null
+// on a timeout, matching useSessionRun) — it is what schema.js reads to
+// classify the direction of the error, so it must be the wrongCls-preferred
+// option and not an independently re-picked one, or every persona's leak would
+// collapse into the same directional noise.
+// decisionMs: under CONFIDENT_MISS_MS (15000) marks the fast/confident misses;
+// null on a timeout, which is the freeze signal and never a confident miss.
+const storedHand = (s, choseOpt, result, fast) => ({
+  scenarioId: s.id,
+  skill: s.skill,
+  result,
+  choiceVal: choseOpt ? choseOpt.val : null,
+  decisionMs: choseOpt == null ? null : (fast && result !== 'correct' ? 4000 : 30000),
+});
+
+// Build a persona's hands: `plan` is a list of
 // { pool, wrongCls | correct: true | timeout: true, fast?: true } — one hand each.
-function buildSession(plan) {
+function buildDecisions(plan) {
   const used = new Set();
   return plan.map((step) => {
     // A wrongCls step needs a scenario where that wrong answer EXISTS (e.g. a
@@ -53,36 +80,38 @@ function buildSession(plan) {
     const s = step.pool.find(fits) ?? step.pool.find((sc) => !used.has(sc.id))
       ?? SCENARIOS.find((sc) => !used.has(sc.id));
     used.add(s.id);
-    const hero = s.positions.find((p) => p.state === 'hero');
     const correctOpt = s.options.find((o) => o.val === s.correct);
     if (step.timeout) {
-      return mk(s, hero, null, correctOpt, 'incorrect', false);
+      return storedHand(s, null, 'incorrect', false);
     }
     if (step.correct) {
-      return mk(s, hero, correctOpt, correctOpt, 'correct', false);
+      return storedHand(s, correctOpt, 'correct', false);
     }
     const choseOpt = pickWrong(s, step.wrongCls ?? []);
     const result = s.grading[choseOpt.val]?.g ?? 'incorrect';
-    return mk(s, hero, choseOpt, correctOpt, result, !!step.fast && result !== 'correct');
+    return storedHand(s, choseOpt, result, !!step.fast && result !== 'correct');
   });
 }
 
-// Mirrors the decisionsPlayed mapping in src/utils/claude.js (kept in sync by
-// hand — claude.js imports browser-only modules and can't load under node).
-function mk(s, hero, choseOpt, correctOpt, result, confidentMiss) {
-  return {
-    scenario: s.tag,
-    villain: s.villain.label,
-    villainNotes: s.villain.notes,
-    tableContext: s.tableContext || null,
-    hand: s.hand.map((c) => c.r + c.s).join(''),
-    position: hero ? hero.label : '',
-    chose: choseOpt ? choseOpt.label : 'Timed out (no action)',
-    correctAction: correctOpt ? correctOpt.label : '',
-    result,
-    confidentMiss,
-  };
-}
+// Ten sessions of five hands is the window the read speaks over.
+const buildWindow = (plan) => {
+  const hands = buildDecisions(plan);
+  const sessions = [];
+  for (let i = 0; i < hands.length; i += 5) sessions.push({ hands: hands.slice(i, i + 5) });
+  return sessions;
+};
+
+// A trend review fed one session's worth of hands would not exercise the prompt
+// it is judging, so each persona's five-step leak shape is repeated ten times
+// rather than authoring fifty new steps.
+//
+// NOTE: `used` above spans the whole 50, so no scenario repeats within a
+// persona. That keeps every hand a distinct spot, and it means aggregate()'s
+// `repeats` (same scenario missed more than once) is always empty here — the
+// prompt renders its "No spot was missed more than once." branch for all nine
+// personas. Real players DO repeat spots (the R1 ladder re-deals missed hands),
+// so that prompt branch is exercised in production but not by this harness.
+const TEN_SESSIONS = (steps) => Array.from({ length: 10 }, () => steps).flat();
 
 // One persona per schema (leak expressed in the schema's direction on its
 // primary skills), plus edge personas the prompt must also handle well.
@@ -90,101 +119,101 @@ const PERSONAS = [
   {
     name: 'Conflict Avoider',
     expect: 'Over-folding / passivity named as the pattern; direction = too passive.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['aggression', 'bluffing']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['aggression']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['betsize']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['potodds']), correct: true },
       { pool: bySkills(['preflop']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Overaggressor',
     expect: 'Forcing action / raising into strength named; direction = too aggressive.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['potodds', 'reads']), wrongCls: ['raise'] },
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
       { pool: bySkills(['reads']), wrongCls: ['raise'] },
       { pool: bySkills(['aggression']), correct: true },
       { pool: bySkills(['position']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'The Gambler',
     expect: 'Calling without the price / any-two-cards named; loose continuance.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: byCorrectCls(bySkills(['potodds']), 'fold'), wrongCls: ['call'] },
       { pool: byCorrectCls(bySkills(['preflop']), 'fold'), wrongCls: ['call', 'raise'] },
       { pool: byCorrectCls(bySkills(['potodds', 'reads']), 'fold'), wrongCls: ['call'] },
       { pool: bySkills(['opponent']), correct: true },
       { pool: bySkills(['reads']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Positional Blind Spot',
     expect: 'Position-driven mistakes named as the common thread across villains.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['position']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['position']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['preflop']), wrongCls: ['call'] },
       { pool: bySkills(['betsize']), correct: true },
       { pool: bySkills(['reads']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Exploitable Regular',
     expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['opponent']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['opponent']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['reads']), wrongCls: ['call'] },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['potodds']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'The Resulter (mixed misses)',
     expect: 'No single direction — a mixed pattern honestly described, not forced.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
       { pool: bySkills(['potodds']), wrongCls: ['fold'] },
       { pool: bySkills(['opponent']), wrongCls: ['call'] },
       { pool: bySkills(['position']), correct: true },
       { pool: bySkills(['aggression']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Confident misser (F2 hook)',
     expect: 'The fast-and-sure cluster called out directly as the headline.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['potodds']), wrongCls: ['call'], fast: true },
       { pool: bySkills(['opponent']), wrongCls: ['raise'], fast: true },
       { pool: bySkills(['reads']), wrongCls: ['call'], fast: true },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Froze twice (timeouts)',
     expect: 'Freezing under the clock treated as its own signal, not generic error.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['potodds']), timeout: true },
       { pool: bySkills(['betsize']), timeout: true },
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['reads']), correct: true },
       { pool: bySkills(['aggression']), correct: true },
-    ],
+    ]),
   },
   {
     name: 'Perfect session',
     expect: 'Brief acknowledgment + one watch-area; no invented weakness.',
-    plan: [
+    plan: TEN_SESSIONS([
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
       { pool: bySkills(['potodds']), correct: true },
       { pool: bySkills(['reads']), correct: true },
       { pool: bySkills(['bluffing']), correct: true },
-    ],
+    ]),
   },
 ];
 
@@ -247,27 +276,35 @@ function checkRead(read, persona) {
 
 const sections = [];
 for (const p of PERSONAS) {
-  const decisions = buildSession(p.plan);
-  const summary = decisions.map((d) =>
-    `  - [${d.result}${d.confidentMiss ? ' · fast' : ''}] ${d.scenario} vs ${d.villain}: chose "${d.chose}" (best "${d.correctAction}")`
-  ).join('\n');
+  // Built through the REAL window + aggregate seam — the same function the
+  // serverless handler calls, so the harness can no longer drift from it.
+  const summary = aggregate(buildWindow(p.plan), lookup);
+  // The doc shows the AGGREGATE the model actually saw, not fifty raw hands:
+  // that aggregate is the prompt's entire input now.
+  const window = [
+    `  - ${summary.sessions} sessions · ${summary.hands} hands · ${summary.accuracy.correct}/${summary.accuracy.total} correct`
+      + (summary.previous ? ` (previous stretch ${summary.previous.correct}/${summary.previous.total})` : ' (no previous stretch)'),
+    `  - direction: under ${summary.direction.under} · over ${summary.direction.over} · loose ${summary.direction.loose} (evidence ${summary.direction.evidence})`,
+    `  - skills: ${summary.skills.map((k) => `${k.skill} ${k.correct}/${k.attempts}`).join(', ') || '(none)'}`,
+    `  - confident misses: ${summary.confidentMisses.length} · repeat-offender spots: ${summary.repeats.length}`,
+  ].join('\n');
   let read = '(dry run — no API call)';
   if (!DRY) {
     try {
-      read = await callClaude(decisions, apiKey);
+      read = await callClaude(summary, apiKey);
     } catch (err) {
       read = `ERROR: ${err.message}`;
     }
     console.log(`✓ ${p.name}`);
   } else {
-    console.log(`— ${p.name} (dry)\n${buildPrompt(decisions)}\n`);
+    console.log(`— ${p.name} (dry)\n${buildPrompt(summary)}\n`);
   }
   const checks = DRY ? '' : `\n**Checks:**\n${checkRead(read, p).join('\n')}\n`;
-  sections.push(`## ${p.name}\n\n**Expected:** ${p.expect}\n\n**Session:**\n${summary}\n\n**Coach's Read:**\n\n${renderRead(read)}\n${checks}`);
+  sections.push(`## ${p.name}\n\n**Expected:** ${p.expect}\n\n**Window:**\n${window}\n\n**Coach's Read:**\n\n${renderRead(read)}\n${checks}`);
 }
 
 const doc = `# Coach's Read eval — ${DRY ? 'DRY RUN' : 'live'} output\n\n` +
-  `*Generated by scripts/eval-coach.mjs. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context · confident-miss callout · human tone, no restating · session-scoped field-notes voice (never a trait verdict). The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
+  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job). The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
   sections.join('\n---\n\n');
 writeFileSync(OUT, doc);
 console.log(`\nWrote ${OUT} (${PERSONAS.length} personas)`);
