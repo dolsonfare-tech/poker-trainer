@@ -36,7 +36,7 @@ import coach from '../api/coach-read.js';
 // HEADLINE_RULE and WORD_CAPS come from the prompt module on purpose: the
 // harness must measure what the prompt ASKS for, never a second copy of the
 // numbers. See the comments beside their definitions in api/coach-read.js.
-const { buildPrompt, callClaude, buildLookup, HEADLINE_RULE, WORD_CAPS } = coach;
+const { buildPrompt, callClaude, buildLookup, HEADLINE_RULE, TRAJECTORY_RULE, WORD_CAPS } = coach;
 const DRY = process.argv.includes('--dry');
 // Offline exercise of the mechanical checks themselves — see the --selftest
 // block further down. No API key, no artifact written.
@@ -184,7 +184,7 @@ const PERSONAS = [
   {
     name: 'Conflict Avoider',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Over-folding / passivity named as the pattern; direction = too passive.',
+    expect: 'Over-folding / passivity named as the pattern; direction = too passive. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
     plan: [
       { pool: bySkills(['aggression', 'bluffing']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['aggression']), wrongCls: ['fold', 'call'] },
@@ -208,7 +208,7 @@ const PERSONAS = [
   {
     name: 'The Gambler',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Calling without the price / any-two-cards named; loose continuance.',
+    expect: 'Calling without the price / any-two-cards named; loose continuance. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
     // Each wrong step fires 10x against a `used` set spanning the whole stretch,
     // so each needs a fold-correct pool of at least 10 or it falls through to
     // SCENARIOS.find(unused) in file order and injects under/over into what
@@ -237,7 +237,7 @@ const PERSONAS = [
   {
     name: 'Exploitable Regular',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly.',
+    expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
     plan: [
       { pool: bySkills(['opponent']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['opponent']), wrongCls: ['fold', 'call'] },
@@ -287,7 +287,7 @@ const PERSONAS = [
   {
     name: 'Perfect session',
     priorCorrect: 3,   // improving  60% -> 100%
-    expect: 'Brief acknowledgment + one watch-area; no invented weakness.',
+    expect: 'Brief acknowledgment + one watch-area; no invented weakness. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2).',
     plan: [
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
@@ -394,6 +394,24 @@ function checkRead(read, summary, cov) {
       lines.push(`- ${hit ? '✓' : '✗'} ${HEADLINE_RULE}`
         + ` (window has ${summary.confidentMisses.length} confident errors)`);
     }
+    // Tier 2 (prompt v2, July 29 2026): trajectory headline. Same keying
+    // discipline as the confident-error check above — fires on the summary's
+    // own data, exactly when the prompt's stated condition fires (no confident
+    // errors AND the previous stretch is given AND accuracy improved on it).
+    // "Opens with the improvement" is verified as both copied correct-counts
+    // appearing in the headline — the same copy-only law every number lives
+    // under, so the check cannot pass on a paraphrase that invented a figure.
+    const improved = summary.previous
+      && (summary.accuracy.correct / summary.accuracy.total)
+        > (summary.previous.correct / summary.previous.total);
+    if (summary.confidentMisses.length === 0 && improved) {
+      cov.trajectoryApplicable += 1;
+      const hit = obj.headline.includes(String(summary.accuracy.correct))
+        && obj.headline.includes(String(summary.previous.correct));
+      if (hit) cov.trajectoryPass += 1;
+      lines.push(`- ${hit ? '✓' : '✗'} trajectory headline: ${TRAJECTORY_RULE}`
+        + ` (no confident errors; ${summary.previous.correct} → ${summary.accuracy.correct})`);
+    }
   }
   // The third cap, also unchecked before: live run 2 put 4 of 9 watchFor
   // sentences at exactly 19 words against an 18 cap and nothing reported it.
@@ -440,6 +458,7 @@ const newCoverage = () => ({
   evidenceLists: 0, evidenceCountBad: 0, evidenceItems: 0, evidenceOver: 0,
   watchFor: 0, watchForOver: 0,
   confidentApplicable: 0, confidentPass: 0,
+  trajectoryApplicable: 0, trajectoryPass: 0,
   freezeApplicable: 0, freezePass: 0,
   voiceScanned: 0, voiceFlagged: 0,
 });
@@ -511,6 +530,7 @@ const coverageReport = (cov, dry) => [
   `- evidence items checked: ${cov.evidenceItems} · over the ${WORD_CAPS.evidence}w cap: ${cov.evidenceOver}`,
   `- watchFor checked: ${cov.watchFor}/${cov.personas} · over the ${WORD_CAPS.watchFor}w cap: ${cov.watchForOver}`,
   `- ${HEADLINE_RULE}: applicable to ${cov.confidentApplicable} persona(s) · passed ${cov.confidentPass}`,
+  `- trajectory headline (tier 2): applicable to ${cov.trajectoryApplicable} persona(s) · passed ${cov.trajectoryPass}`,
   `- freezer timeout rule: applicable to ${cov.freezeApplicable} persona(s) · passed ${cov.freezePass}`,
   `- voice scan: ${cov.voiceScanned} reads scanned · flagged ${cov.voiceFlagged} [soft]`,
   ...(dry ? [] : ['', `**Run verdict: ${runVerdictLine(cov)}**`]),
@@ -675,7 +695,7 @@ const banner = DRY
 
 const doc = `# Coach's Read eval — ${DRY ? 'DRY RUN (prompts only)' : 'LIVE output'}\n\n` +
   `${banner}\n\n` +
-  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
+  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job) · watchFor shaped as a trigger-action plan (cue, then action) · where the window improved with NO confident errors, the headline opens with the copied improvement counts (tier 2). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
   `${coverageReport(cov, DRY)}\n\n---\n\n` +
   sections.join('\n---\n\n');
 // Written BEFORE the verdict is applied, and unconditionally: the founder needs
