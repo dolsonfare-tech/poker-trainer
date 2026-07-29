@@ -101,7 +101,7 @@ beforeEach(() => { jest.clearAllMocks(); });
 test('a guest never calls the coach endpoint, but their session still persists', async () => {
   const remote = remoteStub();
   const res = await submitSession({
-    user: createUser('Guest'), hands, sessionHistory: [], difficulty: 'beginner',
+    user: createUser('Guest'), hands, difficulty: 'beginner',
     isGuest: true, remote,
   });
   expect(fetchCoachRead).not.toHaveBeenCalled();
@@ -116,7 +116,7 @@ test('a signed-in session fetches the read and writes it through', async () => {
   fetchCoachRead.mockResolvedValue('You over-fold rivers.');
   const remote = remoteStub();
   const res = await submitSession({
-    user: { ...createUser('Reader'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'intermediate',
+    user: { ...createUser('Reader'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'intermediate',
     isGuest: false, remote,
   });
   expect(res.coachText).toBe('You over-fold rivers.');
@@ -131,7 +131,7 @@ test('a FAILED coach read still persists the session — losing the hands is the
   fetchCoachRead.mockRejectedValue(new Error('network'));
   const remote = remoteStub();
   const res = await submitSession({
-    user: createUser('Unlucky'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: createUser('Unlucky'), hands, difficulty: 'beginner',
     isGuest: false, remote,
   });
   expect(res.user.sessionsCompleted).toBe(1);         // the session counted
@@ -145,7 +145,7 @@ test('the daily cap is reported as limited, not as a generic failure', async () 
   const err = new Error('cap'); err.code = 'daily_limit';
   fetchCoachRead.mockRejectedValue(err);
   const res = await submitSession({
-    user: { ...createUser('Capped'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: { ...createUser('Capped'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
     isGuest: false, remote: remoteStub(),
   });
   expect(res.limited).toBe(true);
@@ -155,7 +155,7 @@ test('the daily cap is reported as limited, not as a generic failure', async () 
 test('no remote object means localStorage-only — no remote writes attempted', async () => {
   fetchCoachRead.mockResolvedValue('read');
   await submitSession({
-    user: createUser('Local'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: createUser('Local'), hands, difficulty: 'beginner',
     isGuest: false, remote: null,
   });
   expect(saveUser).toHaveBeenCalledTimes(1);          // local still written
@@ -169,7 +169,7 @@ test('a rejected remote write does not reject the caller — the summary must re
   };
   jest.spyOn(console, 'error').mockImplementation(() => {});
   await expect(submitSession({
-    user: { ...createUser('Offline'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: { ...createUser('Offline'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
     isGuest: false, remote,
   })).resolves.toMatchObject({ coachText: 'read' });
   console.error.mockRestore();
@@ -227,7 +227,7 @@ test('submitSession skips the API entirely when no read is due', async () => {
   fetchCoachRead.mockClear();
   const user = { ...createUser('N'), sessionsCompleted: 7, sessionsSinceRead: 2 };
   const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
-  const res = await submitSession({ user, hands, sessionHistory: [], difficulty: 'beginner', isGuest: false, remote: null });
+  const res = await submitSession({ user, hands, difficulty: 'beginner', isGuest: false, remote: null });
   expect(fetchCoachRead).not.toHaveBeenCalled();
   expect(res.coachText).toBe('');
   expect(res.user.sessionsSinceRead).toBe(3);
@@ -238,7 +238,7 @@ test('submitSession calls the API when a read IS due', async () => {
   fetchCoachRead.mockResolvedValueOnce('the meta read');
   const user = { ...createUser('N'), sessionsCompleted: 12, sessionsSinceRead: 5 };
   const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
-  const res = await submitSession({ user, hands, sessionHistory: [], difficulty: 'beginner', isGuest: false, remote: null });
+  const res = await submitSession({ user, hands, difficulty: 'beginner', isGuest: false, remote: null });
   expect(fetchCoachRead).toHaveBeenCalledTimes(1);
   expect(res.coachText).toBe('the meta read');
   expect(res.user.sessionsSinceRead).toBe(0);

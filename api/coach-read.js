@@ -61,8 +61,14 @@ module.exports = async function handler(req, res) {
   // Enforced whenever the server has Supabase credentials (always in prod).
   const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
-  // Declared out here so the no-credentials branch below still sees it.
+  // Declared out here so the no-credentials branch below still sees them.
   let sessions = [];
+  // The cap INCREMENT, deferred. The cap READ (the 429 short-circuit) stays
+  // inline below — that is the cost guard and must fire before any work. But
+  // the increment runs only once the model call is actually about to happen:
+  // charging first meant a Supabase hiccup burned one of five daily calls for
+  // a request that never reached Claude.
+  let chargeCall = null;
   if (supabaseUrl && secretKey) {
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (!token) return res.status(401).json({ error: 'Sign in required' });
@@ -82,7 +88,7 @@ module.exports = async function handler(req, res) {
     if (calls >= DAILY_LIMIT) {
       return res.status(429).json({ error: 'Daily coach limit reached' });
     }
-    await admin.from('coach_usage').upsert(
+    chargeCall = () => admin.from('coach_usage').upsert(
       { user_id: uid, day: today, calls: calls + 1 },
       { onConflict: 'user_id,day' }
     );
@@ -92,13 +98,23 @@ module.exports = async function handler(req, res) {
     // the trailing one the read speaks about, plus the one before it for the
     // accuracy comparison. Ordered newest first, which is what aggregate()
     // expects.
+    //
+    // `.eq('user_id', uid)` is the tenant scope — the single line standing
+    // between one player's read and another player's hands. Pinned by
+    // check-invariants rule 30; do not remove it.
     const { COACH_WINDOW } = await loadModules();
-    const { data: rows } = await admin
+    const { data: rows, error: sessErr } = await admin
       .from('sessions')
       .select('hands, created_at')
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
       .limit(COACH_WINDOW * 2);
+    // A failed query is NOT an empty log. Collapsing the two would answer a
+    // transient DB outage with the 400 below, which triages as a client bug
+    // and hides the outage.
+    if (sessErr) {
+      return res.status(500).json({ error: 'Could not load session history' });
+    }
     sessions = rows ?? [];
   }
 
@@ -111,9 +127,13 @@ module.exports = async function handler(req, res) {
   if (sessions.length === 0) {
     return res.status(400).json({ error: 'No sessions to read' });
   }
-  const summary = await aggregateForUser(sessions);
 
   try {
+    // Inside the try: a dynamic-import or aggregate failure is a structured
+    // 500 on the same path as an upstream failure, not a bare platform crash.
+    const summary = await aggregateForUser(sessions);
+    // Charged here and nowhere earlier — the model call is the very next line.
+    if (chargeCall) await chargeCall();
     const raw = await callClaude(summary, apiKey);
     // The wire format is always { text: string } (claude.js, the persist flow,
     // and both DB columns are untouched by the JSON restructure). On success we

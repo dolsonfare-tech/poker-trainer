@@ -10,8 +10,8 @@
 // catches Supabase table access but not Array.from).
 
 import { execSync } from 'node:child_process';
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { dirname, join, relative, resolve } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const findings = [];
@@ -674,6 +674,66 @@ onlyIn('dates-owner',
 onlyIn('event-names', /track\(\s*'[a-z_]+'/,
   ['src/utils/events.js'], srcNonTest,
   'PostHog event names are single-sourced in src/utils/events.js — import an emitter (emitDecisionMade, …) instead of calling track() with a literal');
+
+// ── 29. The server-loadable subtree stays Node-resolvable (July 28, 2026) ─
+// api/coach-read.js dynamic-imports src/utils/coachWindow.js and
+// src/data/scenarios.js from a CommonJS handler. Node's ESM resolver does NO
+// extension guessing, so ONE extensionless relative specifier anywhere in the
+// transitive closure breaks /api/coach-read in production — and every local
+// gate stays green, because webpack and jest both resolve `./spacedrep` fine.
+//
+// This is not hypothetical. The CA-014 villains extraction (8846d18) added
+// `import { VILLAIN_LABELS } from './villains'` to scenarios.js and silently
+// broke `npm run eval:coach` for the entire time it sat on main. Nothing
+// caught it because nothing in `npm run gates` runs the eval harness. That is
+// twice this class has hidden behind a green board; hence this rule.
+//
+// The closure is RESOLVED by reading the files, never a hardcoded filename
+// list — a fixed list stops protecting the moment someone adds a fifth module.
+const SERVER_ENTRIES = ['src/utils/coachWindow.js', 'src/data/scenarios.js'];
+// Catches `from './x'`, `import './x'`, `import('./x')` and `require('./x')`.
+const RELATIVE_SPEC = /(?:\bfrom\s*|\bimport\s*\(?\s*|\brequire\s*\(\s*)['"](\.[^'"]+)['"]/g;
+const serverClosure = new Set();
+{
+  const queue = SERVER_ENTRIES.map(e => join(ROOT, e));
+  while (queue.length) {
+    const file = queue.shift();
+    if (serverClosure.has(file) || !existsSync(file)) continue;
+    serverClosure.add(file);
+    const src = read(file);
+    for (const [, spec] of src.matchAll(RELATIVE_SPEC)) {
+      if (!/\.(js|json)$/.test(spec)) {
+        flag('ERROR', 'server-esm-resolvable',
+          `${rel(file)} imports '${spec}' without a file extension — node cannot resolve it, so api/coach-read.js fails at runtime while jest and webpack stay green. Write '${spec}.js'.`);
+      }
+      // Resolve either way so one bad specifier does not hide the rest.
+      const target = resolve(dirname(file), /\.(js|json)$/.test(spec) ? spec : `${spec}.js`);
+      if (target.startsWith(join(ROOT, 'src'))) queue.push(target);
+    }
+  }
+}
+if (serverClosure.size < SERVER_ENTRIES.length) {
+  flag('ERROR', 'server-esm-resolvable',
+    'the server-loadable entry points are missing — api/coach-read.js dynamic-imports them by path');
+}
+
+// ── 30. The coach window stays scoped to ONE tenant (July 28, 2026) ──────
+// `.eq('user_id', uid)` in the sessions query is the single line standing
+// between one player's Coach's Read and another player's hands. It has no
+// other protection: CRA's jest only sees src/, so there is no test anywhere
+// that executes api/. If it is ever dropped in a refactor, the read silently
+// aggregates the whole table and leaks other users' play into the prompt.
+{
+  const coachSrc = read(join(ROOT, 'api/coach-read.js'));
+  const sessQuery = coachSrc.match(/\.from\('sessions'\)[\s\S]{0,500}?;/);
+  if (!sessQuery) {
+    flag('ERROR', 'coach-tenant-scope',
+      "api/coach-read.js has no .from('sessions') query — the coach window must read the session log directly");
+  } else if (!/\.eq\('user_id',\s*uid\)/.test(sessQuery[0])) {
+    flag('ERROR', 'coach-tenant-scope',
+      "api/coach-read.js queries sessions without .eq('user_id', uid) — the service-role client bypasses RLS, so this would aggregate EVERY user's hands into one player's read");
+  }
+}
 
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
