@@ -101,16 +101,15 @@ test('a structured coach read renders headline + evidence + watch-for inside the
   };
   dash({ user: u });
 
-  // Headline + watch-for render, inside the profile card
+  // Headline + watch-for render, inside the profile card (C″, 2026-07-29)
   const headline = document.querySelector('.db-schema-card .db-profile-read-headline');
   expect(headline).toHaveTextContent('You over-fold to river bets');
   expect(screen.getByText(/Believe passive raisers/)).toBeInTheDocument();
-  // Evidence rows render on the dashboard too (founder, July 18 — the full
-  // structured read is scannable; only the prose format was the problem)
-  expect(screen.getByText(/Folded top pair to the nit/)).toBeInTheDocument();
-  expect(screen.getByText(/Passed on a value raise/)).toBeInTheDocument();
-  // Focus chip
-  expect(document.querySelector('.db-profile-read-focus-skill')).toHaveTextContent('Pot Odds');
+  // Evidence rows and focus chip stay in the notebook — they don't render
+  // on the card (founder decision: diagnosis and prescription only)
+  expect(screen.queryByText(/Folded top pair to the nit/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Passed on a value raise/)).not.toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-focus-skill')).toBeNull();
   // The standalone "Last Session's Read" section is gone
   expect(document.querySelector('.db-coach-note')).toBeNull();
 });

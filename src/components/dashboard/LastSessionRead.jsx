@@ -1,11 +1,11 @@
 import { parseCoachRead } from '../../utils/coachRead';
-import { formatShortDate } from '../../utils/dates';
 import CoachNotebook from './CoachNotebook';
 
 // ─── Coach's Read ──────────────────────────────────────────────────────────
 // The read belongs to the player profile (founder decision) — a full-width
-// strip beneath the schema/ledger columns. Compact: headline + evidence rows +
-// watch-for + focus chip; legacy prose reads clamp to ~2 lines.
+// strip beneath the schema/ledger columns. Compact: headline and watch-for
+// (diagnosis and prescription); evidence bullets and the date live in the
+// notebook (Past Reads). Legacy prose reads clamp to ~2 lines (C″, 2026-07-29).
 //
 // Phase B: the read is no longer the latest session's alone — it's a trend
 // read over a trailing window of sessions, refreshed every five sessions
@@ -25,20 +25,10 @@ export default function LastSessionRead({ coachNote, coachReads, guest }) {
     <div className="db-profile-read">
       {coachNote && (
         <>
-          <div className="db-profile-read-label">
-            Coach's Read · last 10 sessions
-            {coachReads?.[0]?.date && <> · as of {formatShortDate(coachReads[0].date)}</>}
-          </div>
+          <div className="db-profile-read-label">Coach's Read</div>
           {parsed?.structured ? (
             <>
               <div className="db-profile-read-headline">{parsed.structured.headline}</div>
-              {parsed.structured.evidence.length > 0 && (
-                <ul className="db-profile-read-evidence">
-                  {parsed.structured.evidence.map((e, i) => (
-                    <li key={i} className="db-profile-read-evidence-row">{e}</li>
-                  ))}
-                </ul>
-              )}
               {parsed.structured.watchFor && (
                 <div className="db-profile-read-watchfor">
                   <span className="db-profile-read-wf-label">Watch for</span>
@@ -48,12 +38,6 @@ export default function LastSessionRead({ coachNote, coachReads, guest }) {
             </>
           ) : (
             <p className="db-profile-read-prose">{parsed?.legacy}</p>
-          )}
-          {coachNote.focus && (
-            <div className="db-profile-read-focus">
-              <span className="db-profile-read-focus-label">Focus</span>
-              <span className="db-profile-read-focus-skill">{coachNote.focus}</span>
-            </div>
           )}
         </>
       )}

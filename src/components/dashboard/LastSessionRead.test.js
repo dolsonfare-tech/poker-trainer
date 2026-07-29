@@ -24,13 +24,15 @@ test('no read and no history renders nothing at all', () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test('a structured read renders headline, evidence rows, watch-for and focus', () => {
+test('a structured read renders the headline and watch-for — evidence stays in the notebook', () => {
   render(<LastSessionRead coachNote={note} coachReads={history(1)} />);
   expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
-  expect(screen.getByText('Folded top pair to the nit')).toBeInTheDocument();
-  expect(screen.getByText('Passed on a value raise')).toBeInTheDocument();
   expect(screen.getByText(/Believe passive raisers/)).toBeInTheDocument();
-  expect(document.querySelector('.db-profile-read-focus-skill')).toHaveTextContent('Pot Odds');
+  // Evidence bullets read as stat-dumps on the card (founder call, 2026-07-29
+  // spec). The full read, bullets included, still lives in Past Reads.
+  expect(screen.queryByText('Folded top pair to the nit')).not.toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-evidence')).toBeNull();
+  expect(document.querySelector('.db-profile-read-focus')).toBeNull();
 });
 
 test('a legacy prose read renders as prose, with no headline element', () => {
@@ -66,25 +68,20 @@ test('guests never see the notebook', () => {
   expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
 });
 
-// The read now spans ten sessions, so "Last Session's Read" is a false label
-// and "Focus this session" is a false frame (Phase B).
-test('the read is labelled as a recent-form read, not a single session', () => {
+// C″ (2026-07-29): the label carries no scope claim at all — which also means
+// it can never overclaim scope for a stored legacy per-session read.
+test("the label is exactly Coach's Read — no scope claim", () => {
   render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
   expect(screen.queryByText(/Last Session's Read/i)).not.toBeInTheDocument();
-  expect(screen.getByText(/Coach's Read/i)).toBeInTheDocument();
-  expect(screen.getByText(/last 10 sessions/i)).toBeInTheDocument();
+  expect(screen.queryByText(/last 10 sessions/i)).not.toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-label')).toHaveTextContent(/^Coach's Read$/);
 });
 
-test('the focus chip is framed as ongoing, not as this session', () => {
-  render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
-  expect(screen.queryByText(/Focus this session/i)).not.toBeInTheDocument();
-  expect(screen.getByText(/Focus/i)).toBeInTheDocument();
-});
-
-// A read that refreshes every five sessions can be genuinely old — and if calls
-// are failing it can be MUCH older than the player assumes. Date it, so stale
-// is visible rather than passing for current.
-test('the read is dated so staleness is visible', () => {
+// DELIBERATE REVERSAL of the 2026-07-29 "date the read" pin: the founder cut
+// the date from the card in the C″ spec (Decisions §2). Staleness is now
+// visible only through the dated entries in Past Reads. If stale-read
+// confusion shows up in feedback channels, this is the decision to revisit.
+test('the card label carries no date — dates live in Past Reads', () => {
   render(
     <LastSessionRead
       coachNote={{ body: note.body, focus: 'bluffing' }}
@@ -92,10 +89,6 @@ test('the read is dated so staleness is visible', () => {
       guest={false}
     />,
   );
-  expect(screen.getByText(/Jul 24/)).toBeInTheDocument();
-});
-
-test('with no dated history the label carries no date rather than a wrong one', () => {
-  render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
   expect(screen.queryByText(/as of/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/Jul 24/)).not.toBeInTheDocument();
 });
