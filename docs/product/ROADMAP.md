@@ -47,6 +47,10 @@ retries. Pinned by four new jest tests (ordering-resolved, cadence-counts-this-
 session, failed-insert-skips-read, whitespace guard on `attachRead`) plus
 invariants rule 33. No prompt or model text changed, so no live eval was owed.
 
+**2026-07-29 (later): C″ card restructure — strip deleted, read panel reduced to
+headline + watch-for, queue on the CTA.** Spec:
+`docs/superpowers/specs/2026-07-29-profile-card-restructure-design.md`.
+
 ### THE ONE OPEN DECISION — word caps
 
 The July 29 live eval passed on substance (see CLAUDE.md's eval line) but flagged

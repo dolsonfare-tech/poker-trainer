@@ -195,7 +195,7 @@ test('coachReadsFromSessions caps at COACH_READS_CAP, keeping the newest', () =>
   expect(out[COACH_READS_CAP - 1].body).toBe(`read ${40 - COACH_READS_CAP}`); // oldest survivor
 });
 
-// ── recentSessionsFromSessions (dashboard recent-form strip) ─────────────────
+// ── recentSessionsFromSessions (feeds derived user.recentSessions, rebuilt from the sessions log) ──
 
 // Same local-date derivation the coachReadsFromSessions tests use just above,
 // so the expected value doesn't assume the runner's TZ matches UTC.
