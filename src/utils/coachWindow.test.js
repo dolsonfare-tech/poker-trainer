@@ -69,6 +69,16 @@ test('a timeout is the player never acting, not a slow or a wrong answer', () =>
   expect(out.timeouts).toBe(2);
 });
 
+// The absence-means-presence hazard: `timeouts` is the one place a missing value
+// is an affirmative signal, so a reduced hand shape must NOT be read as a freeze.
+test('a hand missing the keys entirely is not a freeze, only an explicit null is', () => {
+  const out = aggregate([session([
+    { scenarioId: 'sc_odds', skill: 'potodds', result: 'incorrect' },  // keys absent -> no
+    { scenarioId: 'sc_odds', skill: 'potodds', result: 'incorrect', choiceVal: null, decisionMs: null },
+  ])], lookup);
+  expect(out.timeouts).toBe(1);
+});
+
 test('a window with nobody freezing reports zero timeouts', () => {
   const out = aggregate([session([
     hand('sc_odds', 'correct'), hand('sc_bluff', 'incorrect'),

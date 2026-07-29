@@ -23,7 +23,7 @@ import SCENARIOS from '../src/data/scenarios.js';
 import { aggregate } from '../src/utils/coachWindow.js';
 import coach from '../api/coach-read.js';
 
-const { buildPrompt, callClaude } = coach;
+const { buildPrompt, callClaude, buildLookup } = coach;
 const DRY = process.argv.includes('--dry');
 const OUT = 'coach-eval-output.md';
 
@@ -41,14 +41,15 @@ const bySkills = (skills) => SCENARIOS.filter((s) => skills.includes(s.skill));
 const byCorrectCls = (pool, cls) =>
   pool.filter((s) => s.options.find((o) => o.val === s.correct)?.cls === cls);
 
-// The harness now exercises the REAL aggregate() and the REAL prompt, so the
-// hand-synced copy of the payload mapping is gone. Personas are expressed as
-// stored hands — { scenarioId, skill, result, choiceVal, decisionMs } — which
-// is exactly what sessions.hands holds in the database.
-const lookup = (id) => {
-  const s = SCENARIOS.find((x) => x.id === id);
-  return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
-};
+// The harness now exercises the REAL aggregate(), the REAL prompt and the REAL
+// lookup, so the hand-synced copy of the payload mapping is gone. Personas are
+// expressed as stored hands — { scenarioId, skill, result, choiceVal,
+// decisionMs } — which is exactly what sessions.hands holds in the database.
+//
+// buildLookup is imported rather than reimplemented: a second copy of the
+// mapping would let a rename of `villain.label` pass the eval while breaking the
+// endpoint, which is the drift this harness exists to catch.
+const lookup = buildLookup(SCENARIOS);
 
 // One stored hand. `choiceVal` is the option the persona ACTUALLY chose (null
 // on a timeout, matching useSessionRun) — it is what schema.js reads to
@@ -166,10 +167,15 @@ const PERSONAS = [
     name: 'The Gambler',
     priorCorrect: 1,   // improving  20% -> 40%
     expect: 'Calling without the price / any-two-cards named; loose continuance.',
+    // Each wrong step fires 10x against a `used` set spanning the whole stretch,
+    // so each needs a fold-correct pool of at least 10 or it falls through to
+    // SCENARIOS.find(unused) in file order and injects under/over into what
+    // should be a pure `loose` tally. These three pools are disjoint BY SKILL
+    // and sized 16/13/20, which is what takes the fallbacks to zero.
     plan: [
-      { pool: byCorrectCls(bySkills(['potodds']), 'fold'), wrongCls: ['call'] },
-      { pool: byCorrectCls(bySkills(['preflop']), 'fold'), wrongCls: ['call', 'raise'] },
       { pool: byCorrectCls(bySkills(['potodds', 'reads']), 'fold'), wrongCls: ['call'] },
+      { pool: byCorrectCls(bySkills(['preflop', 'position']), 'fold'), wrongCls: ['call', 'raise'] },
+      { pool: byCorrectCls(bySkills(['opponent', 'bluffing', 'betsize', 'aggression']), 'fold'), wrongCls: ['call'] },
       { pool: bySkills(['opponent']), correct: true },
       { pool: bySkills(['reads']), correct: true },
     ],
@@ -281,25 +287,41 @@ function checkRead(read, persona) {
   const has3 = typeof obj.headline === 'string'
     && Array.isArray(obj.evidence) && typeof obj.watchFor === 'string';
   lines.push(`- ${has3 ? '✓' : '✗'} three fields present (headline, evidence[], watchFor)`);
+  // These bounds MUST match what the prompt asks for. They drifted once already
+  // (1–3 items and ≤15 words against a prompt asking 1–2 and ≤12), which would
+  // have printed ✓ on nine systematically over-long reads and sent the founder a
+  // clean-looking report on a run that measured the wrong thing.
   if (Array.isArray(obj.evidence)) {
     const n = obj.evidence.length;
-    lines.push(`- ${n >= 1 && n <= 3 ? '✓' : '✗'} evidence has 1–3 items (${n})`);
+    lines.push(`- ${n >= 1 && n <= 2 ? '✓' : '✗'} evidence has 1–2 items (${n})`);
   }
+  const fields = [obj.headline, ...(Array.isArray(obj.evidence) ? obj.evidence : []), obj.watchFor]
+    .filter((f) => typeof f === 'string');
   if (typeof obj.headline === 'string') {
     const words = obj.headline.trim().split(/\s+/).filter(Boolean).length;
-    lines.push(`- ${words <= 15 ? '✓' : '⚠'} headline ≤ ~15 words (${words}) [soft]`);
+    lines.push(`- ${words <= 12 ? '✓' : '⚠'} headline ≤ 12 words (${words}) [soft]`);
     // The confident-misser persona's headline MUST name the fast/confident leak.
     if (persona.plan.some((s) => s.fast)) {
       const hit = /\b(confiden|fast|quick|sure|snap|autopilot|instinct|reflex|rush)/i.test(obj.headline);
       lines.push(`- ${hit ? '✓' : '✗'} confident-misser headline names the fast/confident pattern`);
     }
   }
-  // Voice reframe (July 22, 2026): the read is session-scoped field notes, not
-  // a trait verdict. Flag identity/always claims in any field. Soft — phrases
-  // like "you are getting 3.5:1" are legitimate, so a human still judges.
+  // The freezer persona's counterpart to the confident-misser check above. 20 of
+  // its 50 hands are timeouts and they carry no direction, so a read that never
+  // mentions them has silently dropped the persona's whole story. Scans all three
+  // fields: the prompt asks for freezing to be its own pattern, not specifically
+  // a headline.
+  if (persona.plan.some((s) => s.timeout)) {
+    const hit = /\b(timeout|timed out|clock|freez|froze|frozen|stall|hesitat|ran out of time|never acted|no action)/i
+      .test(fields.join(' '));
+    lines.push(`- ${hit ? '✓' : '✗'} freezer read names the timeout/clock pattern`);
+  }
+  // Voice reframe (July 22, 2026), tightened in Phase B: the read is a trend
+  // review, never a trait verdict. Flag identity AND habitual claims in any
+  // field — "you always fold the river" is the same verdict wearing different
+  // words, and the prompt now bans it explicitly. Soft — phrases like "you are
+  // getting 3.5:1" are legitimate, so a human still judges.
   const verdicty = /\byou (are|'re) (a|an|too|the)\b|\byou (always|never)\b|\byour game\b|\bas a player\b/i;
-  const fields = [obj.headline, ...(Array.isArray(obj.evidence) ? obj.evidence : []), obj.watchFor]
-    .filter((f) => typeof f === 'string');
   const verdictHit = fields.some((f) => verdicty.test(f));
   lines.push(`- ${verdictHit ? '⚠' : '✓'} session-scoped voice, no trait verdicts${verdictHit ? ' (found "you are a / you always / your game") [soft]' : ''}`);
   return lines;

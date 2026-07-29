@@ -20,6 +20,20 @@ const DAILY_LIMIT = 5;
 // extension guessing, so an extensionless import anywhere in that subtree makes
 // this load fail at runtime while every local gate stays green — which is
 // exactly how `npm run eval:coach` sat broken from CA-014 until this commit.
+// The scenario metadata aggregate() cites, keyed by id. EXPORTED so the eval
+// harness calls this exact function instead of keeping its own copy: a
+// byte-identical duplicate is the same hazard class as the `mk()` payload
+// mapping this seam removed. Rename `villain.label` with a second copy in play
+// and the harness would quietly emit `undefined` villains into the prompt while
+// the endpoint stayed correct — a drift the eval exists to catch, not cause.
+function buildLookup(scenarios) {
+  const byId = new Map((scenarios ?? []).map(s => [s.id, s]));
+  return (id) => {
+    const s = byId.get(id);
+    return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
+  };
+}
+
 let _mods = null;
 async function loadModules() {
   if (!_mods) {
@@ -27,14 +41,10 @@ async function loadModules() {
       import('../src/utils/coachWindow.js'),
       import('../src/data/scenarios.js'),
     ]);
-    const byId = new Map((scen.default ?? []).map(s => [s.id, s]));
     _mods = {
       aggregate: win.aggregate,
       COACH_WINDOW: win.COACH_WINDOW,
-      lookup: (id) => {
-        const s = byId.get(id);
-        return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
-      },
+      lookup: buildLookup(scen.default),
     };
   }
   return _mods;
@@ -200,10 +210,10 @@ function buildPrompt(s) {
   // direction (schema.js refuses to classify one), so without this line a player
   // who is timing out reads to the model as making patternless mistakes.
   const timeouts = s.timeouts
-    ? `They ran out of the clock without acting at all on ${s.timeouts} of these hands. That is freezing on the decision, not choosing badly, and it carries no direction — treat it as its own pattern rather than folding it into the passive or aggressive story.\n\n`
+    ? `They ran out of the clock without acting at all on ${s.timeouts} of these hands. That is freezing on the decision, not choosing badly, and it carries no direction, so treat it as its own pattern rather than folding it into the passive or aggressive story.\n\n`
     : '';
 
-  return `You are a poker coach reviewing a student's last ${s.sessions} sessions — ${s.hands} hands — and writing up what you have been seeing lately. This is a trend review, not a verdict on who they are: name what has been happening over this stretch, and stay in the present tense of "lately".
+  return `You are a poker coach reviewing a student's last ${s.sessions} sessions (${s.hands} hands) and writing up what you have been seeing lately. This is a trend review, not a verdict on who they are: name what has been happening over this stretch, and stay in the present tense of "lately".
 
 Overall: ${s.accuracy.correct} of ${s.accuracy.total} correct (${pct(s.accuracy.correct, s.accuracy.total)}%)${
   s.previous ? `, against ${s.previous.correct} of ${s.previous.total} (${pct(s.previous.correct, s.previous.total)}%) over the stretch before this one` : ''
@@ -212,21 +222,21 @@ Overall: ${s.accuracy.correct} of ${s.accuracy.total} correct (${pct(s.accuracy.
 Per skill over this stretch:
 ${skillLines || '- (no skill has enough attempts to report)'}
 
-Direction of their mistakes — too passive (${s.direction.under}), too aggressive (${s.direction.over}), too loose (${s.direction.loose}), over ${s.direction.evidence} weighted misses.
+Direction of their mistakes: too passive (${s.direction.under}), too aggressive (${s.direction.over}), too loose (${s.direction.loose}), over ${s.direction.evidence} weighted misses.
 
-${timeouts}${confident ? `Confident errors — answered fast and got it wrong, so they do not know these are leaks:\n${confident}` : 'No confident errors this stretch.'}
+${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so they do not know these are leaks):\n${confident}` : 'No confident errors this stretch.'}
 
 ${repeats ? `Spots they have missed more than once in this stretch:\n${repeats}` : 'No spot was missed more than once.'}
 
-Respond with three fields — "headline", "evidence", "watchFor":
+Respond with three fields named "headline", "evidence" and "watchFor":
 - headline: ONE sentence, 12 words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you".
-- evidence: 1 to 2 short items, each 20 words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves — never a restatement of a single hand's result.
+- evidence: 1 to 2 short items, each 20 words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
 - watchFor: ONE sentence, 18 words or fewer, concrete and actionable for their next session.
 
 Rules for all three fields:
-- Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity or their game as a whole: no "you are a...", no "your game is...". Naming the player's type is a different surface's job, not yours
+- Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity, their habits as a whole, or their game: no "you are a...", no "you always..." or "you never...", no "your game is...". A habitual claim ("you always fold the river") is an identity verdict wearing different words, so say "kept folding the river over these sessions" instead. Naming the player's type is a different surface's job, not yours
 - The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency from raising when caution was best. Name the tendency the numbers actually show
-- Confident errors are the highest-leverage thing here — they do not know those are leaks. If there are any, they belong in the headline or the evidence
+- Confident errors are the highest-leverage thing here, because they do not know those are leaks. If there are any, they belong in the headline or the evidence
 - Use only the numbers and spots given above. Never invent a hand, a holding, an opponent or a statistic
 - If the mistakes point in different directions, say so honestly instead of forcing one story
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
@@ -274,3 +284,4 @@ async function callClaude(summary, apiKey) {
 module.exports.buildPrompt = buildPrompt;
 module.exports.callClaude = callClaude;
 module.exports.aggregateForUser = aggregateForUser;
+module.exports.buildLookup = buildLookup;

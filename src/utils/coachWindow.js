@@ -31,7 +31,17 @@ const isConfidentMiss = (h) =>
 // the shown-at timestamp is missing). A freeze is a distinct behaviour from a
 // bad choice and carries no direction — schema.js already refuses to classify
 // it — so the prompt needs to see it separately or it reads as patternless.
-const isTimeout = (h) => h.choiceVal == null && h.decisionMs == null;
+//
+// HAZARD: this is the ONE predicate in the codebase where a MISSING value is an
+// affirmative signal. Everywhere else (directionOfHand, isConfidentMiss) a
+// null/absent field means "no signal, skip". So it demands the keys be PRESENT
+// and null, never merely absent: no writer emits a reduced hand shape today, but
+// if one ever did, a bare `== null` test would report that players froze on
+// hands they actually answered, inside a prompt that forbids inventing
+// statistics. Presence is what distinguishes a recorded freeze from missing data.
+const isTimeout = (h) =>
+  h != null && 'choiceVal' in h && 'decisionMs' in h
+  && h.choiceVal == null && h.decisionMs == null;
 
 const tally = (sessions) => {
   const hands = sessions.flatMap(s => s.hands ?? []);
