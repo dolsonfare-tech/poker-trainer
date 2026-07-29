@@ -157,7 +157,19 @@ module.exports = async function handler(req, res) {
     // `.eq('user_id', uid)` is the tenant scope — the single line standing
     // between one player's read and another player's hands. Pinned by
     // check-invariants rule 30; do not remove it.
-    const { COACH_WINDOW } = await loadModules();
+    // In its own try: this dynamic import is the api/ -> src/ seam, and when it
+    // fails (July 29, 2026: the lambda ran a Node without module-syntax
+    // detection, so the ESM-syntax src files would not load; engines.node now
+    // pins 24.x) it must fail as a logged, structured 500 — NOT the platform's
+    // FUNCTION_INVOCATION_FAILED, which bypasses every error path the client
+    // knows how to degrade from and is invisible outside Vercel's own logs.
+    let COACH_WINDOW;
+    try {
+      ({ COACH_WINDOW } = await loadModules());
+    } catch (err) {
+      console.error('coach-read module load failed', err);
+      return res.status(500).json({ error: 'Coach unavailable' });
+    }
     const { data: rows, error: sessErr } = await admin
       .from('sessions')
       .select('id, hands, created_at')

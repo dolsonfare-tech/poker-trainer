@@ -907,6 +907,33 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   }
 }
 
+// ── 34. The lambda runs a Node that can import the src/ seam (July 29, 2026) ─
+// api/coach-read.js dynamic-imports ESM-syntax .js files from src/ (no
+// "type":"module" anywhere — CRA owns that layout). That works ONLY on Node
+// with module-syntax detection (>= 22.7; default in 23+/24). The production
+// lambda ran an older Node: every read crashed as FUNCTION_INVOCATION_FAILED
+// — a platform-level error that bypasses the handler's own error paths — while
+// every local gate stayed green on Node 24. Ten sessions on a fresh account
+// produced zero reads before a human noticed. Two pins:
+//   (a) package.json engines.node must pin 24.x, so Vercel provisions a
+//       runtime with detection on;
+//   (b) the loadModules() call in the handler must sit in its own try, so a
+//       future load failure answers a logged, structured 500 the client can
+//       degrade from instead of crashing the platform.
+{
+  const pkg = JSON.parse(read(join(ROOT, 'package.json')));
+  const nodeRange = pkg.engines?.node ?? '';
+  if (!/^2[4-9]\.x$|^([3-9][0-9])\.x$/.test(nodeRange)) {
+    flag('ERROR', 'coach-lambda-runtime',
+      `package.json engines.node is '${nodeRange || '(unset)'}' — must pin 24.x (or later): the api/ -> src/ dynamic import needs Node module-syntax detection, and an unpinned Vercel runtime is how every production read crashed on July 29, 2026 while local gates stayed green`);
+  }
+  const coachSrc = read(join(ROOT, 'api/coach-read.js'));
+  if (!/try\s*\{\s*\(\{\s*COACH_WINDOW\s*\}\s*=\s*await loadModules\(\)\);?\s*\}\s*catch/.test(coachSrc)) {
+    flag('ERROR', 'coach-lambda-runtime',
+      'api/coach-read.js no longer wraps loadModules() in its own try/catch — an import failure there crashes the lambda at the platform level (FUNCTION_INVOCATION_FAILED), invisible to every error path the client knows');
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');
