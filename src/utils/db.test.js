@@ -1,6 +1,6 @@
 // db.js pure-derivation units. The Supabase client is mocked out — these test
 // the recent-hands buffer rebuild (F3) that assembleUser runs on load.
-import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, recentSessionsFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
+import { recentHandsFromSessions, directionTallyFromSessions, coachReadsFromSessions, recentSessionsFromSessions, sessionsSinceReadFromSessions, fetchRemoteUser, createRemoteProfile } from './db';
 import { COACH_READS_CAP } from './coachRead';
 import { RECENT_HANDS_CAP } from './iq';
 import { RECENT_SESSIONS_CAP } from './recentForm';
@@ -555,4 +555,36 @@ test('CA-005: saveRemoteUser includes rebuys when user.rebuys is a finite number
   const updateCall = profileBuilder._calls.find(c => c[0] === 'update');
   const payload = updateCall[1];
   expect(payload).toHaveProperty('rebuys', 2);
+});
+
+test('sessionsSinceReadFromSessions counts rows after the last stored read', () => {
+  // rows arrive created_at ASCENDING (oldest first), same as every other derivation
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: 'read A', hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-03T12:00:00Z', coach_read: '', hands: [] },   // empty counts as no read
+    { created_at: '2026-07-04T12:00:00Z', coach_read: null, hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(3);
+});
+
+test('with a read on the newest row, nothing has happened since', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: 'read B', hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(0);
+});
+
+// A brand-new player has no read, so "sessions since the last read" is
+// undefined unless we define it. It must equal the total, or the >=5 half of
+// the trigger can never be satisfied and the first read never fires.
+test('with no read ever stored, every session counts', () => {
+  const rows = [
+    { created_at: '2026-07-01T12:00:00Z', coach_read: null, hands: [] },
+    { created_at: '2026-07-02T12:00:00Z', coach_read: null, hands: [] },
+  ];
+  expect(sessionsSinceReadFromSessions(rows)).toBe(2);
+  expect(sessionsSinceReadFromSessions([])).toBe(0);
+  expect(sessionsSinceReadFromSessions(undefined)).toBe(0);
 });

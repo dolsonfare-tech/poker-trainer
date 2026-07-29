@@ -71,6 +71,22 @@ export function coachReadsFromSessions(sessionRows) {
   return out.length > COACH_READS_CAP ? out.slice(0, COACH_READS_CAP) : out;
 }
 
+// How many sessions have been recorded since the last one that stored a coach
+// read — the second half of the meta-read trigger. Derived from the
+// append-only log rather than counted, so it self-heals after a failed call
+// (a row with no read simply keeps the count climbing) and cannot desync
+// across devices. With no read ever stored this is the total session count, so
+// a new player's first read can fire.
+export function sessionsSinceReadFromSessions(sessionRows) {
+  const rows = sessionRows ?? [];
+  let since = 0;
+  for (const r of rows) {
+    const body = r.coach_read;
+    since = (typeof body === 'string' && body.trim()) ? 0 : since + 1;
+  }
+  return since;
+}
+
 // Recent-form window, rebuilt from the append-only session log — self-healing
 // across devices, same pattern as recentHands/coachReads. Rows arrive
 // created_at ascending (oldest first); reverse to newest-first and cap at the
@@ -132,6 +148,8 @@ function assembleUser(profile, skillRows, sessionRows, bestSessionCorrect = null
     // Coach's Notebook — full read history derived from the session log
     // (newest first, capped), self-healing like recentHands/scenarioHistory.
     coachReads: coachReadsFromSessions(sessionRows),
+    // Second half of the meta-read trigger (see submitSession).
+    sessionsSinceRead: sessionsSinceReadFromSessions(sessionRows),
     // Recent-form window for the dashboard strip — derived like coachReads.
     recentSessions: recentSessionsFromSessions(sessionRows),
     usernameChangedAt: profile.username_changed_at ?? null,

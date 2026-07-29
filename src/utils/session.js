@@ -48,6 +48,7 @@ export function createUser(username) {
     recentSessions: [],
     directionTally: { ...EMPTY_DIRECTION_TALLY },
     leaderboard: null,
+    sessionsSinceRead: 0,
   };
 }
 
@@ -115,7 +116,17 @@ export function applySessionResults(user, hands, coachRead) {
     hands: hands.map(h => ({ skill: h.skill, result: h.result })),
   });
 
-  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect };
+  // Read counter for the meta-read trigger. In Supabase mode db.js rebuilds
+  // this from the log on load; this keeps the current device accurate between
+  // loads, the same pattern as recentHands/scenarioHistory. A legacy profile
+  // with no counter falls back to its session count — every session it has
+  // played predates any read.
+  const priorSince = typeof user.sessionsSinceRead === 'number'
+    ? user.sessionsSinceRead
+    : (user.sessionsCompleted ?? 0);
+  const sessionsSinceRead = coachRead ? 0 : priorSince + 1;
+
+  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect, sessionsSinceRead };
 }
 
 // ── submitSession (MOD-002, Wave 3) ────────────────────────────────────────

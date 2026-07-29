@@ -174,3 +174,23 @@ test('a rejected remote write does not reject the caller — the summary must re
   })).resolves.toMatchObject({ coachText: 'read' });
   console.error.mockRestore();
 });
+
+test('applySessionResults resets the read counter when a read was stored', () => {
+  const user = { ...createUser('N'), sessionsSinceRead: 4 };
+  const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
+  expect(applySessionResults(user, hands, 'a real read').sessionsSinceRead).toBe(0);
+});
+
+test('applySessionResults advances the read counter when no read was stored', () => {
+  const user = { ...createUser('N'), sessionsSinceRead: 4 };
+  const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
+  expect(applySessionResults(user, hands, null).sessionsSinceRead).toBe(5);
+});
+
+test('a legacy cached profile with no counter starts from its session count', () => {
+  const user = { ...createUser('N'), sessionsCompleted: 7 };
+  delete user.sessionsSinceRead;
+  const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
+  // 7 prior sessions + this one, none of which stored a read
+  expect(applySessionResults(user, hands, null).sessionsSinceRead).toBe(8);
+});
