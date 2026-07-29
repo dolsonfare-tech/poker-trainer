@@ -10,16 +10,47 @@ const { createClient } = require('@supabase/supabase-js');
 // anything away. Mirrored by COACH_DAILY_LIMIT in SessionSummary.jsx.
 const DAILY_LIMIT = 5;
 
+// aggregate() and the scenario library are ES modules; this handler is
+// CommonJS, so they load through dynamic import (supported on the Node
+// runtime). The lookup is built here and PASSED IN — coachWindow.js must never
+// import the scenario chunk itself (CA-014 bundle split).
+//
+// Both modules and everything they pull in use fully-specified relative
+// specifiers (`./spacedrep.js`, not `./spacedrep`). Node's ESM resolver does no
+// extension guessing, so an extensionless import anywhere in that subtree makes
+// this load fail at runtime while every local gate stays green — which is
+// exactly how `npm run eval:coach` sat broken from CA-014 until this commit.
+let _mods = null;
+async function loadModules() {
+  if (!_mods) {
+    const [win, scen] = await Promise.all([
+      import('../src/utils/coachWindow.js'),
+      import('../src/data/scenarios.js'),
+    ]);
+    const byId = new Map((scen.default ?? []).map(s => [s.id, s]));
+    _mods = {
+      aggregate: win.aggregate,
+      COACH_WINDOW: win.COACH_WINDOW,
+      lookup: (id) => {
+        const s = byId.get(id);
+        return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
+      },
+    };
+  }
+  return _mods;
+}
+
+async function aggregateForUser(sessions) {
+  const { aggregate, lookup } = await loadModules();
+  return aggregate(sessions, lookup);
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { decisionsPlayed } = req.body;
-  const MAX_DECISIONS = 10; // sessions are 5 scenarios; anything larger is abuse
-  if (!Array.isArray(decisionsPlayed) || decisionsPlayed.length === 0 || decisionsPlayed.length > MAX_DECISIONS) {
-    return res.status(400).json({ error: 'Invalid request body' });
-  }
+  // No request body to validate any more — the window is derived server-side.
 
   const apiKey = process.env.CLAUDE_API_KEY;
   if (!apiKey) {
@@ -30,6 +61,8 @@ module.exports = async function handler(req, res) {
   // Enforced whenever the server has Supabase credentials (always in prod).
   const supabaseUrl = process.env.SUPABASE_URL || process.env.REACT_APP_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
+  // Declared out here so the no-credentials branch below still sees it.
+  let sessions = [];
   if (supabaseUrl && secretKey) {
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
     if (!token) return res.status(401).json({ error: 'Sign in required' });
@@ -53,10 +86,35 @@ module.exports = async function handler(req, res) {
       { user_id: uid, day: today, calls: calls + 1 },
       { onConflict: 'user_id,day' }
     );
+
+    // The window is built HERE, from the append-only log, not sent by the
+    // client — so it cannot be inflated or fabricated. Two windows' worth:
+    // the trailing one the read speaks about, plus the one before it for the
+    // accuracy comparison. Ordered newest first, which is what aggregate()
+    // expects.
+    const { COACH_WINDOW } = await loadModules();
+    const { data: rows } = await admin
+      .from('sessions')
+      .select('hands, created_at')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: false })
+      .limit(COACH_WINDOW * 2);
+    sessions = rows ?? [];
   }
 
+  // Unreachable through the product: the client only asks for a read on a
+  // cadence that requires sessionsCompleted >= 6, so a signed-in user with an
+  // empty log can never be due. Without Supabase credentials there is no
+  // serverless function at all (local preview is a static file server), so that
+  // branch is moot rather than a user-facing error. This is a guard against a
+  // state the cadence cannot produce, not a live path.
+  if (sessions.length === 0) {
+    return res.status(400).json({ error: 'No sessions to read' });
+  }
+  const summary = await aggregateForUser(sessions);
+
   try {
-    const raw = await callClaude(decisionsPlayed, apiKey);
+    const raw = await callClaude(summary, apiKey);
     // The wire format is always { text: string } (claude.js, the persist flow,
     // and both DB columns are untouched by the JSON restructure). On success we
     // re-serialize the parsed object so the string on the wire and in the DB is
@@ -176,5 +234,9 @@ async function callClaude(decisionsPlayed, apiKey) {
   return data.content?.find(b => b.type === 'text')?.text || '';
 }
 
+// These MUST stay below the `module.exports = handler` assignment above — that
+// reassignment replaces the exports object wholesale, so any property attached
+// earlier in the file is silently discarded.
 module.exports.buildPrompt = buildPrompt;
 module.exports.callClaude = callClaude;
+module.exports.aggregateForUser = aggregateForUser;

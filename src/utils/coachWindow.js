@@ -1,5 +1,5 @@
-import { CONFIDENT_MISS_MS } from './spacedrep';
-import { addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './schema';
+import { CONFIDENT_MISS_MS } from './spacedrep.js';
+import { addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './schema.js';
 
 // ─── Coach window ──────────────────────────────────────────────────────────
 // Turns the trailing session log into the PATTERNS the meta-read interprets.

@@ -1,4 +1,4 @@
-import { VILLAIN_LABELS } from './villains';
+import { VILLAIN_LABELS } from './villains.js';
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const SUIT_COLOR = { '♠': 'black', '♣': 'black', '♥': 'red', '♦': 'red' };
@@ -64,7 +64,7 @@ const mkScenario = ({ choices, ...rest }) => {
 // Moved to data/villains.js (CA-014): eight strings should not require the
 // whole scenario library to read. Re-exported here so existing import sites
 // keep working and the map stays single-sourced.
-export { VILLAIN_LABELS } from './villains';
+export { VILLAIN_LABELS } from './villains.js';
 
 // ─── Skill tag lookup ─────────────────────────────────────────────────────
 

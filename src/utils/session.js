@@ -172,7 +172,11 @@ export function shouldFetchRead(user) {
 // session -> db -> userStorage-barrel -> session cycle. Injection breaks it,
 // and its absence doubles as the localStorage-only signal — one condition
 // instead of a `hasSupabase` flag that could disagree with reality.
-export async function submitSession({ user, hands, sessionHistory, difficulty, isGuest, remote }) {
+// `sessionHistory` is deliberately NOT a parameter any more: the coach read is
+// built server-side from the append-only log, so the per-hand scenario objects
+// no longer leave the client. `hands` (the persisted log rows) is all this
+// needs. buildSessionDelta still takes sessionHistory — that one is local UI.
+export async function submitSession({ user, hands, difficulty, isGuest, remote }) {
   const persist = (updated, coachText) => {
     saveUser(updated);                       // localStorage cache always
     if (remote && !isGuest) {
@@ -201,7 +205,7 @@ export async function submitSession({ user, hands, sessionHistory, difficulty, i
   }
 
   try {
-    const coachText = await fetchCoachRead(sessionHistory);
+    const coachText = await fetchCoachRead();
     const updated = user ? persist(applySessionResults(user, hands, coachText), coachText) : null;
     return { user: updated, coachText, limited: false };
   } catch (err) {

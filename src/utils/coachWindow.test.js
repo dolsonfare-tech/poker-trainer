@@ -75,6 +75,50 @@ test('an unknown scenario id degrades instead of throwing', () => {
   expect(out.confidentMisses[0]).toMatchObject({ skill: 'reads', villain: 'Unknown' });
 });
 
+// ── direction ────────────────────────────────────────────────────────────────
+// Carried forward from the Task 3 review: `direction` had ZERO coverage, and
+// the meta-read prompt renders under/over/loose/evidence directly. A wrong
+// value there would surface only in the LIVE eval, which costs the founder real
+// money and time — so it gets pinned mechanically here instead.
+//
+// These fixtures use REAL scenario ids, unlike the rest of this file: direction
+// is resolved by schema.js against data/scenario-index.js, not against the
+// `lookup` parameter, so a made-up id yields no directional signal at all and
+// would make these assertions vacuously pass. Per the index:
+//   id 1  → correct 'call'  (cls call): fold = under, raise = over
+//   id 18 → correct 'fold'  (cls fold): call = loose
+// Weighting is incorrect=1.0, partial=0.5 (DIRECTION_WEIGHT); a correct answer
+// contributes no direction but still counts toward `hands`, the denominator.
+const dHand = (scenarioId, result, choiceVal) => ({
+  scenarioId, skill: 'potodds', result, choiceVal, decisionMs: 30000,
+});
+
+test('direction tallies the DIRECTION of misses, weighted, not just their count', () => {
+  const out = aggregate([session([
+    dHand(1, 'incorrect', 'fold'),   // passive miss      → under 1.0
+    dHand(1, 'partial', 'fold'),     // half-credit miss  → under 0.5
+    dHand(1, 'incorrect', 'raise'),  // aggressive miss   → over  1.0
+    dHand(18, 'incorrect', 'call'),  // call-when-fold    → loose 1.0
+    dHand(1, 'correct', 'call'),     // no direction, still a hand
+  ])], lookup);
+
+  expect(out.direction).toEqual({
+    under: 1.5, over: 1, loose: 1, evidence: 3.5, hands: 5,
+  });
+});
+
+// Negative control: the cells must stay at zero for hands that carry no
+// directional signal, so a future change cannot quietly manufacture evidence.
+// A timeout is a freeze, never a direction; an unknown id resolves to nothing.
+test('timeouts and unknown scenarios add hands but no direction', () => {
+  const out = aggregate([session([
+    dHand(1, 'incorrect', null),          // timeout — choiceVal null
+    dHand('sc_gone', 'incorrect', 'fold'), // id not in the scenario index
+  ])], lookup);
+
+  expect(out.direction).toEqual({ under: 0, over: 0, loose: 0, evidence: 0, hands: 2 });
+});
+
 test('partial credit counts as an attempt but not as correct', () => {
   const out = aggregate([session([hand('sc_odds', 'partial')])], lookup);
   expect(out.skills).toEqual([{ skill: 'potodds', attempts: 1, correct: 0 }]);
