@@ -1,5 +1,6 @@
 import { CONFIDENT_MISS_MS } from './spacedrep.js';
 import { addHandsToDirectionTally, EMPTY_DIRECTION_TALLY } from './schema.js';
+import { MIN_RATED_ATTEMPTS } from '../data/constants.js';
 
 // ─── Coach window ──────────────────────────────────────────────────────────
 // Turns the trailing session log into the PATTERNS the meta-read interprets.
@@ -52,7 +53,7 @@ const tally = (sessions) => {
   };
 };
 
-/** sessions: NEWEST FIRST. lookup: (scenarioId) => { tag, skill, villain } | null */
+/** sessions: NEWEST FIRST. lookup: (scenarioId) => { tag, skill, villain, spot } | null */
 export function aggregate(sessions, lookup) {
   const all = Array.isArray(sessions) ? sessions : [];
   const win = all.slice(0, COACH_WINDOW);
@@ -78,20 +79,43 @@ export function aggregate(sessions, lookup) {
     missesById.set(h.scenarioId, (missesById.get(h.scenarioId) ?? 0) + 1);
   }
 
+  // MIN_RATED_ATTEMPTS is the PRODUCT-WIDE evidence bar, imported rather than
+  // re-stated: the skill ledger greys out anything under it and the recent-form
+  // strip refuses to name it, precisely so the surfaces cannot contradict each
+  // other. Without it here, a lone `- betsize: 0 of 1` line was the only 0%
+  // skill in the window and the read headlined bet sizing while the ledger
+  // showed Bet Sizing as unrated — three surfaces, one player, three answers.
+  // It is also the entire justification for a ten-session window over six ("a
+  // skill averages ~6 attempts and usually clears the bar; at six sessions it
+  // averages under four and usually does not"), so applying it here is what
+  // makes that argument true rather than aspirational.
+  //
+  // Sub-bar skills are dropped from `skills` — the only list the prompt renders
+  // — instead of being carried alongside it, so there is no second list a
+  // future edit can render by mistake. `unratedSkills` is names only, for the
+  // eval doc and debugging; it never reaches the model.
+  const ranked = [...bySkill.values()].sort(
+    (a, b) => b.attempts - a.attempts || a.skill.localeCompare(b.skill),
+  );
+
+  const spotOf = (id) => meta(id).spot ?? '';
+
   return {
     sessions: win.length,
     hands: hands.length,
     accuracy: { correct, total },
     previous: prevWin.length > 0 ? { correct: prev.correct, total: prev.total } : null,
-    skills: [...bySkill.values()].sort(
-      (a, b) => b.attempts - a.attempts || a.skill.localeCompare(b.skill),
-    ),
+    skills: ranked.filter(s => s.attempts >= MIN_RATED_ATTEMPTS),
+    unratedSkills: ranked.filter(s => s.attempts < MIN_RATED_ATTEMPTS).map(s => s.skill),
     direction: addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands),
     timeouts: hands.filter(isTimeout).length,
     confidentMisses: hands.filter(isConfidentMiss).slice(0, MAX_CITED).map(h => ({
       skill: h.skill ?? meta(h.scenarioId).skill ?? 'Unknown',
       villain: meta(h.scenarioId).villain ?? 'Unknown',
       scenario: meta(h.scenarioId).tag ?? 'Unknown',
+      // Seat + hole cards + street: what tells two same-tag, same-villain spots
+      // apart in the prompt. Empty (not 'Unknown') when the id does not resolve.
+      spot: spotOf(h.scenarioId),
     })),
     repeats: [...missesById.entries()]
       .filter(([, n]) => n > 1)
@@ -100,6 +124,7 @@ export function aggregate(sessions, lookup) {
       .map(([id, misses]) => ({
         scenario: meta(id).tag ?? 'Unknown',
         villain: meta(id).villain ?? 'Unknown',
+        spot: spotOf(id),
         misses,
       })),
   };

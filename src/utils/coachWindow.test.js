@@ -1,8 +1,12 @@
 import { aggregate, COACH_WINDOW } from './coachWindow';
+import { MIN_RATED_ATTEMPTS } from '../data/constants';
 
+// Two scenarios sharing a tag and a villain — the collision the `spot` field
+// exists to break. Without it these two render as the same prompt line.
 const LOOKUP = {
-  sc_bluff: { tag: 'Bluff Frequency', skill: 'bluffing', villain: 'Calling Station' },
-  sc_odds:  { tag: 'Pot Odds', skill: 'potodds', villain: 'Tight Nit' },
+  sc_bluff: { tag: 'Bluff Frequency', skill: 'bluffing', villain: 'Calling Station', spot: 'BTN A♠K♠ flop' },
+  sc_odds:  { tag: 'Pot Odds', skill: 'potodds', villain: 'Tight Nit', spot: 'BB J♥8♥ preflop' },
+  sc_odds2: { tag: 'Pot Odds', skill: 'potodds', villain: 'Tight Nit', spot: 'CO Q♦Q♣ turn' },
 };
 const lookup = (id) => LOOKUP[id] ?? null;
 
@@ -10,6 +14,10 @@ const hand = (id, result, over = {}) => ({
   scenarioId: id, skill: LOOKUP[id].skill, result, choiceVal: 'fold', decisionMs: 30000, ...over,
 });
 const session = (hands) => ({ hands });
+// Enough attempts to clear the product-wide evidence bar, so a test about
+// tallies is not silently a test about the bar.
+const rated = (id, result, over = {}) =>
+  Array.from({ length: MIN_RATED_ATTEMPTS }, () => hand(id, result, over));
 
 test('an empty window aggregates to a zeroed, non-crashing shape', () => {
   const out = aggregate([], lookup);
@@ -30,13 +38,48 @@ test('the window is the newest COACH_WINDOW sessions, the rest is the comparison
 
 test('per-skill tallies come out attempts-desc, and skills with no attempts are absent', () => {
   const out = aggregate([session([
-    hand('sc_bluff', 'incorrect'), hand('sc_bluff', 'correct'), hand('sc_odds', 'correct'),
+    ...rated('sc_bluff', 'incorrect'), hand('sc_bluff', 'correct'),
+    ...rated('sc_odds', 'correct'),
   ])], lookup);
   expect(out.skills).toEqual([
-    { skill: 'bluffing', attempts: 2, correct: 1 },
-    { skill: 'potodds', attempts: 1, correct: 1 },
+    { skill: 'bluffing', attempts: MIN_RATED_ATTEMPTS + 1, correct: 1 },
+    { skill: 'potodds', attempts: MIN_RATED_ATTEMPTS, correct: MIN_RATED_ATTEMPTS },
   ]);
   expect(out.skills.find(s => s.skill === 'preflop')).toBeUndefined();
+});
+
+// ── the evidence bar ─────────────────────────────────────────────────────────
+// MIN_RATED_ATTEMPTS is the same bar the skill ledger and the recent-form strip
+// enforce. If the prompt could name a skill they call unrated, three surfaces
+// would give one player three different answers — and the founder would only
+// find out during a LIVE eval that costs real money. Pinned in BOTH directions:
+// exactly at the bar is reportable, one attempt under it is not.
+test('a skill AT MIN_RATED_ATTEMPTS is reportable to the prompt', () => {
+  const out = aggregate([session(rated('sc_odds', 'correct'))], lookup);
+  expect(out.skills).toEqual([
+    { skill: 'potodds', attempts: MIN_RATED_ATTEMPTS, correct: MIN_RATED_ATTEMPTS },
+  ]);
+  expect(out.unratedSkills).toEqual([]);
+});
+
+test('a skill BELOW MIN_RATED_ATTEMPTS is never named to the prompt', () => {
+  const thin = Array.from({ length: MIN_RATED_ATTEMPTS - 1 }, () => hand('sc_bluff', 'incorrect'));
+  const out = aggregate([session([...rated('sc_odds', 'correct'), ...thin])], lookup);
+  expect(out.skills.map(s => s.skill)).toEqual(['potodds']);
+  expect(out.skills.find(s => s.skill === 'bluffing')).toBeUndefined();
+  // Still counted — the hands are real, they just cannot be spoken about.
+  expect(out.unratedSkills).toEqual(['bluffing']);
+  expect(out.hands).toBe(MIN_RATED_ATTEMPTS * 2 - 1);
+});
+
+// The failure the founder actually saw in the dry run: one 0-of-1 skill was the
+// only 0% line in the prompt, so it read as the headline leak.
+test('a lone 0-of-1 skill cannot become the prompt\'s only 0% line', () => {
+  const out = aggregate([session([
+    ...rated('sc_odds', 'correct'), hand('sc_bluff', 'incorrect'),
+  ])], lookup);
+  expect(out.skills.every(s => s.attempts >= MIN_RATED_ATTEMPTS)).toBe(true);
+  expect(out.skills.some(s => s.correct === 0)).toBe(false);
 });
 
 // F2: fast AND wrong is the confident miss — the leak the player does not know
@@ -49,7 +92,10 @@ test('only fast AND wrong counts as a confident miss', () => {
     hand('sc_bluff', 'incorrect', { decisionMs: null }),   // timeout       -> no
   ])], lookup);
   expect(out.confidentMisses).toEqual([
-    { skill: 'bluffing', villain: 'Calling Station', scenario: 'Bluff Frequency' },
+    {
+      skill: 'bluffing', villain: 'Calling Station',
+      scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop',
+    },
   ]);
 });
 
@@ -93,19 +139,58 @@ test('a scenario missed more than once in the window is a repeat offender', () =
     session([hand('sc_odds', 'incorrect')]),
   ], lookup);
   expect(out.repeats).toEqual([
-    { scenario: 'Bluff Frequency', villain: 'Calling Station', misses: 2 },
+    {
+      scenario: 'Bluff Frequency', villain: 'Calling Station',
+      spot: 'BTN A♠K♠ flop', misses: 2,
+    },
   ]);
+});
+
+// The collision this field exists to break: `tag` is a pure function of `skill`,
+// so two DIFFERENT pot-odds spots against the same villain carry an identical
+// tag and villain. Cited by tag + villain alone they are the same line twice,
+// inside a prompt that forbids inventing statistics — the model can only merge
+// them or emit what reads as a data error. The spot is what keeps them two.
+test('two spots sharing a tag and a villain still cite distinctly', () => {
+  const out = aggregate([
+    session([hand('sc_odds', 'incorrect'), hand('sc_odds2', 'incorrect')]),
+    session([hand('sc_odds', 'incorrect'), hand('sc_odds2', 'incorrect')]),
+  ], lookup);
+  expect(out.repeats).toHaveLength(2);
+  const cited = out.repeats.map(r => `${r.scenario}|${r.villain}`);
+  expect(new Set(cited).size).toBe(1);                       // identical without the spot
+  expect(new Set(out.repeats.map(r => r.spot)).size).toBe(2); // distinct with it
+});
+
+// The fact F5 criterion 3 now hangs on: villains reach the prompt ONLY through
+// confidentMisses and repeats. A window with neither carries no villain string
+// at all, so judging such a read against "references the villain types" is
+// judging it against a bar the design cannot meet — which is exactly what the
+// eval harness asked the founder to do on 7 of 9 personas. If a future change
+// puts villains somewhere else in the aggregate, this fails and the harness
+// wording has to be revisited with it.
+test('villains reach the aggregate ONLY via confident misses and repeats', () => {
+  const out = aggregate([session([
+    hand('sc_odds', 'correct'),                          // right, so no citation
+    hand('sc_bluff', 'incorrect', { decisionMs: 90000 }), // slow miss, cited nowhere
+  ])], lookup);
+  expect(out.confidentMisses).toEqual([]);
+  expect(out.repeats).toEqual([]);
+  const { confidentMisses, repeats, ...rest } = out;
+  const villains = Object.values(LOOKUP).map(v => v.villain);
+  expect(villains.some(v => JSON.stringify(rest).includes(v))).toBe(false);
 });
 
 // The lookup is a parameter precisely so this module never imports the lazy
 // scenario chunk. An unknown id must degrade, not throw.
 test('an unknown scenario id degrades instead of throwing', () => {
-  const out = aggregate([session([
-    { scenarioId: 'sc_gone', skill: 'reads', result: 'incorrect', choiceVal: 'call', decisionMs: 2000 },
-  ])], lookup);
-  expect(out.hands).toBe(1);
-  expect(out.skills).toEqual([{ skill: 'reads', attempts: 1, correct: 0 }]);
-  expect(out.confidentMisses[0]).toMatchObject({ skill: 'reads', villain: 'Unknown' });
+  const gone = { scenarioId: 'sc_gone', skill: 'reads', result: 'incorrect', choiceVal: 'call', decisionMs: 2000 };
+  const out = aggregate([session(Array.from({ length: MIN_RATED_ATTEMPTS }, () => gone))], lookup);
+  expect(out.hands).toBe(MIN_RATED_ATTEMPTS);
+  expect(out.skills).toEqual([{ skill: 'reads', attempts: MIN_RATED_ATTEMPTS, correct: 0 }]);
+  // An unresolvable id yields an EMPTY spot, never a second 'Unknown' — the
+  // prompt drops the empty segment rather than printing three unknowns a row.
+  expect(out.confidentMisses[0]).toMatchObject({ skill: 'reads', villain: 'Unknown', spot: '' });
 });
 
 // ── direction ────────────────────────────────────────────────────────────────
@@ -153,7 +238,9 @@ test('timeouts and unknown scenarios add hands but no direction', () => {
 });
 
 test('partial credit counts as an attempt but not as correct', () => {
-  const out = aggregate([session([hand('sc_odds', 'partial')])], lookup);
-  expect(out.skills).toEqual([{ skill: 'potodds', attempts: 1, correct: 0 }]);
-  expect(out.accuracy).toEqual({ correct: 0, total: 1 });
+  const out = aggregate([session(rated('sc_odds', 'partial'))], lookup);
+  expect(out.skills).toEqual([
+    { skill: 'potodds', attempts: MIN_RATED_ATTEMPTS, correct: 0 },
+  ]);
+  expect(out.accuracy).toEqual({ correct: 0, total: MIN_RATED_ATTEMPTS });
 });

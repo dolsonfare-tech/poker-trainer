@@ -26,11 +26,38 @@ const DAILY_LIMIT = 5;
 // mapping this seam removed. Rename `villain.label` with a second copy in play
 // and the harness would quietly emit `undefined` villains into the prompt while
 // the endpoint stayed correct — a drift the eval exists to catch, not cause.
+
+// The disambiguator. `tag` is a PURE FUNCTION of `skill` (scenarios.js:
+// `tag = SKILL_TAGS[rest.skill]`), so a spot labelled by tag + villain alone
+// collapses 172 scenarios into 57 distinct labels — about three scenarios per
+// label. Two different pot-odds spots missed twice each against a Calling
+// Station then render as two byte-identical prompt lines, under a rule that
+// forbids inventing statistics: the model can only merge them (undercounting)
+// or emit something that reads as a data error. Citing a repeated spot the
+// player cannot compute for themselves is the whole point of the ten-session
+// window, so the label has to identify the HAND.
+//
+// Seat + hole cards + street is what the pre-window prompt used for exactly
+// this, and it costs ~16 characters. Measured over the current library: the
+// spot alone is 167/172 distinct, and the rendered `tag, spot vs villain` line
+// is 172/172 — every scenario cites unambiguously.
+//
+// Suit symbols, never shorthand (KQs/98d) — CLAUDE.md, and it is what the
+// player saw on the felt.
+const STREET_BY_BOARD = { 0: 'preflop', 3: 'flop', 4: 'turn', 5: 'river' };
+function describeSpot(s) {
+  const seat = (s.positions ?? []).find(p => p.state === 'hero')?.label?.split(' ')[0];
+  const hole = (s.hand ?? []).map(c => `${c.r}${c.s}`).join('');
+  return [seat, hole, STREET_BY_BOARD[(s.board ?? []).length]].filter(Boolean).join(' ');
+}
+
 function buildLookup(scenarios) {
   const byId = new Map((scenarios ?? []).map(s => [s.id, s]));
   return (id) => {
     const s = byId.get(id);
-    return s ? { tag: s.tag, skill: s.skill, villain: s.villain?.label } : null;
+    return s
+      ? { tag: s.tag, skill: s.skill, villain: s.villain?.label, spot: describeSpot(s) }
+      : null;
   };
 }
 
@@ -200,12 +227,16 @@ function buildPrompt(s) {
   const skillLines = s.skills
     .map(k => `- ${clamp(k.skill, 20)}: ${k.correct} of ${k.attempts}`)
     .join('\n');
-  const confident = s.confidentMisses
-    .map(m => `- ${clamp(m.scenario, 40)} vs ${clamp(m.villain, 30)} (${clamp(m.skill, 20)})`)
-    .join('\n');
-  const repeats = s.repeats
-    .map(r => `- ${clamp(r.scenario, 40)} vs ${clamp(r.villain, 30)}: missed ${r.misses} times`)
-    .join('\n');
+  // `spot` (seat + hole cards + street) is what makes two lines tell two hands
+  // apart — see describeSpot. The old `(potodds)` suffix is gone: `scenario` is
+  // the tag, the tag IS the skill in prose, and the same fact twice in two
+  // vocabularies is noise in a prompt that pays for every token.
+  // An id the lookup cannot resolve yields an empty spot rather than a second
+  // "Unknown" — one unknown per line is a gap, three is noise.
+  const cite = (m) => `${[clamp(m.scenario, 40), clamp(m.spot, 30)].filter(Boolean).join(', ')}`
+    + ` vs ${clamp(m.villain, 30)}`;
+  const confident = s.confidentMisses.map(m => `- ${cite(m)}`).join('\n');
+  const repeats = s.repeats.map(r => `- ${cite(r)}: missed ${r.misses} times`).join('\n');
   // Only when it happened. A freeze is not a bad choice, and it carries no
   // direction (schema.js refuses to classify one), so without this line a player
   // who is timing out reads to the model as making patternless mistakes.

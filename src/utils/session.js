@@ -96,13 +96,24 @@ export function applySessionResults(user, hands, coachRead) {
     .filter(([, d]) => d.rating === 'red' && d.attempts > 0)
     .map(([k]) => SKILL_NAMES[k])[0] ?? null;
 
-  const coachNote = coachRead
+  // What counts as "a read landed this session". MUST match db.js, which
+  // rebuilds coachReads and sessionsSinceRead from the log with
+  // `typeof body === 'string' && body.trim()`. A bare truthy check disagreed on
+  // a whitespace-only read — reachable, because the endpoint returns
+  // `data.content?.find(...)?.text || ''` and a model reply of ' ' survives
+  // normalizeCoachRead and claude.js's `if (!data.text)` untouched. The
+  // divergence was user-visible twice over: the local counter reset while the
+  // rebuilt one kept climbing, and `coachNote = { body: ' ' }` persisted a
+  // dated but EMPTY Coach's Read block that outlived the device.
+  const hasRead = !!coachRead?.trim();
+
+  const coachNote = hasRead
     ? { body: coachRead, focus: weakest }
     : user.coachNote;
 
   // Coach's Notebook history (newest first, capped). Only a real read this
   // session prepends; the raw string is stored verbatim (parsed at render).
-  const coachReads = coachRead
+  const coachReads = hasRead
     ? [{ date: toLocalDateString(new Date()), body: coachRead }, ...(user.coachReads ?? [])].slice(0, COACH_READS_CAP)
     : (user.coachReads ?? []);
 
@@ -124,7 +135,7 @@ export function applySessionResults(user, hands, coachRead) {
   const priorSince = typeof user.sessionsSinceRead === 'number'
     ? user.sessionsSinceRead
     : (user.sessionsCompleted ?? 0);
-  const sessionsSinceRead = coachRead ? 0 : priorSince + 1;
+  const sessionsSinceRead = hasRead ? 0 : priorSince + 1;
 
   return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect, sessionsSinceRead };
 }
