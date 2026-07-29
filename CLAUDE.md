@@ -16,7 +16,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 
 | # | Command | When | Enforces |
 |---|---|---|---|
-| 1 | `npm run check:invariants` | after EVERY code change | 28 architecture rules (single-file ownership incl. schema/persistence/dates/event-name owners, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, triage-doc event paths, root-doc allowlist, CLAUDE.md line budget, component + hook line budgets, test co-location, frozen-clock) |
+| 1 | `npm run check:invariants` | after EVERY code change | 32 architecture rules (single-file ownership incl. schema/persistence/dates/event-name owners, secrets, RLS, no-async-onAuthStateChange, asset budgets, dead-layout guard, CI-status watchdog, triage-doc event paths, root-doc allowlist, CLAUDE.md line budget, component + hook line budgets, test co-location, frozen-clock, server-ESM-resolvable, coach tenant scope, coach-eval contract + dry-run artifact safety) |
 | 2 | `CI=true npm test` | after every code change | jest suite (unit + integration + source pins) |
 | 2b | **`npm run gates`** — the whole set as one command; **prefer it over running 1 and 2 individually** | after every code change | mirrors every CI step except e2e: invariants → both content audits (incl. the scenario-index staleness check) → jest → `simulate:schemas` → `playtest:personas` → `CI=true npm run build` → `check:bundle`. Two red-CI incidents on July 27, 2026 came from running a SUBSET locally: a lint-only `exhaustive-deps` error (`CI=true` promotes warnings to errors — jest and e2e don't lint), then a deleted module still imported by `scripts/` (the harnesses import from `src/` but no `src/` test exercises them). If a gate isn't in this script, it will eventually be skipped |
 | 3 | `npm run audit:scenarios` | `scenarios.js` or `constants.js` touched | scenario content: pots, cards, gradings, contrast pairs, effective stacks |
@@ -26,7 +26,7 @@ Never weaken or skip a gate to get green — if a change can't satisfy one, say 
 | 6 | `npm run e2e` | gameplay/dashboard components, App.css, session flow | geometry guards, streak transitions, notebook, mobile fold, tap targets. **Requires `npm run e2e:build` first** — plain build bakes in Supabase keys and boots to SignIn where specs can't seed a user |
 | 7 | *process* | any bug fixed or load-bearing decision made | **the ratchet law** — encode as a mechanical check the same session: invariants rule, audit rule, jest pin, e2e guard, or harness invariant. Prose rules drift; exit codes don't. A bug fixed without leaving a permanent check behind is a triage failure, not a fix |
 
-**The eval:coach law:** re-run `CLAUDE_API_KEY=... npm run eval:coach` LIVE after ANY prompt or model change to `api/coach-read.js`, and judge the 9 reads against the F5 bar before deploying. Last live run: July 26, 2026 (voice reframe verified — 9/9 pass, zero trait verdicts).
+**The eval:coach law:** re-run `CLAUDE_API_KEY=... npm run eval:coach` LIVE after ANY prompt or model change to `api/coach-read.js`, and judge the 9 reads against the F5 bar before deploying. Last live run: July 26, 2026 (voice reframe verified — 9/9 pass, zero trait verdicts). `--dry` writes a SEPARATE file (`coach-eval-dry-prompts.md`) and can never overwrite the live artifact; both state their run mode and timestamp on line 1, and the harness reports how much it measured, not just ✓/✗ (July 29, 2026 — a dry run destroyed a live artifact and a whole scoring round was run against placeholders).
 
 ---
 

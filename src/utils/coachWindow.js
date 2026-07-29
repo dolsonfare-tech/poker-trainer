@@ -44,6 +44,43 @@ const isTimeout = (h) =>
   h != null && 'choiceVal' in h && 'decisionMs' in h
   && h.choiceVal == null && h.decisionMs == null;
 
+// Pre-aggregation by opponent (July 29, 2026 — live eval finding 2).
+//
+// The prompt used to hand the model a flat LIST of confident-error lines and
+// leave it to TALLY them itself. On a window holding Calling Station x1, Tight
+// Recreational x1, Tight Nit x2 and Maniac x1, two live runs out of two returned
+// "two vs Tight Nit, two vs Tight Recreational" — an invented statistic, under a
+// prompt rule that forbids exactly that. Counting items in a list and reporting
+// the count is a known-unreliable operation for a language model, and it is the
+// one place Phase B asked for arithmetic after building the whole window seam to
+// feed PATTERNS instead of raw hands.
+//
+// So the count is computed here and the model READS it. Two properties matter:
+//
+//  1. Grouping runs over the CITED slice (the <= MAX_CITED entries that actually
+//     reach the prompt), never the full window. A tally of 30 above a list of 5
+//     is a contradiction the model has to resolve, and it would resolve it by
+//     inventing. The number it sees always describes the lines it can see.
+//  2. Individual spots survive INSIDE each group — seat + hole cards + street is
+//     what tells two same-tag, same-villain hands apart (describeSpot in
+//     api/coach-read.js), and losing it would trade one defect for another.
+//
+// Deterministic order: count desc, then villain name, so the prompt bytes for a
+// given window are stable across runs.
+const groupByVillain = (items) => {
+  const groups = new Map();
+  for (const it of items) {
+    const villain = it.villain || 'Unknown';
+    const g = groups.get(villain) ?? { villain, count: 0, spots: [] };
+    g.count += 1;
+    g.spots.push(it);
+    groups.set(villain, g);
+  }
+  return [...groups.values()].sort(
+    (a, b) => b.count - a.count || a.villain.localeCompare(b.villain),
+  );
+};
+
 const tally = (sessions) => {
   const hands = sessions.flatMap(s => s.hands ?? []);
   return {
@@ -100,6 +137,26 @@ export function aggregate(sessions, lookup) {
 
   const spotOf = (id) => meta(id).spot ?? '';
 
+  const confidentCited = hands.filter(isConfidentMiss).slice(0, MAX_CITED).map(h => ({
+    skill: h.skill ?? meta(h.scenarioId).skill ?? 'Unknown',
+    villain: meta(h.scenarioId).villain ?? 'Unknown',
+    scenario: meta(h.scenarioId).tag ?? 'Unknown',
+    // Seat + hole cards + street: what tells two same-tag, same-villain spots
+    // apart in the prompt. Empty (not 'Unknown') when the id does not resolve.
+    spot: spotOf(h.scenarioId),
+  }));
+
+  const repeatsCited = [...missesById.entries()]
+    .filter(([, n]) => n > 1)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, MAX_CITED)
+    .map(([id, misses]) => ({
+      scenario: meta(id).tag ?? 'Unknown',
+      villain: meta(id).villain ?? 'Unknown',
+      spot: spotOf(id),
+      misses,
+    }));
+
   return {
     sessions: win.length,
     hands: hands.length,
@@ -109,23 +166,10 @@ export function aggregate(sessions, lookup) {
     unratedSkills: ranked.filter(s => s.attempts < MIN_RATED_ATTEMPTS).map(s => s.skill),
     direction: addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands),
     timeouts: hands.filter(isTimeout).length,
-    confidentMisses: hands.filter(isConfidentMiss).slice(0, MAX_CITED).map(h => ({
-      skill: h.skill ?? meta(h.scenarioId).skill ?? 'Unknown',
-      villain: meta(h.scenarioId).villain ?? 'Unknown',
-      scenario: meta(h.scenarioId).tag ?? 'Unknown',
-      // Seat + hole cards + street: what tells two same-tag, same-villain spots
-      // apart in the prompt. Empty (not 'Unknown') when the id does not resolve.
-      spot: spotOf(h.scenarioId),
-    })),
-    repeats: [...missesById.entries()]
-      .filter(([, n]) => n > 1)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, MAX_CITED)
-      .map(([id, misses]) => ({
-        scenario: meta(id).tag ?? 'Unknown',
-        villain: meta(id).villain ?? 'Unknown',
-        spot: spotOf(id),
-        misses,
-      })),
+    confidentMisses: confidentCited,
+    repeats: repeatsCited,
+    // The tallies the PROMPT renders. See groupByVillain above.
+    confidentByVillain: groupByVillain(confidentCited),
+    repeatsByVillain: groupByVillain(repeatsCited),
   };
 }

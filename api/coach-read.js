@@ -219,6 +219,45 @@ const COACH_SCHEMA = {
   additionalProperties: false,
 };
 
+// The single agreed rule about where a confident-error pattern goes (live eval
+// finding 3, July 29 2026):
+//
+//   When the window contains ANY confident errors, the headline must be about
+//   that confident-error pattern. The evidence alone is not enough.
+//
+// It drifted three ways at once. This prompt had softened to "they belong in the
+// headline OR the evidence", while checkRead in the eval harness and the
+// confident-misser persona's `expect` both still demanded the headline — so two
+// live runs that put the pattern in the evidence obeyed the prompt and were
+// marked wrong. Resolved toward the ORIGINAL pre-Phase-B intent ("the headline
+// MUST be about that confident-error pattern"), because confident errors are the
+// F2 diagnosis moat and the highest-leverage coaching moment the product has;
+// burying them under the headline is the weaker read.
+//
+// EXPORTED and interpolated into the prompt rather than restated, so the prompt,
+// the harness check and the persona expectation are the same string in memory.
+// A softening edit now has to happen HERE, once, in the open — the three-way
+// disagreement that caused this cannot re-form from a partial edit.
+const HEADLINE_RULE = 'headline must be about that confident-error pattern';
+
+// The three length bounds, ONE source (live eval finding 4, July 29 2026).
+// COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
+// maxItems — so the prompt text is the only place they can be stated, and the
+// eval harness is the only place they can be measured. Written here once and
+// interpolated below, then IMPORTED by scripts/eval-coach.mjs, so "the check and
+// the prompt disagree" is not a state this file can be edited into. The prior
+// arrangement restated them in both files, and they had already drifted once
+// (harness allowing 1-3 items at <= 15 words against a prompt asking 1-2 at
+// <= 12) — which prints a clean report on nine systematically over-long reads.
+//
+// watchFor stays at 18 deliberately; see the report under
+// .superpowers/sdd/2026-07-28-coach-read-phase-b/ for the reasoning. Four of
+// nine live reads landed on exactly 19 words, which is an argument for moving
+// the number, but moving a bound to fit the output it is supposed to bound is
+// backwards while the overshoot has never once been measured. It is measured
+// now; the next live run decides with data.
+const WORD_CAPS = { headline: 12, evidence: 20, watchFor: 18, evidenceItems: [1, 2] };
+
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
 // file remains the ONLY code that talks to the Anthropic API.
@@ -233,10 +272,21 @@ function buildPrompt(s) {
   // vocabularies is noise in a prompt that pays for every token.
   // An id the lookup cannot resolve yields an empty spot rather than a second
   // "Unknown" — one unknown per line is a gap, three is noise.
-  const cite = (m) => `${[clamp(m.scenario, 40), clamp(m.spot, 30)].filter(Boolean).join(', ')}`
-    + ` vs ${clamp(m.villain, 30)}`;
-  const confident = s.confidentMisses.map(m => `- ${cite(m)}`).join('\n');
-  const repeats = s.repeats.map(r => `- ${cite(r)}: missed ${r.misses} times`).join('\n');
+  //
+  // GROUPED BY OPPONENT, with the per-opponent count already computed
+  // (coachWindow.js groupByVillain, July 29 2026). The villain moves out of the
+  // per-spot line and into the group header, so the model reads "Tight Nit: 2"
+  // instead of counting two lines that happen to end in the same name — the
+  // fabricated-statistic defect two live runs reproduced. The spot detail is
+  // unchanged and still disambiguates within the group.
+  const cite = (m) => [clamp(m.scenario, 40), clamp(m.spot, 30)].filter(Boolean).join(', ');
+  const grouped = (groups, noun, line) => (groups ?? [])
+    .map(g => `- ${clamp(g.villain, 30)}: ${g.count} ${noun}${g.count === 1 ? '' : 's'}\n`
+      + g.spots.map(sp => `    - ${line(sp)}`).join('\n'))
+    .join('\n');
+  const confident = grouped(s.confidentByVillain, 'confident error', cite);
+  const repeats = grouped(s.repeatsByVillain, 'repeated spot',
+    (r) => `${cite(r)}: missed ${r.misses} times`);
   // Only when it happened. A freeze is not a bad choice, and it carries no
   // direction (schema.js refuses to classify one), so without this line a player
   // who is timing out reads to the model as making patternless mistakes.
@@ -255,20 +305,21 @@ ${skillLines || '- (no skill has enough attempts to report)'}
 
 Direction of their mistakes: too passive (${s.direction.under}), too aggressive (${s.direction.over}), too loose (${s.direction.loose}), over ${s.direction.evidence} weighted misses.
 
-${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so they do not know these are leaks):\n${confident}` : 'No confident errors this stretch.'}
+${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so they do not know these are leaks), already counted for you by opponent:\n${confident}` : 'No confident errors this stretch.'}
 
-${repeats ? `Spots they have missed more than once in this stretch:\n${repeats}` : 'No spot was missed more than once.'}
+${repeats ? `Spots they have missed more than once in this stretch, already counted for you by opponent:\n${repeats}` : 'No spot was missed more than once.'}
 
 Respond with three fields named "headline", "evidence" and "watchFor":
-- headline: ONE sentence, 12 words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you".
-- evidence: 1 to 2 short items, each 20 words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
-- watchFor: ONE sentence, 18 words or fewer, concrete and actionable for their next session.
+- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}.
+- evidence: ${WORD_CAPS.evidenceItems[0]} to ${WORD_CAPS.evidenceItems[1]} short items, each ${WORD_CAPS.evidence} words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
+- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, concrete and actionable for their next session. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
 
 Rules for all three fields:
 - Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity, their habits as a whole, or their game: no "you are a...", no "you always..." or "you never...", no "your game is...". A habitual claim ("you always fold the river") is an identity verdict wearing different words, so say "kept folding the river over these sessions" instead. Naming the player's type is a different surface's job, not yours
 - The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency from raising when caution was best. Name the tendency the numbers actually show
-- Confident errors are the highest-leverage thing here, because they do not know those are leaks. If there are any, they belong in the headline or the evidence
+- Confident errors are the highest-leverage thing here, because they do not know those are leaks. If any are listed above, the ${HEADLINE_RULE} — putting it in the evidence instead is not enough
 - Use only the numbers and spots given above. Never invent a hand, a holding, an opponent or a statistic
+- COUNTS ARE GIVEN, NEVER DERIVED. Every number you write must be copied from a number written above. Do not count the listed lines yourself, do not add two counts together, and do not describe a group as "two vs X" unless the line above literally says X: 2. The per-opponent tallies are already done for you
 - If the mistakes point in different directions, say so honestly instead of forcing one story
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
 - Sound like a human coach, not an AI
@@ -316,3 +367,7 @@ module.exports.buildPrompt = buildPrompt;
 module.exports.callClaude = callClaude;
 module.exports.aggregateForUser = aggregateForUser;
 module.exports.buildLookup = buildLookup;
+// The prompt's own contract, exported so the eval harness MEASURES the numbers
+// the prompt ASKS for — never a second copy of them (findings 3 and 4).
+module.exports.HEADLINE_RULE = HEADLINE_RULE;
+module.exports.WORD_CAPS = WORD_CAPS;

@@ -26,6 +26,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 coach-eval-output.md
+coach-eval-dry-prompts.md
 persona-playtest-raw.json
 
 # operational artifacts (never commit)

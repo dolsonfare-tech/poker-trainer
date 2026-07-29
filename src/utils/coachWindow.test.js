@@ -162,6 +162,83 @@ test('two spots sharing a tag and a villain still cite distinctly', () => {
   expect(new Set(out.repeats.map(r => r.spot)).size).toBe(2); // distinct with it
 });
 
+// ── pre-aggregation by villain (live eval finding 2, July 29 2026) ──────────
+// The prompt used to hand the model a flat list and let it tally: on a window of
+// Calling Station x1, Tight Recreational x1, Tight Nit x2, Maniac x1 it returned
+// "two vs Tight Nit, two vs Tight Recreational" — an invented statistic, twice
+// out of two live runs, on the single highest-leverage read the product makes.
+// The count is computed here now, so citing it is a read rather than a tally.
+test('confident errors arrive tallied by villain, so the model never has to count', () => {
+  const out = aggregate([session([
+    hand('sc_odds', 'incorrect', { decisionMs: 4000 }),
+    hand('sc_odds2', 'incorrect', { decisionMs: 4000 }),
+    hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),
+  ])], lookup);
+  expect(out.confidentByVillain).toEqual([
+    {
+      villain: 'Tight Nit',
+      count: 2,
+      spots: [
+        { skill: 'potodds', villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'BB J♥8♥ preflop' },
+        { skill: 'potodds', villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'CO Q♦Q♣ turn' },
+      ],
+    },
+    {
+      villain: 'Calling Station',
+      count: 1,
+      spots: [
+        { skill: 'bluffing', villain: 'Calling Station', scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop' },
+      ],
+    },
+  ]);
+});
+
+// The tally is added to the specifics, never substituted for them: seat + hole
+// cards + street is still what tells two same-tag, same-villain hands apart, and
+// it now lives INSIDE the group.
+test('the disambiguating spot labels survive inside each villain group', () => {
+  const out = aggregate([session([
+    hand('sc_odds', 'incorrect', { decisionMs: 4000 }),
+    hand('sc_odds2', 'incorrect', { decisionMs: 4000 }),
+  ])], lookup);
+  expect(out.confidentByVillain).toHaveLength(1);
+  expect(out.confidentByVillain[0].spots.map(s => s.spot))
+    .toEqual(['BB J♥8♥ preflop', 'CO Q♦Q♣ turn']);
+});
+
+// The truncation trap. Only MAX_CITED lines reach the prompt, so a tally taken
+// over the whole window would print a number the model cannot reconcile with the
+// list beneath it — and reconciling an unreconcilable prompt is how it invents.
+// The count must always describe the lines that are actually visible.
+test('the villain tally counts the CITED lines, never more than the prompt shows', () => {
+  const many = Array.from({ length: 8 }, () => hand('sc_odds', 'incorrect', { decisionMs: 4000 }));
+  const out = aggregate([session(many)], lookup);
+  const tallied = out.confidentByVillain.reduce((n, g) => n + g.count, 0);
+  expect(out.confidentMisses.length).toBeLessThan(8);      // truncated
+  expect(tallied).toBe(out.confidentMisses.length);        // and the tally agrees
+  expect(out.confidentByVillain[0].spots).toHaveLength(out.confidentMisses.length);
+});
+
+test('repeat-offender spots are tallied by villain on the same terms', () => {
+  const twice = () => session([
+    hand('sc_odds', 'incorrect'), hand('sc_odds2', 'incorrect'), hand('sc_bluff', 'incorrect'),
+  ]);
+  const out = aggregate([twice(), twice()], lookup);
+  expect(out.repeatsByVillain.map(g => [g.villain, g.count]))
+    .toEqual([['Tight Nit', 2], ['Calling Station', 1]]);
+  // per-spot miss counts are still there — the group count is how many SPOTS,
+  // the spot count is how many times each was missed. Both are given, neither
+  // is derived.
+  expect(out.repeatsByVillain[0].spots.map(s => [s.spot, s.misses]))
+    .toEqual([['BB J♥8♥ preflop', 2], ['CO Q♦Q♣ turn', 2]]);
+});
+
+test('a window with no confident errors and no repeats carries empty tallies', () => {
+  const out = aggregate([session([hand('sc_odds', 'correct')])], lookup);
+  expect(out.confidentByVillain).toEqual([]);
+  expect(out.repeatsByVillain).toEqual([]);
+});
+
 // The fact F5 criterion 3 now hangs on: villains reach the prompt ONLY through
 // confidentMisses and repeats. A window with neither carries no villain string
 // at all, so judging such a read against "references the villain types" is
@@ -176,7 +253,7 @@ test('villains reach the aggregate ONLY via confident misses and repeats', () =>
   ])], lookup);
   expect(out.confidentMisses).toEqual([]);
   expect(out.repeats).toEqual([]);
-  const { confidentMisses, repeats, ...rest } = out;
+  const { confidentMisses, repeats, confidentByVillain, repeatsByVillain, ...rest } = out;
   const villains = Object.values(LOOKUP).map(v => v.villain);
   expect(villains.some(v => JSON.stringify(rest).includes(v))).toBe(false);
 });

@@ -9,8 +9,9 @@
 // prefer patterns that can't false-positive (e.g. `.from('` with a quote
 // catches Supabase table access but not Array.from).
 
-import { execSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { execFileSync, execSync } from 'node:child_process';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -732,6 +733,143 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   } else if (!/\.eq\('user_id',\s*uid\)/.test(sessQuery[0])) {
     flag('ERROR', 'coach-tenant-scope',
       "api/coach-read.js queries sessions without .eq('user_id', uid) — the service-role client bypasses RLS, so this would aggregate EVERY user's hands into one player's read");
+  }
+}
+
+// ── 31. The eval harness measures the PROMPT's contract (July 29, 2026) ──
+// The Coach's Read prompt is validated by exactly one thing: scripts/eval-coach.mjs.
+// A harness that checks different numbers than the prompt asks for does not
+// validate it — it manufactures verdicts. Two live runs proved both halves of
+// that. The prompt had softened to "confident errors belong in the headline OR
+// the evidence" while checkRead and the persona `expect` still demanded the
+// headline, so reads that OBEYED the prompt were marked ✗; and two of three word
+// caps were never measured at all while the model sat one word over one of them
+// on four of nine reads.
+//
+// The structural fix is single-sourcing: api/coach-read.js exports HEADLINE_RULE
+// and WORD_CAPS, interpolates them into the prompt, and the harness IMPORTS
+// them. This rule pins that arrangement — it fails if either constant stops
+// being exported, stops being interpolated into the prompt, or gets restated as
+// a literal in the harness (the shape the drift had before).
+{
+  const promptSrc = read(join(ROOT, 'api/coach-read.js'));
+  const evalSrc = read(join(ROOT, 'scripts/eval-coach.mjs'));
+
+  for (const name of ['HEADLINE_RULE', 'WORD_CAPS']) {
+    if (!new RegExp(`module\\.exports\\.${name}\\s*=`).test(promptSrc))
+      flag('ERROR', 'coach-eval-contract',
+        `api/coach-read.js does not export ${name} — the eval harness imports it so the check and the prompt cannot disagree (live eval findings 3/4, July 2026)`);
+    if (!new RegExp(`\\b${name}\\b`).test(evalSrc))
+      flag('ERROR', 'coach-eval-contract',
+        `scripts/eval-coach.mjs no longer references ${name} — it must measure the prompt's own contract, never a second copy of it`);
+  }
+
+  // The caps must reach the prompt TEXT. Exporting them while the prompt states
+  // hardcoded numbers is the same drift wearing an import.
+  for (const key of ['headline', 'evidence', 'watchFor', 'evidenceItems']) {
+    if (!promptSrc.includes(`WORD_CAPS.${key}`))
+      flag('ERROR', 'coach-eval-contract',
+        `api/coach-read.js never interpolates WORD_CAPS.${key} into the prompt — the field's word limit would be a literal the harness cannot see`);
+  }
+  if (!promptSrc.includes('${HEADLINE_RULE}'))
+    flag('ERROR', 'coach-eval-contract',
+      'api/coach-read.js never interpolates ${HEADLINE_RULE} into the prompt — the confident-error headline mandate must be the SAME string the harness asserts');
+
+  // The prompt must render the PRE-TALLIED villain groups, not the flat lists
+  // (live eval finding 2). Rendering `s.confidentMisses` again puts the model
+  // back in the business of counting list items to say "two vs X" — which it got
+  // wrong on two live runs out of two, inside a prompt forbidding invented
+  // statistics. The tally is computed in coachWindow.js; this pins that it is
+  // the thing actually shown.
+  for (const field of ['confidentByVillain', 'repeatsByVillain']) {
+    if (!promptSrc.includes(`s.${field}`))
+      flag('ERROR', 'coach-eval-contract',
+        `api/coach-read.js does not render s.${field} — the prompt must hand the model per-opponent counts, never a list it has to tally itself (live eval finding 2, July 2026)`);
+  }
+  for (const flat of ['s.confidentMisses.map', 's.repeats.map']) {
+    if (promptSrc.includes(flat))
+      flag('ERROR', 'coach-eval-contract',
+        `api/coach-read.js renders ${flat} into the prompt — that is the flat, un-tallied shape the fabricated-statistic defect came from; render the *ByVillain groups instead`);
+  }
+
+  // No re-hardcoded bounds in the harness. `<= 12` / `words <= 18` style
+  // comparisons against a bare number are exactly what drifted.
+  const restated = evalSrc.match(/\bwords?\s*(?:<=|>)\s*\d+|\.length\s*(?:<=|>=)\s*[13-9]\b/);
+  if (restated)
+    flag('ERROR', 'coach-eval-contract',
+      `scripts/eval-coach.mjs compares a length against a literal ('${restated[0]}') — every bound comes from WORD_CAPS or the check is measuring its own opinion`);
+
+  // And the checks must be shown to WORK. checkRead's cap arithmetic is
+  // otherwise only reachable on a live run, so its first execution would be the
+  // paid gate it exists to protect. --selftest drives it offline against reads
+  // of known length, in both directions, and exits non-zero on any disagreement.
+  try {
+    execFileSync(process.execPath, [join(ROOT, 'scripts/eval-coach.mjs'), '--selftest'],
+      { cwd: ROOT, stdio: 'pipe' });
+  } catch (e) {
+    const out = `${e.stdout ?? ''}${e.stderr ?? ''}`.trim().split('\n').slice(0, 12).join('\n');
+    flag('ERROR', 'coach-eval-contract',
+      `scripts/eval-coach.mjs --selftest failed — the eval's own mechanical checks are wrong, so any report they produce is worthless:\n${out}`);
+  }
+}
+
+// ── 32. A dry eval run cannot destroy a live artifact (July 29, 2026) ────
+// `--dry` used to write the SAME coach-eval-output.md as a live run, filled
+// with "(dry run — no API call)" placeholders. The file is gitignored and
+// untracked, so there is no recovery. The founder ran --dry between two live
+// runs to inspect a prompt, silently destroyed the live output, and scored a
+// full round of F5 measurements against placeholder text. It all came back
+// green and nothing in the harness could have said the green was fake.
+//
+// This is the NEGATIVE CONTROL, not a source scan: plant a live artifact in a
+// scratch cwd, run the real harness with --dry, and assert the planted file is
+// byte-identical afterwards. A source scan would pass on any refactor that
+// looks right; this passes only when the behaviour is right.
+//
+// The vacuity guard below matters as much as the assertion. If the dry run
+// wrote nothing at all — crashed, exited early, changed its output path to
+// somewhere else entirely — the live file would also be untouched and the check
+// would pass while protecting nothing. So the dry artifact must exist, sit at a
+// DIFFERENT path, and identify itself as dry.
+{
+  const evalPath = join(ROOT, 'scripts/eval-coach.mjs');
+  const evalSrc = read(evalPath);
+  // Read the paths out of the harness rather than restating them, so renaming
+  // an artifact cannot silently retarget this control at a file nothing writes.
+  const liveName = evalSrc.match(/const OUT_LIVE\s*=\s*'([^']+)'/)?.[1];
+  const dryName = evalSrc.match(/const OUT_DRY\s*=\s*'([^']+)'/)?.[1];
+  if (!liveName || !dryName) {
+    flag('ERROR', 'coach-eval-dry-safety',
+      'scripts/eval-coach.mjs no longer declares both OUT_LIVE and OUT_DRY — dry mode must write a different file than a live run, or one --dry destroys an unrecoverable live artifact');
+  } else if (liveName === dryName) {
+    flag('ERROR', 'coach-eval-dry-safety',
+      `scripts/eval-coach.mjs writes dry and live output to the same path ('${liveName}') — a dry run would overwrite the live artifact with placeholders`);
+  } else {
+    const tmp = mkdtempSync(join(tmpdir(), 'coach-eval-control-'));
+    const planted = join(tmp, liveName);
+    const sentinel = `# SENTINEL — a live artifact a dry run must not touch\n${Date.now()}\n`;
+    try {
+      writeFileSync(planted, sentinel);
+      // cwd is the scratch dir: the harness resolves its output paths against
+      // cwd, so the whole control runs with zero risk to the real artifact.
+      execFileSync(process.execPath, [evalPath, '--dry'], { cwd: tmp, stdio: 'pipe' });
+      if (readFileSync(planted, 'utf8') !== sentinel)
+        flag('ERROR', 'coach-eval-dry-safety',
+          `a --dry run overwrote ${liveName} — that is the July 2026 defect: a live eval artifact destroyed with no backup, and a scoring round run against placeholders`);
+      const dryPath = join(tmp, dryName);
+      if (!existsSync(dryPath)) {
+        flag('ERROR', 'coach-eval-dry-safety',
+          `a --dry run produced no ${dryName} — the live-file assertion above would pass vacuously, which is the failure mode this rule exists to expose`);
+      } else if (!/RUN MODE: DRY/.test(readFileSync(dryPath, 'utf8'))) {
+        flag('ERROR', 'coach-eval-dry-safety',
+          `${dryName} does not state its run mode at the top — an artifact whose provenance has to be guessed is how the wasted measurement round happened`);
+      }
+    } catch (e) {
+      flag('ERROR', 'coach-eval-dry-safety',
+        `the --dry negative control could not run (${String(e.message).split('\n')[0].slice(0, 120)}) — the eval harness must stay runnable without an API key`);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   }
 }
 
