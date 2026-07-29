@@ -51,30 +51,18 @@ invariants rule 33. No prompt or model text changed, so no live eval was owed.
 headline + watch-for, queue on the CTA.** Spec:
 `docs/superpowers/specs/2026-07-29-profile-card-restructure-design.md`.
 
-### THE ONE OPEN DECISION — word caps
+### The word-cap decision — CLOSED into prompt v2 (July 29, 2026, evening)
 
-The July 29 live eval passed on substance (see CLAUDE.md's eval line) but flagged
-**7 word-cap breaches across 4 of 9 personas**: headline 13w ×2 (cap 12), evidence
-21w and 22w (cap 20), watchFor 19w/20w/21w (cap 18).
-
-The caps (12/20/18) were inherited from the OLD per-session prompt, which described
-five hands. The trend read describes ten sessions, a previous-stretch comparison and
-a villain distribution. The flagged evidence item is
-*"Five confident errors span four opponent types: two vs a Tight Nit, one each vs a
-Calling Station, Maniac, and Tight Recreational"* — 22 words, and exactly the
-aggregate citation Phase B exists to produce. Cutting it to 20 costs a villain name.
-
-Two paths, founder's call:
-1. **Ship now, tune later.** The reads are correct, honest and in voice; the caps are
-   a style constraint. Merge, push, and re-tune caps when the prompt is next touched
-   so one live run validates both. (Recommended — two paid runs were spent on 2026-07-29.)
-2. **Tune first.** Suggested: keep headline at 12 (7 of 9 hit it; a 13-word headline
-   is a sentence), evidence 20 → 24, watchFor 18 → 20. Costs another live run and will
-   not come back all-green — a model told "24 words" writes longer, so it needs real
-   validation, not arithmetic against the current artifact.
-
-**Do not raise a cap to make a run green.** A bound moved to fit the output it bounds
-is not a bound.
+Path 1 was taken (ship now, tune when the prompt is next touched) and the
+promised moment arrived the same day: prompt v2
+(`docs/superpowers/specs/2026-07-29-coach-read-prompt-v2-design.md`) re-tuned
+**evidence 20 → 24 and watchFor 18 → 20, headline unchanged at 12** — the exact
+path-2 numbers — alongside its real changes (trajectory headline tier for
+improving windows without confident errors; watchFor as a trigger-action plan).
+The caps were pre-registered in the spec BEFORE the validating run, so the rule
+stands: a bound is never moved to fit a failing output, and **prompt v2 is
+unvalidated until its live eval run passes the founder's F5 judgment**. Branch:
+`coach-prompt-v2`; do not deploy ahead of that run.
 
 ### Left undone, deliberately
 
