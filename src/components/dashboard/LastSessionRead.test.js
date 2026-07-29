@@ -65,3 +65,37 @@ test('guests never see the notebook', () => {
   expect(screen.queryByText(/Past reads/)).not.toBeInTheDocument();
   expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
 });
+
+// The read now spans ten sessions, so "Last Session's Read" is a false label
+// and "Focus this session" is a false frame (Phase B).
+test('the read is labelled as a recent-form read, not a single session', () => {
+  render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
+  expect(screen.queryByText(/Last Session's Read/i)).not.toBeInTheDocument();
+  expect(screen.getByText(/Coach's Read/i)).toBeInTheDocument();
+  expect(screen.getByText(/last 10 sessions/i)).toBeInTheDocument();
+});
+
+test('the focus chip is framed as ongoing, not as this session', () => {
+  render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
+  expect(screen.queryByText(/Focus this session/i)).not.toBeInTheDocument();
+  expect(screen.getByText(/Focus/i)).toBeInTheDocument();
+});
+
+// A read that refreshes every five sessions can be genuinely old — and if calls
+// are failing it can be MUCH older than the player assumes. Date it, so stale
+// is visible rather than passing for current.
+test('the read is dated so staleness is visible', () => {
+  render(
+    <LastSessionRead
+      coachNote={{ body: note.body, focus: 'bluffing' }}
+      coachReads={[{ date: '2026-07-24', body: note.body }]}
+      guest={false}
+    />,
+  );
+  expect(screen.getByText(/Jul 24/)).toBeInTheDocument();
+});
+
+test('with no dated history the label carries no date rather than a wrong one', () => {
+  render(<LastSessionRead coachNote={{ body: note.body, focus: 'bluffing' }} coachReads={[]} guest={false} />);
+  expect(screen.queryByText(/as of/i)).not.toBeInTheDocument();
+});

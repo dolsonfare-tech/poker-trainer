@@ -10,7 +10,11 @@
 // db.js rebuilds it fresh from the append-only session log; here we keep it in
 // the localStorage cache, newest first, capped. Entries hold the RAW stored
 // string (structured JSON or legacy prose) — parseCoachRead runs at render time.
-export const COACH_READS_CAP = 30;
+// One read per five sessions (Phase B), so 12 reads is ~60 sessions of history
+// — 30 would have been 150. Both enforcement sites use this symbol, so the
+// change is one line. NOTE: db.test.js builds a 40-row fixture to prove
+// truncation; lowering is safe, raising above 40 would silently stop testing it.
+export const COACH_READS_CAP = 12;
 
 // ── Coach's Read parsing ────────────────────────────────────────────────────
 // The Coach's Read is a structured JSON string on the wire and in the DB
