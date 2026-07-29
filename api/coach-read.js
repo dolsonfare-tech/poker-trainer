@@ -298,11 +298,7 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // directional claim the given comparison supports — and the exact counts go
 // in the EVIDENCE, which is the notebook's receipt row. The worked example
 // anchors length (live run 2's tier-2 headlines ran 13-14w without one).
-// The example opener is TWO words on purpose: live run 4's tier-2 headlines
-// all mimicked the example's shape (as run 2 proved they would), and the
-// previous example's six-word opener ("Sharper stretch than the last one")
-// spent half the 12-word cap before the pattern began.
-const TRAJECTORY_RULE = 'open the headline with the improvement in plain words with NO figures, then name the clearest remaining pattern, in the shape "Sharper lately; aggression spots still getting checked" — and put the exact before-and-after counts in one evidence item instead';
+const TRAJECTORY_RULE = 'open the headline with the improvement in plain words with NO figures, then name the clearest remaining pattern, in the shape "Sharper stretch than the last one; aggression spots still getting checked" — and put the exact before-and-after counts in one evidence item instead';
 
 // The three length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
