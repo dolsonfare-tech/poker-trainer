@@ -292,12 +292,13 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // every tier-2 headline blew the 12-word cap. The slash form carries the same
 // two copied numbers at one word each. Copy-only law unchanged: both numbers
 // still come from the data, only the typography is prescribed.
-// The worked example carries three fixes from live run 2 at once: it anchors
-// the headline's length (the run's tier-2 headlines ran 13-14w without it),
-// it shows BOTH counts (one read wrote only the current count), and it shows
-// the counts compact. The example's numbers are placeholders the model must
-// replace with the copied ones — the copy-only law does the rest.
-const TRAJECTORY_RULE = 'open the headline with the improvement as compact counts, then the clearest remaining pattern, in the shape "20/50 up from 10/50; aggression spots still getting checked" (both numbers copied from above)';
+// PROSE, not counts (founder call, July 29 2026 evening): "20/50 up from
+// 10/50" is the deleted stat-strip's vocabulary coming back through the
+// coach's mouth. The headline names the improvement in plain words — a
+// directional claim the given comparison supports — and the exact counts go
+// in the EVIDENCE, which is the notebook's receipt row. The worked example
+// anchors length (live run 2's tier-2 headlines ran 13-14w without one).
+const TRAJECTORY_RULE = 'open the headline with the improvement in plain words with NO figures, then name the clearest remaining pattern, in the shape "Sharper stretch than the last one; aggression spots still getting checked" — and put the exact before-and-after counts in one evidence item instead';
 
 // The three length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or

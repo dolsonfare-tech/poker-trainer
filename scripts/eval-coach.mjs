@@ -184,7 +184,7 @@ const PERSONAS = [
   {
     name: 'Conflict Avoider',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Over-folding / passivity named as the pattern; direction = too passive. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
+    expect: 'Over-folding / passivity named as the pattern; direction = too passive. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
     plan: [
       { pool: bySkills(['aggression', 'bluffing']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['aggression']), wrongCls: ['fold', 'call'] },
@@ -208,7 +208,7 @@ const PERSONAS = [
   {
     name: 'The Gambler',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Calling without the price / any-two-cards named; loose continuance. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
+    expect: 'Calling without the price / any-two-cards named; loose continuance. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
     // Each wrong step fires 10x against a `used` set spanning the whole stretch,
     // so each needs a fold-correct pool of at least 10 or it falls through to
     // SCENARIOS.find(unused) in file order and injects under/over into what
@@ -237,7 +237,7 @@ const PERSONAS = [
   {
     name: 'Exploitable Regular',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2), then the leak.',
+    expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
     plan: [
       { pool: bySkills(['opponent']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['opponent']), wrongCls: ['fold', 'call'] },
@@ -287,7 +287,7 @@ const PERSONAS = [
   {
     name: 'Perfect session',
     priorCorrect: 3,   // improving  60% -> 100%
-    expect: 'Brief acknowledgment + one watch-area; no invented weakness. Improving with no confident errors, so the headline opens with the copied improvement counts (tier 2).',
+    expect: 'Brief acknowledgment + one watch-area; no invented weakness. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2); exact counts as one evidence item.',
     plan: [
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
@@ -337,6 +337,11 @@ const wordCount = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 // condition the prompt actually states — "if there are confident errors above".
 // The proxy and the prompt agreed only by construction. They read the summary
 // now, which is the same thing the prompt renders.
+// One vocabulary, two symmetric checks: an IMPROVED stretch's tier-2 headline
+// must use it, a DECLINED stretch's read must not (that would be spin). A word
+// added here tightens/loosens both sides at once — which is the point.
+const IMPROVEMENT_VOCAB = /\b(up from|improv\w*|climb\w*|rose|rising|sharper|stronger|better)\b/i;
+
 function checkRead(read, summary, cov) {
   let obj;
   try { obj = JSON.parse(read); } catch {
@@ -406,11 +411,20 @@ function checkRead(read, summary, cov) {
         > (summary.previous.correct / summary.previous.total);
     if (summary.confidentMisses.length === 0 && improved) {
       cov.trajectoryApplicable += 1;
-      const hit = obj.headline.includes(String(summary.accuracy.correct))
-        && obj.headline.includes(String(summary.previous.correct));
+      // Prose headline (improvement vocabulary, shared with the false-direction
+      // guard below so the two checks stay symmetric) + the exact counts as a
+      // receipt in ONE evidence item — the copy-only law's mechanical anchor
+      // moved to where the founder moved the numbers (July 29 2026 evening).
+      const proseHit = IMPROVEMENT_VOCAB.test(obj.headline);
+      const receiptHit = Array.isArray(obj.evidence) && obj.evidence.some((e) =>
+        typeof e === 'string'
+        && e.includes(String(summary.accuracy.correct))
+        && e.includes(String(summary.previous.correct)));
+      const hit = proseHit && receiptHit;
       if (hit) cov.trajectoryPass += 1;
       lines.push(`- ${hit ? '✓' : '✗'} trajectory headline: ${TRAJECTORY_RULE}`
-        + ` (no confident errors; ${summary.previous.correct} → ${summary.accuracy.correct})`);
+        + ` (prose ${proseHit ? '✓' : '✗'}, counts receipt in evidence ${receiptHit ? '✓' : '✗'};`
+        + ` ${summary.previous.correct} → ${summary.accuracy.correct})`);
     }
     // False-direction guard (live run 2, July 29 2026): two REGRESSING personas
     // mimicked the tier-2 template and wrote "20/50 up from 30/50" — a decline
@@ -423,7 +437,7 @@ function checkRead(read, summary, cov) {
         <= (summary.previous.correct / summary.previous.total);
     if (declined) {
       cov.directionApplicable += 1;
-      const spun = fields.some((f) => /\b(up from|improv\w*|climbed|rose|better than last)\b/i.test(f));
+      const spun = fields.some((f) => IMPROVEMENT_VOCAB.test(f));
       if (!spun) cov.directionPass += 1;
       lines.push(`- ${spun ? '✗' : '✓'} no false improvement claim on a declined stretch`
         + ` (${summary.previous.correct} → ${summary.accuracy.correct})`);
@@ -588,6 +602,28 @@ if (SELFTEST) {
       mkRead({ headline: 'Fast calls keep missing' }), mkSummary({ confidentMisses: oneMiss }), `✓ ${HEADLINE_RULE}`],
     ['confident errors present + headline ignores them fails',
       mkRead({ headline: 'Position leaks keep showing up' }), mkSummary({ confidentMisses: oneMiss }), `✗ ${HEADLINE_RULE}`],
+    // Tier 2 (prompt v2): prose improvement + the counts receipt in evidence.
+    ['improved stretch: prose headline + counts receipt passes',
+      mkRead({ headline: 'Sharper stretch than the last one; calls still loose', evidence: ['20 of 50 this stretch, up from 10 of 50 before'] }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
+      '✓ trajectory headline'],
+    ['improved stretch: headline without improvement wording fails',
+      mkRead({ headline: 'Calls keep going in too loose lately', evidence: ['20 of 50 this stretch, up from 10 of 50 before'] }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
+      '✗ trajectory headline'],
+    ['improved stretch: missing counts receipt in evidence fails',
+      mkRead({ headline: 'Sharper stretch than the last one; calls still loose', evidence: ['calls keep going in loose'] }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
+      '✗ trajectory headline'],
+    // False-direction guard (live run 2's find): a decline spun as progress.
+    ['declined stretch: "up from" anywhere fails',
+      mkRead({ headline: 'Position spots keep missing', evidence: ['20 of 50, up from 30 of 50'] }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
+      '✗ no false improvement claim'],
+    ['declined stretch: honest decline passes',
+      mkRead({ headline: 'Position spots keep missing', evidence: ['20 of 50 this stretch, down from 30 of 50'] }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
+      '✓ no false improvement claim'],
     // Non-JSON must not silently count as a pass.
     ['unparseable output is reported', 'not json at all', mkSummary(), '✗ did not parse as JSON'],
   ];
@@ -713,7 +749,7 @@ const banner = DRY
 
 const doc = `# Coach's Read eval — ${DRY ? 'DRY RUN (prompts only)' : 'LIVE output'}\n\n` +
   `${banner}\n\n` +
-  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job) · watchFor shaped as a trigger-action plan (cue, then action) · where the window improved with NO confident errors, the headline opens with the copied improvement counts (tier 2). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
+  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job) · watchFor shaped as a trigger-action plan (cue, then action) · where the window improved with NO confident errors, the headline opens with the improvement in plain words and the exact counts land in one evidence item (tier 2). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
   `${coverageReport(cov, DRY)}\n\n---\n\n` +
   sections.join('\n---\n\n');
 // Written BEFORE the verdict is applied, and unconditionally: the founder needs

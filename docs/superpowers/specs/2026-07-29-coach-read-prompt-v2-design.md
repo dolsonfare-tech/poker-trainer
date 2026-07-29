@@ -19,10 +19,19 @@ verdicts, confident errors keep the headline.
    priority. The F2 moat is not negotiable.
 2. **No confident errors AND the previous-stretch comparison is given AND this
    stretch improved on it → trajectory opening.** The headline opens with the
-   improvement, copying both counts as written ("31-of-50 lately, up from
-   24-of-50; the leak still open is aggression"), then names the clearest
-   remaining pattern. Improvement is the only encouragement vocabulary that is
-   always earned.
+   improvement, then names the clearest remaining pattern. Improvement is the
+   only encouragement vocabulary that is always earned.
+
+   > **Revised July 29, evening (founder call, after live runs 1–3):** the
+   > headline states the improvement in PLAIN WORDS with no figures ("Sharper
+   > stretch than the last one; aggression spots still getting checked") and
+   > the exact before-and-after counts land in one evidence item instead — the
+   > notebook's receipt row. The original copying-counts-into-the-headline form
+   > produced "20/50 up from 10/50" — the deleted stat-strip's vocabulary in
+   > the coach's mouth — and collided with the 12-word cap. The mechanical
+   > check became symmetric with the run-2 false-direction guard: improved →
+   > improvement wording required (plus the counts receipt in evidence);
+   > declined → improvement wording forbidden anywhere in the read.
 3. **Otherwise → today's behavior:** plain "clearest pattern, as something they
    have been DOING lately" diagnosis.
 
