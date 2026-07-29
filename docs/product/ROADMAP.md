@@ -171,6 +171,21 @@ backlog is arguably this exact idea. Also interacts with item 7 — a holistic s
 wants a diagnosis that can move as the player improves. **Discuss before scoping; the
 load-bearing decision is where behavioural claims are allowed to live, not the UI.**
 
+### Tester feedback — later batch (logged 2026-07-28, not yet triaged)
+
+Captured verbatim at the founder's request; **no analysis done yet, deliberately.**
+
+10. **Streak badges.** Tester request. Note when this is picked up: M4 in
+    `RESEARCH_LEARNING_SCIENCE.md` is directly on point — badges are acceptable
+    as *milestone acknowledgements*, never as currency, and the existing
+    quiet-gold register is the constraint. Do not scope without reading it.
+11. **Global leaderboard.** Tester request. Note when this is picked up: the
+    trust boundary (CA-001/006/012) is a **hard prerequisite** — `db.js:228`
+    writes `streak`, `rebuys` and `poker_score` from the client, which is
+    harmless while private and trivially forgeable the moment it is ranked. The
+    existing backlog entry scopes a *friends-only* board; "global" is a
+    different product decision, not a bigger version of the same one.
+
 ---
 
 ## Phase Status

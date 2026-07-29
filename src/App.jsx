@@ -156,7 +156,11 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    // The screen class exists so the header can align its left edge with the
+    // card below it. Each screen constrains its content differently, so a
+    // header pinned to .app's padding edge lines up with nothing (measured at
+    // 1400px: logo at 140, summary card at 220 — founder report, July 28).
+    <div className={`app app-${screen}`}>
       <div className="header">
         <div
           className="logo"

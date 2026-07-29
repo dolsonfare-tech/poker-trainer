@@ -38,16 +38,31 @@ export default async function run({ browser, baseURL, check }) {
   // presence explicitly, so a future fixture change that silently drops back
   // to the strip-absent state fails loudly instead of leaving this guard
   // green for the wrong reason.
-  // PRESENCE IS NOT VISIBILITY (found by screenshot, July 28 2026). This check
-  // used to assert only that `.db-form` had a bounding box — and it passed while
-  // the strip was completely invisible: it rendered at the BOTTOM of the profile
-  // card at y761, underneath `.db-cta-block`, which is position:sticky, z-index
-  // 6, and opaquely painted across y686-844 on this viewport. Every automated
-  // check was green; only a screenshot showed it. So ask the browser what it
-  // actually paints at the strip's centre and require the answer to be the strip.
   const form = await page.locator('.db-form').boundingBox();
   check('recent-form strip is present for the fold measurement', !!form,
     form ? `height=${Math.round(form.height)}` : 'missing');
+  const moved = await page.locator('.db-form-moved').count();
+  check('recent-form strip includes the moved-skill cell (tallest case)', moved === 1, `count=${moved}`);
+  const queue = await page.locator('.db-form-queue').count();
+  check('recent-form strip includes the resurface-queue cell (tallest case)', queue === 1, `count=${queue}`);
+
+  const cta = await page.locator('.db-cta-btn').boundingBox();
+  check('dashboard CTA fully above the fold', !!cta && cta.y + cta.height <= VIEW.height,
+    cta ? `bottom=${Math.round(cta.y + cta.height)}` : 'missing');
+
+  // PRESENCE IS NOT VISIBILITY (found by screenshot, July 28 2026). The checks
+  // above only prove `.db-form` has a bounding box — and that passed while the
+  // strip was completely invisible, painted underneath `.db-cta-block`, which is
+  // position:sticky, z-index 6, and opaque across the bottom ~158px of this
+  // viewport. Every automated check was green; only a screenshot caught it.
+  // The strip now closes the profile card, so it legitimately starts below the
+  // fold: scroll to it FIRST (this runs after the CTA measurement, which needs
+  // scrollTop 0), then ask the browser what it actually paints at the strip's
+  // centre and require the answer to be the strip itself.
+  await page.locator('.db-form').scrollIntoViewIfNeeded();
+  await page.evaluate(() => document.querySelector('.db-form')
+    ?.scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await page.waitForTimeout(200);
   const painted = await page.evaluate(() => {
     const el = document.querySelector('.db-form');
     if (!el) return { ok: false, why: 'no .db-form' };
@@ -55,19 +70,13 @@ export default async function run({ browser, baseURL, check }) {
     const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
     return {
       ok: !!hit && el.contains(hit),
-      why: hit ? (hit.className || hit.tagName) : 'nothing painted there',
+      why: hit ? (hit.className || hit.tagName) : 'nothing painted there (off-screen?)',
     };
   });
-  check('recent-form strip is actually VISIBLE, not painted under the sticky CTA',
+  check('recent-form strip is actually VISIBLE once scrolled to, not painted under the sticky CTA',
     painted.ok, `topmost element at strip centre: ${painted.why}`);
-  const moved = await page.locator('.db-form-moved').count();
-  check('recent-form strip includes the moved-skill line (tallest case)', moved === 1, `count=${moved}`);
-  const queue = await page.locator('.db-form-queue').count();
-  check('recent-form strip includes the resurface-queue line (tallest case)', queue === 1, `count=${queue}`);
-
-  const cta = await page.locator('.db-cta-btn').boundingBox();
-  check('dashboard CTA fully above the fold', !!cta && cta.y + cta.height <= VIEW.height,
-    cta ? `bottom=${Math.round(cta.y + cta.height)}` : 'missing');
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await page.waitForTimeout(150);
 
   // ── Chrome must NOT be re-compressed (founder report, July 27 2026) ──
   // CA-038 originally shrank the header to 26px and the logo to 1.8rem to buy

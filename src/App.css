@@ -75,6 +75,22 @@ body {
   position: relative;
 }
 
+/* The header's left edge should line up with the card beneath it. Every screen
+   constrains its content differently, so a header pinned to .app's padding edge
+   lines up with nothing: measured at 1400px the logo sat at x=140 while the
+   summary card began at x=220 and the gameplay card at x=310 (founder report,
+   July 28 — "off to the right ... I'd prefer its top left aligned with the box").
+   The session screens are the ones that visibly diverge, and they share
+   .session-container, so match its width there. `.info-btn` is absolutely
+   positioned inside the header, so it follows to the card's right edge too. */
+@media (min-width: 1100px) {
+  .app-session .header {
+    max-width: 960px;       /* keep in step with .session-container */
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
 .info-btn {
   position: absolute;
   top: 36px;
@@ -1340,39 +1356,79 @@ body {
 /* Recent form — the deterministic strip that updates every session. Quiet
    register: this reports, it never celebrates (M4 — informational, not
    controlling). */
-/* Sits at the TOP of the profile card (see Dashboard.jsx for why — the sticky
-   CTA swallows anything at the bottom on mobile), so it needs a hairline to
-   separate it from the schema/ledger split rather than merging into it. */
+/* Recent form — closes the Player Profile card, below the schema/ledger split.
+   Deliberately mirrors the dashboard's stat row (.db-stat-*): num over label,
+   hairline dividers, evenly weighted cells. It is the same KIND of information,
+   so it should look like it (founder call, July 28 — the earlier stacked-prose
+   version read as numbers shoved into a corner). Register stays quiet: this
+   reports, it never celebrates (M4 — informational, not controlling). */
 .db-form {
-  padding: 2px 0 14px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid rgba(200, 168, 75, 0.14);
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(200, 168, 75, 0.15);
+  /* The sticky CTA (CA-038) can overlap the bottom of this card on mobile;
+     scroll-margin keeps scrollIntoView from parking the strip beneath it. */
+  scroll-margin-bottom: 180px;
 }
-.db-form-label {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--cream-faint); margin-bottom: 6px;
+.db-form-row { display: flex; align-items: center; flex-wrap: wrap; }
+.db-form-cell {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
 }
-.db-form-score { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.db-form-count { font-family: Georgia, serif; font-size: 1.15rem; color: var(--cream); }
-.db-form-dir {
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.62rem; letter-spacing: 0.08em;
+.db-form-num {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-style: italic;
+  font-weight: 900;
+  font-size: 1.35rem;
+  line-height: 1;
+  color: var(--gold-light);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
 }
-.db-form-dir[data-dir="up"]   { color: #56c878; }
-.db-form-dir[data-dir="down"] { color: #e25555; }
-.db-form-dir[data-dir="flat"] { color: var(--cream-faint); }
-.db-form-moved {
-  margin-top: 6px;
-  font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.62rem; letter-spacing: 0.06em;
+/* A skill NAME in the number slot needs to be smaller than a numeral or it
+   crowds its neighbours — "Reading Betting Patterns" is 23 characters. */
+.db-form-num-word { font-size: 0.95rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; display: block; }
+.db-form-den {
+  font-size: 0.85rem; font-style: normal; font-weight: 400;
+  color: rgba(242,237,227,0.4);
 }
-.db-form-moved-skill { color: var(--gold-light); margin-right: 6px; }
-.db-form-moved-word { color: var(--cream-faint); }
-.db-form-queue {
-  margin-top: 6px;
+.db-form-delta { font-size: 0.62rem; font-style: normal; }
+.db-form-delta[data-dir="up"]   { color: #56c878; }
+.db-form-delta[data-dir="down"] { color: #e25555; }
+.db-form-delta[data-dir="flat"] { color: rgba(242,237,227,0.35); }
+.db-form-cell-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
-  font-size: 0.6rem; letter-spacing: 0.06em; color: rgba(232,144,40,0.85);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(242,237,227,0.35);
+}
+.db-form-divider {
+  width: 1px; height: 30px;
+  background: rgba(200,168,75,0.15);
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+/* Phones: one cell per line, number left / label right — the columns would be
+   ~110px wide otherwise and the labels would wrap mid-phrase. */
+@media (max-width: 700px) {
+  .db-form-divider { display: none; }
+  .db-form-row { gap: 10px 0; }
+  .db-form-cell {
+    flex: 0 0 100%;
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    text-align: left;
+  }
+  .db-form-num-word { display: inline; }
 }
 
 /* ── Coach's Note ── */
