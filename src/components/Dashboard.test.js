@@ -86,7 +86,7 @@ test('the Unrated ledger row shows while unrated skills exist', () => {
 });
 
 // ── Last Session's Read lives inside the Player Profile card ────────────────
-test('a structured coach read renders headline + evidence + watch-for inside the Player Profile card', () => {
+test('a structured coach read renders headline + watch-for on the Player Profile card — evidence stays in the notebook', () => {
   const u = {
     ...createUser('Reader'),
     sessionsCompleted: 6,
