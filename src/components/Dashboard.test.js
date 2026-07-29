@@ -339,3 +339,27 @@ test('CA-031: Dashboard.jsx does not hard-code the guest CTA string', () => {
   expect(src).not.toMatch(/'Sign In Free to Keep Playing'/);
   expect(src).not.toMatch(/"Sign In Free to Keep Playing"/);
 });
+
+// ── Task 3: Queue chip on the Deal Me In button ─────────────────────────────
+test('the Deal Me In button carries the remediation queue as its reason-to-play', () => {
+  dash({ user: { ...createUser('Grinder'), sessionsCompleted: 12,
+    scenarioHistory: { sc_001: { remediating: true }, sc_002: { remediating: true } } } });
+  expect(screen.getByText(/2 missed hands waiting/)).toBeInTheDocument();
+});
+
+test('an empty queue shows no chip — silence, never a hedge', () => {
+  dash({ user: { ...createUser('CleanSlate'), sessionsCompleted: 12 } });
+  expect(screen.queryByText(/missed hand/i)).not.toBeInTheDocument();
+});
+
+test('a single queued hand reads in the singular', () => {
+  dash({ user: { ...createUser('One'), sessionsCompleted: 12,
+    scenarioHistory: { sc_001: { remediating: true } } } });
+  expect(screen.getByText(/1 missed hand waiting/)).toBeInTheDocument();
+});
+
+test('guests get no queue chip', () => {
+  dash({ user: { ...createUser('Guesty'),
+    scenarioHistory: { sc_001: { remediating: true } } }, guest: true, onGuestSignIn: () => {} });
+  expect(screen.queryByText(/missed hand/i)).not.toBeInTheDocument();
+});

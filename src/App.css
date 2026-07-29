@@ -1333,6 +1333,16 @@ body {
   50%       { transform: translateX(5px); }
 }
 
+.db-cta-queue-chip {
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  background: rgba(20, 32, 15, 0.18);
+  border-radius: 999px;
+  padding: 3px 10px;
+  margin-left: 10px;
+}
+
 .db-cta-sub {
   text-align: center;
   font-family: 'JetBrains Mono', 'Courier New', monospace;

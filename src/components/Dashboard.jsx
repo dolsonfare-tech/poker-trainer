@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { GUEST_GATE_CTA } from '../data/constants';
 import { streakAlive } from '../utils/streak';
 import { hasSupabase } from '../utils/supabase';
+import { remediationQueueDepth } from '../utils/spacedrep';
 import useCountUp from '../hooks/useCountUp';
 import AdSlot from './AdSlot';
 import StreakWarning from './dashboard/StreakWarning';
@@ -48,6 +49,10 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
   const displayIQ       = useCountUp(iqTo,               iqFrom,           900, 300);
   const displayStreak   = useCountUp(effectiveStreak,     streakAnimFrom,   700, 150);
   const displaySessions = useCountUp(sessionsTo,          sessionsFrom,     700, 500);
+
+  // The remediation queue moved from the deleted stat strip to the CTA: on the
+  // button it is a reason to play, not a stat to decode (C″ spec, 2026-07-29).
+  const queueDepth = guest ? 0 : remediationQueueDepth(user.scenarioHistory ?? {});
 
   // Pro tier doesn't exist yet — the button measures demand (PostHog) and is
   // honest about it. Wire real upgrade flow here when the tier ships.
@@ -195,6 +200,11 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         >
           {guestGated ? GUEST_GATE_CTA : 'Deal Me In'}
           <span className="db-cta-arrow">→</span>
+          {!guestGated && queueDepth > 0 && (
+            <span className="db-cta-queue-chip">
+              {queueDepth} missed hand{queueDepth === 1 ? '' : 's'} waiting
+            </span>
+          )}
         </button>
         {guestGated && (
           <div className="db-guest-note">
