@@ -873,6 +873,40 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   }
 }
 
+// ── 33. The read is stamped onto the row that triggered it (July 29, 2026) ─
+// The client inserts the session row BEFORE fetching the read (the server
+// builds the window from the sessions table — an un-committed row meant every
+// read permanently excluded the session that triggered it), so the row is
+// inserted with coach_read null and the SERVER stamps the read onto it after
+// the model call. RLS has no update policy on sessions (append-only by
+// design); the service role is the only writer that can do this. If the stamp
+// disappears, no read ever reaches the log again: db.js rebuilds coachReads
+// and sessionsSinceRead from rows' coach_read, so every profile load would
+// erase the notebook and the counter would climb forever — firing a read
+// EVERY session (5× the Claude spend) while the dashboard shows none of them.
+// CRA's jest only sees src/, so this scan is the only net under that.
+{
+  const coachSrc = read(join(ROOT, 'api/coach-read.js'));
+  const stamp = coachSrc.match(/\.from\('sessions'\)\s*[\s\S]{0,80}?\.update\(\{\s*coach_read[\s\S]{0,300}?;/);
+  if (!stamp) {
+    flag('ERROR', 'coach-read-stamped-to-log',
+      "api/coach-read.js never updates sessions.coach_read — the row is inserted before the read exists, so without the server stamp no read ever reaches the append-only log, and db.js rebuilds every profile with an empty notebook and a counter that never resets");
+  } else {
+    if (!/\.eq\('user_id',\s*uid\)/.test(stamp[0])) {
+      flag('ERROR', 'coach-read-stamped-to-log',
+        "the coach_read stamp is not scoped with .eq('user_id', uid) — the service-role client bypasses RLS, so this could write one player's read onto another player's row");
+    }
+    if (!/\.eq\('id',/.test(stamp[0])) {
+      flag('ERROR', 'coach-read-stamped-to-log',
+        "the coach_read stamp does not target a specific row id — it must stamp exactly the newest row (the session that triggered the read), not every row the filter reaches");
+    }
+    if (!/\.is\('coach_read',\s*null\)/.test(stamp[0])) {
+      flag('ERROR', 'coach-read-stamped-to-log',
+        "the coach_read stamp is missing .is('coach_read', null) — without it a retry or race could overwrite a read that already landed on that row");
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

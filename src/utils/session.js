@@ -92,31 +92,6 @@ export function applySessionResults(user, hands, coachRead) {
   const sessionCorrect = hands.filter(h => h.result === 'correct').length;
   const bestSessionCorrect = Math.max(user.bestSessionCorrect ?? 0, sessionCorrect);
 
-  const weakest = Object.entries(skills)
-    .filter(([, d]) => d.rating === 'red' && d.attempts > 0)
-    .map(([k]) => SKILL_NAMES[k])[0] ?? null;
-
-  // What counts as "a read landed this session". MUST match db.js, which
-  // rebuilds coachReads and sessionsSinceRead from the log with
-  // `typeof body === 'string' && body.trim()`. A bare truthy check disagreed on
-  // a whitespace-only read — reachable, because the endpoint returns
-  // `data.content?.find(...)?.text || ''` and a model reply of ' ' survives
-  // normalizeCoachRead and claude.js's `if (!data.text)` untouched. The
-  // divergence was user-visible twice over: the local counter reset while the
-  // rebuilt one kept climbing, and `coachNote = { body: ' ' }` persisted a
-  // dated but EMPTY Coach's Read block that outlived the device.
-  const hasRead = !!coachRead?.trim();
-
-  const coachNote = hasRead
-    ? { body: coachRead, focus: weakest }
-    : user.coachNote;
-
-  // Coach's Notebook history (newest first, capped). Only a real read this
-  // session prepends; the raw string is stored verbatim (parsed at render).
-  const coachReads = hasRead
-    ? [{ date: toLocalDateString(new Date()), body: coachRead }, ...(user.coachReads ?? [])].slice(0, COACH_READS_CAP)
-    : (user.coachReads ?? []);
-
   // Recent-form window (dashboard strip). In Supabase mode db.js rebuilds this
   // from the session log on load — this keeps the current device accurate
   // between loads, the same pattern as recentHands/scenarioHistory.
@@ -135,9 +110,40 @@ export function applySessionResults(user, hands, coachRead) {
   const priorSince = typeof user.sessionsSinceRead === 'number'
     ? user.sessionsSinceRead
     : (user.sessionsCompleted ?? 0);
-  const sessionsSinceRead = hasRead ? 0 : priorSince + 1;
 
-  return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect, sessionsSinceRead };
+  const base = { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachReads: user.coachReads ?? [], scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect, sessionsSinceRead: priorSince + 1 };
+  return attachRead(base, coachRead);
+}
+
+// Fold a fetched Coach's Read into an already-updated user record: the note,
+// the notebook history, and the counter reset. Split from applySessionResults
+// because the read now arrives AFTER the session row is in the log (the server
+// stamps the read onto that row), so the two updates happen at different times.
+//
+// What counts as "a read landed". MUST match db.js, which rebuilds coachReads
+// and sessionsSinceRead from the log with `typeof body === 'string' &&
+// body.trim()`. A bare truthy check disagreed on a whitespace-only read —
+// reachable, because the endpoint returns `data.content?.find(...)?.text || ''`
+// and a model reply of ' ' survives normalizeCoachRead and claude.js's
+// `if (!data.text)` untouched. The divergence was user-visible twice over: the
+// local counter reset while the rebuilt one kept climbing, and
+// `coachNote = { body: ' ' }` persisted a dated but EMPTY Coach's Read block
+// that outlived the device.
+export function attachRead(user, coachRead) {
+  if (!coachRead?.trim()) return user;
+
+  const weakest = Object.entries(user.skills)
+    .filter(([, d]) => d.rating === 'red' && d.attempts > 0)
+    .map(([k]) => SKILL_NAMES[k])[0] ?? null;
+
+  return {
+    ...user,
+    coachNote: { body: coachRead, focus: weakest },
+    // Coach's Notebook history (newest first, capped). Only a real read
+    // prepends; the raw string is stored verbatim (parsed at render).
+    coachReads: [{ date: toLocalDateString(new Date()), body: coachRead }, ...(user.coachReads ?? [])].slice(0, COACH_READS_CAP),
+    sessionsSinceRead: 0,
+  };
 }
 
 // ── Meta-read cadence ──────────────────────────────────────────────────────
@@ -188,39 +194,65 @@ export function shouldFetchRead(user) {
 // no longer leave the client. `hands` (the persisted log rows) is all this
 // needs. buildSessionDelta still takes sessionHistory — that one is local UI.
 export async function submitSession({ user, hands, difficulty, isGuest, remote }) {
-  const persist = (updated, coachText) => {
+  // The row never carries the read from the client: on read sessions the row
+  // is inserted BEFORE the read exists (see below) and the server stamps the
+  // read onto it; on every other session there is no read. RLS has no update
+  // policy on sessions, so the service role is the only writer that could.
+  const sessionRow = () => ({
+    difficulty,
+    hands,
+    correctCount: hands.filter(h => h.result === 'correct').length,
+    coachRead: null,
+  });
+  const persistProfile = (updated) => {
     saveUser(updated);                       // localStorage cache always
     if (remote && !isGuest) {
       remote.saveRemoteUser(updated).catch(err => console.error('Profile save failed', err));
-      remote.recordSession({
-        difficulty,
-        hands,
-        correctCount: hands.filter(h => h.result === 'correct').length,
-        coachRead: coachText,
-      }).catch(err => console.error('Session log failed', err));
     }
     return updated;
   };
 
+  // Session results fold in up front so the cadence below counts the session
+  // that JUST finished — checked against the pre-session user, the "first read
+  // at 6" comment was really "first read at 7" and every interval slipped one.
+  const base = user ? applySessionResults(user, hands, null) : null;
+
   if (isGuest) {
-    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
-    return { user: updated, coachText: '', limited: false };
+    return { user: base ? persistProfile(base) : null, coachText: '', limited: false };
   }
 
-  // Four sessions in five now skip the network entirely: the read speaks over a
+  // Four sessions in five skip the network entirely: the read speaks over a
   // trailing window, so it is fetched on a cadence rather than per session.
-  // The session still persists exactly as before either way.
-  if (!shouldFetchRead(user)) {
-    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
-    return { user: updated, coachText: '', limited: false };
+  // The row insert stays fire-and-forget here — nothing downstream reads it.
+  if (!shouldFetchRead(base)) {
+    if (remote && base) {
+      remote.recordSession(sessionRow()).catch(err => console.error('Session log failed', err));
+    }
+    return { user: base ? persistProfile(base) : null, coachText: '', limited: false };
+  }
+
+  // A read is due. The server builds the window from the sessions table, so
+  // the just-finished session's row must be COMMITTED before the fetch — a
+  // fire-and-forget insert loses that race every time, and the read would
+  // permanently exclude the session that triggered it. If the insert fails,
+  // skip the read rather than mint one the log could never rebuild (the
+  // counter keeps climbing, so the next session retries); losing the row
+  // AND the read to one hiccup is the same degradation the old flow had.
+  if (remote && base) {
+    try {
+      await remote.recordSession(sessionRow());
+    } catch (err) {
+      console.error('Session log failed', err);
+      return { user: persistProfile(base), coachText: '', limited: false };
+    }
   }
 
   try {
     const coachText = await fetchCoachRead();
-    const updated = user ? persist(applySessionResults(user, hands, coachText), coachText) : null;
+    const updated = base ? persistProfile(attachRead(base, coachText)) : null;
     return { user: updated, coachText, limited: false };
   } catch (err) {
-    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
+    const updated = base ? persistProfile(base) : null;
     return { user: updated, coachText: '', limited: err?.code === 'daily_limit' };
   }
 }

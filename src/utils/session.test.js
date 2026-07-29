@@ -123,18 +123,94 @@ test('a signed-in session fetches the read and writes it through', async () => {
   expect(res.user.coachNote.body).toBe('You over-fold rivers.');
   expect(saveUser).toHaveBeenCalledTimes(1);
   expect(remote.saveRemoteUser).toHaveBeenCalledTimes(1);
+  // coachRead is null ON PURPOSE: the row is inserted BEFORE the read exists,
+  // and the server stamps the read onto it (see the window-ordering tests).
   expect(remote.recordSession).toHaveBeenCalledWith(
-    expect.objectContaining({ difficulty: 'intermediate', correctCount: 1 }));
+    expect.objectContaining({ difficulty: 'intermediate', correctCount: 1, coachRead: null }));
+});
+
+// ── Window ordering (July 29, 2026) ─────────────────────────────────────────
+// The server builds the read's window from the sessions table, so the row for
+// the session that TRIGGERED the read must be committed before the fetch — or
+// every read permanently excludes the session the player just finished, while
+// the dashboard stamps it "as of today". Calling recordSession first is not
+// enough: fire-and-forget still loses the race to the server's query. The
+// insert must have RESOLVED.
+test('the trend read is fetched only after the triggering session row is in the log', async () => {
+  let rowInserted = false;
+  let fetchSawInsert = null;
+  const remote = {
+    saveRemoteUser: jest.fn().mockResolvedValue(undefined),
+    recordSession: jest.fn(() => new Promise(r => setTimeout(() => { rowInserted = true; r(); }, 0))),
+  };
+  fetchCoachRead.mockImplementation(() => {
+    fetchSawInsert = rowInserted;
+    return Promise.resolve('a read over ten sessions');
+  });
+  const res = await submitSession({
+    user: { ...createUser('Ordered'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
+    isGuest: false, remote,
+  });
+  expect(fetchCoachRead).toHaveBeenCalledTimes(1);
+  expect(fetchSawInsert).toBe(true);
+  expect(remote.recordSession).toHaveBeenCalledTimes(1); // inserted once, never re-sent after the read
+  expect(res.coachText).toBe('a read over ten sessions');
+});
+
+test('the cadence counts the session that just finished — the first read lands as session 6 ends', async () => {
+  fetchCoachRead.mockResolvedValue('first read');
+  const res = await submitSession({
+    user: { ...createUser('Sixth'), sessionsCompleted: 5, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
+    isGuest: false, remote: remoteStub(),
+  });
+  expect(fetchCoachRead).toHaveBeenCalledTimes(1);
+  expect(res.user.sessionsCompleted).toBe(6);
+  expect(res.user.sessionsSinceRead).toBe(0);
+});
+
+// If the row insert fails there is nothing for the server to stamp the read
+// onto, so the log could never rebuild it: the local profile would show a read
+// the remote rebuild denies ever happened — the dual-owner divergence again.
+// Skip the read; the counter keeps climbing and the next session retries.
+test('a failed row insert skips the read rather than minting one the log cannot rebuild', async () => {
+  fetchCoachRead.mockResolvedValue('orphan read');
+  const remote = {
+    saveRemoteUser: jest.fn().mockResolvedValue(undefined),
+    recordSession: jest.fn().mockRejectedValue(new Error('insert failed')),
+  };
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  const res = await submitSession({
+    user: { ...createUser('Dropped'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
+    isGuest: false, remote,
+  });
+  expect(fetchCoachRead).not.toHaveBeenCalled();
+  expect(res.coachText).toBe('');
+  expect(res.user.sessionsSinceRead).toBe(6);          // climbs, so the next session retries
+  expect(saveUser).toHaveBeenCalledTimes(1);           // the session itself still persists locally
+  console.error.mockRestore();
+});
+
+test('a whitespace-only fetched read attaches nothing and does not reset the counter', async () => {
+  fetchCoachRead.mockResolvedValue('   ');
+  const res = await submitSession({
+    user: { ...createUser('Blank'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
+    isGuest: false, remote: remoteStub(),
+  });
+  expect(res.user.sessionsSinceRead).toBe(6);          // no read landed, by BOTH owners' definition
+  expect(res.user.coachReads).toEqual([]);
 });
 
 test('a FAILED coach read still persists the session — losing the hands is the worse bug', async () => {
   fetchCoachRead.mockRejectedValue(new Error('network'));
   const remote = remoteStub();
   const res = await submitSession({
-    user: createUser('Unlucky'), hands, difficulty: 'beginner',
+    // Eligible for a read (the cadence landed on this branch made the old
+    // brand-new-user fixture skip the fetch entirely, so this test was
+    // silently no longer covering its own title).
+    user: { ...createUser('Unlucky'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
     isGuest: false, remote,
   });
-  expect(res.user.sessionsCompleted).toBe(1);         // the session counted
+  expect(res.user.sessionsCompleted).toBe(13);        // the session counted
   expect(res.coachText).toBe('');
   expect(res.limited).toBe(false);
   expect(saveUser).toHaveBeenCalledTimes(1);
@@ -168,10 +244,13 @@ test('a rejected remote write does not reject the caller — the summary must re
     recordSession: jest.fn().mockRejectedValue(new Error('500')),
   };
   jest.spyOn(console, 'error').mockImplementation(() => {});
+  // coachText is '' here, not 'read': the failed insert means the read is
+  // skipped (see the failed-row-insert test above), but the caller still
+  // resolves and the summary still renders.
   await expect(submitSession({
     user: { ...createUser('Offline'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, difficulty: 'beginner',
     isGuest: false, remote,
-  })).resolves.toMatchObject({ coachText: 'read' });
+  })).resolves.toMatchObject({ coachText: '' });
   console.error.mockRestore();
 });
 

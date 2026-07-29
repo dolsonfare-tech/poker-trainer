@@ -20,14 +20,32 @@ counts, the previous stretch to compare against, a timeout count) and speaks
 temporally, never in identity. Spec: `docs/superpowers/specs/2026-07-28-coach-read-scope-design.md`.
 Plan: `docs/superpowers/plans/2026-07-28-coach-read-phase-b.md`.
 
-**Verification state.** `npm run gates` green (525 tests), `npm run e2e` green,
-invariants clean including three new rules added during the work:
+**Verification state.** `npm run gates` green (529 tests), `npm run e2e` green,
+invariants clean including four new rules added during the work:
 - **29 `server-esm-resolvable`** — no extensionless relative import in the subtree
   `api/coach-read.js` loads. This existed as a real defect: `eval:coach` had been
   BROKEN on `main` since `8846d18` and nothing ran it, so it failed silently.
 - **30 `coach-tenant-scope`** — pins `.eq('user_id', uid)` on the sessions query,
   the one line stopping another player's hands entering somebody's read.
 - **32** — a `--dry` eval run can never overwrite the live artifact.
+- **33 `coach-read-stamped-to-log`** — see the window-ordering fix below.
+
+**Window-ordering fix (July 29, post-review).** A branch review found that every
+read was built from a window EXCLUDING the session that triggered it: the client
+POSTed for the read before the session row was inserted (fire-and-forget), so the
+server's window query could never see it — "your last 10 sessions, as of today"
+was permanently one session stale, and the cadence (checked against the
+pre-session user) actually first fired at session 7, not 6. Fixed by inverting
+the ordering: the client AWAITS the row insert (`coach_read: null`) before
+fetching, checks the cadence on post-session counts, and the SERVER stamps the
+finished read onto that newest row (service role — RLS has no update policy on
+sessions, which stays append-only for clients; stamp is id-targeted,
+tenant-scoped, and guarded by `.is('coach_read', null)`). If the insert fails
+the read is skipped — a read the log can't rebuild would resurrect the
+dual-owner divergence — and the counter keeps climbing so the next session
+retries. Pinned by four new jest tests (ordering-resolved, cadence-counts-this-
+session, failed-insert-skips-read, whitespace guard on `attachRead`) plus
+invariants rule 33. No prompt or model text changed, so no live eval was owed.
 
 ### THE ONE OPEN DECISION — word caps
 

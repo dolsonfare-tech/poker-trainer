@@ -110,6 +110,14 @@ module.exports = async function handler(req, res) {
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   // Declared out here so the no-credentials branch below still sees them.
   let sessions = [];
+  // Stamps the finished read onto the newest session row — the session that
+  // triggered this read. The client inserts that row (coach_read null) BEFORE
+  // calling here, so the window below includes it; the read then has to be
+  // written back or it never reaches the append-only log at all (RLS has no
+  // update policy on sessions — the service role is the only writer that can).
+  // db.js rebuilds coachReads and sessionsSinceRead from rows' coach_read, so
+  // a read that skips the log is erased on the next profile load.
+  let stampRead = null;
   // The cap INCREMENT, deferred. The cap READ (the 429 short-circuit) stays
   // inline below — that is the cost guard and must fire before any work. But
   // the increment runs only once the model call is actually about to happen:
@@ -152,7 +160,7 @@ module.exports = async function handler(req, res) {
     const { COACH_WINDOW } = await loadModules();
     const { data: rows, error: sessErr } = await admin
       .from('sessions')
-      .select('hands, created_at')
+      .select('id, hands, created_at')
       .eq('user_id', uid)
       .order('created_at', { ascending: false })
       .limit(COACH_WINDOW * 2);
@@ -163,6 +171,20 @@ module.exports = async function handler(req, res) {
       return res.status(500).json({ error: 'Could not load session history' });
     }
     sessions = rows ?? [];
+
+    // `.is('coach_read', null)` so a retry or race can never overwrite a read
+    // that already landed; `.eq('id', ...)` so exactly the triggering row is
+    // stamped; `.eq('user_id', uid)` is the same tenant scope as the window
+    // query (rule 33 pins all three).
+    const newestId = sessions[0]?.id;
+    if (newestId) {
+      stampRead = (text) => admin
+        .from('sessions')
+        .update({ coach_read: text })
+        .eq('user_id', uid)
+        .eq('id', newestId)
+        .is('coach_read', null);
+    }
   }
 
   // Unreachable through the product: the client only asks for a read on a
@@ -187,7 +209,15 @@ module.exports = async function handler(req, res) {
     // re-serialize the parsed object so the string on the wire and in the DB is
     // always canonical JSON; on any parse/validation failure we pass the model's
     // raw text through so the client renders it as prose (graceful degradation).
-    return res.status(200).json({ text: normalizeCoachRead(raw) });
+    const text = normalizeCoachRead(raw);
+    // Stamp failure is logged, never fatal: the model call is already paid for
+    // and the player is waiting. The cost of a lost stamp is bounded — the
+    // rebuilt counter keeps climbing, so the next session fetches again.
+    if (stampRead && text.trim()) {
+      const { error: stampErr } = await stampRead(text);
+      if (stampErr) console.error('coach_read stamp failed', stampErr);
+    }
+    return res.status(200).json({ text });
   } catch (err) {
     if (err?.upstream) return res.status(502).json({ error: 'Upstream API error' });
     return res.status(500).json({ error: 'Upstream API call failed' });
