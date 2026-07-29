@@ -280,6 +280,15 @@ const COACH_SCHEMA = {
 // disagreement that caused this cannot re-form from a partial edit.
 const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 
+// Tier 2 of the headline precedence (prompt v2, July 29 2026): when the window
+// has NO confident errors but DOES show measured improvement over the previous
+// stretch, the improvement IS the encouragement — the only kind honest labeling
+// permits, because it is copied from the data rather than manufactured. Tier 1
+// (HEADLINE_RULE) always wins; this fires only in its absence. Exported and
+// imported by scripts/eval-coach.mjs for the same single-sourcing reason as
+// HEADLINE_RULE.
+const TRAJECTORY_RULE = 'open the headline with that improvement, copying both correct-counts as written above, then name the clearest remaining pattern in the same sentence';
+
 // The three length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
 // maxItems — so the prompt text is the only place they can be stated, and the
@@ -290,13 +299,14 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // (harness allowing 1-3 items at <= 15 words against a prompt asking 1-2 at
 // <= 12) — which prints a clean report on nine systematically over-long reads.
 //
-// watchFor stays at 18 deliberately; see the report under
-// .superpowers/sdd/2026-07-28-coach-read-phase-b/ for the reasoning. Four of
-// nine live reads landed on exactly 19 words, which is an argument for moving
-// the number, but moving a bound to fit the output it is supposed to bound is
-// backwards while the overshoot has never once been measured. It is measured
-// now; the next live run decides with data.
-const WORD_CAPS = { headline: 12, evidence: 20, watchFor: 18, evidenceItems: [1, 2] };
+// evidence 24 and watchFor 20 were re-tuned on July 29 2026 as part of prompt
+// v2 (docs/superpowers/specs/2026-07-29-coach-read-prompt-v2-design.md) — the
+// moment ROADMAP path 1 promised ("re-tune when the prompt is next touched so
+// one live run validates both"). Measured basis, not vibes: evidence items at
+// 21w and 22w, and four watchFors at exactly 19w, across the July 29 live
+// runs. PRE-REGISTERED before the validating run — a cap is never moved to
+// green a failing run, and the pending live run can still fail on substance.
+const WORD_CAPS = { headline: 12, evidence: 24, watchFor: 20, evidenceItems: [1, 2] };
 
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
@@ -358,9 +368,9 @@ ${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so t
 ${repeats ? `Spots they have missed more than once in this stretch, already counted for you by opponent:\n${repeats}` : 'No spot was missed more than once.'}
 
 Respond with three fields named "headline", "evidence" and "watchFor":
-- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}.
+- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern as above.
 - evidence: ${WORD_CAPS.evidenceItems[0]} to ${WORD_CAPS.evidenceItems[1]} short items, each ${WORD_CAPS.evidence} words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
-- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, concrete and actionable for their next session. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
+- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, phrased as a trigger-action plan for their next session: name the situation cue, then the action ("Next time a raise crosses your mind, make it"). Cite one number from above only if it sharpens the instruction, copied as written. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
 
 Rules for all three fields:
 - Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity, their habits as a whole, or their game: no "you are a...", no "you always..." or "you never...", no "your game is...". A habitual claim ("you always fold the river") is an identity verdict wearing different words, so say "kept folding the river over these sessions" instead. Naming the player's type is a different surface's job, not yours
@@ -418,4 +428,5 @@ module.exports.buildLookup = buildLookup;
 // The prompt's own contract, exported so the eval harness MEASURES the numbers
 // the prompt ASKS for — never a second copy of them (findings 3 and 4).
 module.exports.HEADLINE_RULE = HEADLINE_RULE;
+module.exports.TRAJECTORY_RULE = TRAJECTORY_RULE;
 module.exports.WORD_CAPS = WORD_CAPS;
