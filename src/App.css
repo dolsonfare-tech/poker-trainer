@@ -1745,6 +1745,8 @@ body {
   padding: 0 0 10px 56px;
 }
 
+.db-notebook-detail .db-profile-read-evidence { margin-top: 2px; }
+
 .db-notebook-prose {
   margin: 0;
   font-family: 'Playfair Display', Georgia, serif;
