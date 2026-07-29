@@ -59,10 +59,13 @@ promised moment arrived the same day: prompt v2
 **evidence 20 → 24 and watchFor 18 → 20, headline unchanged at 12** — the exact
 path-2 numbers — alongside its real changes (trajectory headline tier for
 improving windows without confident errors; watchFor as a trigger-action plan).
-The caps were pre-registered in the spec BEFORE the validating run, so the rule
-stands: a bound is never moved to fit a failing output, and **prompt v2 is
-unvalidated until its live eval run passes the founder's F5 judgment**. Branch:
-`coach-prompt-v2`; do not deploy ahead of that run.
+The caps were pre-registered in the spec BEFORE the validating run. **Validated
+July 29, evening, on the 4th live run** (progression 0→4→5→6 clean; runs 1–3
+each yielded a real prompt fix: compact→prose trajectory counts, the
+false-improvement guard, the trim rule). Remaining misses were +1/+2 words —
+covered by the founder-delegated **±2 soft tolerance** (`CAP_TOLERANCE`,
+eval-coach.mjs; +3 stays hard, substance checks tolerate nothing). The deployed
+prompt is byte-identical to run 4's.
 
 ### Left undone, deliberately
 

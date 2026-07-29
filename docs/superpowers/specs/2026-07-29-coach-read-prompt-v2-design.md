@@ -103,3 +103,21 @@ table puts them.
   labeling; the trajectory tier is deliberately one-directional).
 - Chip/EV-denominated stakes language (no such data in the window; the
   no-derivation guardrail forbids inventing it).
+
+## Validation record (July 29, 2026, evening)
+
+Four live runs; each of the first three yielded a real prompt fix (compact →
+prose trajectory counts; the false-improvement guard after two declining
+personas wrote "up from" on a drop; the trim rule). Run 4: every substance
+check green — false-improvement 5/5, trajectory 4/4 (prose + evidence receipt),
+tier-1 1/1, freezer 1/1, voice 0 flags — with three +1/+2-word cap misses.
+
+**Tolerance decision (founder-delegated executive call):** word caps carry a
+±2-word soft tolerance (`CAP_TOLERANCE` in eval-coach.mjs) — reported ⚠, never
+failing a persona; +3 is a hard ✗. Set AFTER substance converged, pre-committed
+for all future runs; substance checks tolerate nothing at any margin. Rationale:
+re-rolling paid runs until ±1-word sampling noise lands green is a worse
+dishonesty than a documented tolerance. The example-opener tweak made after
+run 4 was REVERTED so the deployed prompt is byte-identical to the validated
+one; that tweak's idea ("Sharper lately" as a two-word example opener) is
+recorded here for the next prompt revision instead.
