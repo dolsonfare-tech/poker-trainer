@@ -99,8 +99,18 @@ export default async function run({ browser, baseURL, check }) {
   if (hrRows > 0) {
     await tap('.ss-hr-row', '.ss-hr-row');
   } else {
-    check('.ss-hr-row hit area — SKIPPED (4 sessions in a row missed zero hands, no row rendered to measure)',
-      true, 'skipped');
+    // Four zero-miss sessions in a row is astronomically unlikely (the first
+    // option is graded `correct` in well under a third of scenarios, and
+    // `partial` counts as a miss too), so reaching this branch almost
+    // certainly means the rows stopped rendering — not an unlucky draw. Do
+    // NOT pass here: `check(name, true)` is a literal green tick and would
+    // silently disarm this guard. Assert the only benign explanation.
+    const section = await page.locator('.ss-missed-section').count();
+    check('no .ss-hr-row after 4 sessions means the section is genuinely absent, not broken',
+      section === 0,
+      section === 0
+        ? 'section absent — 4 zero-miss deals, vanishingly unlikely but benign'
+        : '.ss-missed-section RENDERED with zero .ss-hr-row inside it — the row markup or its gating is broken');
   }
 
   await page.close();

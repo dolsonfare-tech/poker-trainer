@@ -130,13 +130,19 @@ export function dayStr(offsetDays) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-// Plays one full 5-hand session from the dashboard; returns summary-card text.
+// Hands per session, mirroring SESSION_LENGTH in src/utils/deal.js. Exported so
+// the worst-case fold projection in mobilefold.spec.mjs derives its row count
+// from the same number this helper actually plays — a hardcoded 5 in the spec
+// would silently under-project if the session ever grew (found in review).
+export const SESSION_HANDS = 5;
+
+// Plays one full session from the dashboard; returns summary-card text.
 // `perHand` (optional) runs before each decision — geometry guards live there.
 export async function playSession(page, { perHand } = {}) {
   await page.click('.db-cta-btn');
   await page.waitForSelector('.ds-confirm-btn', { timeout: 10000 });
   await page.click('.ds-confirm-btn');
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < SESSION_HANDS; i++) {
     await page.waitForSelector('.sc2-actions button:not([disabled])', { timeout: 20000 });
     if (perHand) await perHand(i);
     await page.click('.sc2-actions button:not([disabled])');

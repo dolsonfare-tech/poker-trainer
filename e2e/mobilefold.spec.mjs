@@ -6,7 +6,7 @@
 // inside the 844px fold, on hand 1, at BOTH difficulties; the dashboard's
 // primary CTA must sit above the fold too. Also re-asserts the July 18
 // table-collapse guard at phone width (desktop smoke covers 1200px only).
-import { baseUser, seedAndOpen, stubCoach, playSession, STRUCTURED_READ } from './helpers.mjs';
+import { baseUser, seedAndOpen, stubCoach, playSession, SESSION_HANDS, STRUCTURED_READ } from './helpers.mjs';
 
 const VIEW = { width: 390, height: 844 };
 
@@ -38,9 +38,28 @@ export default async function run({ browser, baseURL, check }) {
   // presence explicitly, so a future fixture change that silently drops back
   // to the strip-absent state fails loudly instead of leaving this guard
   // green for the wrong reason.
+  // PRESENCE IS NOT VISIBILITY (found by screenshot, July 28 2026). This check
+  // used to assert only that `.db-form` had a bounding box — and it passed while
+  // the strip was completely invisible: it rendered at the BOTTOM of the profile
+  // card at y761, underneath `.db-cta-block`, which is position:sticky, z-index
+  // 6, and opaquely painted across y686-844 on this viewport. Every automated
+  // check was green; only a screenshot showed it. So ask the browser what it
+  // actually paints at the strip's centre and require the answer to be the strip.
   const form = await page.locator('.db-form').boundingBox();
   check('recent-form strip is present for the fold measurement', !!form,
     form ? `height=${Math.round(form.height)}` : 'missing');
+  const painted = await page.evaluate(() => {
+    const el = document.querySelector('.db-form');
+    if (!el) return { ok: false, why: 'no .db-form' };
+    const b = el.getBoundingClientRect();
+    const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
+    return {
+      ok: !!hit && el.contains(hit),
+      why: hit ? (hit.className || hit.tagName) : 'nothing painted there',
+    };
+  });
+  check('recent-form strip is actually VISIBLE, not painted under the sticky CTA',
+    painted.ok, `topmost element at strip centre: ${painted.why}`);
   const moved = await page.locator('.db-form-moved').count();
   check('recent-form strip includes the moved-skill line (tallest case)', moved === 1, `count=${moved}`);
   const queue = await page.locator('.db-form-queue').count();
@@ -207,32 +226,44 @@ export default async function run({ browser, baseURL, check }) {
 
   if (rowCount > 0) {
     const rowBox = await rows.nth(0).boundingBox();
-    const gap = await page.evaluate(() => {
-      const list = document.querySelector('.ss-missed-list');
-      return list ? parseFloat(getComputedStyle(list).rowGap) : 10;
-    });
-    const rowPitch = rowBox.height + gap;
-    const missingRows = 5 - rowCount;
-    const projectedBottom = Math.round(chain.y + chain.height + missingRows * rowPitch);
-    check('summary chain button clears the fold at the worst-case 5-miss projection',
-      projectedBottom <= VIEW.height,
-      `actual rows=${rowCount} rowHeight=${Math.round(rowBox.height)} gap=${gap} rowPitch=${Math.round(rowPitch)} missingRows=${missingRows} projectedBottom=${projectedBottom} fold=${VIEW.height}`);
-  } else {
-    // Never pass vacuously (found in review): with zero rows there is nothing
-    // to measure a row's pitch from. Report that explicitly rather than a
-    // silent green tick that would look like the projection actually ran.
-    check('summary chain button clears the fold at the worst-case 5-miss projection — SKIPPED (0 hands missed this run, no row to measure)',
-      true, 'no .ss-hr-row rendered — re-run to exercise this projection on a session with at least one miss');
-  }
+    // A row in the DOM but not laid out returns null here; fail on the real
+    // cause rather than throwing "cannot read properties of null" downstream.
+    if (!rowBox) {
+      check('review row has a layout box to measure', false, '.ss-hr-row present but boundingBox() is null');
+    } else {
+      const gap = await page.evaluate(() => {
+        const list = document.querySelector('.ss-missed-list');
+        if (!list) return null;
+        const g = parseFloat(getComputedStyle(list).rowGap);
+        // `row-gap: normal` parses to NaN. Treating that as 0 keeps the
+        // projection conservative; letting NaN through would make every
+        // comparison false and turn a page that got SHORTER into a red guard.
+        return Number.isFinite(g) ? g : 0;
+      });
+      const rowPitch = rowBox.height + (gap ?? 0);
+      const missingRows = SESSION_HANDS - rowCount;
+      const projectedBottom = Math.round(chain.y + chain.height + missingRows * rowPitch);
+      check(`summary chain button clears the fold at the worst-case ${SESSION_HANDS}-miss projection`,
+        projectedBottom <= VIEW.height,
+        `actual rows=${rowCount} rowHeight=${Math.round(rowBox.height)} gap=${gap} rowPitch=${Math.round(rowPitch)} missingRows=${missingRows} projectedBottom=${projectedBottom} fold=${VIEW.height}`);
+    }
 
-  if (rowCount > 0) {
     const collapsed = await page.locator('.ss-hr-detail').count();
     check('review rows start collapsed', collapsed === 0, `expanded=${collapsed} of ${rowCount} rows`);
   } else {
-    // Same vacuous-pass trap: with zero rows there are no rows to have
-    // started collapsed, so this can't validate the thing it claims to.
-    check('review rows start collapsed — SKIPPED (0 hands missed this run, nothing to check)',
-      true, 'no .ss-hr-row rendered this run');
+    // Zero rows is only legitimate when this deal genuinely missed nothing —
+    // in which case the whole section is absent. The dangerous case is the
+    // section rendering with no rows in it, which would mean the row markup or
+    // its gating broke and this guard disarmed itself while still printing a
+    // green tick (found in the final review: `check(name, true)` IS a pass;
+    // "SKIPPED" is only label text). Assert the benign cause, so the broken
+    // one is a hard red.
+    const section = await page.locator('.ss-missed-section').count();
+    check('zero review rows means the section is genuinely absent, not broken',
+      section === 0,
+      section === 0
+        ? 'no misses this deal — section correctly absent'
+        : '.ss-missed-section RENDERED with zero .ss-hr-row inside it — the row markup or its gating is broken');
   }
 
   await page.close();

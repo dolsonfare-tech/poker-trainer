@@ -181,6 +181,17 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
           <span className="db-schema-corner db-corner-tr" />
           <span className="db-schema-corner db-corner-bl" />
           <span className="db-schema-corner db-corner-br" />
+          {/* Recent form sits ABOVE the schema/ledger split, not below it. Two
+              reasons, and the first is not cosmetic: on mobile `.db-cta-block`
+              is position:sticky with an OPAQUE background (CA-038), so anything
+              at the bottom of this card is painted underneath it and invisible
+              until the player scrolls. Measured July 28 2026 at 390x844 — the
+              strip sat at y761 under a sticky bar spanning y686-844, and
+              elementFromPoint at its centre returned the Table Reads link.
+              Second: this line is "what just happened", the card below it is the
+              lifetime read. Recent before lifetime is the honest order. */}
+          {recentForm && <RecentForm form={recentForm} />}
+
           <div className="db-profile-split">
             <SchemaPanel
               schema={schema}
@@ -193,7 +204,6 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             </div>
           </div>
 
-          {recentForm && <RecentForm form={recentForm} />}
           <LastSessionRead coachNote={coachNote} coachReads={user.coachReads} guest={guest} />
         </div>
       </div>

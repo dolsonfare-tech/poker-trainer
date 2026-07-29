@@ -1340,7 +1340,14 @@ body {
 /* Recent form — the deterministic strip that updates every session. Quiet
    register: this reports, it never celebrates (M4 — informational, not
    controlling). */
-.db-form { padding: 12px 0 4px; }
+/* Sits at the TOP of the profile card (see Dashboard.jsx for why — the sticky
+   CTA swallows anything at the bottom on mobile), so it needs a hairline to
+   separate it from the schema/ledger split rather than merging into it. */
+.db-form {
+  padding: 2px 0 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(200, 168, 75, 0.14);
+}
 .db-form-label {
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
