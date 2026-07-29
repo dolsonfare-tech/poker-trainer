@@ -193,8 +193,47 @@ export default async function run({ browser, baseURL, check }) {
   check('summary chain button fully above the fold', !!chain && chain.y + chain.height <= VIEW.height,
     chain ? `bottom=${Math.round(chain.y + chain.height)} fold=${VIEW.height}` : 'missing');
 
-  const collapsed = await page.locator('.ss-hr-detail').count();
-  check('review rows start collapsed', collapsed === 0, `expanded=${collapsed}`);
+  // The check above only proves the fold for THIS run's deal. playSession()
+  // clicks the first enabled action on every hand, so the miss count — and
+  // therefore how many collapsed .ss-hr-row rows the "Hands to Review"
+  // section renders — is anywhere from 0 to 5 and varies run to run (found in
+  // review, July 28 2026). A guard whose strictness depends on how many hands
+  // happened to be missed isn't a guard: a future change adding ~30px per row
+  // would fail a 5-miss run and pass a 2-miss run. Measure this run's actual
+  // row pitch and project it out to the true worst case (every session misses
+  // at most 5) so the verdict is deterministic regardless of what was dealt.
+  const rows = page.locator('.ss-hr-row');
+  const rowCount = await rows.count();
+
+  if (rowCount > 0) {
+    const rowBox = await rows.nth(0).boundingBox();
+    const gap = await page.evaluate(() => {
+      const list = document.querySelector('.ss-missed-list');
+      return list ? parseFloat(getComputedStyle(list).rowGap) : 10;
+    });
+    const rowPitch = rowBox.height + gap;
+    const missingRows = 5 - rowCount;
+    const projectedBottom = Math.round(chain.y + chain.height + missingRows * rowPitch);
+    check('summary chain button clears the fold at the worst-case 5-miss projection',
+      projectedBottom <= VIEW.height,
+      `actual rows=${rowCount} rowHeight=${Math.round(rowBox.height)} gap=${gap} rowPitch=${Math.round(rowPitch)} missingRows=${missingRows} projectedBottom=${projectedBottom} fold=${VIEW.height}`);
+  } else {
+    // Never pass vacuously (found in review): with zero rows there is nothing
+    // to measure a row's pitch from. Report that explicitly rather than a
+    // silent green tick that would look like the projection actually ran.
+    check('summary chain button clears the fold at the worst-case 5-miss projection — SKIPPED (0 hands missed this run, no row to measure)',
+      true, 'no .ss-hr-row rendered — re-run to exercise this projection on a session with at least one miss');
+  }
+
+  if (rowCount > 0) {
+    const collapsed = await page.locator('.ss-hr-detail').count();
+    check('review rows start collapsed', collapsed === 0, `expanded=${collapsed} of ${rowCount} rows`);
+  } else {
+    // Same vacuous-pass trap: with zero rows there are no rows to have
+    // started collapsed, so this can't validate the thing it claims to.
+    check('review rows start collapsed — SKIPPED (0 hands missed this run, nothing to check)',
+      true, 'no .ss-hr-row rendered this run');
+  }
 
   await page.close();
 }

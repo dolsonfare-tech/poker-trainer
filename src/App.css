@@ -641,7 +641,7 @@ body {
   border: none;
   cursor: pointer;
   text-align: left;
-  min-height: 44px;            /* tap-target floor, guarded by taptargets.spec */
+  min-height: 45px; /* CA-040 tap target — 45px, not 44: exactly 44 sits on the e2e guard boundary where sub-pixel rounding flakes it (see taptargets.spec.mjs) */
 }
 .ss-hr-arrow {
   font-size: 0.7rem;

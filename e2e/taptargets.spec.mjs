@@ -3,7 +3,7 @@
 // present a ≥44px hit area (audit measured 13–43px). boundingBox() measures
 // the border box, so padding-grown hit areas count while the negative-margin
 // half of the idiom keeps the visual layout unchanged — no screenshot diffs.
-import { baseUser, seedAndOpen, stubCoach } from './helpers.mjs';
+import { baseUser, seedAndOpen, stubCoach, playSession, backToDashboard } from './helpers.mjs';
 
 // MIN is the accessibility requirement; REQUIRED is what this guard enforces.
 // They differ deliberately. An element sized to EXACTLY 44px sits on the
@@ -79,6 +79,29 @@ export default async function run({ browser, baseURL, check }) {
   await page.click('.fb-disagree-toggle');
   await page.waitForSelector('.fb-disagree-chip', { timeout: 5000 });
   await tap('.fb-disagree-chip', '.fb-disagree-chip');
+
+  // ── Session summary: collapsed review row ──
+  // `.ss-hr-row` only renders when at least one hand is missed this session
+  // (SessionSummary.jsx gates "Hands to Review" on `missedHands.length > 0`),
+  // and playSession() clicks the first enabled action on every hand with no
+  // seeded RNG, so an individual session can land on zero misses (see
+  // mobilefold.spec.mjs). Retry a few sessions rather than accept a guard
+  // that flakes on that draw.
+  await page.goto(baseURL, { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.db-cta-btn', { timeout: 20000 });
+  let hrRows = 0;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await playSession(page);
+    hrRows = await page.locator('.ss-hr-row').count();
+    if (hrRows > 0) break;
+    await backToDashboard(page);
+  }
+  if (hrRows > 0) {
+    await tap('.ss-hr-row', '.ss-hr-row');
+  } else {
+    check('.ss-hr-row hit area — SKIPPED (4 sessions in a row missed zero hands, no row rendered to measure)',
+      true, 'skipped');
+  }
 
   await page.close();
 }
