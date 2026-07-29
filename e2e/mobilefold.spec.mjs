@@ -20,12 +20,12 @@ export default async function run({ browser, baseURL, check }) {
   await seedAndOpen(page, baseURL, baseUser({
     coachNote: { body: read, focus: 'potodds' },
     coachReads: [{ date: '2026-07-24', body: read }, { date: '2026-07-23', body: read }],
-    // Two scenarios flagged remediating gives the strip's third (queue) line
-    // too, on top of baseUser()'s recentSessions producing the score line and
-    // the moved-skill line — the tallest the Player Profile card ever gets.
-    // Scoped to this spec only (not baseUser() itself) so we don't perturb
+    // Two scenarios flagged remediating feeds remediationQueueDepth — no
+    // longer the recent-form strip's queue line (removed 2026-07-29, C″
+    // restructure), but kept seeded here for the CTA's queue chip. Scoped to
+    // this spec only (not baseUser() itself) so we don't perturb
     // dealScenarios' weak-slot weighting for every other e2e spec that has no
-    // reason to care about the strip.
+    // reason to care about the remediation queue.
     scenarioHistory: { sc_034: { lastResult: 'incorrect' }, sc_035: { lastResult: 'incorrect' } },
   }), { cr_last_difficulty: 'intermediate' });
 
@@ -33,39 +33,30 @@ export default async function run({ browser, baseURL, check }) {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(150);
 
-  // Guard against measuring the wrong thing (found in review): baseUser() now
-  // seeds recentSessions specifically so this strip renders here — assert its
-  // presence explicitly, so a future fixture change that silently drops back
-  // to the strip-absent state fails loudly instead of leaving this guard
-  // green for the wrong reason.
-  const form = await page.locator('.db-form').boundingBox();
-  check('recent-form strip is present for the fold measurement', !!form,
-    form ? `height=${Math.round(form.height)}` : 'missing');
-  const moved = await page.locator('.db-form-moved').count();
-  check('recent-form strip includes the moved-skill cell (tallest case)', moved === 1, `count=${moved}`);
-  const queue = await page.locator('.db-form-queue').count();
-  check('recent-form strip includes the resurface-queue cell (tallest case)', queue === 1, `count=${queue}`);
-
   const cta = await page.locator('.db-cta-btn').boundingBox();
   check('dashboard CTA fully above the fold', !!cta && cta.y + cta.height <= VIEW.height,
     cta ? `bottom=${Math.round(cta.y + cta.height)}` : 'missing');
 
-  // PRESENCE IS NOT VISIBILITY (found by screenshot, July 28 2026). The checks
-  // above only prove `.db-form` has a bounding box — and that passed while the
-  // strip was completely invisible, painted underneath `.db-cta-block`, which is
-  // position:sticky, z-index 6, and opaque across the bottom ~158px of this
-  // viewport. Every automated check was green; only a screenshot caught it.
-  // The strip now closes the profile card, so it legitimately starts below the
-  // fold: scroll to it FIRST (this runs after the CTA measurement, which needs
-  // scrollTop 0), then ask the browser what it actually paints at the strip's
-  // centre and require the answer to be the strip itself.
-  await page.locator('.db-form').scrollIntoViewIfNeeded();
-  await page.evaluate(() => document.querySelector('.db-form')
+  // PRESENCE IS NOT VISIBILITY (found by screenshot, July 28 2026). A bounding
+  // box alone doesn't prove a mobile player can see the element — the original
+  // finding was the recent-form strip completely invisible, painted underneath
+  // `.db-cta-block`, which is position:sticky, z-index 6, and opaque across the
+  // bottom ~158px of this viewport. Every automated check was green; only a
+  // screenshot caught it. The read panel now closes the profile card and
+  // inherits that duty (recent-form strip removed 2026-07-29, C″ restructure):
+  // scroll to it FIRST (this runs after the CTA measurement, which needs
+  // scrollTop 0), then ask the browser what it actually paints at the panel's
+  // centre and require the answer to be the panel itself.
+  const readPanel = await page.locator('.db-profile-read').boundingBox();
+  check('read panel must have a real bounding box', !!readPanel,
+    readPanel ? `height=${Math.round(readPanel.height)}` : 'missing');
+  await page.locator('.db-profile-read').scrollIntoViewIfNeeded();
+  await page.evaluate(() => document.querySelector('.db-profile-read')
     ?.scrollIntoView({ block: 'center', behavior: 'instant' }));
   await page.waitForTimeout(200);
   const painted = await page.evaluate(() => {
-    const el = document.querySelector('.db-form');
-    if (!el) return { ok: false, why: 'no .db-form' };
+    const el = document.querySelector('.db-profile-read');
+    if (!el) return { ok: false, why: 'no .db-profile-read' };
     const b = el.getBoundingClientRect();
     const hit = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2);
     return {
@@ -73,8 +64,8 @@ export default async function run({ browser, baseURL, check }) {
       why: hit ? (hit.className || hit.tagName) : 'nothing painted there (off-screen?)',
     };
   });
-  check('recent-form strip is actually VISIBLE once scrolled to, not painted under the sticky CTA',
-    painted.ok, `topmost element at strip centre: ${painted.why}`);
+  check('read panel is actually VISIBLE once scrolled to, not painted under the sticky CTA',
+    painted.ok, `topmost element at panel centre: ${painted.why}`);
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForTimeout(150);
 

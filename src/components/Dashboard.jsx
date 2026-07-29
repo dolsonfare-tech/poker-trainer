@@ -9,11 +9,9 @@ import StreakStatus from './dashboard/StreakStatus';
 import SchemaPanel from './dashboard/SchemaPanel';
 import SkillLedger from './dashboard/SkillLedger';
 import LastSessionRead from './dashboard/LastSessionRead';
-import RecentForm from './dashboard/RecentForm';
 import BetaFeedback from './dashboard/BetaFeedback';
 import UsernameEditor from './dashboard/UsernameEditor';
 import { emitGoProClicked, emitUsernameEditOpened } from '../utils/events';
-import { deriveRecentForm } from '../utils/recentForm';
 
 // ─── Dashboard ────────────────────────────────────────────────────────────
 // Layout skeleton only. Every self-contained section lives in
@@ -59,14 +57,6 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
     setProTeased(true);
     setTimeout(() => setProTeased(false), 2500);
   };
-
-  // Deterministic recent form — computed at render from derived state, so it
-  // costs nothing and is never stale.
-  const recentForm = guest ? null : deriveRecentForm({
-    recentSessions: user.recentSessions,
-    skills,
-    scenarioHistory: user.scenarioHistory,
-  });
 
   return (
     <div className="dashboard">
@@ -192,16 +182,6 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
               <SkillLedger skills={skills} prevSkills={sessionDelta?.prevSkills ?? null} />
             </div>
           </div>
-
-          {/* Recent form closes the card: the schema and ledger are the lifetime
-              read, this is what moved lately. Founder call, July 28 — it read as
-              numbers shoved into the top corner when it sat above them.
-              MOBILE HAZARD: `.db-cta-block` is position:sticky with an opaque
-              background (CA-038), so the last thing in this card can be painted
-              underneath it. `.db-schema-card` carries bottom padding at <=700px
-              to clear it, and e2e/mobilefold.spec.mjs asserts the strip is
-              genuinely visible — not merely present — after scrolling to it. */}
-          {recentForm && <RecentForm form={recentForm} />}
 
           <LastSessionRead coachNote={coachNote} coachReads={user.coachReads} guest={guest} />
         </div>

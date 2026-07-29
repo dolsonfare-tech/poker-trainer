@@ -16,23 +16,16 @@ export function uniformSkills(rating = 'yellow', attempts = 10, correct = 6) {
 const OTHER_SKILLS = SKILL_KEYS.filter(k => k !== 'bluffing');
 
 // Twelve 5-hand sessions (RECENT_SESSIONS_CAP), newest first: a trailing
-// window of 6 plus a previous window of 6, so deriveRecentForm's line 1
-// ("N of M, up/down from P") has a real comparison to render, not a bare
-// first-window state.
-//
-// Deliberately engineered so 'bluffing' clears MIN_RATED_ATTEMPTS (5) INSIDE
-// the trailing window (one bluffing hand per window session = 6 attempts)
-// with an accuracy far from its uniformSkills() lifetime rate (0.6) — window
-// accuracy 1/6 vs lifetime 0.6 is the biggest gap of any skill, so it's the
-// deterministic 'moved' winner ("Bluffing is slipping lately"). Every other
-// skill gets ~3 attempts across the window (24 non-bluffing hands over 7
-// skills), which stays under the gate on purpose.
-//
-// This is the fixture the mobilefold guard measures against — the tallest,
-// most-complete version of the strip (score line + moved line), so the fold
-// guard exercises the strip-present path at its worst case for height, not
-// its best case. See mobilefold.spec.mjs for the queue-depth line (added via
-// scenarioHistory in that spec directly, not here — see its comment for why).
+// window of 6 plus a previous window of 6. This shape used to feed the
+// dashboard's recent-form strip (removed 2026-07-29, C″ restructure) and its
+// "N of M, up/down from P" comparison line and moved-skill callout — neither
+// is read by anything anymore, but `recentSessions` is still a real field on
+// the user object (session.js/db.js append and rebuild it), so this fixture
+// stays as production-shaped seed data for streak/read assertions elsewhere
+// in the suite. The per-skill attempt distribution below (e.g. 'bluffing'
+// clearing MIN_RATED_ATTEMPTS inside the window) no longer drives any visible
+// UI — it's vestigial from the strip's moved-skill selection — and is left
+// alone rather than reshaped, since no spec depends on its exact values.
 function recentSessionsFixture() {
   const day = (offset) => {
     // offset 0 = newest (today), counting back one calendar day per session.

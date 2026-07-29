@@ -315,6 +315,19 @@ test('locked-schema card clamps countdown at zero when sessionsCompleted exceeds
   expect(lockedCard).toHaveTextContent(/Play a session to refresh your profile/);
 });
 
+// ── C″ restructure (2026-07-29): the stat strip is gone ────────────────────
+test('the recent-form strip no longer renders', () => {
+  // hands populated (not just the session-level total/correct fields) — the
+  // strip's own render gate (deriveRecentForm → total === windowHands.length)
+  // only trips on real hands, so an empty `hands: []` array would pass this
+  // assertion whether or not the strip was actually deleted.
+  const hands = Array.from({ length: 5 }, (_, i) => ({ skill: 'potodds', result: i < 3 ? 'correct' : 'incorrect' }));
+  dash({ user: { ...createUser('Stripless'), sessionsCompleted: 12,
+    recentSessions: [{ date: '2026-07-28', correct: 3, total: 5, hands }] } });
+  expect(document.querySelector('.db-form')).toBeNull();
+  expect(screen.queryByText(/to resurface/i)).not.toBeInTheDocument();
+});
+
 // ── CA-031: GUEST_GATE_CTA single-source pin ──────────────────────────────────
 test('CA-031: Dashboard.jsx does not hard-code the guest CTA string', () => {
   const fs = require('fs');
