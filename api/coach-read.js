@@ -391,6 +391,7 @@ Rules for all three fields:
 - If the mistakes point in different directions, say so honestly instead of forcing one story
 - Only call this stretch improved, or "up from" anything, if the overall numbers above actually rose. A decline is named as a decline or the comparison is left out entirely; never dress a drop as progress
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
+- Before answering, count each field's words against its limit; if any field is over, cut words until it fits. Cut adjectives and qualifiers first, never the numbers or the pattern. The limits are hard
 - Sound like a human coach, not an AI
 - No em dashes, no "not only... but also" constructions
 - No generic praise or filler
