@@ -287,7 +287,12 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // (HEADLINE_RULE) always wins; this fires only in its absence. Exported and
 // imported by scripts/eval-coach.mjs for the same single-sourcing reason as
 // HEADLINE_RULE.
-const TRAJECTORY_RULE = 'open the headline with that improvement, copying both correct-counts as written above, then name the clearest remaining pattern in the same sentence';
+// "as compact counts like 20/50": the first live run wrote both counts long-form
+// ("20 of 50 ... from 10 of 50" — six words before the coach says anything) and
+// every tier-2 headline blew the 12-word cap. The slash form carries the same
+// two copied numbers at one word each. Copy-only law unchanged: both numbers
+// still come from the data, only the typography is prescribed.
+const TRAJECTORY_RULE = 'open the headline with that improvement written as compact counts like 20/50 (both numbers copied from above), then name the clearest remaining pattern in the same sentence';
 
 // The three length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
@@ -368,9 +373,9 @@ ${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so t
 ${repeats ? `Spots they have missed more than once in this stretch, already counted for you by opponent:\n${repeats}` : 'No spot was missed more than once.'}
 
 Respond with three fields named "headline", "evidence" and "watchFor":
-- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern as above.
+- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern as above. Count the headline's words before you answer; ${WORD_CAPS.headline} is a hard limit, not a target.
 - evidence: ${WORD_CAPS.evidenceItems[0]} to ${WORD_CAPS.evidenceItems[1]} short items, each ${WORD_CAPS.evidence} words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
-- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, phrased as a trigger-action plan for their next session: name the situation cue, then the action ("Next time a raise crosses your mind, make it"). Cite one number from above only if it sharpens the instruction, copied as written. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
+- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, phrased as a trigger-action plan for their next session: name the situation cue, then the action ("Next time a raise crosses your mind, make it"). Cite one number from above only if it sharpens the instruction AND still fits the limit; the cue and action come first, the citation is the first thing to drop. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
 
 Rules for all three fields:
 - Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity, their habits as a whole, or their game: no "you are a...", no "you always..." or "you never...", no "your game is...". A habitual claim ("you always fold the river") is an identity verdict wearing different words, so say "kept folding the river over these sessions" instead. Naming the player's type is a different surface's job, not yours
