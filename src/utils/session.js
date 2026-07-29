@@ -129,6 +129,19 @@ export function applySessionResults(user, hands, coachRead) {
   return { ...user, skills, streak, lastSessionDate, rebuys, sessionsCompleted, schema, pokerScore, coachNote, coachReads, scenarioHistory, recentHands, recentSessions, directionTally, bestSessionCorrect, sessionsSinceRead };
 }
 
+// ── Meta-read cadence ──────────────────────────────────────────────────────
+// The read speaks over a trailing 10 sessions (~50 hands) because a skill needs
+// ~5 attempts before it can honestly be named. It first fires at 6 so a new
+// player is not staring at an empty slot for ten sessions, then every 5.
+export const META_READ_MIN_SESSIONS = 6;
+export const META_READ_EVERY = 5;
+
+export function shouldFetchRead(user) {
+  if (!user) return false;
+  return (user.sessionsCompleted ?? 0) >= META_READ_MIN_SESSIONS
+    && (user.sessionsSinceRead ?? 0) >= META_READ_EVERY;
+}
+
 // ── submitSession (MOD-002, Wave 3) ────────────────────────────────────────
 // The end-of-session pipeline, lifted verbatim out of App.jsx's
 // handleFetchCoachRead: fetch the Coach's Read, fold the results into the user
@@ -175,6 +188,14 @@ export async function submitSession({ user, hands, sessionHistory, difficulty, i
   };
 
   if (isGuest) {
+    const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
+    return { user: updated, coachText: '', limited: false };
+  }
+
+  // Four sessions in five now skip the network entirely: the read speaks over a
+  // trailing window, so it is fetched on a cadence rather than per session.
+  // The session still persists exactly as before either way.
+  if (!shouldFetchRead(user)) {
     const updated = user ? persist(applySessionResults(user, hands, null), null) : null;
     return { user: updated, coachText: '', limited: false };
   }

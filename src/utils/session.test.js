@@ -2,7 +2,7 @@
 // including the Coach's Notebook history.
 //
 // MOD-001 (Wave 3): split out of userStorage.test.js alongside the source.
-import { applySessionResults, createUser } from './session';
+import { applySessionResults, createUser, shouldFetchRead, META_READ_MIN_SESSIONS, META_READ_EVERY } from './session';
 import { COACH_READS_CAP } from './coachRead';
 import { toLocalDateString } from './dates';
 
@@ -116,7 +116,7 @@ test('a signed-in session fetches the read and writes it through', async () => {
   fetchCoachRead.mockResolvedValue('You over-fold rivers.');
   const remote = remoteStub();
   const res = await submitSession({
-    user: createUser('Reader'), hands, sessionHistory: [{}], difficulty: 'intermediate',
+    user: { ...createUser('Reader'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'intermediate',
     isGuest: false, remote,
   });
   expect(res.coachText).toBe('You over-fold rivers.');
@@ -145,11 +145,11 @@ test('the daily cap is reported as limited, not as a generic failure', async () 
   const err = new Error('cap'); err.code = 'daily_limit';
   fetchCoachRead.mockRejectedValue(err);
   const res = await submitSession({
-    user: createUser('Capped'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: { ...createUser('Capped'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'beginner',
     isGuest: false, remote: remoteStub(),
   });
   expect(res.limited).toBe(true);
-  expect(res.user.sessionsCompleted).toBe(1);
+  expect(res.user.sessionsCompleted).toBe(13);        // 12 prior + this one — the session still counted
 });
 
 test('no remote object means localStorage-only — no remote writes attempted', async () => {
@@ -169,7 +169,7 @@ test('a rejected remote write does not reject the caller — the summary must re
   };
   jest.spyOn(console, 'error').mockImplementation(() => {});
   await expect(submitSession({
-    user: createUser('Offline'), hands, sessionHistory: [{}], difficulty: 'beginner',
+    user: { ...createUser('Offline'), sessionsCompleted: 12, sessionsSinceRead: 5 }, hands, sessionHistory: [{}], difficulty: 'beginner',
     isGuest: false, remote,
   })).resolves.toMatchObject({ coachText: 'read' });
   console.error.mockRestore();
@@ -193,4 +193,53 @@ test('a legacy cached profile with no counter starts from its session count', ()
   const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
   // 7 prior sessions + this one, none of which stored a read
   expect(applySessionResults(user, hands, null).sessionsSinceRead).toBe(8);
+});
+
+// ── shouldFetchRead (Phase B, Task 2) ───────────────────────────────────────
+const u = (over) => ({ ...createUser('N'), ...over });
+
+test('no read before the minimum session count, however long the gap', () => {
+  expect(shouldFetchRead(u({ sessionsCompleted: 5, sessionsSinceRead: 5 }))).toBe(false);
+});
+
+test('the first read fires at the minimum session count', () => {
+  expect(shouldFetchRead(u({ sessionsCompleted: META_READ_MIN_SESSIONS, sessionsSinceRead: 6 }))).toBe(true);
+});
+
+test('no read again until the interval has passed', () => {
+  expect(shouldFetchRead(u({ sessionsCompleted: 9, sessionsSinceRead: 4 }))).toBe(false);
+  expect(shouldFetchRead(u({ sessionsCompleted: 9, sessionsSinceRead: META_READ_EVERY }))).toBe(true);
+});
+
+// The self-healing case: a failed call leaves the row with no read, so the
+// counter keeps climbing and the NEXT session retries — rather than the player
+// waiting another full interval.
+test('after a failed read the counter keeps climbing and the next session retries', () => {
+  expect(shouldFetchRead(u({ sessionsCompleted: 12, sessionsSinceRead: 7 }))).toBe(true);
+});
+
+test('guests never trigger a read', () => {
+  expect(shouldFetchRead(null)).toBe(false);
+  expect(shouldFetchRead(undefined)).toBe(false);
+});
+
+test('submitSession skips the API entirely when no read is due', async () => {
+  fetchCoachRead.mockClear();
+  const user = { ...createUser('N'), sessionsCompleted: 7, sessionsSinceRead: 2 };
+  const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
+  const res = await submitSession({ user, hands, sessionHistory: [], difficulty: 'beginner', isGuest: false, remote: null });
+  expect(fetchCoachRead).not.toHaveBeenCalled();
+  expect(res.coachText).toBe('');
+  expect(res.user.sessionsSinceRead).toBe(3);
+});
+
+test('submitSession calls the API when a read IS due', async () => {
+  fetchCoachRead.mockClear();
+  fetchCoachRead.mockResolvedValueOnce('the meta read');
+  const user = { ...createUser('N'), sessionsCompleted: 12, sessionsSinceRead: 5 };
+  const hands = [{ scenarioId: 'sc_001', skill: 'potodds', result: 'correct', choiceVal: 'call' }];
+  const res = await submitSession({ user, hands, sessionHistory: [], difficulty: 'beginner', isGuest: false, remote: null });
+  expect(fetchCoachRead).toHaveBeenCalledTimes(1);
+  expect(res.coachText).toBe('the meta read');
+  expect(res.user.sessionsSinceRead).toBe(0);
 });
