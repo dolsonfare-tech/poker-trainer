@@ -37,10 +37,19 @@ const DAILY_LIMIT = 5;
 // player cannot compute for themselves is the whole point of the ten-session
 // window, so the label has to identify the HAND.
 //
-// Seat + hole cards + street is what the pre-window prompt used for exactly
-// this, and it costs ~16 characters. Measured over the current library: the
-// spot alone is 167/172 distinct, and the rendered `tag, spot vs villain` line
-// is 172/172 — every scenario cites unambiguously.
+// Seat + hole cards + street + BOARD. The board joined July 29, 2026 with the
+// evidence bar (finding 3): once a citation may have to stand WITHOUT its tag —
+// because the tag is the skill in prose and a sub-bar skill may not be named —
+// the spot has to carry the whole identity on its own. Measured over the
+// current library (172 scenarios):
+//   - seat + hole + street            → 167/172 distinct
+//   - seat + hole + street + board    → 172/172 distinct
+//   - villain + spot, tag WITHHELD    → 172/172 distinct
+//   - villain + tag + spot            → 172/172 distinct
+// So the rendered citation is unambiguous whether or not the tag is present;
+// without the board it would have fallen to 171/172 in the withheld case
+// (`Aggressive Regular | BB Q♦J♦ flop` is two different hands). Cost is ~7
+// characters and it stays inside the 30-char clamp (longest spot: 25).
 //
 // Suit symbols, never shorthand (KQs/98d) — CLAUDE.md, and it is what the
 // player saw on the felt.
@@ -48,7 +57,8 @@ const STREET_BY_BOARD = { 0: 'preflop', 3: 'flop', 4: 'turn', 5: 'river' };
 function describeSpot(s) {
   const seat = (s.positions ?? []).find(p => p.state === 'hero')?.label?.split(' ')[0];
   const hole = (s.hand ?? []).map(c => `${c.r}${c.s}`).join('');
-  return [seat, hole, STREET_BY_BOARD[(s.board ?? []).length]].filter(Boolean).join(' ');
+  const board = (s.board ?? []).join('');
+  return [seat, hole, STREET_BY_BOARD[(s.board ?? []).length], board].filter(Boolean).join(' ');
 }
 
 function buildLookup(scenarios) {
@@ -279,7 +289,15 @@ function buildPrompt(s) {
   // instead of counting two lines that happen to end in the same name — the
   // fabricated-statistic defect two live runs reproduced. The spot detail is
   // unchanged and still disambiguates within the group.
-  const cite = (m) => [clamp(m.scenario, 40), clamp(m.spot, 30)].filter(Boolean).join(', ');
+  // `m.scenario` is the tag, and the tag IS the skill in prose. coachWindow.js
+  // leaves it EMPTY on any citation whose skill has not cleared
+  // MIN_RATED_ATTEMPTS, so the line degrades to the spot alone (still 172/172
+  // distinct — see describeSpot) rather than handing the model a skill name the
+  // ledger greys out. The `|| 'unspecified spot'` covers the degenerate case
+  // where the id resolves to nothing at all and the tag is withheld too: an
+  // empty bullet is worse than an honest one.
+  const cite = (m) =>
+    [clamp(m.scenario, 40), clamp(m.spot, 30)].filter(Boolean).join(', ') || 'unspecified spot';
   const grouped = (groups, noun, line) => (groups ?? [])
     .map(g => `- ${clamp(g.villain, 30)}: ${g.count} ${noun}${g.count === 1 ? '' : 's'}\n`
       + g.spots.map(sp => `    - ${line(sp)}`).join('\n'))

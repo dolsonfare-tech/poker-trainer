@@ -101,9 +101,14 @@ export function aggregate(sessions, lookup) {
   const prev = tally(prevWin);
 
   const bySkill = new Map();
+  // Which skill each scenario was TALLIED under, so a citation is judged against
+  // the bar by the same key that fed the ledger. Reading `meta(id).skill` here
+  // instead would let a stored hand tallied under one skill be gated by another.
+  const skillById = new Map();
   for (const h of hands) {
     const key = h.skill ?? meta(h.scenarioId).skill;
     if (!key) continue;
+    skillById.set(h.scenarioId, key);
     const s = bySkill.get(key) ?? { skill: key, attempts: 0, correct: 0 };
     s.attempts += 1;
     if (h.result === 'correct') s.correct += 1;
@@ -134,15 +139,51 @@ export function aggregate(sessions, lookup) {
   const ranked = [...bySkill.values()].sort(
     (a, b) => b.attempts - a.attempts || a.skill.localeCompare(b.skill),
   );
+  // ONE predicate for the bar. `skills`, `unratedSkills` and the citation gate
+  // below all read it, so "the read named a skill the ledger greys out" cannot
+  // come back through two copies of the comparison disagreeing.
+  const isRated = (s) => s.attempts >= MIN_RATED_ATTEMPTS;
 
   const spotOf = (id) => meta(id).spot ?? '';
 
+  // ── The bar applies to CITATIONS too (live eval finding 3, July 29 2026) ──
+  // Dropping sub-bar skills from `skills` closed only half the hole. A citation
+  // carries `scenario`, which is the scenario's `tag` — and `tag` is a pure
+  // function of `skill` (scenarios.js: `tag = SKILL_TAGS[rest.skill]`), i.e. the
+  // skill written out in prose. So a window holding one fast-and-wrong `betsize`
+  // hand sent NO betsize skill line and still showed the model
+  // "Bet Sizing, BTN A♠K♣ flop T♠9♣2♦" — under a prompt that actively instructs
+  // it to headline confident errors. The read headlined Bet Sizing while the
+  // ledger greyed Bet Sizing out and the recent-form strip stayed silent: three
+  // surfaces, one player, contradictory claims.
+  //
+  // The fix is NOT to drop the confident error. A confident error is
+  // behaviourally significant regardless of sample size and it is the
+  // highest-leverage signal the product has (F2); discarding it to satisfy a
+  // display rule trades the wrong thing away. What is dropped is the SKILL NAME
+  // on the citation. The seat, hole cards, street, board and villain already
+  // identify the spot — measured 172/172 distinct with the tag withheld, see
+  // describeSpot in api/coach-read.js — so the error still reaches the model in
+  // full, just without a label the ledger contradicts.
+  //
+  // `skill` is likewise not emitted on a citation at all. Leaving it on the
+  // object and relying on the prompt not to render it would make this a
+  // convention; leaving it off makes `skills` the ONE channel through which a
+  // skill name can reach the model, and that channel applies the bar on the
+  // line below. Pinned in both directions in coachWindow.test.js.
+  const ratedSkills = new Set(ranked.filter(isRated).map(s => s.skill));
+  // The tag, or '' when the skill behind it may not be named.
+  const tagIfRated = (id) => {
+    const skill = skillById.get(id) ?? meta(id).skill;
+    return skill != null && ratedSkills.has(skill) ? (meta(id).tag ?? 'Unknown') : '';
+  };
+
   const confidentCited = hands.filter(isConfidentMiss).slice(0, MAX_CITED).map(h => ({
-    skill: h.skill ?? meta(h.scenarioId).skill ?? 'Unknown',
     villain: meta(h.scenarioId).villain ?? 'Unknown',
-    scenario: meta(h.scenarioId).tag ?? 'Unknown',
-    // Seat + hole cards + street: what tells two same-tag, same-villain spots
-    // apart in the prompt. Empty (not 'Unknown') when the id does not resolve.
+    scenario: tagIfRated(h.scenarioId),
+    // Seat + hole cards + street + board: what tells two same-tag, same-villain
+    // spots apart in the prompt, and the whole identity when the tag is
+    // withheld. Empty (not 'Unknown') when the id does not resolve.
     spot: spotOf(h.scenarioId),
   }));
 
@@ -151,7 +192,7 @@ export function aggregate(sessions, lookup) {
     .sort((a, b) => b[1] - a[1])
     .slice(0, MAX_CITED)
     .map(([id, misses]) => ({
-      scenario: meta(id).tag ?? 'Unknown',
+      scenario: tagIfRated(id),
       villain: meta(id).villain ?? 'Unknown',
       spot: spotOf(id),
       misses,
@@ -162,8 +203,8 @@ export function aggregate(sessions, lookup) {
     hands: hands.length,
     accuracy: { correct, total },
     previous: prevWin.length > 0 ? { correct: prev.correct, total: prev.total } : null,
-    skills: ranked.filter(s => s.attempts >= MIN_RATED_ATTEMPTS),
-    unratedSkills: ranked.filter(s => s.attempts < MIN_RATED_ATTEMPTS).map(s => s.skill),
+    skills: ranked.filter(isRated),
+    unratedSkills: ranked.filter(s => !isRated(s)).map(s => s.skill),
     direction: addHandsToDirectionTally(EMPTY_DIRECTION_TALLY, hands),
     timeouts: hands.filter(isTimeout).length,
     confidentMisses: confidentCited,

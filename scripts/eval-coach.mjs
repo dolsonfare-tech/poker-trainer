@@ -435,6 +435,7 @@ function checkRead(read, summary, cov) {
 // clean run from a run that matched nothing — see the header on checkRead.
 const newCoverage = () => ({
   personas: 0, parsed: 0, unparsed: 0,
+  personasClean: 0, personasErrored: 0, personasFailed: 0,
   headlines: 0, headlinesOver: 0,
   evidenceLists: 0, evidenceCountBad: 0, evidenceItems: 0, evidenceOver: 0,
   watchFor: 0, watchForOver: 0,
@@ -442,6 +443,58 @@ const newCoverage = () => ({
   freezeApplicable: 0, freezePass: 0,
   voiceScanned: 0, voiceFlagged: 0,
 });
+
+// ── Per-persona verdict + exit status (live eval findings 1 and 2, July 29) ──
+// The console used to print `✓ ${p.name}` AFTER the try/catch closed,
+// unconditionally. It certified that control reached that statement, nothing
+// more: a persona whose API call threw printed the same tick as a clean one, and
+// the three genuine ✗ results of the founder's July 29 run (watchFor 19w against
+// the 18 cap, one evidence item one over, a 13w headline against the 12 cap) sat
+// in the artifact where nobody watching the console would ever see them. Same
+// bug class as the two before it — a signal must not certify more than it
+// actually measured.
+//
+// So the verdict is DERIVED FROM THE CHECK LINES the artifact prints. Not a
+// second judgement that could disagree with the document the founder reads: the
+// console and the artifact are the same measurement rendered twice.
+//
+// Three states, never collapsed:
+//   errored — the call itself failed. Never a tick, whatever the checks say.
+//   failed  — the read came back and one or more HARD checks were ✗.
+//   clean   — the read came back and every hard check passed.
+// Soft ⚠ lines (the voice scan) are reported and never fail a persona: the scan
+// is a judgement aid for a human, not a pass/fail rule, and phrases like "you
+// are getting 3.5:1" are legitimate.
+const ERROR_PREFIX = 'ERROR: ';
+const isErroredRead = (read) => typeof read === 'string' && read.startsWith(ERROR_PREFIX);
+
+function personaVerdict(read, checkLines) {
+  const failed = checkLines.filter((l) => l.startsWith('- ✗')).length;
+  const soft = checkLines.filter((l) => l.startsWith('- ⚠')).length;
+  const errored = isErroredRead(read);
+  return { errored, failed, soft, clean: !errored && failed === 0 };
+}
+
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+function verdictLine(name, v) {
+  const soft = v.soft ? ` (+${plural(v.soft, 'soft flag')})` : '';
+  if (v.errored) return `✗ ${name} — API CALL FAILED, no read to check`;
+  if (v.failed > 0) return `✗ ${name} — ${plural(v.failed, 'check')} FAILED${soft}`;
+  return `✓ ${name} — all checks passed${soft}`;
+}
+
+// Finding 2: the exit code has to tell a clean run from a dirty one, or nothing
+// downstream (a founder's shell, a future wrapper) can. The artifact is written
+// EITHER WAY — the founder needs to read the reads regardless of the verdict —
+// so only the exit status changes.
+const runExitCode = (cov) => (cov.personasClean === cov.personas ? 0 : 1);
+
+const runVerdictLine = (cov) =>
+  `${cov.personasClean} of ${cov.personas} personas passed cleanly`
+  + (cov.personasFailed ? ` · ${plural(cov.personasFailed, 'persona')} with failing checks` : '')
+  + (cov.personasErrored ? ` · ${plural(cov.personasErrored, 'API call')} failed` : '')
+  + ` — exit ${runExitCode(cov)}`;
 
 const coverageReport = (cov, dry) => [
   '## Coverage — what this run actually measured',
@@ -460,6 +513,7 @@ const coverageReport = (cov, dry) => [
   `- ${HEADLINE_RULE}: applicable to ${cov.confidentApplicable} persona(s) · passed ${cov.confidentPass}`,
   `- freezer timeout rule: applicable to ${cov.freezeApplicable} persona(s) · passed ${cov.freezePass}`,
   `- voice scan: ${cov.voiceScanned} reads scanned · flagged ${cov.voiceFlagged} [soft]`,
+  ...(dry ? [] : ['', `**Run verdict: ${runVerdictLine(cov)}**`]),
 ].join('\n');
 
 // ── Self-test (--selftest) ────────────────────────────────────────────────
@@ -519,9 +573,44 @@ if (SELFTEST) {
   for (const [k, v] of Object.entries(wantCov))
     if (c[k] !== v) failures.push(`  ✗ coverage.${k} is ${c[k]}, expected ${v} — the totals must reflect real measurements`);
 
+  // ── Findings 1 and 2: the console verdict and the exit status ────────────
+  // Exercised offline for the same reason the cap checks are: a verdict whose
+  // first execution is the paid gate it protects has never been shown to work.
+  // The errored-read case in particular can now be proven WITHOUT a real API
+  // call — the harness's only failure channel is the `ERROR: ` prefix it writes
+  // into `read`, so feeding that string is the same input a thrown fetch
+  // produces.
+  const lines = (read, summary = mkSummary()) => checkRead(read, summary, newCoverage());
+  const errRead = `${ERROR_PREFIX}fetch failed`;
+  const errV = personaVerdict(errRead, lines(errRead));
+  const badRead = mkRead({ headline: nWords(H + 1) });
+  const badV = personaVerdict(badRead, lines(badRead));
+  const okV = personaVerdict(mkRead({}), lines(mkRead({})));
+  // Hard checks all pass; only the soft voice scan trips. Must stay clean.
+  const softRead = mkRead({ headline: 'You are a maniac lately' });
+  const softV = personaVerdict(softRead, lines(softRead));
+  const covOf = (personas, clean) => ({ ...newCoverage(), personas, personasClean: clean });
+
+  const verdictCases = [
+    ['an errored read is never ticked', () => !verdictLine('P', errV).includes('✓')],
+    ['an errored read is named as a failed API call', () => verdictLine('P', errV).includes('API CALL FAILED')],
+    ['an errored read is not counted clean', () => errV.clean === false && errV.errored === true],
+    ['a failing check is reported with its count', () => verdictLine('P', badV) === '✗ P — 1 check FAILED'],
+    ['a clean read is ticked', () => verdictLine('P', okV) === '✓ P — all checks passed'],
+    ['a soft voice flag is surfaced but does not fail the persona',
+      () => softV.clean === true && verdictLine('P', softV) === '✓ P — all checks passed (+1 soft flag)'],
+    ['a dirty run exits 1', () => runExitCode(covOf(9, 8)) === 1],
+    ['a clean run exits 0', () => runExitCode(covOf(9, 9)) === 0],
+    ['the run verdict states the denominator and the exit code',
+      () => runVerdictLine(covOf(9, 8)).includes('8 of 9 personas passed cleanly')
+        && runVerdictLine(covOf(9, 8)).includes('exit 1')],
+  ];
+  for (const [name, fn] of verdictCases) if (!fn()) failures.push(`  ✗ ${name}`);
+
+  const total = cases.length + 1 + Object.keys(wantCov).length + verdictCases.length;
   console.log(failures.length
     ? `eval-coach selftest FAILED (${failures.length}):\n${failures.join('\n')}`
-    : `eval-coach selftest OK — ${cases.length + 1 + Object.keys(wantCov).length} assertions over caps ${H}/${E}/${W}w, item range ${WORD_CAPS.evidenceItems.join('–')}, the headline rule and the coverage totals`);
+    : `eval-coach selftest OK — ${total} assertions over caps ${H}/${E}/${W}w, item range ${WORD_CAPS.evidenceItems.join('–')}, the headline rule, the coverage totals, the per-persona verdict and the exit status`);
   process.exit(failures.length ? 1 : 0);
 }
 
@@ -553,13 +642,23 @@ for (const p of PERSONAS) {
     try {
       read = await callClaude(summary, apiKey);
     } catch (err) {
-      read = `ERROR: ${err.message}`;
+      read = `${ERROR_PREFIX}${err.message}`;
     }
-    console.log(`✓ ${p.name}`);
   } else {
     console.log(`— ${p.name} (dry)\n${buildPrompt(summary)}\n`);
   }
-  const checks = DRY ? '' : `\n**Checks:**\n${checkRead(read, summary, cov).join('\n')}\n`;
+  // The checks run BEFORE anything is printed about this persona. The old order
+  // printed the tick first and measured afterwards, which is how a failed call
+  // and three real ✗ results all rendered as ✓ (finding 1).
+  const checkLines = DRY ? [] : checkRead(read, summary, cov);
+  if (!DRY) {
+    const v = personaVerdict(read, checkLines);
+    if (v.clean) cov.personasClean += 1;
+    if (v.errored) cov.personasErrored += 1;
+    else if (v.failed > 0) cov.personasFailed += 1;
+    console.log(verdictLine(p.name, v));
+  }
+  const checks = DRY ? '' : `\n**Checks:**\n${checkLines.join('\n')}\n`;
   sections.push(`## ${p.name}\n\n**Expected:** ${p.expect}\n\n**Window:**\n${window}\n\n**Coach's Read:**\n\n${renderRead(read)}\n${checks}`);
 }
 
@@ -579,7 +678,17 @@ const doc = `# Coach's Read eval — ${DRY ? 'DRY RUN (prompts only)' : 'LIVE ou
   `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
   `${coverageReport(cov, DRY)}\n\n---\n\n` +
   sections.join('\n---\n\n');
+// Written BEFORE the verdict is applied, and unconditionally: the founder needs
+// to read the nine reads whether the run was clean or dirty. Only the exit
+// status reflects the verdict (finding 2).
 writeFileSync(OUT, doc);
 console.log(`\n${coverageReport(cov, DRY)}\n`);
 console.log(`Wrote ${OUT} (${DRY ? 'DRY RUN' : 'LIVE'}, ${PERSONAS.length} personas)`
   + (DRY ? ` — the live artifact ${OUT_LIVE} was NOT touched` : ''));
+if (!DRY) {
+  console.log(runVerdictLine(cov));
+  // exitCode rather than exit(): the artifact is on disk and stdout still has to
+  // flush. A dry run has measured nothing, so it has no verdict to report and
+  // stays at 0 (check-invariants rule 32 runs it and requires success).
+  process.exitCode = runExitCode(cov);
+}

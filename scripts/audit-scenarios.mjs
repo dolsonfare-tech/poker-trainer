@@ -325,6 +325,58 @@ for (const s2 of SCENARIOS) {
   }
 }
 
+// ── Coach citation distinctness (live eval finding 3, July 29 2026) ─────
+// The Coach's Read cites a missed hand as `villain: tag, spot`. Two loads sit
+// on that string and both are content properties of THIS file, which is why the
+// check lives here rather than beside the prompt:
+//
+//  1. Two different hands must never render as the same line. The prompt
+//     forbids inventing statistics, so on a byte-identical pair the model can
+//     only merge them (undercounting) or emit what reads as a data error.
+//  2. The line has to stay unambiguous WITHOUT its tag. `tag` is a pure
+//     function of `skill`, so it is the skill in prose; coachWindow.js withholds
+//     it on any skill under MIN_RATED_ATTEMPTS, because the skill ledger greys
+//     those out and the read may not contradict it. Seat + hole cards + street +
+//     board is what carries the identity in that case.
+//
+// Measured July 29, 2026 over 172 scenarios: 172/172 distinct in both states.
+// Before the board joined the spot it was 171/172 withheld (`Aggressive
+// Regular | BB Q♦J♦ flop` was two different hands), so this is exactly the kind
+// of property a new scenario can silently break.
+{
+  const { default: coach } = await import('../api/coach-read.js');
+  const lookup = coach.buildLookup(SCENARIOS);
+  // The prompt's own clamps and its `cite` join, so the audit measures the
+  // string the model actually sees, not an approximation of it.
+  const clamp = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
+  const line = (m, withTag) =>
+    `${clamp(m.villain, 30)}: `
+    + ([withTag ? clamp(m.tag, 40) : '', clamp(m.spot, 30)].filter(Boolean).join(', ') || 'unspecified spot');
+
+  for (const [state, withTag] of [['tag present (rated skill)', true], ['tag WITHHELD (sub-bar skill)', false]]) {
+    const seen = new Map();
+    for (const s of SCENARIOS) {
+      const id = String(s.id).startsWith('sc_') ? String(s.id) : `sc_${String(s.id).padStart(3, '0')}`;
+      const key = line(lookup(s.id), withTag);
+      if (seen.has(key)) {
+        flag('ERROR', id, 'coach-citation',
+          `renders the same Coach's Read citation as ${seen.get(key)} with the ${state}: '${key}'. `
+          + 'Two hands the model cannot tell apart, inside a prompt that forbids inventing statistics. '
+          + 'Vary the seat, the hole cards, the street or the board.');
+      } else {
+        seen.set(key, id);
+      }
+    }
+  }
+  // Vacuity guard: if describeSpot ever returned nothing, every line would still
+  // be distinct by villain alone on a small library and this rule would pass
+  // while protecting nothing.
+  const empty = SCENARIOS.filter(s => !(lookup(s.id)?.spot ?? '')).length;
+  if (empty)
+    flag('ERROR', 'coach-citation', 'coach-citation',
+      `${empty} scenario(s) produce an EMPTY spot label — describeSpot in api/coach-read.js is the only thing identifying a cited hand once its skill tag is withheld`);
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const bySev = { ERROR: [], WARN: [] };
 for (const f of findings) bySev[f.sev].push(f);

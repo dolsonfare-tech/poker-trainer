@@ -18,6 +18,11 @@ const session = (hands) => ({ hands });
 // tallies is not silently a test about the bar.
 const rated = (id, result, over = {}) =>
   Array.from({ length: MIN_RATED_ATTEMPTS }, () => hand(id, result, over));
+// Padding that lifts a skill over the bar without adding misses: a citation
+// only carries its `scenario` tag once its skill is rated (see the evidence-bar
+// block below), so a fixture about tallies has to clear the bar deliberately or
+// it becomes a test of the bar by accident.
+const clearsBar = (id) => rated(id, 'correct');
 
 test('an empty window aggregates to a zeroed, non-crashing shape', () => {
   const out = aggregate([], lookup);
@@ -72,6 +77,78 @@ test('a skill BELOW MIN_RATED_ATTEMPTS is never named to the prompt', () => {
   expect(out.hands).toBe(MIN_RATED_ATTEMPTS * 2 - 1);
 });
 
+// ── the bar reaches CITATIONS too (live eval finding 3, July 29 2026) ────────
+// Dropping sub-bar skills from `skills` closed only half the hole. A citation
+// carries `scenario`, which is the scenario's `tag` — and `tag` is a pure
+// function of `skill`, i.e. the skill written out in prose. So a window with a
+// single fast-and-wrong `bluffing` hand sent NO bluffing skill line and still
+// showed the model "Bluff Frequency, BTN A♠K♠ flop ...", under a prompt that
+// instructs it to headline confident errors. The read headlined Bluff Frequency
+// while the ledger greyed it out.
+//
+// The confident error is NOT discarded — it is the highest-leverage signal the
+// product has (F2). Only its skill LABEL is withheld; seat, hole cards, street,
+// board and villain still identify the spot (172/172 distinct without the tag).
+// Both directions, because a gate that only ever sees one input is untested.
+test('a citation on a RATED skill carries its tag', () => {
+  const out = aggregate([session([
+    ...clearsBar('sc_bluff'),
+    hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),
+  ])], lookup);
+  expect(out.skills.map(s => s.skill)).toEqual(['bluffing']);
+  expect(out.confidentMisses).toEqual([
+    { villain: 'Calling Station', scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop' },
+  ]);
+});
+
+test('a citation on a SUB-BAR skill withholds the tag but keeps the spot', () => {
+  const out = aggregate([session([
+    ...clearsBar('sc_odds'),                              // an unrelated rated skill
+    hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),  // one thin, confident miss
+  ])], lookup);
+  expect(out.unratedSkills).toEqual(['bluffing']);
+  // The error still reaches the model, fully located, just unlabelled.
+  expect(out.confidentMisses).toEqual([
+    { villain: 'Calling Station', scenario: '', spot: 'BTN A♠K♠ flop' },
+  ]);
+  expect(out.confidentByVillain[0].spots[0].spot).toBe('BTN A♠K♠ flop');
+});
+
+test('a repeat-offender citation is gated by the same bar', () => {
+  const twice = [hand('sc_bluff', 'incorrect'), hand('sc_bluff', 'incorrect')];
+  const thin = aggregate([session([...clearsBar('sc_odds'), ...twice])], lookup);
+  expect(thin.repeats).toEqual([
+    { scenario: '', villain: 'Calling Station', spot: 'BTN A♠K♠ flop', misses: 2 },
+  ]);
+  const fat = aggregate([session([...clearsBar('sc_bluff'), ...twice])], lookup);
+  expect(fat.repeats[0].scenario).toBe('Bluff Frequency');
+});
+
+// The structural claim, not just the two cases above: `skills` is the ONE
+// channel through which a skill name can reach the model, and it applies the
+// bar. Nothing a sub-bar skill is called — neither its key nor its prose tag —
+// may appear anywhere the prompt renders. (`unratedSkills` is excluded on
+// purpose: it is for the eval doc and debugging and is never rendered.)
+test('a sub-bar skill cannot reach the model as a nameable skill', () => {
+  const out = aggregate([session([
+    ...clearsBar('sc_odds'),
+    hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),
+    hand('sc_bluff', 'incorrect'),
+  ])], lookup);
+  const rendered = JSON.stringify({
+    skills: out.skills,
+    confidentByVillain: out.confidentByVillain,
+    repeatsByVillain: out.repeatsByVillain,
+    confidentMisses: out.confidentMisses,
+    repeats: out.repeats,
+  });
+  expect(rendered).not.toContain('Bluff Frequency');   // the tag: the skill in prose
+  expect(rendered).not.toContain('bluffing');          // and the raw skill key
+  // Negative control: the rated skill IS nameable, so the assertions above are
+  // not passing because nothing is named at all.
+  expect(rendered).toContain('potodds');
+});
+
 // The failure the founder actually saw in the dry run: one 0-of-1 skill was the
 // only 0% line in the prompt, so it read as the headline leak.
 test('a lone 0-of-1 skill cannot become the prompt\'s only 0% line', () => {
@@ -86,16 +163,14 @@ test('a lone 0-of-1 skill cannot become the prompt\'s only 0% line', () => {
 // they have. Slow-wrong is an ordinary miss; fast-RIGHT is not a miss at all.
 test('only fast AND wrong counts as a confident miss', () => {
   const out = aggregate([session([
+    ...clearsBar('sc_bluff'),                              // so the tag may be cited
     hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),   // fast + wrong  -> yes
     hand('sc_odds', 'incorrect', { decisionMs: 40000 }),   // slow + wrong  -> no
     hand('sc_odds', 'correct', { decisionMs: 3000 }),      // fast + right  -> no
     hand('sc_bluff', 'incorrect', { decisionMs: null }),   // timeout       -> no
   ])], lookup);
   expect(out.confidentMisses).toEqual([
-    {
-      skill: 'bluffing', villain: 'Calling Station',
-      scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop',
-    },
+    { villain: 'Calling Station', scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop' },
   ]);
 });
 
@@ -134,6 +209,7 @@ test('a window with nobody freezing reports zero timeouts', () => {
 
 test('a scenario missed more than once in the window is a repeat offender', () => {
   const out = aggregate([
+    session(clearsBar('sc_bluff')),   // so the tag may be cited
     session([hand('sc_bluff', 'incorrect')]),
     session([hand('sc_bluff', 'incorrect')]),
     session([hand('sc_odds', 'incorrect')]),
@@ -153,6 +229,7 @@ test('a scenario missed more than once in the window is a repeat offender', () =
 // them or emit what reads as a data error. The spot is what keeps them two.
 test('two spots sharing a tag and a villain still cite distinctly', () => {
   const out = aggregate([
+    session(clearsBar('sc_odds')),   // so the tag is present to collide at all
     session([hand('sc_odds', 'incorrect'), hand('sc_odds2', 'incorrect')]),
     session([hand('sc_odds', 'incorrect'), hand('sc_odds2', 'incorrect')]),
   ], lookup);
@@ -170,6 +247,7 @@ test('two spots sharing a tag and a villain still cite distinctly', () => {
 // The count is computed here now, so citing it is a read rather than a tally.
 test('confident errors arrive tallied by villain, so the model never has to count', () => {
   const out = aggregate([session([
+    ...clearsBar('sc_odds'), ...clearsBar('sc_bluff'),   // both skills over the bar
     hand('sc_odds', 'incorrect', { decisionMs: 4000 }),
     hand('sc_odds2', 'incorrect', { decisionMs: 4000 }),
     hand('sc_bluff', 'incorrect', { decisionMs: 4000 }),
@@ -179,15 +257,15 @@ test('confident errors arrive tallied by villain, so the model never has to coun
       villain: 'Tight Nit',
       count: 2,
       spots: [
-        { skill: 'potodds', villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'BB J♥8♥ preflop' },
-        { skill: 'potodds', villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'CO Q♦Q♣ turn' },
+        { villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'BB J♥8♥ preflop' },
+        { villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'CO Q♦Q♣ turn' },
       ],
     },
     {
       villain: 'Calling Station',
       count: 1,
       spots: [
-        { skill: 'bluffing', villain: 'Calling Station', scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop' },
+        { villain: 'Calling Station', scenario: 'Bluff Frequency', spot: 'BTN A♠K♠ flop' },
       ],
     },
   ]);
@@ -267,7 +345,9 @@ test('an unknown scenario id degrades instead of throwing', () => {
   expect(out.skills).toEqual([{ skill: 'reads', attempts: MIN_RATED_ATTEMPTS, correct: 0 }]);
   // An unresolvable id yields an EMPTY spot, never a second 'Unknown' — the
   // prompt drops the empty segment rather than printing three unknowns a row.
-  expect(out.confidentMisses[0]).toMatchObject({ skill: 'reads', villain: 'Unknown', spot: '' });
+  // `reads` HAS cleared the bar here, so the tag slot is filled (with 'Unknown',
+  // since the lookup resolved nothing) rather than withheld.
+  expect(out.confidentMisses[0]).toEqual({ villain: 'Unknown', scenario: 'Unknown', spot: '' });
 });
 
 // ── direction ────────────────────────────────────────────────────────────────
