@@ -331,11 +331,30 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
 
 6. **Session-length data-driven revisit** — SESSION_LENGTH=5 is a validated instinct, not a data-driven number. Decision rule: if PostHog chain rate (`session_started.chained`) stays persistently >~50%, argue for a bigger unit; if mid-session abandonment (`decision_made` count vs `session_completed`) >~15%, argue smaller. Revisit after day-14 playtest analysis.
 
-7. **Coach eval:coach live re-run** — the voice-reframe prompt landed with dry-mode only. Before any deploy touching `api/coach-read.js`, run `CLAUDE_API_KEY=... npm run eval:coach` and judge 9 reads against the F5 bar (see `docs/architecture/ENGINES.md` §4).
+7. ✅ **Coach eval:coach live re-run** — DONE many times over on July 29, 2026 (six live runs across Phase B and prompt v2; see the Phase B status section above). The standing law is unchanged: before any deploy touching `api/coach-read.js` prompt/model, run `CLAUDE_API_KEY=... npm run eval:coach` live and judge against the F5 bar.
 
 8. **AdSense** — ON HOLD until real users exist. Code scaffolding dormant (no-op without `REACT_APP_ADSENSE_CLIENT`). When ready: create account, set env in Vercel, author `public/ads.txt`.
 
-9. **Tester feedback — July 27 2026** (first live tester report; both items fixed same-day, follow-ups below).
+9. **Coach's Read v3 — "a true coach's voice" (founder direction, July 29 2026, evening).**
+   The founder wants the read to feel like a REAL coach talking, not three labeled
+   fields — think 2–3 flowing sentences in a coach's register. **Scope is the
+   Coach's Read panel ONLY: the Player Schema (archetype card) and the skill chips
+   stay exactly as they are — founder said so twice (C″ design and again July 29
+   evening).** This is the Tier B project from the July 29 discussion: the read's
+   JSON response shape (`COACH_SCHEMA` in api/coach-read.js — NOT the player
+   schema), `parseCoachRead`, and the read panel's render (card + notebook), plus
+   a cap rethink (the terse 12/24/20 caps and a conversational voice pull opposite
+   directions) and a redesign of the harness's mechanical checks. Budget: token cost is negligible (micro-cents per read); the
+   real cost is 3–4 live eval runs plus founder judgment time. Hard-won constraints
+   that MUST survive the rewrite: the honesty guards (no invented numbers, no
+   identity verdicts, the false-improvement guard, tier-1 confident-error priority),
+   and the eval law. Key technique from the July 29 v2 iteration: the model mimics
+   the prompt's worked example with near-perfect fidelity — the project succeeds or
+   fails on writing 2–3 PERFECT example reads in the target voice, not on adjectives
+   like "be conversational". Prompt v2's spec + validation record:
+   `docs/superpowers/specs/2026-07-29-coach-read-prompt-v2-design.md`.
+
+10. **Tester feedback — July 27 2026** (first live tester report; both items fixed same-day, follow-ups below).
    - ✅ **Mobile hand name printed through the felt rim.** At every width 320–414 the name rendered across the 3px gold border; the tester read "SIX-FIVE SUITED" as "Sive-five suited". Fixed by raising the felt's bottom inset 10% → 14% and giving 5px back between cards and name. Pinned by three guards in `e2e/mobilefold.spec.mjs` (clears rim / no ellipsis / within felt span) alongside the existing founder-approved hero-cluster contract.
    - ✅ **Odds notation was undecodable.** A tester hit "3.7:1" and read the decimal point as a second colon ("3:7:1"). The `Pot Odds` glossary entry defined the concept but never decoded the notation or the break-even conversion; both added in `VillainGuide.jsx`.
    - ⏳ **Follow-up — the glossary is a click away from the moment of confusion.** The number appears in a feedback panel mid-session; the decode lives behind the ⓘ. Options: link the first odds mention in `FeedbackPanel` to the guide's Pot Odds entry, or inline the break-even percentage next to the ratio in feedback text. The second is the higher-effect-size fix (F1: explanation quality is the top lever) but touches 100+ scenario `fb` strings — scope it deliberately rather than piecemeal.
