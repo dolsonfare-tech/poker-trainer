@@ -15,10 +15,14 @@ import CoachNotebook from './CoachNotebook';
 // The notebook must not vanish just because the LATEST refresh produced no
 // read (cap / failed call) — with no strip above it, the notebook becomes
 // the only surface for the history, latest read included.
-export default function LastSessionRead({ coachNote, coachReads, guest }) {
+// `coachLimited`: the server's 5-a-day coach cap swallowed this session's
+// refresh. Before July 29 2026 that produced nothing at all — the card sat
+// unchanged with no explanation, which reads as a broken feature rather than a
+// constraint. Naming the limit turns a silent defect into an honest one.
+export default function LastSessionRead({ coachNote, coachReads, guest, coachLimited }) {
   const readsCount = coachReads?.length ?? 0;
   const showNotebook = !guest && readsCount >= (coachNote ? 2 : 1);
-  if (!coachNote && !showNotebook) return null;
+  if (!coachNote && !showNotebook && !coachLimited) return null;
   const parsed = coachNote ? parseCoachRead(coachNote.body) : null;
 
   return (
@@ -40,6 +44,11 @@ export default function LastSessionRead({ coachNote, coachReads, guest }) {
             <p className="db-profile-read-prose">{parsed?.legacy}</p>
           )}
         </>
+      )}
+      {coachLimited && (
+        <div className="db-profile-read-capped">
+          {'♠\uFE0E'} Coach is out for the day — back tomorrow.
+        </div>
       )}
       {showNotebook && (
         <CoachNotebook reads={coachReads} includeLatest={!coachNote} />

@@ -1562,6 +1562,22 @@ body {
   background: rgba(200,168,75,0.5);
 }
 
+/* The 5-a-day coach cap fired for this session (founder queue item 6,
+   July 29 2026). Quiet and gold rather than red: a rationed premium call is a
+   constraint, not an error, and the previous read above it is still good.
+   'Segoe UI Symbol' before the generic so the spade cannot fall through to an
+   emoji font — the JSX pins U+FE0E too (invariant 36). */
+.db-profile-read-capped {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(200,168,75,0.14);
+  font-family: 'JetBrains Mono', 'Courier New', 'Segoe UI Symbol', monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  line-height: 1.5;
+  color: rgba(242,237,227,0.55);
+}
+
 .db-profile-read-watchfor {
   margin-top: 8px;
   font-size: 0.8rem;

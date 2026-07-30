@@ -80,7 +80,7 @@ export default function App() {
   const {
     scenario, shuffledScenarios, currentIndex, difficulty,
     decided, feedback, timedOut, combo, correctCount,
-    showSummary, sessionDelta, sessionHistory, skillResults,
+    showSummary, sessionDelta, sessionHistory, skillResults, coachLimited,
     handleDifficultySelect, handlePlayAgain,
     handleDecision, handleTimeout, handleNext, handleRestart,
   } = useSessionRun({ user, setUser, isGuest, screen, setScreen });
@@ -189,6 +189,10 @@ export default function App() {
           guest={isGuest}
           guestGated={guestGated}
           onGuestSignIn={handleGuestSignIn}
+          // The 5-a-day coach cap fired for the session just played. Transient
+          // by design: it explains THIS return to the dashboard, and a reload
+          // clears it rather than asserting a cap state we haven't re-checked.
+          coachLimited={coachLimited}
           onTableReads={!isGuest ? handleOpenTableReads : undefined}
           onSchemaInfo={(name) => {
             emitSchemaGuideOpened(name);

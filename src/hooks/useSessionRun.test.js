@@ -183,3 +183,46 @@ test('a chained session is reported as chained and resets the previous run', asy
   expect(result.current.sessionHistory).toEqual([]);
   expect(result.current.currentIndex).toBe(0);
 });
+
+// ── Daily read cap (founder queue item 6, July 29 2026) ────────────────────
+// submitSession has always returned `limited` for the 5-a-day cap, and
+// useSessionRun has always thrown it away — so a swallowed read looked exactly
+// like a working app that had nothing to say. These pin the value reaching the
+// caller, which is the whole of the bug.
+
+const playOut = async (result) => {
+  const total = result.current.shuffledScenarios.length;
+  for (let i = 0; i < total; i++) {
+    act(() => { result.current.handleDecision(result.current.scenario.correct); });
+    // eslint-disable-next-line no-await-in-loop
+    await act(async () => { result.current.handleNext(); });
+  }
+};
+
+test('a capped read surfaces as coachLimited', async () => {
+  submitSession.mockResolvedValue({ user: null, coachText: '', limited: true });
+  const { result } = setup();
+  await deal(result);
+  await playOut(result);
+  expect(result.current.coachLimited).toBe(true);
+});
+
+test('a normal session leaves coachLimited false', async () => {
+  submitSession.mockResolvedValue({ user: null, coachText: 'a read', limited: false });
+  const { result } = setup();
+  await deal(result);
+  await playOut(result);
+  expect(result.current.coachLimited).toBe(false);
+});
+
+// The notice describes the session that just ended. Carrying it into the next
+// one would tell a player the coach is out on a day it isn't.
+test('starting another session clears a previous cap notice', async () => {
+  submitSession.mockResolvedValue({ user: null, coachText: '', limited: true });
+  const { result } = setup();
+  await deal(result);
+  await playOut(result);
+  expect(result.current.coachLimited).toBe(true);
+  await act(async () => { await result.current.startSession('beginner'); });
+  expect(result.current.coachLimited).toBe(false);
+});

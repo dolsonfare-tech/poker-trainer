@@ -92,3 +92,28 @@ test('the card label carries no date — dates live in Past Reads', () => {
   expect(screen.queryByText(/as of/i)).not.toBeInTheDocument();
   expect(screen.queryByText(/Jul 24/)).not.toBeInTheDocument();
 });
+
+// ── Daily read cap (founder queue item 6, July 29 2026) ────────────────────
+// The 5-a-day cap used to swallow a read in silence: submitSession caught the
+// 429, returned limited:true, and nothing rendered it. The player saw an
+// unchanged card and no reason for it — a silent product defect rather than a
+// stated constraint.
+
+test('a capped refresh says so, above an unchanged read', () => {
+  render(<LastSessionRead coachNote={note} coachReads={history(1)} coachLimited />);
+  expect(screen.getByText(/Coach is out for the day/)).toBeInTheDocument();
+  // The previous read is still the player's best information — the notice
+  // explains why it did not change, it does not replace it.
+  expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
+});
+
+test('a capped refresh with nothing to show still renders the notice', () => {
+  const { container } = render(<LastSessionRead coachNote={null} coachReads={[]} coachLimited />);
+  expect(container).not.toBeEmptyDOMElement();
+  expect(screen.getByText(/Coach is out for the day/)).toBeInTheDocument();
+});
+
+test('an uncapped session shows no notice', () => {
+  render(<LastSessionRead coachNote={note} coachReads={history(1)} />);
+  expect(screen.queryByText(/Coach is out for the day/)).not.toBeInTheDocument();
+});

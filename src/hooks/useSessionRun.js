@@ -36,6 +36,11 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
   const [correctCount, setCorrectCount]           = useState(0);
   const [sessionHistory, setSessionHistory]       = useState([]);
   const [sessionDelta, setSessionDelta]           = useState(null);
+  // The server's 5-a-day coach cap fired for this session (submitSession
+  // caught the 429). Deliberately NOT cleared by handleRestart: the dashboard
+  // is where the read lives, so returning there is exactly when the player
+  // needs to be told why it didn't refresh. startSession clears it.
+  const [coachLimited, setCoachLimited]           = useState(false);
   const sessionUserRef                            = useRef(null);
   // Synchronous decided guard — state/effect updates can lag in throttled
   // background tabs, so this ref is the authoritative "already answered" flag
@@ -95,6 +100,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     setCorrectCount(0);
     setSessionHistory([]);
     setSessionDelta(null);
+    setCoachLimited(false);
     setScreen('session');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     emitSessionStarted({ difficulty: selected, chained, guest: isGuest });
@@ -124,11 +130,15 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     // the dashboard. Only the SUMMARY's display state is gone (Phase A): nothing
     // on this screen renders the read, so there is nothing to hold in state and
     // nothing to show a spinner for.
-    const { user: updated } = await submitSession({
+    // `limited` is the 5-a-day cap. It was computed here and dropped on the
+    // floor until July 29 2026, which is what made a swallowed read look
+    // identical to a coach with nothing to say (founder queue item 6).
+    const { user: updated, limited } = await submitSession({
       user: prevUser, hands, difficulty, isGuest,
       remote: hasSupabase ? { saveRemoteUser, recordSession } : null,
     });
     if (updated) setUser(updated);
+    setCoachLimited(!!limited);
   };
 
   const handleDecision = useCallback((choice) => {
@@ -196,7 +206,7 @@ export function useSessionRun({ user, setUser, isGuest, screen, setScreen }) {
     // state the render tree reads
     scenario, shuffledScenarios, currentIndex, difficulty,
     decided, feedback, timedOut, combo, correctCount,
-    showSummary, sessionDelta, sessionHistory, skillResults,
+    showSummary, sessionDelta, sessionHistory, skillResults, coachLimited,
     // actions
     startSession, handleDifficultySelect, handlePlayAgain,
     handleDecision, handleTimeout, handleNext, handleRestart,

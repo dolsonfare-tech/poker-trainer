@@ -176,8 +176,14 @@ test('network rejection: re-throws the exact same error instance', async () => {
 
 // ── 429 daily-limit ───────────────────────────────────────────────────────────
 // This is a DISTINCT branch: throws an Error with err.code='daily_limit'.
-// App.jsx catches it at err?.code === 'daily_limit' and sets coachLimited=true,
-// which SessionSummary renders as the honest cap copy (not the generic fallback).
+// utils/session.js:submitSession catches it at err?.code === 'daily_limit' and
+// returns limited:true; useSessionRun holds that as coachLimited and the
+// Dashboard read strip renders the honest cap copy (LastSessionRead).
+//
+// This comment named App.jsx and SessionSummary until July 29 2026 — both were
+// correct before Wave 3 moved the consumer into useSessionRun and Phase A took
+// the read off the summary. It went stale describing the exact hop that was
+// silently missing: nothing read `limited` at all until queue item 6.
 
 test('429: THROWS (does not return a value)', async () => {
   jest.spyOn(global, 'fetch').mockResolvedValue(

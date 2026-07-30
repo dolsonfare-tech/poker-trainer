@@ -18,7 +18,7 @@ import { emitGoProClicked, emitUsernameEditOpened } from '../utils/events';
 // Layout skeleton only. Every self-contained section lives in
 // ./dashboard/* (MOD-003, Wave 2) — this file composes them and owns the
 // stats row, Player Profile card, and CTA block.
-export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn, onTableReads, onSchemaInfo }) {
+export default function Dashboard({ onStartSession, user, sessionDelta, onSignOut, onRename, guest, guestGated, onGuestSignIn, onTableReads, onSchemaInfo, coachLimited }) {
   const [editingName, setEditingName] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [pulse, setPulse] = useState(false);
@@ -190,7 +190,7 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
             </div>
           </div>
 
-          <LastSessionRead coachNote={coachNote} coachReads={user.coachReads} guest={guest} />
+          <LastSessionRead coachNote={coachNote} coachReads={user.coachReads} guest={guest} coachLimited={coachLimited} />
         </div>
       </div>
 
