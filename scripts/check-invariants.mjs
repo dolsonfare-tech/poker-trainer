@@ -934,6 +934,40 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   }
 }
 
+// ── 35. The coach lambda survives BOTH module shapes (July 29, 2026) ──────
+// Vercel's builder transpiles the traced src/ ESM files to CommonJS inside
+// the function bundle, so in production import() returns a WRAPPED namespace:
+// named exports on ns.default, the default export at ns.default.default.
+// Locally the same files load as true ESM. api/coach-read.js's nsNamed /
+// nsDefault normalizers must accept both shapes — production ran the wrapped
+// shape while every local gate ran the ESM shape, and every read 500'd
+// ("scenarios.map is not a function") until a human noticed. BEHAVIORAL
+// check, not a regex: both shapes are fed through the real normalizers.
+{
+  const { createRequire } = await import('node:module');
+  const req = createRequire(import.meta.url);
+  const { nsNamed, nsDefault } = req(join(ROOT, 'api/coach-read.js'));
+  const arr = [1, 2];
+  const fn = () => {};
+  const esmShape = { default: arr, aggregate: fn, COACH_WINDOW: 10 };
+  const cjsShape = { default: { __esModule: true, default: arr, aggregate: fn, COACH_WINDOW: 10 } };
+  const cases = [
+    ['ESM default', () => nsDefault(esmShape) === arr],
+    ['CJS-wrapped default', () => nsDefault(cjsShape) === arr],
+    ['ESM named', () => nsNamed(esmShape, 'aggregate') === fn],
+    ['CJS-wrapped named', () => nsNamed(cjsShape, 'aggregate') === fn],
+    ['missing named throws', () => { try { nsNamed(esmShape, 'nope'); return false; } catch { return true; } }],
+  ];
+  for (const [name, check] of cases) {
+    let ok = false;
+    try { ok = check(); } catch { ok = false; }
+    if (!ok) {
+      flag('ERROR', 'coach-module-interop',
+        `api/coach-read.js module-interop normalizer failed the '${name}' case — the deployed lambda sees Vercel-transpiled CJS namespaces while local dev sees true ESM; a normalizer that handles only one shape is the July 29, 2026 production read outage`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

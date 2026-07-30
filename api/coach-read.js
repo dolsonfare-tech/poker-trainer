@@ -71,6 +71,27 @@ function buildLookup(scenarios) {
   };
 }
 
+// ── ESM/CJS interop (July 29, 2026 — the production read outage) ──────────
+// Locally, import() of the src/ files yields true ESM namespaces: named
+// exports on the namespace, the scenario array at scen.default. In the
+// DEPLOYED lambda, Vercel's builder transpiles those traced files to CommonJS
+// inside the bundle, and Node's import()-of-CJS wraps module.exports one
+// level deeper: named exports live on ns.default, and a transpiled default
+// export lands at ns.default.default. `scen.default.map is not a function`
+// took every production read down while every local gate — which loads the
+// real ESM — stayed green. These two normalizers accept BOTH shapes and
+// throw NAMED errors on anything else, so a future shape drift logs as
+// itself instead of as a `.map` mystery three frames deep.
+const nsNamed = (ns, name) => {
+  const fn = ns?.[name] ?? ns?.default?.[name];
+  if (fn === undefined) throw new Error(`module interop: export '${name}' not found on either namespace shape`);
+  return fn;
+};
+const nsDefault = (ns) => {
+  const d = ns?.default;
+  return (d && typeof d === 'object' && '__esModule' in d && 'default' in d) ? d.default : d;
+};
+
 let _mods = null;
 async function loadModules() {
   if (!_mods) {
@@ -78,11 +99,16 @@ async function loadModules() {
       import('../src/utils/coachWindow.js'),
       import('../src/data/scenarios.js'),
     ]);
-    _mods = {
-      aggregate: win.aggregate,
-      COACH_WINDOW: win.COACH_WINDOW,
-      lookup: buildLookup(scen.default),
-    };
+    const scenarios = nsDefault(scen);
+    if (!Array.isArray(scenarios)) {
+      throw new Error(`module interop: scenarios resolved to ${typeof scenarios}, expected the scenario array`);
+    }
+    const aggregate = nsNamed(win, 'aggregate');
+    const COACH_WINDOW = nsNamed(win, 'COACH_WINDOW');
+    if (typeof aggregate !== 'function' || typeof COACH_WINDOW !== 'number') {
+      throw new Error('module interop: coachWindow exports resolved to wrong types');
+    }
+    _mods = { aggregate, COACH_WINDOW, lookup: buildLookup(scenarios) };
   }
   return _mods;
 }
@@ -455,3 +481,5 @@ module.exports.buildLookup = buildLookup;
 module.exports.HEADLINE_RULE = HEADLINE_RULE;
 module.exports.TRAJECTORY_RULE = TRAJECTORY_RULE;
 module.exports.WORD_CAPS = WORD_CAPS;
+module.exports.nsNamed = nsNamed;
+module.exports.nsDefault = nsDefault;
