@@ -43,7 +43,10 @@ export default function TimerRing({ totalSeconds, paused, onTimeout }) {
           style={{ transition: 'stroke-dashoffset 1s linear, stroke 0.5s ease', filter: `drop-shadow(0 0 4px ${color})` }}
         />
       </svg>
-      <div style={{
+      {/* tr-seconds carries no styling — it is the stable handle the pause
+          guards select on. Reading the countdown by tag/position broke every
+          time the ring's markup moved. */}
+      <div className="tr-seconds" style={{
         position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontFamily: "'JetBrains Mono', 'Courier New', monospace", fontSize: '13px', fontWeight: '700',
         color, transition: 'color 0.5s ease',

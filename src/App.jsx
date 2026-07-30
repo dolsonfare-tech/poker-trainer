@@ -254,6 +254,13 @@ export default function App() {
                   emitVillainGuideOpened({ from: 'table', scenarioId: scenario.id });
                   setGuide({ focus: label });
                 }}
+                // Consulting the guide must not spend the hand's clock — the
+                // ⓘ in the header and the villain read on the felt both open
+                // a modal OVER a live countdown. Until July 29 2026 the timer
+                // kept running behind it, so looking something up could time
+                // the player out. `guide` is the same null-or-object state the
+                // modal renders from, so the pause can never drift from it.
+                guideOpen={guide !== null}
               />
             </>
           )}

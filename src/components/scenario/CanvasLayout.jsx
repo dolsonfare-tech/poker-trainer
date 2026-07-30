@@ -22,7 +22,7 @@ export default function CanvasLayout({
   options, onDecision, decided,
   showTimer, onTimeout,
   feedback, timedOut, onNext, nextLabel,
-  onVillainInfo,
+  onVillainInfo, guideOpen = false,
 }) {
   const v = villainSummary(scenario);
   // Peek: temporarily lift the feedback overlay so the player can re-study
@@ -30,6 +30,7 @@ export default function CanvasLayout({
   // disagree with. Resets on every new hand.
   const [peek, setPeek] = useState(false);
   useEffect(() => { setPeek(false); }, [currentIndex]);
+
   // `sc2-analysis` is the desktop side-by-side switch (tester feedback #1, July
   // 2026). It is a state modifier, not a breakpoint: App.css only acts on it at
   // >=1280px, where there is room to put the analysis BESIDE the felt instead of
@@ -45,9 +46,14 @@ export default function CanvasLayout({
           {combo >= 2 && (
             <span className="sc2-combo">🔥 {combo} in a row</span>
           )}
+          {/* The ring freezes for a decision AND for an open guide. Consulting
+              the help is not spending your clock: before July 29 2026 tapping
+              ⓘ — the header button or the villain read below — left the
+              countdown running behind the modal, so looking up what a Calling
+              Station is could time the hand out. */}
           {showTimer && (
             <TimerRing key={currentIndex} totalSeconds={totalSeconds}
-              paused={decided} onTimeout={onTimeout} />
+              paused={decided || guideOpen} onTimeout={onTimeout} />
           )}
           <SessionProgress currentIndex={currentIndex} total={total} correctCount={correctCount} />
         </div>

@@ -9,7 +9,7 @@
 // functional tests stay green; these assertions catch the nesting half of that
 // failure, and only the screenshot/e2e step catches the CSS half.
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 
 jest.mock('../../utils/analytics', () => ({ track: jest.fn() }));
 
@@ -37,15 +37,28 @@ const scenario = (over = {}) => ({
   ...over,
 });
 
-const layout = (props = {}) => {
+const allProps = (props = {}) => {
   const s = props.scenario ?? scenario();
-  return render(<CanvasLayout
-    scenario={s} currentIndex={0} total={8}
-    totalSeconds={60} correctCount={0}
-    options={s.options} onDecision={() => {}} decided={false}
-    showTimer={false} onTimeout={() => {}}
-    feedback={null} timedOut={false} onNext={() => {}} nextLabel="Next hand"
-    {...props} />);
+  return {
+    scenario: s, currentIndex: 0, total: 8,
+    totalSeconds: 60, correctCount: 0,
+    options: s.options, onDecision: () => {}, decided: false,
+    showTimer: false, onTimeout: () => {},
+    feedback: null, timedOut: false, onNext: () => {}, nextLabel: 'Next hand',
+    ...props,
+  };
+};
+
+const layout = (props = {}) => render(<CanvasLayout {...allProps(props)} />);
+
+// Prop-updating variant: returns a setter that rerenders IN PLACE. The pause
+// tests need this rather than a second `layout()` — TimerRing is keyed on
+// currentIndex, so a remount would reset the countdown and the test would pass
+// against a frozen clock it never actually froze.
+const relayout = (props = {}) => {
+  const all = allProps(props);
+  const { rerender } = render(<CanvasLayout {...all} />);
+  return (next) => rerender(<CanvasLayout {...all} {...next} />);
 };
 
 beforeEach(() => { jest.clearAllMocks(); });
@@ -210,4 +223,63 @@ test('with a guide handler the strip reports the villain label', () => {
   layout({ onVillainInfo });
   fireEvent.click(document.querySelector('.sc2-strip-tappable'));
   expect(onVillainInfo).toHaveBeenCalledWith('Tight Nit');
+});
+
+// ── Guide-open timer pause (founder queue item 1, July 29 2026) ─────────────
+// The worst first-impression bug in the repo: tapping ⓘ — the header guide
+// button or the villain read on the felt — opens a modal OVER a running clock,
+// so a player who stops to look up what a Calling Station is gets timed out for
+// consulting the help. `decided` was the only input that ever froze the ring;
+// `guideOpen` is the second. These pin BOTH edges, because a pause that never
+// resumes is the same bug wearing a different hat.
+
+test('the countdown runs while the guide is closed', () => {
+  jest.useFakeTimers();
+  try {
+    relayout({ showTimer: true });
+    act(() => { jest.advanceTimersByTime(3000); });
+    expect(screen.getByText('57')).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('opening the guide freezes the countdown where it stood', () => {
+  jest.useFakeTimers();
+  try {
+    const set = relayout({ showTimer: true });
+    act(() => { jest.advanceTimersByTime(3000); });
+    act(() => { set({ guideOpen: true }); });
+    act(() => { jest.advanceTimersByTime(10000); });
+    expect(screen.getByText('57')).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('closing the guide resumes the countdown from where it froze', () => {
+  jest.useFakeTimers();
+  try {
+    const set = relayout({ showTimer: true });
+    act(() => { jest.advanceTimersByTime(3000); });
+    act(() => { set({ guideOpen: true }); });
+    act(() => { jest.advanceTimersByTime(10000); });
+    act(() => { set({ guideOpen: false }); });
+    act(() => { jest.advanceTimersByTime(2000); });
+    expect(screen.getByText('55')).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
+});
+
+test('an open guide cannot time the player out', () => {
+  jest.useFakeTimers();
+  try {
+    const onTimeout = jest.fn();
+    relayout({ showTimer: true, totalSeconds: 3, guideOpen: true, onTimeout });
+    act(() => { jest.advanceTimersByTime(20000); });
+    expect(onTimeout).not.toHaveBeenCalled();
+  } finally {
+    jest.useRealTimers();
+  }
 });

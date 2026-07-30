@@ -2,7 +2,7 @@
 // must land on a rendered session summary. Guards against render crashes
 // (blank screen) anywhere in the flow.
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 
 // Pin local (pre-Supabase) mode: this test exercises the game flow, and CRA's
 // jest loads .env, which would otherwise flip the app into auth mode.
@@ -108,4 +108,58 @@ test('username is editable from the dashboard, then locked for a week', async ()
   expect(screen.getByText(/limited to once a week/)).toBeInTheDocument();
   fireEvent.click(screen.getByText('OK'));
   expect(screen.getByText('RiverRat')).toBeInTheDocument();
+});
+
+// ── Guide pauses the clock (founder queue item 1, July 29 2026) ─────────────
+// CanvasLayout.test.js proves the `guideOpen` prop freezes the ring. This
+// proves APP PASSES IT — the half that was actually broken. Without this the
+// prop can be silently dropped at the call site and every CanvasLayout test
+// stays green while the shipped bug returns.
+//
+// Fake timers run for the whole test: TimerRing registers its interval on
+// mount, so switching clocks afterwards would leave a real interval running
+// and the assertion would measure nothing.
+test('opening the guide mid-hand stops the clock, and closing it restarts', async () => {
+  localStorage.clear();
+  jest.useFakeTimers();
+  try {
+    const { container } = render(<App />);
+    const seconds = () => container.querySelector('.tr-seconds')?.textContent;
+
+    fireEvent.change(screen.getByPlaceholderText('Choose a username'), {
+      target: { value: 'Tester' },
+    });
+    fireEvent.click(screen.getByText(/Let's Play/));
+
+    // Intermediate, not beginner — showTimer is `difficulty !== 'beginner'`,
+    // so a beginner session would assert against a ring that never rendered.
+    fireEvent.click(screen.getByText(/Deal Me In/));
+    fireEvent.click(screen.getByText('Intermediate'));
+    fireEvent.click(screen.getByText(/Start Session/));
+
+    // The deck arrives via dynamic import (CA-014) — a microtask, not a timer.
+    await act(async () => {});
+    expect(container.querySelector('.act-btn')).toBeInTheDocument();
+    expect(seconds()).toBe('60');
+
+    // Control: the clock is genuinely running before the guide opens. Without
+    // this the freeze assertion below would pass against a dead timer.
+    act(() => { jest.advanceTimersByTime(3000); });
+    expect(seconds()).toBe('57');
+
+    // The header ⓘ — the same control a player taps to look up a villain type.
+    // VillainGuide is a lazy route, so let its chunk resolve.
+    fireEvent.click(screen.getByLabelText('Open the guide'));
+    await act(async () => {});
+
+    act(() => { jest.advanceTimersByTime(30000); });
+    expect(seconds()).toBe('57');   // half a minute of reading costs nothing
+
+    fireEvent.click(screen.getByLabelText('Close guide'));
+    await act(async () => {});
+    act(() => { jest.advanceTimersByTime(2000); });
+    expect(seconds()).toBe('55');   // and the hand resumes where it left off
+  } finally {
+    jest.useRealTimers();
+  }
 });
