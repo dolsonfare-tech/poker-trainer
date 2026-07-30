@@ -71,7 +71,9 @@ export default function Dashboard({ onStartSession, user, sessionDelta, onSignOu
         {guest ? (
           <div className="db-account">
             <div className="db-account-btn db-account-static">
-              <div className="db-avatar">♠</div>
+              {/* U+FE0E (text presentation) — a bare spade is emoji-by-default on
+                  Apple platforms and paints in colour. Invariant 36. */}
+              <div className="db-avatar">{'♠\uFE0E'}</div>
               <span className="db-username">Guest</span>
             </div>
             <button className="db-guest-signin" onClick={() => onGuestSignIn('topbar')}>

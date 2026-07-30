@@ -27,7 +27,10 @@ export default function TableCanvas({ scenario, onVillainInfo }) {
   const heroIdx = positions.findIndex(p => p.state === 'hero');
   const villainIdx = positions.findIndex(p => p.state === 'active');
   const v = villainSummary(scenario);
-  const isRed = (str) => str.includes('♥') || str.includes('♦');
+  // A COMPARISON against scenario data, not rendered output: the board
+  // strings carry bare suits, so pinning U+FE0E here would match nothing and
+  // every red card would render black.
+  const isRed = (str) => str.includes('♥') || str.includes('♦'); // raw-suit-ok
   const boardCount = scenario.board ? scenario.board.length : 0;
   const blankCount = Math.max(0, 5 - boardCount);
   const heroPos = positions[heroIdx]?.label?.split(' ')[0] ?? 'YOU';

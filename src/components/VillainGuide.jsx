@@ -78,14 +78,14 @@ const GLOSSARY = [
   { label: 'Equity', desc: "Your hand's share of the pot if the cards were run out right now — a hand with 40% equity wins the pot 40% of the time." },
   { label: 'Outs', desc: 'The unseen cards that improve your hand to a likely winner — a flush draw has nine outs, an open-ended straight draw eight, a gutshot four.' },
   { label: 'Gutshot', desc: 'An inside straight draw needing one exact rank to fill — four outs, half the outs of an open-ended draw.' },
-  { label: 'Kicker', desc: 'The side card that breaks ties between matching hands — on an ace-high board, A♥K♦ beats A♠Q♣ because the king outkicks the queen.' },
+  { label: 'Kicker', desc: 'The side card that breaks ties between matching hands — on an ace-high board, A♥\uFE0EK♦\uFE0E beats A♠\uFE0EQ♣\uFE0E because the king outkicks the queen.' },
   { label: 'Barrel', desc: 'Continuing to bet street after street as the aggressor — a second barrel on the turn, a third barrel on the river.' },
   { label: 'Overbet', desc: 'A bet larger than the pot. It polarizes the bettor: usually a very strong hand or a bluff, rarely anything in between.' },
   { label: 'Semi-bluff', desc: 'A bet or raise with a drawing hand — you can win two ways: everyone folds now, or your draw arrives when called.' },
   { label: 'Float', desc: 'Calling a bet with a weak hand, planning to take the pot away on a later street when the aggressor gives up.' },
-  { label: 'Blocker', desc: 'A card in your hand that makes an opponent less likely to hold a certain hand — holding the A♠ blocks the nut flush on a spade board.' },
+  { label: 'Blocker', desc: 'A card in your hand that makes an opponent less likely to hold a certain hand — holding the A♠\uFE0E blocks the nut flush on a spade board.' },
   { label: 'Implied Odds', desc: 'Money you expect to win on later streets if your draw hits. Good implied odds can make a call profitable even when the immediate pot odds fall short.' },
-  { label: 'Wet / Dry Board', desc: 'A wet board offers many draws (9♥8♥7♦); a dry board offers few (K♠7♦2♣). Wet boards call for bigger bets and closer attention.' },
+  { label: 'Wet / Dry Board', desc: 'A wet board offers many draws (9♥\uFE0E8♥\uFE0E7♦\uFE0E); a dry board offers few (K♠\uFE0E7♦\uFE0E2♣\uFE0E). Wet boards call for bigger bets and closer attention.' },
 ];
 
 const POSITIONS = [

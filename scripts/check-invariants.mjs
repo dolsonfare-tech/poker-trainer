@@ -968,6 +968,54 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   }
 }
 
+// ── 36. Suit glyphs in components request TEXT presentation (July 29, 2026) ─
+// U+2660/2663/2665/2666 are emoji-by-default on Apple platforms: with no
+// VARIATION SELECTOR-15 (U+FE0E) the OS is free to resolve them through Apple
+// Color Emoji and paint a colour glyph in a monochrome felt-and-gold UI. This
+// is the founder's "the logos are blue-ish now" report (July 27, 2026), and the
+// July 27 fix pinned exactly ONE site — DifficultySelector — leaving the
+// SignIn guest note and the Dashboard guest avatar to be re-reported on
+// July 28. Pinning one site never generalises; this rule is the generalisation.
+//
+// Scope is component JSX, where a suit is RENDERED. src/data/*.js is out of
+// scope on purpose: those are content files whose card strings flow through
+// PlayingCard, and they are gated by the content audits instead.
+//
+// A comparison against un-pinned data (`str.includes('♥')`) must NOT be pinned
+// — adding the selector there silently breaks the match — so a line may opt out
+// with a `raw-suit-ok` comment stating why.
+{
+  const SUIT = /[♠♣♥♦]/g;
+  for (const f of srcNonTest.filter(x => x.endsWith('.jsx'))) {
+    read(f).split('\n').forEach((line, i) => {
+      if (line.includes('raw-suit-ok')) return;
+      for (const m of [...line.matchAll(SUIT)]) {
+        const after = line.slice(m.index + 1);
+        // Either the six-character escape TEXT (string literals) or a real
+        // U+FE0E codepoint (JSX text nodes, where \u escapes are not parsed).
+        if (after.startsWith('\\uFE0E') || after.startsWith('︎')) continue;
+        flag('ERROR', 'suit-glyph-presentation',
+          `${rel(f)}:${i + 1} renders '${m[0]}' with no U+FE0E — append the text-presentation selector ('${m[0]}\\uFE0E'; in JSX text use {'${m[0]}\\uFE0E'}) or, if this is a comparison against unpinned data rather than rendered output, mark the line raw-suit-ok with a reason`);
+      }
+    });
+  }
+
+  // The CSS half of the same failure. U+FE0E asks for text presentation, but a
+  // stack that NAMES an emoji family hands the glyph over anyway. Rather than
+  // maintain a list of glyph-bearing selectors (which drifts the moment someone
+  // adds one), assert the whole stylesheet never reaches for an emoji font.
+  // Comments are stripped first: .ds-card-icon's note explains the July 27 bug
+  // by naming Apple Color Emoji, and an unfiltered scan would read that prose
+  // as the declaration it warns about.
+  const css = read(join(ROOT, 'src', 'App.css')).replace(/\/\*[\s\S]*?\*\//g, '');
+  for (const m of css.matchAll(/font-family:([^;}]*)/g)) {
+    if (/emoji/i.test(m[1])) {
+      flag('ERROR', 'suit-glyph-presentation',
+        `src/App.css declares an emoji font family (font-family:${m[1].trim().slice(0, 60)}) — an emoji family in the stack can claim ♠/♥/♦/♣ and paint them in colour, which is the July 27 2026 "the logos are blue-ish now" report; reach a monochrome symbol font instead ('Segoe UI Symbol')`);
+    }
+  }
+}
+
 // ── Report ──────────────────────────────────────────────────────────────
 const errors = findings.filter(f => f.sev === 'ERROR');
 const warns = findings.filter(f => f.sev === 'WARN');

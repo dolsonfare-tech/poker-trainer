@@ -77,7 +77,9 @@ export default function SignIn({ onGuestPlay, guestUsed }) {
         </div>
         {guestUsed && (
           <div className="si-guest-note">
-            ♠ Your free session's results are saved on this device — sign in and they carry over.
+            {/* U+FE0E (text presentation) — as JSX text a bare spade is
+                emoji-by-default on Apple platforms. Invariant 36. */}
+            {'♠\uFE0E'} Your free session's results are saved on this device — sign in and they carry over.
           </div>
         )}
 
