@@ -13,6 +13,7 @@ import { execFileSync, execSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
+import { classifyBuild, selfTest as buildModeSelfTest, STUB_SUPABASE_URL } from '../e2e/buildmode.mjs';
 
 const ROOT = new URL('..', import.meta.url).pathname;
 const findings = [];
@@ -1014,6 +1015,96 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
         `src/App.css declares an emoji font family (font-family:${m[1].trim().slice(0, 60)}) — an emoji family in the stack can claim ♠/♥/♦/♣ and paint them in colour, which is the July 27 2026 "the logos are blue-ish now" report; reach a monochrome symbol font instead ('Segoe UI Symbol')`);
     }
   }
+}
+
+// ── 37. The two e2e lanes stay pinned to their own builds (July 30, 2026) ─
+// The sign-in lane (e2e/auth/) needs the OPPOSITE build from every other spec:
+// Supabase env PRESENT, so `hasSupabase` is true and App renders SignIn at all.
+// Two builds and two lanes means two ways to wire them to the wrong partner,
+// and only one of them is loud.
+//
+//   LOUD   — the auth lane against the localStorage build: SignIn never
+//            renders, every check fails, someone investigates.
+//   SILENT — a spec added to the auth lane that actually needed localStorage
+//            mode, or a lane entry point copy-pasted with the other lane's
+//            buildMode. It runs, it passes, and it measures nothing. That is
+//            the failure this rule exists for.
+//
+// It also carries rule 25's protection (no local run may write to production
+// PostHog) across to the second build, which is a new place for that leak to
+// reopen, and runs the build classifier's own negative control here — `npm run
+// gates` does not run e2e, so without this a gutted classifier would ship.
+{
+  const pkg = JSON.parse(read(join(ROOT, 'package.json')));
+  const authBuild = pkg.scripts?.['e2e:build:auth'] ?? '';
+  const scriptVar = (name) => (authBuild.match(new RegExp(`${name}=(\\S*)`)) ?? [, null])[1];
+
+  if (!authBuild)
+    flag('ERROR', 'e2e-lanes',
+      'package.json has no e2e:build:auth script — the sign-in lane has no build to run against');
+
+  // The classifier must agree with what package.json actually bakes in. If the
+  // stub origin is edited in one place, this fires instead of the lane
+  // rejecting its own build at run time (or worse, accepting the wrong one).
+  const builtUrl = scriptVar('REACT_APP_SUPABASE_URL');
+  if (authBuild && builtUrl !== STUB_SUPABASE_URL)
+    flag('ERROR', 'e2e-lanes',
+      `e2e:build:auth builds with REACT_APP_SUPABASE_URL=${builtUrl}, but e2e/buildmode.mjs classifies on '${STUB_SUPABASE_URL}' — the auth lane would reject its own build`);
+  if (authBuild && classifyBuild([`u="${builtUrl}";`]) !== 'authstub')
+    flag('ERROR', 'e2e-lanes',
+      `a bundle built by e2e:build:auth does not classify as 'authstub' (got '${classifyBuild([`u="${builtUrl}";`])}') — the guard cannot tell the lanes apart`);
+  if (authBuild && !scriptVar('REACT_APP_SUPABASE_ANON_KEY'))
+    flag('ERROR', 'e2e-lanes',
+      'e2e:build:auth leaves REACT_APP_SUPABASE_ANON_KEY empty — supabase.js needs BOTH vars, so the build would silently be localStorage mode and the lane would test nothing');
+
+  // Rule 25, second build. `e2e:build` blanking the key is not enough once a
+  // second build exists that a developer runs just as often.
+  if (authBuild && scriptVar('REACT_APP_POSTHOG_KEY') !== '')
+    flag('ERROR', 'e2e-lanes',
+      'e2e:build:auth does not blank REACT_APP_POSTHOG_KEY — the sign-in lane would write synthetic events into the production PostHog project (see rule 25)');
+  // The spec's out-of-scope note says OAuth is untested BECAUSE the button is
+  // absent. If the flag leaks into this build that note quietly stops being true.
+  if (authBuild && scriptVar('REACT_APP_GOOGLE_AUTH'))
+    flag('ERROR', 'e2e-lanes',
+      'e2e:build:auth enables REACT_APP_GOOGLE_AUTH — e2e/auth/signin.spec.mjs declares OAuth out of scope on the grounds that the button does not render');
+
+  // Each lane entry point demands its own build mode, and the two must differ.
+  const lanes = [
+    ['e2e/run.mjs', 'localstorage', 'e2e'],
+    ['e2e/run-auth.mjs', 'authstub', 'e2e/auth'],
+  ];
+  const declared = [];
+  for (const [file, mode, specDir] of lanes) {
+    const p = join(ROOT, file);
+    if (!existsSync(p)) { flag('ERROR', 'e2e-lanes', `${file} is missing — a lane vanished`); continue; }
+    const src = read(p);
+    const m = src.match(/buildMode:\s*'([a-z]+)'/);
+    declared.push(m?.[1]);
+    if (m?.[1] !== mode)
+      flag('ERROR', 'e2e-lanes',
+        `${file} runs with buildMode '${m?.[1] ?? 'none'}', expected '${mode}' — this lane's specs assume that build and would measure nothing against the other one`);
+    const dir = join(ROOT, specDir);
+    const specs = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.spec.mjs')) : [];
+    if (specs.length === 0)
+      flag('ERROR', 'e2e-lanes', `${specDir} holds no *.spec.mjs — ${file} would report success having measured nothing`);
+  }
+  if (declared.length === 2 && declared[0] === declared[1])
+    flag('ERROR', 'e2e-lanes',
+      `both e2e lanes declare buildMode '${declared[0]}' — one of them is running its specs against a build they were not written for`);
+
+  // The classifier's own negative control. e2e/buildmode.mjs runs this too, but
+  // only when a lane runs; `npm run gates` never invokes e2e.
+  if (!buildModeSelfTest())
+    flag('ERROR', 'e2e-lanes',
+      'e2e/buildmode.mjs selfTest() fails — the build classifier no longer separates production / authstub / localstorage, so both lanes are running unguarded');
+
+  // CI must run the lane. A net that only exists locally is a dead net — the
+  // rule-12 lesson (CI red and unnoticed for a week, July 19–26 2026).
+  const ci = read(join(ROOT, '.github/workflows/ci.yml'));
+  for (const cmd of ['npm run e2e:build:auth', 'npm run e2e:auth'])
+    if (!ci.includes(cmd))
+      flag('ERROR', 'e2e-lanes',
+        `.github/workflows/ci.yml never runs \`${cmd}\` — the sign-in lane would exist only on developer machines`);
 }
 
 // ── Report ──────────────────────────────────────────────────────────────

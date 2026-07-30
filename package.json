@@ -34,6 +34,8 @@
     "playtest:personas": "node scripts/playtest-personas.mjs",
     "e2e": "node e2e/run.mjs",
     "e2e:build": "REACT_APP_SUPABASE_URL= REACT_APP_SUPABASE_ANON_KEY= REACT_APP_POSTHOG_KEY= react-scripts build",
+    "e2e:auth": "node e2e/run-auth.mjs",
+    "e2e:build:auth": "REACT_APP_SUPABASE_URL=https://stub.supabase.e2e REACT_APP_SUPABASE_ANON_KEY=stub-anon-key REACT_APP_POSTHOG_KEY= REACT_APP_GOOGLE_AUTH= react-scripts build",
     "eject": "react-scripts eject",
     "gen:scenario-index": "node scripts/gen-scenario-index.mjs",
     "check:bundle": "node scripts/check-bundle.mjs"

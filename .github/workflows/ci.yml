@@ -41,3 +41,10 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Browser e2e (geometry guards, streak clock, comprehension surfaces)
         run: npm run e2e
+      # Second lane, second build. SignIn only renders when Supabase env is
+      # PRESENT, so it is unreachable from the build above — see e2e/buildmode.mjs.
+      # Dummy, unresolvable credentials; every request is intercepted in-spec.
+      - name: Auth-stub build (dummy Supabase env — reaches the SignIn screen)
+        run: npm run e2e:build:auth
+      - name: Browser e2e — sign-in lane (guest-first hierarchy, magic link)
+        run: npm run e2e:auth
