@@ -8,6 +8,7 @@ import TableCanvas from './TableCanvas';
 import SessionProgress from './SessionProgress';
 import ActionButtons from './ActionButtons';
 import { emitTablePeeked } from '../../utils/events';
+import { useAdvanceKey } from '../../hooks/useAdvanceKey';
 
 // ─── Canvas layout ─────────────────────────────────────────────────────────
 // Top-level compositor for the gameplay canvas — chrome, street bar, felt,
@@ -30,6 +31,15 @@ export default function CanvasLayout({
   // disagree with. Resets on every new hand.
   const [peek, setPeek] = useState(false);
   useEffect(() => { setPeek(false); }, [currentIndex]);
+
+  // Keyboard advance (July 29 2026): Space/Enter stands in for a click on the
+  // Next button. `active` mirrors that button's own render condition, plus the
+  // two states where it exists but the player isn't looking at it — mid-peek
+  // (overlay lifted, button off screen) and behind the guide modal.
+  useAdvanceKey({
+    active: !!feedback && !feedback.loading && !peek && !guideOpen,
+    onAdvance: onNext,
+  });
 
   // `sc2-analysis` is the desktop side-by-side switch (tester feedback #1, July
   // 2026). It is a state modifier, not a breakpoint: App.css only acts on it at

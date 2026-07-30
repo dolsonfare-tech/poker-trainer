@@ -283,3 +283,90 @@ test('an open guide cannot time the player out', () => {
     jest.useRealTimers();
   }
 });
+
+// ── Keyboard advance (founder queue item 5, July 29 2026) ──────────────────
+// Desktop players shouldn't reach for the mouse between hands. This is the
+// SANCTIONED half of the friction item: the keystroke stands in for a click on
+// the Next button and nothing else. It must never become auto-advance — every
+// test below that expects `not.toHaveBeenCalled` is guarding that line, so if
+// a timer ever starts driving onNext, this block goes red.
+
+const FB = { grade: 'correct', loading: false, text: 'Right price.', choice: 'call' };
+
+test('space advances the hand once the analysis is up', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.keyDown(document.body, { key: ' ' });
+  expect(onNext).toHaveBeenCalledTimes(1);
+});
+
+test('enter advances the hand once the analysis is up', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.keyDown(document.body, { key: 'Enter' });
+  expect(onNext).toHaveBeenCalledTimes(1);
+});
+
+// No feedback = the hand is still live and the action buttons have focus
+// priority. Advancing here would skip the player's own decision.
+test('the advance key does nothing while the hand is still live', () => {
+  const onNext = jest.fn();
+  layout({ onNext });
+  fireEvent.keyDown(document.body, { key: ' ' });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+// Mirrors the Next button being withheld — the key and the button appear and
+// disappear together, which is what makes this a shortcut rather than a
+// second, invisible way to advance.
+test('the advance key does nothing while the coach text is loading', () => {
+  const onNext = jest.fn();
+  layout({ feedback: { ...FB, loading: true, text: '' }, decided: true, onNext });
+  fireEvent.keyDown(document.body, { key: ' ' });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+test('an unrelated key never advances', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.keyDown(document.body, { key: 'a' });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+// Cmd/Ctrl+Space is a system shortcut (Spotlight, input-source switch). Eating
+// it would be worse than the friction we're removing.
+test('a modified space is left to the browser', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.keyDown(document.body, { key: ' ', metaKey: true });
+  fireEvent.keyDown(document.body, { key: ' ', ctrlKey: true });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+// The disagree chips are real buttons: the browser already fires click on
+// Space/Enter for a focused button. Without this guard, flagging a grading
+// would submit the flag AND skip to the next hand in one keystroke.
+test('space on a focused control activates that control, not the advance', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.keyDown(screen.getByText(/Disagree\?/), { key: ' ' });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+test('an open guide swallows the advance key', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext, guideOpen: true });
+  fireEvent.keyDown(document.body, { key: ' ' });
+  expect(onNext).not.toHaveBeenCalled();
+});
+
+// While peeking, the overlay is aria-hidden and the Next button is not on
+// screen. A key that advances from a surface the player can't see is a
+// mis-click they never made.
+test('peeking at the table suspends the advance key with the Next button', () => {
+  const onNext = jest.fn();
+  layout({ feedback: FB, decided: true, onNext });
+  fireEvent.click(screen.getByText(/Show table/));
+  fireEvent.keyDown(document.body, { key: ' ' });
+  expect(onNext).not.toHaveBeenCalled();
+});
