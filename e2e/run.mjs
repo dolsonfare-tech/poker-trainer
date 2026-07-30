@@ -1,4 +1,4 @@
-// Default e2e lane: the 10 product specs, against a localStorage-mode build.
+// Default e2e lane: the product specs, against a localStorage-mode build.
 //
 //   npm run e2e:build && npm run e2e
 //
