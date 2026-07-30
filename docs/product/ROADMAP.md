@@ -218,9 +218,25 @@ the calls.
    "two screens" are two states. The guest CTA is now gated on `!showSignIn`, and the
    reveal link reads "Sign in or create an account →". Magic link *is* sign-up
    (`signInWithOtp` never passes `shouldCreateUser`, which defaults true).
-   **⏳ Gap left behind:** `e2e/` has **zero** SignIn coverage — every spec seeds a
-   signed-in profile straight into localStorage. This fix is pinned in jest only, on
-   the one screen where users actually leave. Thinnest net in the repo.
+   **✅ Gap CLOSED 2026-07-30 — `e2e/auth/signin.spec.mjs`, 30 checks.** The gap was
+   never laziness: SignIn is *unreachable* from the existing suite. `e2e:build` blanks
+   the Supabase vars, `hasSupabase` goes false, and App boots to UsernameEntry — and
+   CRA inlines those vars at webpack time, so no spec can change it at run time.
+   Closing it needed a second build flavor (`e2e:build:auth`, DUMMY Supabase env
+   pointed at the unresolvable `https://stub.supabase.e2e`) and a second lane
+   (`npm run e2e:auth`), leaving `npm run e2e` untouched.
+   **The regression target** — the reveal REMOVING the guest CTA — was negative-
+   controlled: reverting `!showSignIn` and rebuilding failed exactly that check and
+   no other. Also pinned: zero Supabase network on boot, the guest-first hierarchy
+   measured from computed style rather than markup, both magic-link outcomes, and the
+   used-up-guest state. **Still untestable:** magic-link completion (needs a live
+   project) and OAuth (button absent in this build — a check pins that, so the
+   out-of-scope claim can't quietly stop being true).
+   **Ratchets:** invariant 37 pins the two lanes to different build modes, keeps the
+   stub URL in `package.json` and the classifier in `e2e/buildmode.mjs` in sync, runs
+   the classifier's negative control inside `check:invariants` (gates never runs e2e),
+   carries rule 25's PostHog-leak guard to the second build, and requires CI to run
+   the lane — the rule-12 lesson that a local-only net is a dead net.
 
 9. **◐ SPLIT — better logo/icon on mobile.** The in-app logo is not an image: it is the
    text `Check<em>Raise</em>` in four places, platform-safe and fine. The
@@ -373,6 +389,7 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
     - ✅ **Space/Enter advances past the feedback overlay** (desktop friction, the sanctioned half). Extracted to `hooks/useAdvanceKey.js` because inlining it pushed `CanvasLayout` to 167 lines against its 160 budget and invariant 21's instruction is to extract, not raise the number. **Explicitly not auto-advance:** `active` mirrors the Next button's own render condition, so key and button appear and disappear together; every `not.toHaveBeenCalled` case in the two test files guards that line. Also refuses modified keys and keypresses aimed at a focused control — without the latter, flagging a grading would submit the flag AND skip the hand in one press.
     - ✅ **The 5-a-day coach cap swallowed reads in silence.** Not a missing feature — a dropped return value. `submitSession` had always returned `limited: true` for the 429; `useSessionRun` destructured only `{ user }` and threw it away, so a rationed read looked identical to a coach with nothing to say. Now surfaces in the Dashboard read strip as "Coach is out for the day — back tomorrow", beside the unchanged read rather than replacing it. **Transient by design:** it explains one return to the dashboard and clears on reload rather than asserting a cap state we haven't re-checked. A persistent-until-midnight notice would need the cap read back from the server — deliberately not built. Also corrected a comment in `claude.test.js` that had described this consumer as living in `App.jsx`/`SessionSummary` since Wave 3 and Phase A moved it — it went stale describing the exact hop that was missing.
     - ✅ **Notebook cap 30 → 12 — already done** in commit `1d091bb`, which also left the `db.test.js` 40-row-fixture caveat as a comment in `coachRead.js`. No work needed.
+    - ✅ **Follow-on session, July 30 2026 — the SignIn e2e net (triage item 8's gap).** Not one of the six brief items; queued off the gap the July 27 sign-in fix left behind, because cold traffic is about to hit that screen and it was the thinnest net in the repo. Delivered as a second e2e lane against a second build flavor — full detail in triage item 8 above. The transferable lesson: **"we never wrote that test" and "that test is impossible to write against this build" look identical from the outside**, and only the second one costs a build-system change. Worth checking which it is before scoping the next coverage gap.
     - ⏸ **Icon plumbing (maskable manifest variant, 180×180 apple-touch-icon, asset budgets for `icon-192.png` and `og.png`) — PARKED.** Founder is redoing the checkraise.ai images. Generating variants from art about to be replaced is throwaway work, and the byte ceilings can't be calibrated until the new files exist. **Pick this up when the new art lands**, and note what was measured: `icon-192.png` is 72,347 B and predates the July 26 CA-019 recompression pass (`icon-512` got it, the 192 didn't); `og.png` is 1200×630 / 246,912 B. `sips` is available locally for resizing and padding. Lowercase filenames — invariant 7 catches it, but macOS hides case renames so it's worth saying out loud.
 
 ---

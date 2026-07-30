@@ -93,15 +93,42 @@ an invariants rule.
   voice reframe verified (9/9 pass, zero trait verdicts; residuals logged in
   `docs/architecture/ENGINES.md` §coach pipeline).
 
-## Gate 6 — e2e suite (`npm run e2e`, ~30s)
+## Gate 6 — e2e suite (two lanes, ~35s)
 
-Plain-Playwright specs (no framework — `e2e/run.mjs` orchestrates) against a static
+Plain-Playwright specs (no framework — `e2e/runner.mjs` orchestrates, each lane's
+entry point supplies its spec directory and required build) against a static
 production build, coach endpoint stubbed. Deterministic element-box assertions,
 deliberately NOT screenshot diffs (flaky, and diffs rot).
 
-**Build first: `npm run e2e:build`** — it blanks `REACT_APP_SUPABASE_URL`/`ANON_KEY`
-so the build runs in localStorage mode. The plain `npm run build` bakes in `.env`'s
-Supabase keys and the app boots to SignIn, where the specs can't seed a user.
+### Two builds, because auth mode is a build-time fact
+
+CRA inlines `process.env.REACT_APP_*` as string literals at webpack time, so
+`supabase.js`'s `url && key ? createClient(...) : null` is decided by the build.
+One bundle is in exactly one auth mode, and the suite needs both:
+
+| Lane | Build first | What it can reach |
+|------|-------------|-------------------|
+| `npm run e2e` (9 specs, 146 checks) | `npm run e2e:build` — blanks `REACT_APP_SUPABASE_URL`/`ANON_KEY` | localStorage mode: `hasSupabase` false, App boots to UsernameEntry, specs seed a profile and drive the product. **SignIn is unreachable.** |
+| `npm run e2e:auth` (1 spec, 30 checks) | `npm run e2e:build:auth` — DUMMY Supabase env (`https://stub.supabase.e2e`) | auth-stub mode: `hasSupabase` true, no session in localStorage, App renders **SignIn**. Every request to the (unresolvable) stub host is intercepted in-spec. |
+
+The plain `npm run build` bakes in `.env`'s real Supabase keys — a third flavor,
+and **neither lane may run against it**.
+
+**Both lanes refuse the wrong build.** `e2e/buildmode.mjs` classifies `build/` as
+`production` / `authstub` / `localstorage` and each lane declares which one it
+needs. Production is tested first and wins ties, so a stray stub literal can never
+disarm the "never drive e2e against the live project" half. Its `selfTest()`
+negative control runs on every lane invocation *and* inside `check:invariants`
+(rule 37) — `npm run gates` never runs e2e, so without that second call site a
+gutted classifier would ship. Rule 37 also pins the two lanes to different build
+modes, keeps `e2e:build:auth` blanking `REACT_APP_POSTHOG_KEY` (rule 25's leak,
+second build), and requires CI to run the lane.
+
+The loud failure is the auth lane against the localStorage build: SignIn never
+renders and every check fails. The **silent** one — a spec added to the auth lane
+that actually needed localStorage mode — is what rule 37 exists for.
+
+### Lane 1 — `npm run e2e`
 
 | Spec | Guards |
 |------|--------|
@@ -111,12 +138,27 @@ Supabase keys and the app boots to SignIn, where the specs can't seed a user.
 | `taptargets.spec.mjs` | CA-040: ≥44px hit areas at 390×844 for the feedback-capture surfaces (disagree toggle + chips, guide close/tabs, Table Reads links) |
 | `mobilefold.spec.mjs` | CA-038: at 390×844 from scrollTop 0, every action button + ticker top inside the fold (both difficulties), table-collapse guard at phone width, hero-cluster containment, dashboard CTA above the fold |
 
+### Lane 2 — `npm run e2e:auth`
+
+| Spec | Guards |
+|------|--------|
+| `auth/signin.spec.mjs` | ROADMAP item 8's gap, closed July 30 2026 — the screen where cold traffic decides whether to stay, previously pinned in jest only. Boot fires ZERO Supabase network (the claim the whole lane rests on, asserted not assumed); guest-first hierarchy for a fresh visitor (filled CTA above a bare-text reveal, measured from computed background + stacking, email form absent from the DOM, both subtitle strings); **the reveal REMOVES the guest CTA** — the July 27 founder fix, negative-controlled by reverting `!showSignIn` and confirming exactly this check fails; guest CTA lands on the level picker; magic-link success (submit gated on `@`, one request, address unpadded on the wire, sent state echoes it + the close-tab line); error path (GoTrue `msg` surfaces, `ue-input-error` set, typing clears both); a used-up guest sees the ♠ carry-over note and no CTA |
+
+**Out of scope, stated in the spec header so partial coverage is never mistaken for
+full:** magic-link *completion* (email delivery + redirect-with-session needs a live
+project), OAuth (`REACT_APP_GOOGLE_AUTH` unset — a check pins the button's absence
+rather than letting silence look like coverage), and any real Supabase traffic. The
+lane proves the client's behavior around the API, never the API's.
+
 ## CI (`.github/workflows/ci.yml`)
 
 Every push to main + every PR. Node **24**, `permissions: contents: read`. Order:
 `npm ci` → invariants → audit:scenarios → audit:observations → `CI=true npm test` →
 simulate:schemas → playtest:personas (1 trial) → production build (localStorage mode
-— no env in CI) → Playwright install → e2e.
+— no env in CI) → Playwright install → e2e → **auth-stub build → e2e:auth**.
+
+The second build is why the auth lane is last: it overwrites `build/`, so nothing
+that needs the localStorage bundle may run after it.
 
 **History note:** CI was never green until July 26, 2026 — it failed silently on
 every push July 19–26 (lockfile out of sync under npm 10) and nobody noticed; the
