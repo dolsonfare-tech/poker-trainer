@@ -373,7 +373,16 @@ const hasNumeral = (s) => /\d/.test(s ?? '');
 // One vocabulary, two symmetric checks: an IMPROVED stretch's tier-2 headline
 // must use it, a DECLINED stretch's read must not (that would be spin). A word
 // added here tightens/loosens both sides at once — which is the point.
-const IMPROVEMENT_VOCAB = /\b(up from|improv\w*|climb\w*|rose|rising|sharper|stronger|better)\b/i;
+// The noun lookahead (v3 live run 3, August 2 2026): "betting was the STRONGER
+// play" is comparative poker vocabulary about an ACTION, not a claim that the
+// stretch improved — and the Resulter persona wrote exactly that in a read
+// whose opening sentence honestly named its decline ("you slipped from the
+// stretch before"). Without the lookahead the guard flagged the most honest
+// read of the run as spin. The exclusion is symmetric by construction: the
+// same regex drives the trajectory check, so "a better line" neither satisfies
+// an improvement mandate nor violates a decline — in both directions, action
+// comparatives are not trajectory claims.
+const IMPROVEMENT_VOCAB = /\b(up from|improv\w*|climb\w*|rose|rising|sharper|stronger|better)\b(?!\s+(?:play|line|spot|hand|bet|raise|fold|call|check|option|choice|read)s?\b)/i;
 
 // ── Example-fingerprint scan (v3, August 2 2026 — soft ⚠) ──────────────────
 // The lesson this whole prompt is built on is that the model mimics the worked
@@ -794,6 +803,17 @@ if (SELFTEST) {
       mkRead({ headline: 'Position spots keep missing.', watchFor: 'Slow down before calling.' }),
       mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
       '✓ no false improvement claim'],
+    // Run-3 false positive, pinned both directions: an ACTION comparative
+    // ("the stronger play") is not a trajectory claim. On a decline it must
+    // not read as spin; on an improvement it must not satisfy the clause.
+    ['declined stretch: an action comparative ("stronger play") is not spin',
+      mkRead({ headline: 'You slipped from the stretch before.', watchFor: 'Betting was the stronger play, so bet.' }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
+      '✓ no false improvement claim'],
+    ['improved stretch: an action comparative does not satisfy the trajectory clause',
+      mkRead({ headline: 'The stronger play keeps being available lately.' }),
+      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
+      '✗ trajectory clause'],
     // ── The v3 voice ban, the phrase that prompted it (spec §5).
     ['"you tend to" is flagged as a trait verdict',
       mkRead({ headline: 'You tend to fold too early.' }), mkSummary(), '⚠ stretch-scoped voice'],

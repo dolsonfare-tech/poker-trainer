@@ -449,7 +449,7 @@ Now say it out loud to them, the way you would across the table. Two sentences, 
 
 Respond with two fields named "headline" and "watchFor". They are sentence one and sentence two of ONE short paragraph, and they will be shown to the player joined together with a space:
 - headline: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.headline} words or fewer. What you have been seeing, in natural speech, scoped to this stretch with "lately" or "you've been". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern in the data.
-- watchFor: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.watchFor} words or fewer. WHY it costs them, in terms of the opponent type or the poker concept, and then a concrete if-then instruction they can actually run next session: name the cue, then the action. End the sentence at the action. No clause after it.
+- watchFor: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.watchFor} words or fewer. WHY it costs them, in terms of the opponent type or the poker concept, and then a concrete if-then instruction they can actually run next session: name the cue, then the action. Say the action ONCE and stop there: no clause after it, and never a restatement of the action as its opposite ("never limp", "instead of calling"). The advice is already inside the action.
 - The two sentences together are ${V3_CAPS.total} words or fewer. Both end in a full stop.
 
 These three examples are the voice. Match their register exactly: plain speech with real poker lingo, no numbers, nothing clever.
@@ -478,7 +478,7 @@ Rules for both fields:
 - If the mistakes point in different directions, say so honestly instead of forcing one story
 - Only call this stretch improved, or sharper, or better, if the overall numbers above actually rose. A decline is named as a decline or the comparison is left out entirely; never dress a drop as progress
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
-- Before answering, count the words in each sentence and in the pair. If either is over, cut in this order: intensifiers first ("way", "really", "just", "actually", "a lot"), then the WHY clause. Never cut the cue or the action. The limits are hard
+- Before answering, count the words in each sentence and in the pair. If either is over, cut in this order: intensifiers first ("way", "really", "just", "actually", "a lot"), then any restatement of a point already made ("letting time run out" after "freezing on the clock" is the same fact twice), then the WHY clause. Never cut the cue or the action. The limits are hard
 - Sound like a human coach, not an AI
 - No em dashes, no semicolons stitching two sentences into one, no "not only... but also" constructions
 - No generic praise or filler
