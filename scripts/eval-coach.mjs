@@ -33,10 +33,10 @@ import SCENARIOS from '../src/data/scenarios.js';
 import { aggregate } from '../src/utils/coachWindow.js';
 import coach from '../api/coach-read.js';
 
-// HEADLINE_RULE and WORD_CAPS come from the prompt module on purpose: the
-// harness must measure what the prompt ASKS for, never a second copy of the
-// numbers. See the comments beside their definitions in api/coach-read.js.
-const { buildPrompt, callClaude, buildLookup, HEADLINE_RULE, TRAJECTORY_RULE, WORD_CAPS } = coach;
+// HEADLINE_RULE and V3_CAPS come from the prompt module on purpose: the harness
+// must measure what the prompt ASKS for, never a second copy of the numbers.
+// See the comments beside their definitions in api/coach-read.js.
+const { buildPrompt, callClaude, buildLookup, HEADLINE_RULE, TRAJECTORY_RULE, V3_CAPS } = coach;
 const DRY = process.argv.includes('--dry');
 // Offline exercise of the mechanical checks themselves — see the --selftest
 // block further down. No API key, no artifact written.
@@ -184,7 +184,7 @@ const PERSONAS = [
   {
     name: 'Conflict Avoider',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Over-folding / passivity named as the pattern; direction = too passive. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
+    expect: 'TIER 2 (improving, no confident errors): sentence one opens with the improvement as a CLAUSE, then names the over-folding; sentence two says why a passive line costs against these opponents and lands an if-then for next session. Direction = too passive. No numerals anywhere.',
     plan: [
       { pool: bySkills(['aggression', 'bluffing']), wrongCls: ['fold', 'call'] },
       { pool: bySkills(['aggression']), wrongCls: ['fold', 'call'] },
@@ -196,7 +196,7 @@ const PERSONAS = [
   {
     name: 'Overaggressor',
     priorCorrect: 3,   // regressing 60% -> 40%
-    expect: 'Forcing action / raising into strength named; direction = too aggressive.',
+    expect: 'TIER 3 (plain pattern, declining stretch): forcing the action / raising into strength named in sentence one, scoped with "lately". Sentence two teaches why that costs against a player who is not folding, then an if-then. NO improvement wording — the stretch declined.',
     plan: [
       { pool: bySkills(['potodds', 'reads']), wrongCls: ['raise'] },
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
@@ -208,7 +208,7 @@ const PERSONAS = [
   {
     name: 'The Gambler',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Calling without the price / any-two-cards named; loose continuance. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
+    expect: 'TIER 2 (improving, no confident errors): improvement clause, then calling without the price / loose continuance. Sentence two explains the price in WORDS ("less than half the pot", never a figure) and lands an if-then.',
     // Each wrong step fires 10x against a `used` set spanning the whole stretch,
     // so each needs a fold-correct pool of at least 10 or it falls through to
     // SCENARIOS.find(unused) in file order and injects under/over into what
@@ -225,7 +225,7 @@ const PERSONAS = [
   {
     name: 'Positional Blind Spot',
     priorCorrect: 3,   // regressing 60% -> 40%
-    expect: 'Position-driven mistakes named as the common thread across villains.',
+    expect: 'TIER 3 (plain pattern, declining stretch): position-driven mistakes named as the common thread in sentence one; sentence two teaches why acting out of position costs and gives a cue-then-action. No improvement wording.',
     plan: [
       { pool: bySkills(['position']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['position']), wrongCls: ['fold', 'call'] },
@@ -237,7 +237,7 @@ const PERSONAS = [
   {
     name: 'Exploitable Regular',
     priorCorrect: 1,   // improving  20% -> 40%
-    expect: 'Ignoring the villain type (one-size-fits-all play) named explicitly. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2), then the leak; exact counts as one evidence item.',
+    expect: 'TIER 2 (improving, no confident errors): improvement clause, then playing one-size-fits-all against different opponents. Sentence two is the F1 lever doing its job — what a specific villain type actually does, and the adjustment that follows from it.',
     plan: [
       { pool: bySkills(['opponent']), wrongCls: ['call', 'raise'] },
       { pool: bySkills(['opponent']), wrongCls: ['fold', 'call'] },
@@ -249,7 +249,7 @@ const PERSONAS = [
   {
     name: 'The Resulter (mixed misses)',
     priorCorrect: 3,   // regressing 60% -> 40%
-    expect: 'No single direction — a mixed pattern honestly described, not forced.',
+    expect: 'TIER 3, declining: no single direction, so the mixed pattern is described honestly in two sentences rather than forced into one story. The hardest register test — advice voice without a single clean leak to point at.',
     plan: [
       { pool: bySkills(['bluffing']), wrongCls: ['raise'] },
       { pool: bySkills(['potodds']), wrongCls: ['fold'] },
@@ -263,7 +263,7 @@ const PERSONAS = [
     priorCorrect: 4,   // regressing 80% -> 40%
     // Interpolated, not restated: this sentence, the prompt rule and the
     // checkRead assertion below are one string (finding 3).
-    expect: `The fast-and-sure cluster called out directly: the ${HEADLINE_RULE}.`,
+    expect: `TIER 1, which always wins: the fast-and-sure cluster owns sentence one — the ${HEADLINE_RULE}. Sentence two teaches why those spots are not the automatic call they feel like. This is the persona the worked example was written from, so it is also where parroting would show first.`,
     plan: [
       { pool: bySkills(['potodds']), wrongCls: ['call'], fast: true },
       { pool: bySkills(['opponent']), wrongCls: ['raise'], fast: true },
@@ -275,7 +275,7 @@ const PERSONAS = [
   {
     name: 'Froze twice (timeouts)',
     priorCorrect: 5,   // regressing 100% -> 60%
-    expect: 'Freezing under the clock treated as its own signal, not generic error.',
+    expect: 'TIER 3 (freezer variant), declining: freezing on the clock named as its own pattern, not folded into a passive or aggressive story. Sentence two gives them something to DO when the timer runs low. No improvement wording.',
     plan: [
       { pool: bySkills(['potodds']), timeout: true },
       { pool: bySkills(['betsize']), timeout: true },
@@ -287,7 +287,7 @@ const PERSONAS = [
   {
     name: 'Perfect session',
     priorCorrect: 3,   // improving  60% -> 100%
-    expect: 'Brief acknowledgment + one watch-area; no invented weakness. Improving with no confident errors, so the headline opens with the improvement in plain words (tier 2); exact counts as one evidence item.',
+    expect: 'TIER 2 (improving, no confident errors), the no-leak case: the improvement clause earns sentence one, and sentence two gives one thing to keep watching. No invented weakness, no filler praise.',
     plan: [
       { pool: bySkills(['preflop']), correct: true },
       { pool: bySkills(['position']), correct: true },
@@ -307,21 +307,54 @@ if (!apiKey && !DRY && !SELFTEST) {
   process.exit(1);
 }
 
-// The Coach's Read is now structured JSON (headline/evidence/watchFor via
-// output_config json_schema). callClaude returns the model's raw text — the
-// JSON string — which the serverless handler re-serializes on the wire; here we
-// parse it directly to pretty-print and to run mechanical checks.
+// The Coach's Read is structured JSON (headline/watchFor via output_config
+// json_schema). callClaude returns the model's raw text — the JSON string —
+// which the serverless handler re-serializes on the wire; here we parse it
+// directly to pretty-print and to run mechanical checks.
+//
+// Rendered JOINED, exactly as LastSessionRead joins it (v3, August 2 2026). The
+// acceptance test for this surface is the founder reading all nine aloud and
+// hearing one coach talking, so the artifact has to show the paragraph the
+// player sees — not the two fields in a layout only this file uses. The v2
+// renderer's bold-headline-then-bullets shape flattered reads that did not
+// actually run together as speech.
 function renderRead(read) {
   let obj;
   try { obj = JSON.parse(read); } catch { return read; }
   if (!obj || typeof obj !== 'object') return read;
-  const parts = [`**${obj.headline ?? '(no headline)'}**`, ''];
-  if (Array.isArray(obj.evidence)) for (const e of obj.evidence) parts.push(`- ${e}`);
-  if (obj.watchFor) { parts.push(''); parts.push(`*Watch for:* ${obj.watchFor}`); }
-  return parts.join('\n');
+  const joined = [obj.headline, obj.watchFor].filter(Boolean).join(' ');
+  return joined || read;
 }
 
 const wordCount = (s) => s.trim().split(/\s+/).filter(Boolean).length;
+
+// Sentence splitter for the one-sentence-per-field rule. Terminal punctuation
+// followed by whitespace ends a sentence; a closing quote or bracket may sit
+// between them ('... go in." Next ...').
+//
+// The digit guard is not decoration. "3.5:1" and "1.5 big blinds" carry periods
+// that are not sentence ends, and a splitter without the guard would report two
+// sentences for one — turning the numeral check's job into a phantom structure
+// failure and pointing the founder at the wrong defect. v3 bans numerals
+// outright, so a read that trips the guard is already failing the numeral check;
+// the guard exists so it fails as ITSELF and not as something else.
+//
+// The sentinel is written as an ESCAPE, never as a raw byte: a literal control
+// character in source makes the file binary to grep and to everything built on
+// grep, which is a silent way to lose a file from every future search.
+const SENT_MASK = '\u0000';
+const sentences = (s) => {
+  const t = (s ?? '').trim();
+  if (!t) return [];
+  return t
+    .replace(/(\d)\.(\d)/g, `$1${SENT_MASK}$2`)
+    .split(/(?<=[.!?])["'’)\]]*\s+/)
+    .map((x) => x.replaceAll(SENT_MASK, '.').trim())
+    .filter(Boolean);
+};
+
+const endsTerminal = (s) => /[.!?]["'’)\]]*$/.test((s ?? '').trim());
+const hasNumeral = (s) => /\d/.test(s ?? '');
 
 // Mechanical checks on one live read. Soft checks (⚠) report but never fail the
 // harness — the eval is a review aid, not a CI gate. Only run against real
@@ -341,6 +374,38 @@ const wordCount = (s) => s.trim().split(/\s+/).filter(Boolean).length;
 // must use it, a DECLINED stretch's read must not (that would be spin). A word
 // added here tightens/loosens both sides at once — which is the point.
 const IMPROVEMENT_VOCAB = /\b(up from|improv\w*|climb\w*|rose|rising|sharper|stronger|better)\b/i;
+
+// ── Example-fingerprint scan (v3, August 2 2026 — soft ⚠) ──────────────────
+// The lesson this whole prompt is built on is that the model mimics the worked
+// example with near-perfect fidelity. That is the mechanism v3 RELIES on for
+// voice; one step further, the same mechanism is parroting — the example's
+// CONTENT arriving on a persona whose data says nothing of the kind. With
+// numbers gone from every field, phrase-leak is what number-leak used to be,
+// so this scan replaces the copy-only checks rather than adding to them.
+//
+// Each fingerprint carries the condition that WARRANTS it, read off the same
+// summary the prompt was built from — so the scan flags a fabrication, not a
+// coincidence. "Snap calling tight players" is exactly right for a player who
+// confidently misplayed against a nit and is invented for anyone else.
+// Soft, because warranted-looking phrasing can still be the right words: the
+// scan points, a human judges.
+const FINGERPRINTS = [
+  {
+    phrase: 'snap calling tight players',
+    warrants: 'a confident error against a tight villain',
+    warranted: (s) => (s.confidentMisses ?? []).some((m) => /tight/i.test(m.villain ?? '')),
+  },
+  {
+    phrase: 'half the pot',
+    warrants: 'a pot-odds or bet-sizing skill in the window',
+    warranted: (s) => (s.skills ?? []).some((k) => /potodds|betsize/i.test(k.skill ?? '')),
+  },
+  {
+    phrase: 'any choice beats no choice',
+    warrants: 'at least one timeout in the window',
+    warranted: (s) => (s.timeouts ?? 0) > 0,
+  },
+];
 
 // ── Word-cap tolerance (founder-delegated call, July 29 2026, evening) ──────
 // Four live runs converged on this shape: every substance check green twice
@@ -373,49 +438,78 @@ function checkRead(read, summary, cov) {
   }
   cov.parsed += 1;
   const lines = [];
-  const has3 = typeof obj.headline === 'string'
-    && Array.isArray(obj.evidence) && typeof obj.watchFor === 'string';
-  lines.push(`- ${has3 ? '✓' : '✗'} three fields present (headline, evidence[], watchFor)`);
-  // Bounds come from WORD_CAPS in api/coach-read.js — the same object the prompt
-  // interpolates — so the check and the ask cannot disagree. They drifted once
-  // already (1–3 items at ≤15 words against a prompt asking 1–2 at ≤12), which
-  // prints ✓ on nine systematically over-long reads and sends the founder a
-  // clean-looking report on a run that measured the wrong thing.
-  const [minItems, maxItems] = WORD_CAPS.evidenceItems;
-  if (Array.isArray(obj.evidence)) {
-    const n = obj.evidence.length;
-    cov.evidenceLists += 1;
-    const ok = n >= minItems && n <= maxItems;
-    if (!ok) cov.evidenceCountBad += 1;
-    lines.push(`- ${ok ? '✓' : '✗'} evidence has ${minItems}–${maxItems} items (${n})`);
-    // Each item measured and PRINTED. This cap was not checked at all before;
-    // live run 2 had one item at 22 words and the report said nothing.
-    const over = [];
-    const hardOver = [];
-    for (const e of obj.evidence) {
-      if (typeof e !== 'string') continue;
-      const w = wordCount(e);
-      cov.evidenceItems += 1;
-      if (w > WORD_CAPS.evidence) { cov.evidenceOver += 1; over.push(w); }
-      if (w > WORD_CAPS.evidence + CAP_TOLERANCE) { cov.evidenceOverHard += 1; hardOver.push(w); }
-    }
-    const widths = obj.evidence.filter(e => typeof e === 'string').map(wordCount);
-    const eSym = hardOver.length ? '✗' : over.length ? '⚠' : '✓';
-    lines.push(`- ${eSym} evidence items ≤ ${WORD_CAPS.evidence} words`
-      + ` (measured ${widths.length}: ${widths.join('w, ')}w`
-      + `${hardOver.length ? ` — ${hardOver.length} beyond the ${CAP_TOLERANCE}-word tolerance`
-        : over.length ? ` — ${over.length} over, inside the tolerance` : ''})`
-      + `${!hardOver.length && over.length ? ' [soft]' : ''}`);
+  const has2 = typeof obj.headline === 'string' && typeof obj.watchFor === 'string';
+  lines.push(`- ${has2 ? '✓' : '✗'} two fields present (headline, watchFor)`);
+  // v3 dropped `evidence`, and COACH_SCHEMA's additionalProperties:false means
+  // the model cannot put it back. One arriving here says the schema and the
+  // prompt have come apart upstream — a louder failure than a quiet extra key.
+  if ('evidence' in obj)
+    lines.push('- ✗ read still carries an `evidence` field — v3 dropped it from COACH_SCHEMA');
+
+  // Named pairs so every structural line can say WHICH field it measured; the
+  // bare list is what the whole-read scans (voice, spin, freezer) read.
+  const named = [['headline', obj.headline], ['watchFor', obj.watchFor]]
+    .filter(([, v]) => typeof v === 'string');
+  const fields = named.map(([, v]) => v);
+
+  // ── Structure (v3): one sentence, terminal punctuation, zero numerals ─────
+  // Structure is NOT sampling noise, so none of these three carry the word-cap
+  // tolerance. A two-sentence "headline" is not a long field, it is a different
+  // shape than the one the renderers join into a paragraph; and a numeral is the
+  // founder's "numbers gone everywhere" call failing outright, not by a margin.
+  for (const [name, text] of named) {
+    const sents = sentences(text);
+    cov.sentenceFields += 1;
+    const okSent = sents.length === V3_CAPS.sentencesPerField;
+    if (!okSent) cov.sentenceBad += 1;
+    lines.push(`- ${okSent ? '✓' : '✗'} ${name} is exactly ${V3_CAPS.sentencesPerField} sentence`
+      + ` (measured ${sents.length})`);
+
+    cov.punctFields += 1;
+    const okPunct = endsTerminal(text);
+    if (!okPunct) cov.punctBad += 1;
+    lines.push(`- ${okPunct ? '✓' : '✗'} ${name} ends in terminal punctuation`
+      + ` (ends "${text.trim().slice(-14)}")`);
+
+    const digits = text.match(/\d/g) ?? [];
+    cov.numeralFields += 1;
+    if (digits.length) cov.numeralBad += 1;
+    lines.push(`- ${digits.length ? '✗' : '✓'} ${name} contains no numerals`
+      + ` (${digits.length} found${digits.length ? `: ${digits.join(' ')}` : ''})`);
   }
-  const fields = [obj.headline, ...(Array.isArray(obj.evidence) ? obj.evidence : []), obj.watchFor]
-    .filter((f) => typeof f === 'string');
+
+  // ── Length: the two render guards, plus the total the founder actually set ──
+  // The total is the real bound ("two sentences a coach would say"); the two
+  // per-field numbers are render guards on the card. All three come from
+  // V3_CAPS in api/coach-read.js — the same object the prompt interpolates — so
+  // the check and the ask cannot disagree. They drifted once already, which
+  // prints ✓ on nine systematically over-long reads.
   if (typeof obj.headline === 'string') {
     const words = wordCount(obj.headline);
     cov.headlines += 1;
-    if (words > WORD_CAPS.headline) cov.headlinesOver += 1;
-    const hRes = capLine('headline', words, WORD_CAPS.headline);
+    if (words > V3_CAPS.headline) cov.headlinesOver += 1;
+    const hRes = capLine('headline', words, V3_CAPS.headline);
     if (hRes.hard) cov.headlinesOverHard += 1;
     lines.push(hRes.text);
+  }
+  if (typeof obj.watchFor === 'string') {
+    const words = wordCount(obj.watchFor);
+    cov.watchFor += 1;
+    if (words > V3_CAPS.watchFor) cov.watchForOver += 1;
+    const wRes = capLine('watchFor', words, V3_CAPS.watchFor);
+    if (wRes.hard) cov.watchForOverHard += 1;
+    lines.push(wRes.text);
+  }
+  if (has2) {
+    const words = wordCount(`${obj.headline} ${obj.watchFor}`);
+    cov.totals += 1;
+    if (words > V3_CAPS.total) cov.totalsOver += 1;
+    const tRes = capLine('total, both sentences', words, V3_CAPS.total);
+    if (tRes.hard) cov.totalsOverHard += 1;
+    lines.push(tRes.text);
+  }
+
+  if (typeof obj.headline === 'string') {
     // Finding 3: the rule fires on the DATA (does this window contain confident
     // errors?), which is the prompt's own condition — not on the persona's plan
     // shape, which was only ever a proxy for it.
@@ -426,39 +520,33 @@ function checkRead(read, summary, cov) {
       lines.push(`- ${hit ? '✓' : '✗'} ${HEADLINE_RULE}`
         + ` (window has ${summary.confidentMisses.length} confident errors)`);
     }
-    // Tier 2 (prompt v2, July 29 2026): trajectory headline. Same keying
-    // discipline as the confident-error check above — fires on the summary's
-    // own data, exactly when the prompt's stated condition fires (no confident
-    // errors AND the previous stretch is given AND accuracy improved on it).
-    // "Opens with the improvement" is verified as both copied correct-counts
-    // appearing in the headline — the same copy-only law every number lives
-    // under, so the check cannot pass on a paraphrase that invented a figure.
+    // Tier 2, now a CLAUSE (v3). Same keying discipline as the confident-error
+    // check above — fires on the summary's own data, exactly when the prompt's
+    // stated condition fires (no confident errors AND the previous stretch is
+    // given AND accuracy improved on it).
+    //
+    // The counts-receipt half of this check is RETIRED with `evidence` and with
+    // numerals: there is nowhere left for a copied figure to live, so demanding
+    // one would fail every correct read. The prose-vocabulary half is the whole
+    // check now, and it stays symmetric with the false-improvement guard below —
+    // one vocabulary, used to require improvement wording here and to forbid it
+    // there.
     const improved = summary.previous
       && (summary.accuracy.correct / summary.accuracy.total)
         > (summary.previous.correct / summary.previous.total);
     if (summary.confidentMisses.length === 0 && improved) {
       cov.trajectoryApplicable += 1;
-      // Prose headline (improvement vocabulary, shared with the false-direction
-      // guard below so the two checks stay symmetric) + the exact counts as a
-      // receipt in ONE evidence item — the copy-only law's mechanical anchor
-      // moved to where the founder moved the numbers (July 29 2026 evening).
-      const proseHit = IMPROVEMENT_VOCAB.test(obj.headline);
-      const receiptHit = Array.isArray(obj.evidence) && obj.evidence.some((e) =>
-        typeof e === 'string'
-        && e.includes(String(summary.accuracy.correct))
-        && e.includes(String(summary.previous.correct)));
-      const hit = proseHit && receiptHit;
+      const hit = IMPROVEMENT_VOCAB.test(obj.headline);
       if (hit) cov.trajectoryPass += 1;
-      lines.push(`- ${hit ? '✓' : '✗'} trajectory headline: ${TRAJECTORY_RULE}`
-        + ` (prose ${proseHit ? '✓' : '✗'}, counts receipt in evidence ${receiptHit ? '✓' : '✗'};`
-        + ` ${summary.previous.correct} → ${summary.accuracy.correct})`);
+      lines.push(`- ${hit ? '✓' : '✗'} trajectory clause opens the headline: ${TRAJECTORY_RULE}`
+        + ` (${summary.previous.correct} → ${summary.accuracy.correct} correct)`);
     }
     // False-direction guard (live run 2, July 29 2026): two REGRESSING personas
     // mimicked the tier-2 template and wrote "20/50 up from 30/50" — a decline
     // dressed as progress — and nothing flagged it. Keyed off the summary like
     // every conditional check here: fires only when the comparison exists and
-    // did NOT improve, and scans all three fields, because a spun comparison in
-    // the evidence is the same lie in a different row.
+    // did NOT improve, and scans BOTH fields, because a spun comparison in
+    // sentence two is the same lie in a different place.
     const declined = summary.previous
       && (summary.accuracy.correct / summary.accuracy.total)
         <= (summary.previous.correct / summary.previous.total);
@@ -470,21 +558,11 @@ function checkRead(read, summary, cov) {
         + ` (${summary.previous.correct} → ${summary.accuracy.correct})`);
     }
   }
-  // The third cap, also unchecked before: live run 2 put 4 of 9 watchFor
-  // sentences at exactly 19 words against an 18 cap and nothing reported it.
-  if (typeof obj.watchFor === 'string') {
-    const words = wordCount(obj.watchFor);
-    cov.watchFor += 1;
-    if (words > WORD_CAPS.watchFor) cov.watchForOver += 1;
-    const wRes = capLine('watchFor', words, WORD_CAPS.watchFor);
-    if (wRes.hard) cov.watchForOverHard += 1;
-    lines.push(wRes.text);
-  }
   // The freezer persona's counterpart to the confident-misser check above. 20 of
   // its 50 hands are timeouts and they carry no direction, so a read that never
-  // mentions them has silently dropped the persona's whole story. Scans all three
+  // mentions them has silently dropped the persona's whole story. Scans both
   // fields: the prompt asks for freezing to be its own pattern, not specifically
-  // a headline.
+  // sentence one.
   if (summary.timeouts > 0) {
     cov.freezeApplicable += 1;
     const hit = /\b(timeout|timed out|clock|freez|froze|frozen|stall|hesitat|ran out of time|never acted|no action)/i
@@ -493,17 +571,44 @@ function checkRead(read, summary, cov) {
     lines.push(`- ${hit ? '✓' : '✗'} freezer read names the timeout/clock pattern`
       + ` (window has ${summary.timeouts} timeouts)`);
   }
-  // Voice reframe (July 22, 2026), tightened in Phase B: the read is a trend
-  // review, never a trait verdict. Flag identity AND habitual claims in any
-  // field — "you always fold the river" is the same verdict wearing different
-  // words, and the prompt now bans it explicitly. Soft — phrases like "you are
-  // getting 3.5:1" are legitimate, so a human still judges.
-  const verdicty = /\byou (are|'re) (a|an|too|the)\b|\byou (always|never)\b|\byour game\b|\bas a player\b/i;
+  // Voice reframe (July 22, 2026), tightened in Phase B and again in v3: the
+  // read is a trend review, never a trait verdict. Flag identity AND habitual
+  // claims in either field — "you always fold the river" is the same verdict
+  // wearing different words, and the prompt bans it explicitly.
+  //
+  // "you tend to" and its kin joined the regex in v3 (spec §5). They arrived
+  // through the founder's OWN draft — "you tend to fold too early" — which is
+  // warm, reads well, and collides head-on with their own July 22 law: a
+  // trait-tensed claim about ~50 hands. The resolution kept the warmth and
+  // moved the scope ("lately you've been folding too early"), so the banned
+  // form has to be mechanical or the next warm draft reintroduces it.
+  // Soft — a human still judges, since some "you are" phrasings are innocent.
+  const verdicty = /\byou (are|'re) (a|an|too|the)\b|\byou (always|never|tend to|usually|often)\b|\byour game\b|\bas a player\b/i;
   const verdictHit = fields.some((f) => verdicty.test(f));
   cov.voiceScanned += 1;
   if (verdictHit) cov.voiceFlagged += 1;
-  lines.push(`- ${verdictHit ? '⚠' : '✓'} session-scoped voice, no trait verdicts`
-    + ` (${fields.length} fields scanned)${verdictHit ? ' — found "you are a / you always / your game" [soft]' : ''}`);
+  lines.push(`- ${verdictHit ? '⚠' : '✓'} stretch-scoped voice, no trait verdicts`
+    + ` (${fields.length} fields scanned)`
+    + `${verdictHit ? ' — found "you are a / you always / you tend to / your game" [soft]' : ''}`);
+
+  // Example-fingerprint scan (soft) — see FINGERPRINTS above. Reported with its
+  // denominator like every other check here: "0 flagged" and "nothing scanned"
+  // must not render the same way.
+  const joined = fields.join(' ').toLowerCase();
+  const leaked = FINGERPRINTS.filter((f) => joined.includes(f.phrase) && !f.warranted(summary));
+  cov.fingerprintScanned += 1;
+  if (leaked.length) cov.fingerprintFlagged += 1;
+  lines.push(`- ${leaked.length ? '⚠' : '✓'} no worked-example phrasing the data does not warrant`
+    + ` (${FINGERPRINTS.length} fingerprints scanned)`
+    + `${leaked.length ? ` — ${leaked.map((f) => `"${f.phrase}" needs ${f.warrants}`).join('; ')} [soft]` : ''}`);
+
+  // Em dashes (soft). Banned by the prompt and by the house voice; the tell that
+  // the model has slipped out of speech and into writing.
+  const dashes = fields.join(' ').match(/[—–]/g) ?? [];
+  cov.emdashScanned += 1;
+  if (dashes.length) cov.emdashFlagged += 1;
+  lines.push(`- ${dashes.length ? '⚠' : '✓'} no em dashes`
+    + ` (${dashes.length} found in ${fields.length} fields)${dashes.length ? ' [soft]' : ''}`);
   return lines;
 }
 
@@ -512,15 +617,19 @@ function checkRead(read, summary, cov) {
 const newCoverage = () => ({
   personas: 0, parsed: 0, unparsed: 0,
   personasClean: 0, personasErrored: 0, personasFailed: 0,
-  headlines: 0, headlinesOver: 0,
-  evidenceLists: 0, evidenceCountBad: 0, evidenceItems: 0, evidenceOver: 0,
-  watchFor: 0, watchForOver: 0,
+  headlines: 0, headlinesOver: 0, headlinesOverHard: 0,
+  watchFor: 0, watchForOver: 0, watchForOverHard: 0,
+  totals: 0, totalsOver: 0, totalsOverHard: 0,
+  sentenceFields: 0, sentenceBad: 0,
+  punctFields: 0, punctBad: 0,
+  numeralFields: 0, numeralBad: 0,
   confidentApplicable: 0, confidentPass: 0,
   trajectoryApplicable: 0, trajectoryPass: 0,
   directionApplicable: 0, directionPass: 0,
-  headlinesOverHard: 0, evidenceOverHard: 0, watchForOverHard: 0,
   freezeApplicable: 0, freezePass: 0,
   voiceScanned: 0, voiceFlagged: 0,
+  fingerprintScanned: 0, fingerprintFlagged: 0,
+  emdashScanned: 0, emdashFlagged: 0,
 });
 
 // ── Per-persona verdict + exit status (live eval findings 1 and 2, July 29) ──
@@ -585,15 +694,19 @@ const coverageReport = (cov, dry) => [
     : []),
   `- personas rendered: ${cov.personas} · reads parsed as JSON: ${cov.parsed}/${cov.personas}`
     + (cov.unparsed ? ` · UNPARSED: ${cov.unparsed}` : ''),
-  `- headlines checked: ${cov.headlines}/${cov.personas} · over the ${WORD_CAPS.headline}w cap: ${cov.headlinesOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.headlinesOverHard}`,
-  `- evidence lists checked: ${cov.evidenceLists}/${cov.personas} · item-count violations: ${cov.evidenceCountBad}`,
-  `- evidence items checked: ${cov.evidenceItems} · over the ${WORD_CAPS.evidence}w cap: ${cov.evidenceOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.evidenceOverHard}`,
-  `- watchFor checked: ${cov.watchFor}/${cov.personas} · over the ${WORD_CAPS.watchFor}w cap: ${cov.watchForOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.watchForOverHard}`,
+  `- sentence count: ${cov.sentenceFields} fields checked · not exactly ${V3_CAPS.sentencesPerField} sentence: ${cov.sentenceBad} (hard)`,
+  `- terminal punctuation: ${cov.punctFields} fields checked · missing: ${cov.punctBad} (hard)`,
+  `- numeral scan: ${cov.numeralFields} fields checked · containing digits: ${cov.numeralBad} (hard)`,
+  `- headlines checked: ${cov.headlines}/${cov.personas} · over the ${V3_CAPS.headline}w render guard: ${cov.headlinesOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.headlinesOverHard}`,
+  `- watchFor checked: ${cov.watchFor}/${cov.personas} · over the ${V3_CAPS.watchFor}w render guard: ${cov.watchForOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.watchForOverHard}`,
+  `- totals checked: ${cov.totals}/${cov.personas} · over the ${V3_CAPS.total}w cap: ${cov.totalsOver} · beyond the +${CAP_TOLERANCE} tolerance (hard): ${cov.totalsOverHard}`,
   `- ${HEADLINE_RULE}: applicable to ${cov.confidentApplicable} persona(s) · passed ${cov.confidentPass}`,
-  `- trajectory headline (tier 2): applicable to ${cov.trajectoryApplicable} persona(s) · passed ${cov.trajectoryPass}`,
+  `- trajectory clause (tier 2): applicable to ${cov.trajectoryApplicable} persona(s) · passed ${cov.trajectoryPass}`,
   `- no false improvement claim on declined stretches: applicable to ${cov.directionApplicable} persona(s) · passed ${cov.directionPass}`,
   `- freezer timeout rule: applicable to ${cov.freezeApplicable} persona(s) · passed ${cov.freezePass}`,
   `- voice scan: ${cov.voiceScanned} reads scanned · flagged ${cov.voiceFlagged} [soft]`,
+  `- example-fingerprint scan: ${cov.fingerprintScanned} reads scanned against ${FINGERPRINTS.length} phrases · flagged ${cov.fingerprintFlagged} [soft]`,
+  `- em-dash scan: ${cov.emdashScanned} reads scanned · flagged ${cov.emdashFlagged} [soft]`,
   ...(dry ? [] : ['', `**Run verdict: ${runVerdictLine(cov)}**`]),
 ].join('\n');
 
@@ -607,55 +720,101 @@ const coverageReport = (cov, dry) => [
 // Both directions are asserted. A checker that only ever sees passing input
 // cannot be told apart from one that returns ✓ unconditionally.
 if (SELFTEST) {
-  const nWords = (n) => Array.from({ length: n }, (_, i) => `w${i}`).join(' ');
-  const mkRead = (o) => JSON.stringify({ headline: 'a b c', evidence: ['e f'], watchFor: 'g h', ...o });
-  const mkSummary = (o) => ({ confidentMisses: [], timeouts: 0, ...o });
+  // n words, exactly one sentence, terminal punctuation, and NO DIGITS — the
+  // filler has to satisfy every v3 structure check or a cap case would fail for
+  // the wrong reason. (The old `w0 w1 w2` filler is now itself a numeral
+  // violation, which is a neat demonstration that the check has teeth.)
+  const nWords = (n) => Array.from({ length: n },
+    (_, i) => String.fromCharCode(97 + (i % 26)).repeat(2)).join(' ') + '.';
+  const mkRead = (o) => JSON.stringify({ headline: 'aa bb cc.', watchFor: 'dd ee ff.', ...o });
+  const mkSummary = (o) => ({ confidentMisses: [], timeouts: 0, skills: [], ...o });
   const oneMiss = [{ villain: 'Tight Nit', scenario: 'Pot Odds', spot: 'BB J♥8♥ preflop', skill: 'potodds' }];
-  const { headline: H, evidence: E, watchFor: W } = WORD_CAPS;
+  const { headline: H, watchFor: W, total: T, sentencesPerField: S } = V3_CAPS;
 
   const cases = [
-    // Each cap, at the bound and one word past it.
-    [`headline at the ${H}w cap passes`, mkRead({ headline: nWords(H) }), mkSummary(), `✓ headline ${H}w (cap ${H})`],
+    // ── Each cap, at the bound and past it ────────────────────────────────
+    [`headline at the ${H}w render guard passes`, mkRead({ headline: nWords(H) }), mkSummary(), `✓ headline ${H}w (cap ${H})`],
     [`headline at ${H + 1}w is a soft warning inside the tolerance`, mkRead({ headline: nWords(H + 1) }), mkSummary(), `⚠ headline ${H + 1}w (cap ${H}`],
     [`headline at ${H + 3}w hard-fails beyond the tolerance`, mkRead({ headline: nWords(H + 3) }), mkSummary(), `✗ headline ${H + 3}w (cap ${H}`],
-    [`evidence item at the ${E}w cap passes`, mkRead({ evidence: [nWords(E)] }), mkSummary(), `✓ evidence items ≤ ${E} words`],
-    [`evidence item at ${E + 1}w is a soft warning inside the tolerance`, mkRead({ evidence: [nWords(E + 1)] }), mkSummary(), `⚠ evidence items ≤ ${E} words`],
-    [`evidence item at ${E + 3}w hard-fails beyond the tolerance`, mkRead({ evidence: [nWords(E + 3)] }), mkSummary(), `✗ evidence items ≤ ${E} words`],
-    [`watchFor at the ${W}w cap passes`, mkRead({ watchFor: nWords(W) }), mkSummary(), `✓ watchFor ${W}w (cap ${W})`],
-    // The exact live-run-2 shape: 19 words against an 18 cap, four times over,
-    // reported by nothing. It is reported now.
+    [`watchFor at the ${W}w render guard passes`, mkRead({ watchFor: nWords(W) }), mkSummary(), `✓ watchFor ${W}w (cap ${W})`],
     [`watchFor at ${W + 1}w is a soft warning inside the tolerance`, mkRead({ watchFor: nWords(W + 1) }), mkSummary(), `⚠ watchFor ${W + 1}w (cap ${W}`],
     [`watchFor at ${W + 3}w hard-fails beyond the tolerance`, mkRead({ watchFor: nWords(W + 3) }), mkSummary(), `✗ watchFor ${W + 3}w (cap ${W}`],
-    // Evidence item COUNT, both bounds.
-    ['too many evidence items fails', mkRead({ evidence: ['a', 'b', 'c'] }), mkSummary(), '✗ evidence has'],
-    ['an empty evidence list fails', mkRead({ evidence: [] }), mkSummary(), '✗ evidence has'],
-    // Finding 3, both directions: the rule fires on the DATA, and only on it.
+    // The TOTAL is a real constraint, not one implied by the two render guards:
+    // both fields can sit inside their own caps and still bust the pair. That is
+    // the case the founder's "two sentences, forty words" call actually bounds.
+    [`both fields inside their guards can still bust the ${T}w total`,
+      mkRead({ headline: nWords(H), watchFor: nWords(W) }), mkSummary(), `✗ total, both sentences ${H + W}w (cap ${T}`],
+    [`a pair at exactly ${T}w passes`,
+      mkRead({ headline: nWords(H), watchFor: nWords(T - H) }), mkSummary(), `✓ total, both sentences ${T}w (cap ${T})`],
+    [`a pair at ${T + 1}w is a soft warning inside the tolerance`,
+      mkRead({ headline: nWords(H), watchFor: nWords(T - H + 1) }), mkSummary(), `⚠ total, both sentences ${T + 1}w (cap ${T}`],
+    // ── Structure: one sentence, terminal punctuation, zero numerals ───────
+    [`a ${S}-sentence headline passes`, mkRead({ headline: 'aa bb cc.' }), mkSummary(), `✓ headline is exactly ${S} sentence (measured ${S})`],
+    ['two sentences in one field hard-fail',
+      mkRead({ headline: 'Aa bb cc. Dd ee ff.' }), mkSummary(), `✗ headline is exactly ${S} sentence (measured 2)`],
+    ['a question mark still counts as one sentence',
+      mkRead({ headline: 'Aa bb cc?' }), mkSummary(), `✓ headline is exactly ${S} sentence`],
+    ['a field with no terminal punctuation hard-fails',
+      mkRead({ watchFor: 'dd ee ff' }), mkSummary(), '✗ watchFor ends in terminal punctuation'],
+    ['a closing quote after the full stop still counts as terminal',
+      mkRead({ watchFor: 'dd ee "ff."' }), mkSummary(), '✓ watchFor ends in terminal punctuation'],
+    ['a numeral anywhere hard-fails',
+      mkRead({ watchFor: 'Bet 3 times.' }), mkSummary(), '✗ watchFor contains no numerals (1 found'],
+    // The splitter's digit guard, which is the reason it exists: "3.5" must not
+    // read as a sentence boundary. The read still fails — on the NUMERAL check,
+    // which is the true defect — instead of on a phantom two-sentence one.
+    ['a decimal does not split a sentence in two',
+      mkRead({ watchFor: 'Take 3.5 to one.' }), mkSummary(), `✓ watchFor is exactly ${S} sentence (measured ${S})`],
+    ['a decimal is still caught as a numeral',
+      mkRead({ watchFor: 'Take 3.5 to one.' }), mkSummary(), '✗ watchFor contains no numerals'],
+    // v3 dropped evidence; the schema forbids it, so its presence is a defect.
+    ['a leftover evidence field is reported',
+      JSON.stringify({ headline: 'aa bb.', watchFor: 'cc dd.', evidence: ['ee'] }), mkSummary(), '✗ read still carries an `evidence` field'],
+    // ── Finding 3, both directions: the rule fires on the DATA, and only on it.
     ['confident errors present + headline names them passes',
-      mkRead({ headline: 'Fast calls keep missing' }), mkSummary({ confidentMisses: oneMiss }), `✓ ${HEADLINE_RULE}`],
+      mkRead({ headline: 'Fast calls keep missing.' }), mkSummary({ confidentMisses: oneMiss }), `✓ ${HEADLINE_RULE}`],
     ['confident errors present + headline ignores them fails',
-      mkRead({ headline: 'Position leaks keep showing up' }), mkSummary({ confidentMisses: oneMiss }), `✗ ${HEADLINE_RULE}`],
-    // Tier 2 (prompt v2): prose improvement + the counts receipt in evidence.
-    ['improved stretch: prose headline + counts receipt passes',
-      mkRead({ headline: 'Sharper stretch than the last one; calls still loose', evidence: ['20 of 50 this stretch, up from 10 of 50 before'] }),
+      mkRead({ headline: 'Position leaks keep showing up.' }), mkSummary({ confidentMisses: oneMiss }), `✗ ${HEADLINE_RULE}`],
+    // ── Tier 2 (v3): the prose clause is the WHOLE check — the counts receipt
+    // retired with `evidence` and with numerals.
+    ['improved stretch: an improvement clause in the headline passes',
+      mkRead({ headline: 'You are playing sharper lately, but calls still go loose.' }),
       mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
-      '✓ trajectory headline'],
+      '✓ trajectory clause'],
     ['improved stretch: headline without improvement wording fails',
-      mkRead({ headline: 'Calls keep going in too loose lately', evidence: ['20 of 50 this stretch, up from 10 of 50 before'] }),
+      mkRead({ headline: 'Calls keep going in too loose lately.' }),
       mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
-      '✗ trajectory headline'],
-    ['improved stretch: missing counts receipt in evidence fails',
-      mkRead({ headline: 'Sharper stretch than the last one; calls still loose', evidence: ['calls keep going in loose'] }),
-      mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } }),
-      '✗ trajectory headline'],
-    // False-direction guard (live run 2's find): a decline spun as progress.
-    ['declined stretch: "up from" anywhere fails',
-      mkRead({ headline: 'Position spots keep missing', evidence: ['20 of 50, up from 30 of 50'] }),
+      '✗ trajectory clause'],
+    // ── False-direction guard: a decline spun as progress.
+    ['declined stretch: improvement wording in either field fails',
+      mkRead({ headline: 'Position spots keep missing.', watchFor: 'A sharper stretch than before.' }),
       mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
       '✗ no false improvement claim'],
     ['declined stretch: honest decline passes',
-      mkRead({ headline: 'Position spots keep missing', evidence: ['20 of 50 this stretch, down from 30 of 50'] }),
+      mkRead({ headline: 'Position spots keep missing.', watchFor: 'Slow down before calling.' }),
       mkSummary({ accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } }),
       '✓ no false improvement claim'],
+    // ── The v3 voice ban, the phrase that prompted it (spec §5).
+    ['"you tend to" is flagged as a trait verdict',
+      mkRead({ headline: 'You tend to fold too early.' }), mkSummary(), '⚠ stretch-scoped voice'],
+    ['the stretch-scoped rewrite of the same sentence is clean',
+      mkRead({ headline: "Lately you've been folding too early." }), mkSummary(), '✓ stretch-scoped voice'],
+    // ── Example fingerprints, both directions.
+    ['an example phrase the data does not warrant is flagged',
+      mkRead({ headline: 'You have been snap calling tight players lately.' }), mkSummary(),
+      '⚠ no worked-example phrasing the data does not warrant'],
+    ['the same phrase is clean when the window has a tight-villain confident error',
+      mkRead({ headline: 'You have been snap calling tight players lately.' }),
+      mkSummary({ confidentMisses: oneMiss }), '✓ no worked-example phrasing'],
+    ['a freezer phrase is clean when the window has timeouts',
+      mkRead({ watchFor: 'Commit, because any choice beats no choice.' }),
+      mkSummary({ timeouts: 4 }), '✓ no worked-example phrasing'],
+    ['a freezer phrase on a window with no timeouts is flagged',
+      mkRead({ watchFor: 'Commit, because any choice beats no choice.' }),
+      mkSummary(), '⚠ no worked-example phrasing'],
+    // ── Em dashes.
+    ['an em dash is flagged', mkRead({ watchFor: 'Slow down — then call.' }), mkSummary(), '⚠ no em dashes (1 found'],
+    ['a clean read reports the em-dash denominator', mkRead({}), mkSummary(), '✓ no em dashes (0 found'],
     // Non-JSON must not silently count as a pass.
     ['unparseable output is reported', 'not json at all', mkSummary(), '✗ did not parse as JSON'],
   ];
@@ -665,17 +824,62 @@ if (SELFTEST) {
     const out = checkRead(read, summary, newCoverage()).join('\n');
     if (!out.includes(want)) failures.push(`  ✗ ${name}\n     wanted a line containing: ${want}\n     got:\n${out.replace(/^/gm, '       ')}`);
   }
+  // ── The founder-signed worked examples must pass this harness ────────────
+  // The three examples in the prompt are the founder's own register, signed off
+  // August 2 2026, and they go into the prompt verbatim. So they are the one
+  // input whose correct verdict is known in advance: if the harness fails them,
+  // the HARNESS is wrong — a cap mistyped, a splitter too eager, a scan too
+  // broad — and every ✗ it prints on a live run is noise pointing at the model.
+  //
+  // Each is paired with the window that WARRANTS it, so the conditional checks
+  // (confident-error headline, trajectory clause, freezer, fingerprints) are
+  // exercised on their passing side rather than skipped. Zero hard failures AND
+  // zero soft flags: a worked example that trips a soft scan is an example that
+  // teaches the model to trip it.
+  const SIGNED_EXAMPLES = [
+    ['tier 1 (confident errors)',
+      { headline: "You've been snap calling tight players a lot lately.",
+        watchFor: 'A Tight Nit rarely bluffs and rarely plays a bad hand, so make sure yours is strong before the chips go in.' },
+      mkSummary({ confidentMisses: oneMiss, accuracy: { correct: 20, total: 50 }, previous: { correct: 40, total: 50 } })],
+    ['tier 2 (improving stretch)',
+      { headline: "You're playing sharper lately, but you're still folding too early when the price is good.",
+        watchFor: 'When the bet is less than half the pot, pause and look at your draws before letting the hand go.' },
+      mkSummary({ skills: [{ skill: 'potodds', correct: 4, attempts: 10 }],
+        accuracy: { correct: 20, total: 50 }, previous: { correct: 10, total: 50 } })],
+    ['tier 3 (freezer variant)',
+      { headline: 'The clock has been making too many of your decisions for you.',
+        watchFor: 'When the timer gets low, pick the safest line you see and commit, because any choice beats no choice.' },
+      mkSummary({ timeouts: 8, accuracy: { correct: 20, total: 50 }, previous: { correct: 30, total: 50 } })],
+  ];
+  for (const [label, read, summary] of SIGNED_EXAMPLES) {
+    const out = checkRead(JSON.stringify(read), summary, newCoverage());
+    const hard = out.filter((l) => l.startsWith('- ✗'));
+    const soft = out.filter((l) => l.startsWith('- ⚠'));
+    if (hard.length || soft.length)
+      failures.push(`  ✗ the founder-signed ${label} example does not pass this harness\n`
+        + `     (the example is signed off and ships verbatim, so this is a HARNESS defect)\n`
+        + [...hard, ...soft].map((l) => `     ${l}`).join('\n'));
+  }
+
   // A read with no confident errors must not be judged against a rule the
   // prompt did not give it — the inverse of the drift finding 3 fixed.
   const quiet = checkRead(mkRead({}), mkSummary(), newCoverage()).join('\n');
   if (quiet.includes(HEADLINE_RULE))
     failures.push(`  ✗ the headline rule fired on a window with zero confident errors`);
 
-  // Coverage must count what was measured, not what was declared.
+  // Coverage must count what was measured, not what was declared. Every v3
+  // counter is asserted here: a check that silently stops running would show up
+  // as a zero in the report, and a zero is indistinguishable from "clean" to
+  // anyone reading it — which is the exact shape of finding 1.
   const c = newCoverage();
-  checkRead(mkRead({ evidence: ['a b', 'c d'] }), mkSummary({ timeouts: 3 }), c);
+  checkRead(mkRead({}), mkSummary({ timeouts: 3 }), c);
   checkRead('not json', mkSummary(), c);
-  const wantCov = { parsed: 1, unparsed: 1, headlines: 1, evidenceItems: 2, watchFor: 1, freezeApplicable: 1 };
+  const wantCov = {
+    parsed: 1, unparsed: 1,
+    headlines: 1, watchFor: 1, totals: 1,
+    sentenceFields: 2, punctFields: 2, numeralFields: 2,
+    freezeApplicable: 1, voiceScanned: 1, fingerprintScanned: 1, emdashScanned: 1,
+  };
   for (const [k, v] of Object.entries(wantCov))
     if (c[k] !== v) failures.push(`  ✗ coverage.${k} is ${c[k]}, expected ${v} — the totals must reflect real measurements`);
 
@@ -693,7 +897,7 @@ if (SELFTEST) {
   const badV = personaVerdict(badRead, lines(badRead));
   const okV = personaVerdict(mkRead({}), lines(mkRead({})));
   // Hard checks all pass; only the soft voice scan trips. Must stay clean.
-  const softRead = mkRead({ headline: 'You are a maniac lately' });
+  const softRead = mkRead({ headline: 'You are a maniac lately.' });
   const softV = personaVerdict(softRead, lines(softRead));
   const covOf = (personas, clean) => ({ ...newCoverage(), personas, personasClean: clean });
 
@@ -713,10 +917,14 @@ if (SELFTEST) {
   ];
   for (const [name, fn] of verdictCases) if (!fn()) failures.push(`  ✗ ${name}`);
 
-  const total = cases.length + 1 + Object.keys(wantCov).length + verdictCases.length;
+  const total = cases.length + SIGNED_EXAMPLES.length + 1
+    + Object.keys(wantCov).length + verdictCases.length;
   console.log(failures.length
     ? `eval-coach selftest FAILED (${failures.length}):\n${failures.join('\n')}`
-    : `eval-coach selftest OK — ${total} assertions over caps ${H}/${E}/${W}w, item range ${WORD_CAPS.evidenceItems.join('–')}, the headline rule, the coverage totals, the per-persona verdict and the exit status`);
+    : `eval-coach selftest OK — ${total} assertions over caps ${H}/${W}/${T}w at ${S} sentence per field,`
+      + ' the structure checks (sentences, terminal punctuation, numerals), the headline rule,'
+      + ' the trajectory clause, the fingerprint and em-dash scans, the coverage totals,'
+      + ' the per-persona verdict and the exit status');
   process.exit(failures.length ? 1 : 0);
 }
 
@@ -751,8 +959,19 @@ for (const p of PERSONAS) {
       read = `${ERROR_PREFIX}${err.message}`;
     }
   } else {
-    console.log(`— ${p.name} (dry)\n${buildPrompt(summary)}\n`);
+    console.log(`— ${p.name} (dry) — prompt written to ${OUT}`);
   }
+  // The dry artifact carries the ASSEMBLED PROMPTS (August 2, 2026). It is named
+  // coach-eval-dry-prompts.md and its own banner says "use this to read the
+  // PROMPTS", and until now it contained none of them: they went to stdout only,
+  // while the file held nine "(dry run — no API call)" placeholders. Anyone
+  // reviewing a prompt change by opening the file — which is what its name
+  // invites — reviewed nothing and had no way to tell. Same failure class as
+  // findings 1 and 4: an artifact that certifies more than it carries.
+  const promptBlock = DRY
+    ? `\n**Assembled prompt** — verbatim, exactly what the model would receive:\n\n`
+      + '```\n' + buildPrompt(summary) + '\n```\n'
+    : '';
   // The checks run BEFORE anything is printed about this persona. The old order
   // printed the tick first and measured afterwards, which is how a failed call
   // and three real ✗ results all rendered as ✓ (finding 1).
@@ -765,7 +984,7 @@ for (const p of PERSONAS) {
     console.log(verdictLine(p.name, v));
   }
   const checks = DRY ? '' : `\n**Checks:**\n${checkLines.join('\n')}\n`;
-  sections.push(`## ${p.name}\n\n**Expected:** ${p.expect}\n\n**Window:**\n${window}\n\n**Coach's Read:**\n\n${renderRead(read)}\n${checks}`);
+  sections.push(`## ${p.name}\n\n**Expected:** ${p.expect}\n\n**Window:**\n${window}\n${promptBlock}\n**Coach's Read:**\n\n${renderRead(read)}\n${checks}`);
 }
 
 // The banner is the artifact's identity (finding 1). Mode first, on line 1 and
@@ -781,7 +1000,9 @@ const banner = DRY
 
 const doc = `# Coach's Read eval — ${DRY ? 'DRY RUN (prompts only)' : 'LIVE output'}\n\n` +
   `${banner}\n\n` +
-  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/evidence/watchFor). Judge each against the F5 bar: pattern-level why · direction of error · villain context WHERE THE WINDOW HAS IT · confident-miss callout · human tone, no restating · stretch-scoped trend voice (never a trait verdict — naming the player's type is the schema card's job) · watchFor shaped as a trigger-action plan (cue, then action) · where the window improved with NO confident errors, the headline opens with the improvement in plain words and the exact counts land in one evidence item (tier 2). Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference and that criterion does not apply; where the counts are non-zero, a read that ignores the villain fails. The mechanical Checks block flags structural issues; the F5 judgment is still yours.*\n\n` +
+  `*Generated by scripts/eval-coach.mjs over the real aggregate() of a ten-session window. Reads are structured JSON (headline/watchFor) and are printed here JOINED, as one paragraph, because that is exactly how the card renders them.*\n\n` +
+  `**Read all nine aloud.** That is the acceptance test v3 was written for: they should sound like one coach talking, not nine reports. The mechanical Checks block below each read covers structure (two sentences, terminal punctuation, zero numerals, the word caps) and the substance rules (confident errors own sentence one · the trajectory clause only on genuinely improving stretches · declines never spun · freezing named as its own pattern · no trait verdicts). None of it can judge VOICE, which is the only thing that decides whether v3 ships.\n\n` +
+  `*Also judge: does sentence two actually TEACH — a real claim about the villain type or the concept — and does it land an if-then the player can run next session? Does anything read as parroted from the worked examples rather than earned by this persona's data (the fingerprint scan flags the three phrases it can see; you can see the rest)? Villains reach the prompt ONLY through confident errors and repeated spots, so on a persona whose Window shows 0 of each there is no villain string to reference; where the counts are non-zero, a read that ignores the villain fails.*\n\n` +
   `${coverageReport(cov, DRY)}\n\n---\n\n` +
   sections.join('\n---\n\n');
 // Written BEFORE the verdict is applied, and unconditionally: the founder needs

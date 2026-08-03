@@ -24,15 +24,50 @@ test('no read and no history renders nothing at all', () => {
   expect(container).toBeEmptyDOMElement();
 });
 
-test('a structured read renders the headline and watch-for — evidence stays in the notebook', () => {
+// v3 (2026-08-02): the card joins the two fields into ONE paragraph. The read is
+// two sentences of a coach talking, so a "Watch for" label between them cuts a
+// single thought in half. Evidence bullets never appeared here and still do not
+// (founder call, 2026-07-29 spec); the full legacy read lives in Past Reads.
+test('a structured read renders as one joined paragraph, not a labelled split', () => {
   render(<LastSessionRead coachNote={note} coachReads={history(1)} />);
-  expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
-  expect(screen.getByText(/Believe passive raisers/)).toBeInTheDocument();
-  // Evidence bullets read as stat-dumps on the card (founder call, 2026-07-29
-  // spec). The full read, bullets included, still lives in Past Reads.
+  // Both fields are period-ized in the join: this fixture is v2-shaped (no
+  // terminal punctuation — the old split layout never needed it), and every
+  // real player's CURRENT read is v2-shaped until their next one fires. A
+  // plain space-join renders those as run-ons on the card's front line.
+  expect(document.querySelector('.db-profile-read-headline')).toHaveTextContent(
+    'You over-fold to river bets. Believe passive raisers on scary boards.',
+  );
+  // The label and its row are gone from the card — the join IS the render.
+  expect(screen.queryByText('Watch for')).not.toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-wf-label')).toBeNull();
+  expect(document.querySelector('.db-profile-read-watchfor')).toBeNull();
+
   expect(screen.queryByText('Folded top pair to the nit')).not.toBeInTheDocument();
   expect(document.querySelector('.db-profile-read-evidence')).toBeNull();
   expect(document.querySelector('.db-profile-read-focus')).toBeNull();
+});
+
+// A read stored before v3 has three fields; it joins the same way, because the
+// card never rendered its evidence either. Derived state re-reads the whole
+// append-only log on every profile load, so this is a live path, not a museum.
+test('a legacy three-field read joins the same way — no migration', () => {
+  render(<LastSessionRead coachNote={note} coachReads={history(1)} />);
+  const card = document.querySelector('.db-profile-read-headline');
+  expect(card).toHaveTextContent(/You over-fold to river bets\. Believe passive raisers/);
+  expect(card).not.toHaveTextContent(/Folded top pair/);
+});
+
+test('a structured read with no watchFor renders the headline alone, unpadded', () => {
+  render(
+    <LastSessionRead
+      coachNote={{ body: structured('Clean stretch, keep watching pot odds'), focus: null }}
+      coachReads={history(1)}
+    />,
+  );
+  // Period-ized like every joined part — a lone field is still a sentence on
+  // the card — and nothing else: no join artifact, no trailing space.
+  expect(document.querySelector('.db-profile-read-headline'))
+    .toHaveTextContent(/^Clean stretch, keep watching pot odds\.$/);
 });
 
 test('a legacy prose read renders as prose, with no headline element', () => {
@@ -65,7 +100,8 @@ test('a single historical read still reaches the player when there is no strip',
 test('guests never see the notebook', () => {
   render(<LastSessionRead coachNote={note} coachReads={history(3)} guest />);
   expect(screen.queryByText(/Past reads/)).not.toBeInTheDocument();
-  expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-headline'))
+    .toHaveTextContent(/You over-fold to river bets/);
 });
 
 // C″ (2026-07-29): the label carries no scope claim at all — which also means
@@ -104,7 +140,8 @@ test('a capped refresh says so, above an unchanged read', () => {
   expect(screen.getByText(/Coach is out for the day/)).toBeInTheDocument();
   // The previous read is still the player's best information — the notice
   // explains why it did not change, it does not replace it.
-  expect(screen.getByText('You over-fold to river bets')).toBeInTheDocument();
+  expect(document.querySelector('.db-profile-read-headline'))
+    .toHaveTextContent(/You over-fold to river bets/);
 });
 
 test('a capped refresh with nothing to show still renders the notice', () => {

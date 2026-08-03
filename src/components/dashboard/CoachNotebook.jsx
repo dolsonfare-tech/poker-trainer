@@ -52,6 +52,15 @@ export default function CoachNotebook({ reads, includeLatest = false }) {
                 {/* Legacy prose has no separate detail — its "headline" IS the
                     whole read, so expanding just un-clamps the row (a detail
                     block would duplicate the text; founder-reported July 19). */}
+                {/* Two read generations render here at once, and both stay
+                    correct because the notebook is an ARCHIVE — old reads are
+                    never rewritten (the append-only discipline in spirit).
+                    A pre-v3 read has evidence bullets and a prescription, so it
+                    keeps its bullets and its "Watch for" label. A v3 read is two
+                    sentences: the row above is sentence one, so the detail is
+                    sentence two alone, unlabelled, and the row plus the detail
+                    read as the one paragraph the card shows. Labelling it would
+                    put a form field in the middle of a sentence pair. */}
                 {isOpen && parsed?.structured && (
                   <div className="db-notebook-detail">
                     {parsed.structured.evidence.length > 0 && (
@@ -63,7 +72,9 @@ export default function CoachNotebook({ reads, includeLatest = false }) {
                     )}
                     {parsed.structured.watchFor && (
                       <div className="db-profile-read-watchfor">
-                        <span className="db-profile-read-wf-label">Watch for</span>
+                        {parsed.structured.evidence.length > 0 && (
+                          <span className="db-profile-read-wf-label">Watch for</span>
+                        )}
                         <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
                       </div>
                     )}

@@ -748,15 +748,23 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
 // on four of nine reads.
 //
 // The structural fix is single-sourcing: api/coach-read.js exports HEADLINE_RULE
-// and WORD_CAPS, interpolates them into the prompt, and the harness IMPORTS
-// them. This rule pins that arrangement — it fails if either constant stops
-// being exported, stops being interpolated into the prompt, or gets restated as
-// a literal in the harness (the shape the drift had before).
+// and the caps object, interpolates them into the prompt, and the harness
+// IMPORTS them. This rule pins that arrangement — it fails if either constant
+// stops being exported, stops being interpolated into the prompt, or gets
+// restated as a literal in the harness (the shape the drift had before).
+//
+// The caps object changed NAME and SHAPE in v3 (August 2, 2026): WORD_CAPS
+// {headline, evidence, watchFor, evidenceItems} → V3_CAPS {total, headline,
+// watchFor, sentencesPerField}, because the read became two fields of one
+// sentence each with a total that is the real bound. The rule's INTENT is
+// unchanged and is the reason it survives a rename: it exists to stop a cap
+// being re-hardcoded anywhere, and a rename that quietly dropped the pin would
+// leave the next prompt revision free to do exactly that.
 {
   const promptSrc = read(join(ROOT, 'api/coach-read.js'));
   const evalSrc = read(join(ROOT, 'scripts/eval-coach.mjs'));
 
-  for (const name of ['HEADLINE_RULE', 'WORD_CAPS']) {
+  for (const name of ['HEADLINE_RULE', 'V3_CAPS']) {
     if (!new RegExp(`module\\.exports\\.${name}\\s*=`).test(promptSrc))
       flag('ERROR', 'coach-eval-contract',
         `api/coach-read.js does not export ${name} — the eval harness imports it so the check and the prompt cannot disagree (live eval findings 3/4, July 2026)`);
@@ -767,11 +775,54 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
 
   // The caps must reach the prompt TEXT. Exporting them while the prompt states
   // hardcoded numbers is the same drift wearing an import.
-  for (const key of ['headline', 'evidence', 'watchFor', 'evidenceItems']) {
-    if (!promptSrc.includes(`WORD_CAPS.${key}`))
+  for (const key of ['total', 'headline', 'watchFor', 'sentencesPerField']) {
+    if (!promptSrc.includes(`V3_CAPS.${key}`))
       flag('ERROR', 'coach-eval-contract',
-        `api/coach-read.js never interpolates WORD_CAPS.${key} into the prompt — the field's word limit would be a literal the harness cannot see`);
+        `api/coach-read.js never interpolates V3_CAPS.${key} into the prompt — that bound would be a literal the harness cannot see`);
   }
+  // The prompt must not contain what the prompt bans (August 2, 2026). v3 rests
+  // on one empirical claim: the model mimics this text with near-perfect
+  // fidelity — that is why the worked examples are founder-signed-off and go in
+  // verbatim. The same fidelity applies to prose the author did not think of as
+  // an example. Two em dashes sat in the v3 instructions, three lines above the
+  // rule forbidding them, and the harness's em-dash scan would have reported the
+  // resulting reads as a MODEL defect. A ban the prompt itself violates is worse
+  // than no ban: it teaches the opposite of what it says.
+  const tmpl = promptSrc.match(/return `You are a poker coach[\s\S]*?`;/)?.[0];
+  if (!tmpl) {
+    flag('ERROR', 'coach-eval-contract',
+      'could not locate the buildPrompt template in api/coach-read.js — the prompt-hygiene checks below have nothing to scan');
+  } else {
+    // Scanning the template SOURCE is not scanning the prompt. HEADLINE_RULE and
+    // TRAJECTORY_RULE reach the model interpolated, so the source the regex above
+    // captures holds the literal `${TRAJECTORY_RULE}` and never that rule's text
+    // — an em dash inside either constant was invisible to this check while
+    // landing in the prompt verbatim. Found August 2, 2026, applying the founder's
+    // eval round 1 prescriptions: the prescribed trajectory wording carried an em
+    // dash and would have been the first thing through the hole. The values are
+    // REQUIRED, not re-parsed out of the source, so what is scanned is exactly
+    // what buildPrompt interpolates.
+    const { createRequire } = await import('node:module');
+    let rules;
+    try {
+      const coach = createRequire(import.meta.url)(join(ROOT, 'api/coach-read.js'));
+      rules = [['HEADLINE_RULE', coach.HEADLINE_RULE], ['TRAJECTORY_RULE', coach.TRAJECTORY_RULE]];
+    } catch (err) {
+      flag('ERROR', 'coach-eval-contract',
+        `could not load api/coach-read.js to scan its interpolated prompt rules (${err.message}) — the em-dash ban cannot be verified against the text that actually reaches the model`);
+      rules = [];
+    }
+    for (const [label, text] of [['the prompt template', tmpl], ...rules]) {
+      if (typeof text !== 'string') {
+        flag('ERROR', 'coach-eval-contract',
+          `${label} is not a string — it is interpolated into the Coach's Read prompt and must be scannable text`);
+      } else if (text.includes('—')) {
+        flag('ERROR', 'coach-eval-contract',
+          `${label} contains an em dash while the Coach's Read prompt instructs the model not to use one — the model mimics this text, so every part of the prompt has to obey its own rules`);
+      }
+    }
+  }
+
   if (!promptSrc.includes('${HEADLINE_RULE}'))
     flag('ERROR', 'coach-eval-contract',
       'api/coach-read.js never interpolates ${HEADLINE_RULE} into the prompt — the confident-error headline mandate must be the SAME string the harness asserts');
@@ -798,7 +849,7 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
   const restated = evalSrc.match(/\bwords?\s*(?:<=|>)\s*\d+|\.length\s*(?:<=|>=)\s*[13-9]\b/);
   if (restated)
     flag('ERROR', 'coach-eval-contract',
-      `scripts/eval-coach.mjs compares a length against a literal ('${restated[0]}') — every bound comes from WORD_CAPS or the check is measuring its own opinion`);
+      `scripts/eval-coach.mjs compares a length against a literal ('${restated[0]}') — every bound comes from V3_CAPS or the check is measuring its own opinion`);
 
   // And the checks must be shown to WORK. checkRead's cap arithmetic is
   // otherwise only reachable on a live run, so its first execution would be the
@@ -861,9 +912,29 @@ if (serverClosure.size < SERVER_ENTRIES.length) {
       if (!existsSync(dryPath)) {
         flag('ERROR', 'coach-eval-dry-safety',
           `a --dry run produced no ${dryName} — the live-file assertion above would pass vacuously, which is the failure mode this rule exists to expose`);
-      } else if (!/RUN MODE: DRY/.test(readFileSync(dryPath, 'utf8'))) {
-        flag('ERROR', 'coach-eval-dry-safety',
-          `${dryName} does not state its run mode at the top — an artifact whose provenance has to be guessed is how the wasted measurement round happened`);
+      } else {
+        const dryDoc = readFileSync(dryPath, 'utf8');
+        if (!/RUN MODE: DRY/.test(dryDoc))
+          flag('ERROR', 'coach-eval-dry-safety',
+            `${dryName} does not state its run mode at the top — an artifact whose provenance has to be guessed is how the wasted measurement round happened`);
+        // The dry artifact must CARRY the assembled prompts (August 2, 2026).
+        // It is named for them and its banner tells the reader to use it to read
+        // them; for months it contained none — they went to stdout only, and the
+        // file held nine "(dry run — no API call)" placeholders. A prompt change
+        // reviewed by opening this file reviewed nothing, and nothing said so.
+        // Same class as findings 1 and 4: the artifact certified more than it
+        // carried. The opening words of buildPrompt are read out of the prompt
+        // module rather than restated here, so rewording the prompt cannot
+        // silently retarget this check at a string nothing writes.
+        const opener = read(join(ROOT, 'api/coach-read.js'))
+          .match(/return `(You are a poker coach[^.]*\.)/)?.[1];
+        if (!opener) {
+          flag('ERROR', 'coach-eval-dry-safety',
+            'could not locate the prompt opener in api/coach-read.js — rule 32 reads it from there so the dry-artifact check cannot drift from the real prompt');
+        } else if (!dryDoc.includes(opener.slice(0, 40))) {
+          flag('ERROR', 'coach-eval-dry-safety',
+            `${dryName} does not contain the assembled prompt — a file named for prompts, telling its reader to review prompts, with no prompt in it`);
+        }
       }
     } catch (e) {
       flag('ERROR', 'coach-eval-dry-safety',

@@ -3,9 +3,11 @@ import CoachNotebook from './CoachNotebook';
 
 // ─── Coach's Read ──────────────────────────────────────────────────────────
 // The read belongs to the player profile (founder decision) — a full-width
-// strip beneath the schema/ledger columns. Compact: headline and watch-for
-// (diagnosis and prescription); evidence bullets and the date live in the
-// notebook (Past Reads). Legacy prose reads clamp to ~2 lines (C″, 2026-07-29).
+// strip beneath the schema/ledger columns. v3: two sentences joined into one
+// short paragraph — the observation, then why it costs and what to do about it.
+// The date lives in the notebook (Past Reads); so do the evidence bullets of
+// reads written before v3 dropped them. Legacy prose reads clamp to ~2 lines
+// (C″, 2026-07-29).
 //
 // Phase B: the read is no longer the latest session's alone — it's a trend
 // read over a trailing window of sessions, refreshed every five sessions
@@ -31,15 +33,22 @@ export default function LastSessionRead({ coachNote, coachReads, guest, coachLim
         <>
           <div className="db-profile-read-label">Coach's Read</div>
           {parsed?.structured ? (
-            <>
-              <div className="db-profile-read-headline">{parsed.structured.headline}</div>
-              {parsed.structured.watchFor && (
-                <div className="db-profile-read-watchfor">
-                  <span className="db-profile-read-wf-label">Watch for</span>
-                  <span className="db-profile-read-wf-text">{parsed.structured.watchFor}</span>
-                </div>
-              )}
-            </>
+            // v3 (August 2, 2026): the two fields are sentence one and sentence
+            // two of ONE paragraph, so they are joined here rather than laid out
+            // as a headline over a labelled "Watch for" row. The split layout was
+            // right when watchFor was a separate prescription; it now cuts a
+            // two-sentence thought in half and puts a form label in the middle
+            // of it. Old three-field reads join here too (the card never showed
+            // their evidence), but their fields predate the terminal-punctuation
+            // rule — the split layout never needed periods — so each part is
+            // period-ized before the join or every pre-v3 read renders as a
+            // run-on until its owner's next read fires, up to five sessions away.
+            <div className="db-profile-read-headline">
+              {[parsed.structured.headline, parsed.structured.watchFor]
+                .filter(Boolean)
+                .map((s) => (/[.!?]$/.test(s.trim()) ? s.trim() : `${s.trim()}.`))
+                .join(' ')}
+            </div>
           ) : (
             <p className="db-profile-read-prose">{parsed?.legacy}</p>
           )}

@@ -263,18 +263,23 @@ module.exports = async function handler(req, res) {
 };
 
 // Validate the model's structured output and re-serialize it. Returns canonical
-// JSON when the three fields are present and well-typed, else the raw text
+// JSON when BOTH v3 fields are present and well-typed, else the raw text
 // unchanged (the client's parseCoachRead falls back to prose rendering).
+//
+// v3 (August 2, 2026) dropped `evidence`. An old three-field read arriving here
+// would still normalize — the extra key is simply not copied out — but that
+// cannot happen: the schema below forbids additional properties, so the model
+// can only emit the two. The re-serialization is what guarantees the string on
+// the wire and in the DB is canonical two-field JSON regardless.
 function normalizeCoachRead(raw) {
   if (typeof raw !== 'string' || !raw.trim()) return raw;
   try {
     const p = JSON.parse(raw);
     const ok = p && typeof p === 'object'
       && typeof p.headline === 'string'
-      && Array.isArray(p.evidence)
       && typeof p.watchFor === 'string';
     if (!ok) return raw;
-    return JSON.stringify({ headline: p.headline, evidence: p.evidence, watchFor: p.watchFor });
+    return JSON.stringify({ headline: p.headline, watchFor: p.watchFor });
   } catch {
     return raw;
   }
@@ -286,14 +291,19 @@ const clamp = (v, max = 200) => (typeof v === 'string' ? v.slice(0, max) : '');
 // requires additionalProperties:false and does NOT support length/count
 // constraints (maxLength, minItems/maxItems) — every word/count limit is
 // enforced in the prompt text instead. Supported on claude-sonnet-5.
+//
+// v3 (August 2, 2026): `evidence` is GONE. The read is two sentences of a coach
+// talking, and the founder's red-pen call was that no surface of it shows its
+// arithmetic — the window data still decides WHICH pattern gets named, it just
+// never appears as a receipt. `additionalProperties: false` is what makes the
+// deletion real: the model cannot re-add the field on its own.
 const COACH_SCHEMA = {
   type: 'object',
   properties: {
     headline: { type: 'string' },
-    evidence: { type: 'array', items: { type: 'string' } },
     watchFor: { type: 'string' },
   },
-  required: ['headline', 'evidence', 'watchFor'],
+  required: ['headline', 'watchFor'],
   additionalProperties: false,
 };
 
@@ -325,20 +335,19 @@ const HEADLINE_RULE = 'headline must be about that confident-error pattern';
 // (HEADLINE_RULE) always wins; this fires only in its absence. Exported and
 // imported by scripts/eval-coach.mjs for the same single-sourcing reason as
 // HEADLINE_RULE.
-// "as compact counts like 20/50": the first live run wrote both counts long-form
-// ("20 of 50 ... from 10 of 50" — six words before the coach says anything) and
-// every tier-2 headline blew the 12-word cap. The slash form carries the same
-// two copied numbers at one word each. Copy-only law unchanged: both numbers
-// still come from the data, only the typography is prescribed.
-// PROSE, not counts (founder call, July 29 2026 evening): "20/50 up from
-// 10/50" is the deleted stat-strip's vocabulary coming back through the
-// coach's mouth. The headline names the improvement in plain words — a
-// directional claim the given comparison supports — and the exact counts go
-// in the EVIDENCE, which is the notebook's receipt row. The worked example
-// anchors length (live run 2's tier-2 headlines ran 13-14w without one).
-const TRAJECTORY_RULE = 'open the headline with the improvement in plain words with NO figures, then name the clearest remaining pattern, in the shape "Sharper stretch than the last one; aggression spots still getting checked" — and put the exact before-and-after counts in one evidence item instead';
+// A CLAUSE, never a sentence (v3, August 2 2026). The progression of this rule
+// is the whole story of the surface: counts in the headline ("20/50 up from
+// 10/50") → prose in the headline with the counts as an evidence receipt
+// (July 29) → an opening CLAUSE and no receipt at all (v3, once evidence and
+// every numeral went away). Improvement earns four or five words at the front
+// of sentence 1 and then the coaching starts; it never gets a sentence of its
+// own, because a two-sentence read that spends one of them on praise has
+// nothing left to teach with. One-directional by design: it fires only on a
+// genuine improvement, and a decline is never dressed up (honest labeling —
+// the false-improvement guard in the harness is the mechanical half of this).
+const TRAJECTORY_RULE = 'open sentence one with the improvement as a short clause in plain words with NO figures, then turn straight into the pattern that still needs work, exactly like the second example below ("You\'re playing sharper lately, but ..."). It is a clause, never its own sentence, and it never appears on a stretch that did not actually improve. The clause is OWED whenever the numbers rose, however rough the stretch still looks. Do not withhold it because the accuracy is still low or because most hands are still wrong: "better than last stretch, but ..." is honest at any level, and a rising player who is told only what is broken is being read inaccurately';
 
-// The three length bounds, ONE source (live eval finding 4, July 29 2026).
+// The length bounds, ONE source (live eval finding 4, July 29 2026).
 // COACH_SCHEMA cannot carry them — structured outputs support no maxLength or
 // maxItems — so the prompt text is the only place they can be stated, and the
 // eval harness is the only place they can be measured. Written here once and
@@ -348,14 +357,19 @@ const TRAJECTORY_RULE = 'open the headline with the improvement in plain words w
 // (harness allowing 1-3 items at <= 15 words against a prompt asking 1-2 at
 // <= 12) — which prints a clean report on nine systematically over-long reads.
 //
-// evidence 24 and watchFor 20 were re-tuned on July 29 2026 as part of prompt
-// v2 (docs/superpowers/specs/2026-07-29-coach-read-prompt-v2-design.md) — the
-// moment ROADMAP path 1 promised ("re-tune when the prompt is next touched so
-// one live run validates both"). Measured basis, not vibes: evidence items at
-// 21w and 22w, and four watchFors at exactly 19w, across the July 29 live
-// runs. PRE-REGISTERED before the validating run — a cap is never moved to
-// green a failing run, and the pending live run can still fail on substance.
-const WORD_CAPS = { headline: 12, evidence: 24, watchFor: 20, evidenceItems: [1, 2] };
+// v3 (August 2, 2026) replaces WORD_CAPS with V3_CAPS. The shape changed because
+// the read did: two fields, one sentence each, and a TOTAL that is the real
+// bound the founder cares about — "two sentences a coach would actually say"
+// measured 25–35 words across their own rewrites, so 40 is the ceiling with
+// headroom rather than a target. `sentencesPerField` is a cap like the others
+// and lives here for the same reason: the prompt states it and the harness
+// measures it, from this one object.
+//
+// PRE-REGISTERED in the v3 spec BEFORE any validating run
+// (docs/superpowers/specs/2026-07-30-coach-read-v3-conversational-voice-design.md
+// §"Founder red-pen decisions" 2). A cap is never moved to green a failing run;
+// the live runs can still fail on substance, which has no tolerance at all.
+const V3_CAPS = { total: 40, headline: 20, watchFor: 26, sentencesPerField: 1 };
 
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
@@ -401,7 +415,7 @@ function buildPrompt(s) {
     ? `They ran out of the clock without acting at all on ${s.timeouts} of these hands. That is freezing on the decision, not choosing badly, and it carries no direction, so treat it as its own pattern rather than folding it into the passive or aggressive story.\n\n`
     : '';
 
-  return `You are a poker coach reviewing a student's last ${s.sessions} sessions (${s.hands} hands) and writing up what you have been seeing lately. This is a trend review, not a verdict on who they are: name what has been happening over this stretch, and stay in the present tense of "lately".
+  return `You are a poker coach. Your student has just played ${s.sessions} sessions (${s.hands} hands) and you are about to tell them, in two sentences, the one thing you want them to fix and how to fix it. This is advice, not a report: they do not need to hear what the data says, they need to hear what to do about it and why. Talk about this stretch ("lately", "you've been"), never about who they are.
 
 Overall: ${s.accuracy.correct} of ${s.accuracy.total} correct (${pct(s.accuracy.correct, s.accuracy.total)}%)${
   s.previous ? `, against ${s.previous.correct} of ${s.previous.total} (${pct(s.previous.correct, s.previous.total)}%) over the stretch before this one` : ''
@@ -416,25 +430,44 @@ ${timeouts}${confident ? `Confident errors (answered fast and got it wrong, so t
 
 ${repeats ? `Spots they have missed more than once in this stretch, already counted for you by opponent:\n${repeats}` : 'No spot was missed more than once.'}
 
-Respond with three fields named "headline", "evidence" and "watchFor":
-- headline: ONE sentence, ${WORD_CAPS.headline} words or fewer, naming the clearest pattern across these ${s.sessions} sessions as something they have been DOING lately ("Bluffs keep firing into players who never fold"), never as an identity ("You are a maniac"). Start with the observation, not with "you". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern as above. Count the headline's words before you answer; ${WORD_CAPS.headline} is a hard limit, not a target.
-- evidence: ${WORD_CAPS.evidenceItems[0]} to ${WORD_CAPS.evidenceItems[1]} short items, each ${WORD_CAPS.evidence} words or fewer, each citing a NUMBER or a repeated spot from the data above ("Bluffing: 3 of 11 across these sessions, twice into a station"). These must be things the player cannot compute for themselves, never a restatement of a single hand's result.
-- watchFor: ONE sentence, ${WORD_CAPS.watchFor} words or fewer, phrased as a trigger-action plan for their next session: name the situation cue, then the action ("Next time a raise crosses your mind, make it"). Cite one number from above only if it sharpens the instruction AND still fits the limit; the cue and action come first, the citation is the first thing to drop. Count the words before you answer; ${WORD_CAPS.watchFor} is a hard limit, not a target.
+Now say it out loud to them, the way you would across the table. Two sentences, no more.
 
-Rules for all three fields:
-- Scope every claim to this STRETCH ("lately", "over these sessions", "recently") and to observed behaviour. Never pronounce on their identity, their habits as a whole, or their game: no "you are a...", no "you always..." or "you never...", no "your game is...". A habitual claim ("you always fold the river") is an identity verdict wearing different words, so say "kept folding the river over these sessions" instead. Naming the player's type is a different surface's job, not yours
+Respond with two fields named "headline" and "watchFor". They are sentence one and sentence two of ONE short paragraph, and they will be shown to the player joined together with a space:
+- headline: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.headline} words or fewer. What you have been seeing, in natural speech, scoped to this stretch with "lately" or "you've been". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern in the data. Sentence one usually needs fewer words than its own cap. Spend the difference in sentence two, which is doing the harder job.
+- watchFor: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.watchFor} words or fewer. WHY it costs them, in terms of the opponent type or the poker concept, and then a concrete if-then instruction they can actually run next session: name the cue, then the action. End the sentence at the action. No clause after it.
+- The two sentences together are ${V3_CAPS.total} words or fewer. Both end in a full stop.
+
+These three examples are the voice. Match their register exactly: plain speech with real poker lingo, no numbers, nothing clever.
+
+When confident errors are in the data:
+  headline: "You've been snap calling tight players a lot lately."
+  watchFor: "A Tight Nit rarely bluffs and rarely plays a bad hand, so make sure yours is strong before the chips go in."
+
+When the stretch improved and there are no confident errors:
+  headline: "You're playing sharper lately, but you're still folding too early when the price is good."
+  watchFor: "When the bet is less than half the pot, pause and look at your draws before letting the hand go."
+
+When it is a plain pattern (here, freezing on the clock):
+  headline: "The clock has been making too many of your decisions for you."
+  watchFor: "When the timer gets low, pick the safest line you see and commit, because any choice beats no choice."
+
+Those are examples of the VOICE, not a menu of content. Say what THIS player's data above actually shows; do not reuse their phrases unless the data in front of you says the same thing.
+
+Rules for both fields:
+- NO NUMERALS ANYWHERE. Not one digit, in either field. The counts above tell you which pattern to name; they never appear in what you write. A threshold goes in words, which is how a coach says it anyway: "less than half the pot", "about three to one", "more than once"
+- Scope every claim to this STRETCH ("lately", "you've been", "over these sessions") and to what they did. Never pronounce on who they are or what they habitually do: no "you are a...", no "you always..." or "you never...", no "you tend to...". Never say "your game" in ANY phrasing: not "your game is", not "the leak in your game", not "the soft spot in your game". A softer wrapper does not make it smaller. A leak belongs to this stretch, not to their game. "You tend to fold too early" is an identity verdict wearing softer words. "Lately you've been folding too early" is the same warmth and it is true. Naming the player's type is a different surface's job, not yours
+- Sentence two is where you TEACH. General poker knowledge about how an opponent type plays is yours to use and is exactly what makes the read worth reading: "a Tight Nit rarely bluffs", "a Calling Station will not fold to one more bet". That is a claim about the villain type, not an invented claim about the player
+- Never invent anything about the PLAYER: no hand, holding, opponent or statistic that is not in the data above. If a fact is about them, it came from above or it does not get said
 - The direction of the mistakes is the read: folding or flat-calling when raising was best is a different tendency from raising when caution was best. Name the tendency the numbers actually show
-- Confident errors are the highest-leverage thing here, because they do not know those are leaks. If any are listed above, the ${HEADLINE_RULE} — putting it in the evidence instead is not enough
-- Use only the numbers and spots given above. Never invent a hand, a holding, an opponent or a statistic
-- COUNTS ARE GIVEN, NEVER DERIVED. Every number you write must be copied from a number written above. Do not count the listed lines yourself, do not add two counts together, and do not describe a group as "two vs X" unless the line above literally says X: 2. The per-opponent tallies are already done for you
+- Confident errors are the highest-leverage thing here, because they do not know those are leaks. If any are listed above, the ${HEADLINE_RULE}
 - If the mistakes point in different directions, say so honestly instead of forcing one story
-- Only call this stretch improved, or "up from" anything, if the overall numbers above actually rose. A decline is named as a decline or the comparison is left out entirely; never dress a drop as progress
+- Only call this stretch improved, or sharper, or better, if the overall numbers above actually rose. A decline is named as a decline or the comparison is left out entirely; never dress a drop as progress
 - These are exploitative judgement spots, not solver outputs: say "the recommended play", never "the solve" or GTO language
-- Before answering, count each field's words against its limit; if any field is over, cut words until it fits. Cut adjectives and qualifiers first, never the numbers or the pattern. The limits are hard
+- Before answering, count the words in each sentence and in the pair. If either is over, cut in this order: intensifiers first ("way", "really", "just", "actually", "a lot"), then the WHY clause. Never cut the cue or the action. The limits are hard
 - Sound like a human coach, not an AI
-- No em dashes, no "not only... but also" constructions
+- No em dashes, no semicolons stitching two sentences into one, no "not only... but also" constructions
 - No generic praise or filler
-- If they are genuinely playing well across this stretch, say so in the headline and name one thing to keep watching in watchFor`;
+- If they are genuinely playing well across this stretch, say so in sentence one and give them one thing to keep watching in sentence two`;
 }
 
 async function callClaude(summary, apiKey) {
@@ -447,15 +480,17 @@ async function callClaude(summary, apiKey) {
     },
     body: JSON.stringify({
       model: 'claude-sonnet-5',
-      // Raised 300 → 500 for the structured (JSON) output: three fields plus
-      // JSON syntax overhead need headroom, and a truncated response is
-      // unparseable rather than merely short (truncation was a real eval defect).
+      // Raised 300 → 500 for the structured (JSON) output: the fields plus JSON
+      // syntax overhead need headroom, and a truncated response is unparseable
+      // rather than merely short (truncation was a real eval defect). Left at
+      // 500 through the v3 two-field cut — headroom is not the cost driver here
+      // and a tighter bound would only buy a new way to truncate.
       max_tokens: 500,
       // Sonnet 5 runs adaptive thinking by default when `thinking` is
       // omitted, and thinking tokens count against max_tokens — which can
       // eat the whole budget and return truncated or empty text.
       thinking: { type: 'disabled' },
-      // Structured output: constrain the response to the three-field schema.
+      // Structured output: constrain the response to the two-field schema.
       output_config: { format: { type: 'json_schema', schema: COACH_SCHEMA } },
       messages: [{ role: 'user', content: buildPrompt(summary) }],
     }),
@@ -480,6 +515,12 @@ module.exports.buildLookup = buildLookup;
 // the prompt ASKS for — never a second copy of them (findings 3 and 4).
 module.exports.HEADLINE_RULE = HEADLINE_RULE;
 module.exports.TRAJECTORY_RULE = TRAJECTORY_RULE;
-module.exports.WORD_CAPS = WORD_CAPS;
+module.exports.V3_CAPS = V3_CAPS;
+// Exported for the jest pins in src/utils/coachRead.test.js: the wire format has
+// two ends, and normalizeCoachRead (what the server emits) has to stay the shape
+// parseCoachRead (what the client renders) accepts. Untested until v3 — the
+// three-field validator was only ever exercised through a paid live call.
+module.exports.normalizeCoachRead = normalizeCoachRead;
+module.exports.COACH_SCHEMA = COACH_SCHEMA;
 module.exports.nsNamed = nsNamed;
 module.exports.nsDefault = nsDefault;
