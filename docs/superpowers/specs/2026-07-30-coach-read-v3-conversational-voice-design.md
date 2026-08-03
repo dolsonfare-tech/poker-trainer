@@ -146,6 +146,44 @@ lands on an if-then the player can execute next session. Written to be a voice
   rendering for old reads (the derived history is append-only in spirit —
   old reads are not rewritten).
 
+## Cap re-registration (2026-08-02, after live run 2 — founder decision)
+
+Runs 1 and 2 converged on substance (tier behavior, honesty guards, structure,
+voice register all green) while the model wrote the founder's register at
+**42–50 words against the 40 cap** — measured across nine reads twice. Root
+cause, diagnosed run 2: the prompt's content stack (trajectory clause + pattern
++ teach + cue + action) exceeds what the signed examples demonstrate — the
+tier-2 example's watchFor carries cue + action with NO why-clause, which is how
+it lands at 20 words — so the model obeys the content list at example-register
+and overruns. The 40 was registered from founder seed-rewrites that did not
+carry the full mandated stack.
+
+**Decision (founder, after reading all nine run-2 reads): this length IS the
+product — the caps were mis-registered, so they are amended in the open:**
+
+| Measure | Was | Now | Basis (run-2 measurements) |
+|---|---|---|---|
+| total | 40 | **48** | totals 40–50, mean ~45; two at 50 land soft-⚠ under 48+2 |
+| headline | 20 | **22** | headlines 16–21; the mandated trajectory clause spends ~6 words |
+| watchFor | 26 | **30** | watchFors 22–31; teach + cue + action needs the room |
+
+Discipline note: this is NOT the sin the tolerance rule names. Silently
+widening `CAP_TOLERANCE` or nudging a cap to green a red run hides a
+measurement; this is a founder product decision made after reading the real
+output, recorded here with its basis, with **substance checks unchanged and a
+fresh validating run still owed**. `CAP_TOLERANCE` stays ±2/+3. Same class as
+the July 29 v2 re-tune: pre-registered before the run that validates it.
+
+Two prompt corrections ride along, both run-2 findings:
+- **Delete the "spend the difference in sentence two" line** — it backfired
+  verbatim: the model heard "spend" and spent (watchFor hard-overruns 1→4).
+- **Playing-well + improved stretches say so with improvement vocabulary** —
+  Perfect session (30→50) wrote "Every skill clicked lately", which is a
+  playing-well sentence the trajectory check cannot see; the
+  genuinely-playing-well rule now asks for "sharper" / "better than last
+  stretch" wording when the comparison also rose, so the two rules compose
+  instead of colliding.
+
 ## Validation plan
 
 1. ~~Founder red-pen round 1~~ — done August 2 (this revision).
@@ -159,7 +197,8 @@ lands on an if-then the player can execute next session. Written to be a voice
 
 ## Acceptance
 
-- All 9 personas: 2 sentences, ≤ 40 (+2) words, terminal punctuation, zero
+- All 9 personas: 2 sentences, ≤ 48 (+2) words (re-registered 2026-08-02 —
+  see the cap re-registration section), terminal punctuation, zero
   numerals, zero identity/habitual verdicts, zero example fingerprints, zero
   em dashes.
 - Tier behavior: confident-error opening on tier-1 personas; trajectory

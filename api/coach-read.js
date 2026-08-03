@@ -365,11 +365,26 @@ const TRAJECTORY_RULE = 'open sentence one with the improvement as a short claus
 // and lives here for the same reason: the prompt states it and the harness
 // measures it, from this one object.
 //
-// PRE-REGISTERED in the v3 spec BEFORE any validating run
-// (docs/superpowers/specs/2026-07-30-coach-read-v3-conversational-voice-design.md
-// §"Founder red-pen decisions" 2). A cap is never moved to green a failing run;
-// the live runs can still fail on substance, which has no tolerance at all.
-const V3_CAPS = { total: 40, headline: 20, watchFor: 26, sentencesPerField: 1 };
+// RE-REGISTERED August 2, 2026 after live run 2: total 40 → 48, headline
+// 20 → 22, watchFor 26 → 30. The original numbers were mis-registered, not
+// missed. They came from founder seed-rewrites that did not carry the full
+// content stack the prompt mandates (trajectory clause + pattern + teach + cue
+// + action), and the two signed watchFor examples do not demonstrate that stack
+// either: the tier-2 example is cue + action with NO why-clause at 20 words,
+// which is what 26 was calibrated on. The model then obeyed the bullet list at
+// the examples' register and landed 42-50 words across nine reads, twice. The
+// founder read all nine and ruled that this length IS the product.
+//
+// This is NOT the sin the tolerance rule names, and the distinction is the
+// whole discipline: silently widening CAP_TOLERANCE or nudging a bound to green
+// a red run HIDES a measurement. This is a product decision taken after reading
+// the real output, recorded with its basis and its measured ranges in the spec
+// (§"Cap re-registration (2026-08-02, after live run 2)"), with the substance
+// checks unchanged, CAP_TOLERANCE unchanged at ±2/+3, and a fresh validating
+// run still owed. Same class as the July 29 v2 re-tune: written down BEFORE the
+// run that validates it. If a future run overruns 48, that is a finding about
+// the prompt, not an invitation to write 56 here.
+const V3_CAPS = { total: 48, headline: 22, watchFor: 30, sentencesPerField: 1 };
 
 // Exported for scripts/eval-coach.mjs — the eval harness must exercise the
 // REAL prompt and the REAL request params, never a copy that can drift. This
@@ -433,7 +448,7 @@ ${repeats ? `Spots they have missed more than once in this stretch, already coun
 Now say it out loud to them, the way you would across the table. Two sentences, no more.
 
 Respond with two fields named "headline" and "watchFor". They are sentence one and sentence two of ONE short paragraph, and they will be shown to the player joined together with a space:
-- headline: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.headline} words or fewer. What you have been seeing, in natural speech, scoped to this stretch with "lately" or "you've been". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern in the data. Sentence one usually needs fewer words than its own cap. Spend the difference in sentence two, which is doing the harder job.
+- headline: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.headline} words or fewer. What you have been seeing, in natural speech, scoped to this stretch with "lately" or "you've been". If confident errors are listed above, the ${HEADLINE_RULE}. If there are NO confident errors listed and the stretch-before comparison is given and this stretch improved on it, ${TRAJECTORY_RULE}. Otherwise name the clearest pattern in the data.
 - watchFor: exactly ${V3_CAPS.sentencesPerField} sentence, ${V3_CAPS.watchFor} words or fewer. WHY it costs them, in terms of the opponent type or the poker concept, and then a concrete if-then instruction they can actually run next session: name the cue, then the action. End the sentence at the action. No clause after it.
 - The two sentences together are ${V3_CAPS.total} words or fewer. Both end in a full stop.
 
@@ -467,7 +482,7 @@ Rules for both fields:
 - Sound like a human coach, not an AI
 - No em dashes, no semicolons stitching two sentences into one, no "not only... but also" constructions
 - No generic praise or filler
-- If they are genuinely playing well across this stretch, say so in sentence one and give them one thing to keep watching in sentence two`;
+- If they are genuinely playing well across this stretch, say so in sentence one and give them one thing to keep watching in sentence two. When the stretch-before comparison is given AND the numbers also rose, say the good news as improvement rather than as a flat compliment: "you're playing sharper lately", "better than last stretch". "Every skill clicked lately" praises without saying they climbed, and climbing is the more useful thing to tell them`;
 }
 
 async function callClaude(summary, apiKey) {
