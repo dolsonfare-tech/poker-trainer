@@ -351,8 +351,21 @@ Strategic questions answered: monetization (subscription, not ads-first — Pro 
 
 8. **AdSense** — ON HOLD until real users exist. Code scaffolding dormant (no-op without `REACT_APP_ADSENSE_CLIENT`). When ready: create account, set env in Vercel, author `public/ads.txt`.
 
-9. **Coach's Read v3 — "a true coach's voice" (founder direction, July 29 2026, evening).**
-   The founder wants the read to feel like a REAL coach talking, not three labeled
+9. **✅ SHIPPED 2026-08-02 — Coach's Read v3, "a true coach's voice."** Validated on
+   its 4th live run (9/9 clean, exit 0) and deployed the same evening. What shipped
+   went FURTHER than the original ask after founder red-pen: advice voice not just
+   conversational — two sentences (scoped observation, then why + if-then), ZERO
+   numerals on any surface (evidence field deleted from `COACH_SCHEMA`; wire names
+   kept so old reads render unchanged), villain-type teaching in the register (the
+   F1 lever), caps re-registered openly at 48/22/30 mid-loop with documented basis.
+   Every hard-won constraint survived: honesty guards, tier-1 confident-error
+   priority, the eval law. Spec + full run-by-run record:
+   `docs/superpowers/specs/2026-07-30-coach-read-v3-conversational-voice-design.md`.
+   **Left open, deliberately:** card typography (a ~48-word paragraph now renders in
+   the old 12-word headline's Playfair 700 — founder to eyeball, one CSS declaration
+   if too heavy), and the first PRODUCTION v3 read should be verified when a real
+   account next hits the cadence (watch PostHog `coach_read_failed`).
+   *Original brief, for the record:* the read should feel like a REAL coach talking, not three labeled
    fields — think 2–3 flowing sentences in a coach's register. **Scope is the
    Coach's Read panel ONLY: the Player Schema (archetype card) and the skill chips
    stay exactly as they are — founder said so twice (C″ design and again July 29
