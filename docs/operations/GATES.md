@@ -89,9 +89,25 @@ an invariants rule.
   so the founder uses a short-lived console key. `npm run eval:coach -- --dry` prints
   prompts without calling. Output → gitignored `coach-eval-output.md`.
   **THE LAW: re-run LIVE after ANY prompt or model change**, and judge the 9 reads
-  against the F5 bar before deploying. Last live run: July 26, 2026 — the July 22
-  voice reframe verified (9/9 pass, zero trait verdicts; residuals logged in
-  `docs/architecture/ENGINES.md` §coach pipeline).
+  against the F5 bar before deploying. Last live run: **August 2, 2026 — prompt v3
+  validated on its 4th live run (9/9 clean, exit 0)**; see the eval law in CLAUDE.md
+  for the caps and the ±2 tolerance policy.
+- **`npm run smoke:coach`** — the only check that touches the DEPLOYED lambda.
+  Everything else in this file runs against local files and loads the real ESM;
+  the deployed function loads Vercel's CommonJS transpilation of the same modules,
+  which is how every production read broke on July 29, 2026 while all gates stayed
+  green. Tier 1 (default, free, no token) infers the deployment's config from the
+  handler's early-return order: `GET → 405` proves it boots, and `POST → 401`
+  proves `CLAUDE_API_KEY`, `SUPABASE_URL` and `SUPABASE_SECRET_KEY` are all set —
+  a `400` there instead means the Supabase vars are missing and the auth block,
+  the daily cap and the tenant scope were ALL skipped. Tier 2 needs
+  `COACH_SMOKE_TOKEN` (a signed-in user's `access_token`) to cross the auth wall,
+  which is the only way to reach the dynamic `api/ → src/` import; against an
+  account with **no sessions** it proves the module load for free, because the
+  empty-log guard sits after `loadModules()`. Word caps are reported, never
+  enforced — `eval:coach` owns those. `--selftest` exercises the content checks
+  offline and **runs inside `npm run gates`**, so the probe's own logic is
+  verified even when nobody runs it against production.
 
 ## Gate 6 — e2e suite (two lanes, ~35s)
 

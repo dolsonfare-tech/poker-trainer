@@ -80,10 +80,23 @@ prompt is byte-identical to run 4's.
   misses `words >= N`; rule 32 misdiagnoses one of its two failure modes in its
   message; an all-errored live run still overwrites the prior live artifact). None can
   produce a false green today.
-- **First production read must be verified after deploy.** This is the first time
-  `api/` reaches into `src/` (dynamic import). `@vercel/nft` should trace it, but
-  nothing local proves the lambda bundles it — if it misses, every read 500s and the
-  only signal is PostHog `coach_read_failed`.
+- ~~**First production read must be verified after deploy.**~~ **✅ DONE 2026-08-30.**
+  Verified against production with a real signed-in account: `POST /api/coach-read`
+  returned `200` with canonical two-field v3 JSON, and the read was confirmed stamped
+  onto the newest `sessions` row (250 chars, replacing nothing — the row before it
+  still carries its longer v2-era read). That single call proves the whole chain the
+  local gates cannot reach: the `api/ → src/` dynamic import inside the lambda, the
+  tenant-scoped window query, `aggregate()` over real data, the Claude call, the
+  structured-output schema, and the service-role stamp-back. Measured 13w headline /
+  23w watchFor / 36w total against caps 22/30/48 — inside without needing tolerance.
+
+  **The monitoring plan it replaced was unsound.** "Watch PostHog `coach_read_failed`"
+  is a REACTIVE signal: it only fires when a real user triggers a read. With no users
+  between 2026-08-02 and 2026-08-30 the metric sat at zero, which is byte-identical to
+  healthy — the failure state and the no-data state were the same value. Replaced by
+  **`npm run smoke:coach`** (gate detail in `docs/operations/GATES.md`), an active
+  probe that needs no traffic, plus `--selftest` inside `npm run gates` so the probe's
+  own logic cannot rot. Ratchet law (gate 7) satisfied.
 
 ---
 
