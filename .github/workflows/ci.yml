@@ -27,6 +27,8 @@ jobs:
         run: npm run audit:scenarios
       - name: Observations content audit
         run: npm run audit:observations
+      - name: Coach smoke self-check (offline — the live probe is gate 8)
+        run: npm run smoke:coach -- --selftest
       - name: Unit + integration tests
         run: CI=true npm test
       - name: Schema-diagnosis bias harness
